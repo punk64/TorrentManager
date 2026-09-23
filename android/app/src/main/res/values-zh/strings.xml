@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 中文（含简体 zh-CN / 繁体 zh-TW，均匹配 values-zh）环境下的显示名。 -->
+<resources>
+    <string name="app_name">种子管理器</string>
+</resources>

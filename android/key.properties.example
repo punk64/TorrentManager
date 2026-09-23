@@ -1,0 +1,20 @@
+# key.properties 模板
+#
+# 本模板**不含任何真实密钥**。要构建 release 包：
+#
+#   1) 把本文件复制为 key.properties（同目录，即 android/key.properties）
+#   2) 把下面的占位值换成你自己的口令
+#   3) 把自己的签名库放到 android/app/ 下
+#      （注意：文件名是 build.gradle.kts 里**硬编码**的，不能改）
+#
+# ⚠️ 密钥是应用的唯一身份凭证：拿到它的人可以用**同一签名**伪造"升级包"，
+#    同包名 + 同签名能直接覆盖安装到手机上。所以：
+#      * 别把它提交进版本库（android/.gitignore 已忽略 key.properties 与 *.jks）
+#      * 别把它打进要外发的 zip / 源码副本里
+#      * 如果它曾经外发过，应当**轮换 keystore**（换新库 + 提版本号重新发版）
+#
+# build.gradle.kts 读取的就是下面这三个字段（storeFile 是硬编码的，不在这里配）：
+#
+# storePassword=<签名库口令>
+# keyPassword=<密钥口令>
+# keyAlias=<密钥别名>

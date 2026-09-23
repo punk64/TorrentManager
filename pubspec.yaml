@@ -1,0 +1,82 @@
+name: torrent_manager
+description: 'TorrentManager —— qBittorrent + Transmission 远程种子管理器'
+publish_to: 'none'
+# ⚠️ 2026-09-20：版本号从 1.0.0 改为 0.0.0 起步（用户口径）。
+# ⚠️ 2026-09-21：用户改口径 —— 版本号自 V0.1.0 起算（versionName 归零重排）。
+#   ⚠️ versionCode **不能**跟着归 1：Android 只认 versionCode 判新旧，
+#      归 1 会让新包被判为「降级」→ 系统安装器拒装并提示「存在更新版本」。
+#      实测：基础 1 → arm64 包 versionCode **2001**（`--split-per-abi` 自动 +2000），
+#      而已装 V0.0.9 = 基础 10 → **2010** ⇒ 2001 < 2010 ⇒ 装不上。
+#   ★ 故 versionCode **接着历史最大值往下排**：V0.0.9 = 10 → V0.1.0 = **11**（包内 2011）。
+#      规则：新版本的 `+N` 必须 **大于所有已装机版本的 `+N`**（本机历史最大 = 10）。
+#   `版本号` 决定 APK 的 versionName（安装后「应用信息」里看到的 V0.1.N）。
+#   `+N` 是 versionCode（Android 只认它做"新旧"判断，必须**单调递增**）。
+#   两条都由**唯一的出包脚本**自动推进，不要手改。它会：
+#   构建 → 成功后把这里自增一位（0.1.0+11 → 0.1.1+12）→
+#   把产物重命名为 TorrentManager-V0.1.N-<abi>.apk → 跑打包断言。
+#   因此**这里存的是"下一次要出的版本"**，而不是"上一次出的版本"。
+version: 0.2.9+32
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ⚠️ 2026-09-17 体积优化删除：cupertino_icons（lib/ 下 0 处 import，
+  #    仅打进 CupertinoIcons.ttf 257,628 B）。
+
+  # 状态管理 + 路由（GetMaterialApp / GetPage）
+  get: ^4.6.6
+
+  # 网络层（Dio + Cookie 管理）
+  dio: ^5.4.0
+  cookie_jar: ^4.0.8
+  dio_cookie_manager: ^3.1.1
+
+  # 本地存储
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.2.0
+  path_provider: ^2.1.2
+
+  # 加密（需求 5）：备份文件用 AES-256-GCM 加密后再写盘，密钥存
+  # flutter_secure_storage（Android Keystore 托管）。
+  # ⚠️ 它本来就是传递依赖（pubspec.lock 已锁 4.0.0），这里提升为直接依赖。
+  pointycastle: ^4.0.0
+
+  # 文件选择：从本地文件系统选 .torrent 添加
+  file_picker: ^8.0.0
+
+  # 图表
+  fl_chart: ^0.68.0
+
+  # 国际化
+  intl: ^0.19.0
+
+  # 后端（Supabase auth / postgrest / functions 客户端）
+  #
+  # ⚠️ 本项目为**纯本地实现**：`lib/` 下没有任何 import 引用本包 ——
+  # 账户与备份分别由 LocalStore / AuthController 用设备内存储实现，
+  # 因此 release AOT 构建时本依赖的全部代码都会被 tree-shaking 剔除，不进入 APK。
+  # 保留声明是为了避免改动依赖树（改动后需重新联网 `pub get`）。
+  # 如需彻底移除：删掉下面这行后执行 `flutter pub get` 即可，功能不受影响。
+  supabase_flutter: ^2.8.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+
+  # 界面素材：qbittorrent.png / transmission.png / empty.png
+  # ⚠️ 2026-09-17 清理：`assets/icon/`（1/2/android/icon/ios.png，98KB）代码零引用，
+  #    属死资源，已删除且不再声明打包。
+  # ⚠️ 2026-09-18：原 `drawer_background.webp`（122KB）已删除，抽屉默认图换成
+  #    `drawer_menu_default.webp`（用户指定图，1440×735 WebP q80，132KB）。
+  assets:
+    - assets/images/
+    # 2026-09-18：六套壁纸主题的背景图。每张按「长边 ≤1440 + WebP q80」
+    # 压缩（源图 2.48MB → 六张合计约 1.0MB），无 PNG 兜底、无多倍图。
+    - assets/images/wallpapers/

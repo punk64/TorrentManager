@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  默认（**兜底**）语言资源 —— 2026-09-20 按用户口径调整。
+
+  用户口径：「跟随系统语言，当没有适配系统语言时，使用默认中文」。
+
+  因此资源布局是：
+    * values/      → 兜底 = 中文「种子管理器」（系统语言未被下面任何目录适配时用它）
+    * values-zh/   → 简体 / 繁体中文 = 「种子管理器」
+    * values-en/   → 英语 = 「Torrent Manager」
+
+  ⚠️ 注意这不是"英文当默认"——**默认档必须是中文**。若把 `values/` 写成英文，
+     那么日语 / 德语 / 法语等所有未适配语言都会显示英文，与用户口径不符。
+
+  注意：这里的 app_name 只影响**启动器图标下的名称 / 最近任务 / 设置里的应用名**
+  （Android 系统层面），Dart 侧的应用内标题取自 lib/utils/strings.dart 的
+  Strings.appName，两处需保持一致。
+-->
+<resources>
+    <string name="app_name">种子管理器</string>
+</resources>

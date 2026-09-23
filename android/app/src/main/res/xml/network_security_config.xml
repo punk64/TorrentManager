@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  明文流量策略（2026-09-19，P0）。
+
+  ⚠️ 本文件与它替换掉的 `android:usesCleartextTraffic="true"` **行为完全一致**：
+     `base-config cleartextTrafficPermitted="true"` 等价于「对所有域名放行明文 HTTP」。
+     迁移到资源文件的收益是**语义显式化**（放行范围写在资源里、可按构建类型区分），
+     并未收窄放行面 —— 这一点在文档中已如实标注，不做「看起来更安全」的假象。
+
+  为什么**不能**按局域网网段收窄：
+    1. `network-security-config` 的 `domain-config` 只接受**域名或字面 IP**，
+       不支持 CIDR 网段；而服务器地址由用户在表单里任意填写
+       （10.x / 172.16-31.x / 192.168.x 无法穷举）。
+    2. 本文件由 Android **系统在建立连接时直接读取**，应用代码不参与解析，
+       因此不存在「运行时解密 / 动态生成」的空间。
+
+  结论：明文 HTTP 是 qBittorrent / Transmission 局域网 WebUI 的**功能必需**。
+  真正消除明文传输的唯一途径是服务端启用 HTTPS、客户端沿用（见 `ServerData.useHttps`）。
+
+  将来若要收紧：把下面 base-config 改为 cleartextTrafficPermitted="false"，
+  再用 domain-config 逐条列出**字面 IP**。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1,0 +1,85 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 联网权限：qBittorrent / Transmission 需要网络访问。
+         Flutter 模板只在 debug / profile 包中声明 INTERNET，release 包会漏掉，
+         结果就是应用能装上但所有网络请求全部失败。 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 完整权限声明：
+         - ACCESS_NETWORK_STATE / ACCESS_WIFI_STATE：判断连通性、区分
+           WiFi / 移动网络（连接局域网内的 qBittorrent / Transmission 时）
+         - READ_EXTERNAL_STORAGE / WRITE_EXTERNAL_STORAGE：从本机选取
+           .torrent 文件
+         - VIBRATE：长按多选等交互的震动反馈
+         注：两个存储权限设了 maxSdkVersion，因为 Android 10+ 起已改为
+         分区存储、由 SAF 接管，限定上限可避免在新系统上被误判为
+         过度申请权限，且不影响旧设备的原有行为。 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+
+    <!-- ⚠️ 2026-09-19（P0）：明文流量策略由 `android:usesCleartextTraffic="true"`
+         迁移到 `res/xml/network_security_config.xml`，**行为不变**（base-config
+         cleartextTrafficPermitted="true" 与前者等价）；迁移原因、放行范围与
+         「为何无法按 CIDR 收窄」都写在该文件的注释里。
+         此前若两处并存，targetSdk 24+ 时以 XML 为准、manifest 属性会被忽略，
+         语义上更容易误判，故这里只保留 networkSecurityConfig 单一入口。 -->
+    <!-- ⚠️ 2026-09-20：**已移除 `android:extractNativeLibs`**，改由 gradle 的
+         `packaging.jniLibs.useLegacyPackaging` 单一来源派生（见 build.gradle.kts）。
+         原因：AGP 9 下若在 manifest 里**显式**写这个属性，构建 lite 包
+         （useLegacyPackaging=true → 需要 extractNativeLibs=true）时会**直接报错**：
+           "android:extractNativeLibs is set to \"false\" in AndroidManifest.xml.
+            Avoid setting ... explicitly ..., instead set ...useLegacyPackaging..."。
+         即两处冲突是 hard error，不再只是"被覆盖/被忽略"。
+         删掉后：标准包 → AGP 派生 false（so STORED，设备直接 mmap）；
+                 lite  包 → AGP 派生 true（so 压缩，安装时解压出一份副本）。 -->
+    <application
+        android:label="@string/app_name"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <!-- Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+    <!-- Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

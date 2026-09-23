@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  英文环境（en / en-US / en-GB …）下的显示名。
+  2026-09-20 新增：用户口径「跟随系统语言」。
+
+  目录 → 取值对应关系：
+    values/    兜底（未适配语言）→ 种子管理器
+    values-zh/ 中文               → 种子管理器
+    values-en/ 英语（本文件）      → Torrent Manager
+-->
+<resources>
+    <string name="app_name">Torrent Manager</string>
+</resources>
