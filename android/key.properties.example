@@ -3,9 +3,8 @@
 # 本模板**不含任何真实密钥**。要构建 release 包：
 #
 #   1) 把本文件复制为 key.properties（同目录，即 android/key.properties）
-#   2) 把下面的占位值换成你自己的口令
-#   3) 把自己的签名库放到 android/app/ 下
-#      （注意：文件名是 build.gradle.kts 里**硬编码**的，不能改）
+#   2) 生成自己的签名库（见下方命令）
+#   3) 把口令填进下面的字段
 #
 # ⚠️ 密钥是应用的唯一身份凭证：拿到它的人可以用**同一签名**伪造"升级包"，
 #    同包名 + 同签名能直接覆盖安装到手机上。所以：
@@ -13,8 +12,21 @@
 #      * 别把它打进要外发的 zip / 源码副本里
 #      * 如果它曾经外发过，应当**轮换 keystore**（换新库 + 提版本号重新发版）
 #
-# build.gradle.kts 读取的就是下面这三个字段（storeFile 是硬编码的，不在这里配）：
+# 生成签名库（别名、口令自行替换）：
 #
+#   keytool -genkeypair -v -keystore torrentmanager-release.jks -alias torrentmanager \
+#           -keyalg RSA -keysize 2048 -validity 10000
+#
+# 生成后把 .jks 放到 android/app/ 下，然后在 key.properties 里填：
+#
+# storeFile=<签名库路径>      # 可省略；省略时默认 android/app/torrentmanager-release.jks
+#                             # 相对路径以 android/app/ 为基准，也可写绝对路径
 # storePassword=<签名库口令>
 # keyPassword=<密钥口令>
 # keyAlias=<密钥别名>
+#
+# 只想把工程编译起来试跑、不想配密钥库的，可以改用调试证书构建：
+#
+#   python release.py --debug-sign
+#
+# 该方式产出的包能装能跑，但签名与正式版不同，**不能覆盖安装正式版**。

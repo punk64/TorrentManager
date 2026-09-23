@@ -25,11 +25,10 @@ android {
     // 同时把证书从 CN=Android Debug 换成正式主体，避免被国产 ROM 判为测试包。
     signingConfigs {
         create("release") {
-            // ⚠️ 口令**不能硬编码在这个文件里** —— 它随源码进备份包，一旦外发
-            //    就等于把签名私钥的钥匙一并交出去了。
-            //    改为从 `android/key.properties` 读取（该文件已被 .gitignore
-            //    与分发流程排除），或退而读环境变量
-            //    TORRENTMANAGER_STORE_PASSWORD / _KEY_PASSWORD。
+            // ⚠️ 口令**不能硬编码在这个文件里** —— 它一旦随源码外发，就等于把
+            //    签名私钥的钥匙一并交出去了。
+            //    改为从 `android/key.properties` 读取（该文件已被 .gitignore 排除），
+            //    或退而读环境变量 TORRENTMANAGER_STORE_PASSWORD / _KEY_PASSWORD。
             //    两者都缺 → 口令为空，release 签名会失败，此时请补齐 key.properties。
             // ⚠️ 必须显式 import `Properties`（见文件顶部）：在 `android {}` 块**内**
             //    写 `java.util.Properties()` 会解析失败 —— 这里的 `java` 被 Android 的
@@ -39,7 +38,9 @@ android {
             if (kpFile.exists()) {
                 kpFile.inputStream().use { stream -> kp.load(stream) }
             }
-            storeFile = file("torrentmanager-release.jks")
+            // 密钥库文件名默认 torrentmanager-release.jks；想用自己的文件名与位置，
+            // 在 key.properties 里加一行 storeFile=<路径>（相对路径以 android/app/ 为基准）。
+            storeFile = file(kp.getProperty("storeFile") ?: "torrentmanager-release.jks")
             storePassword = kp.getProperty("storePassword")
                 ?: System.getenv("TORRENTMANAGER_STORE_PASSWORD") ?: ""
             keyAlias = kp.getProperty("keyAlias")
@@ -66,7 +67,12 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // 默认用上面配置的正式密钥库。构建时加 `-PtmDebugSign=true`
+            // （等价环境变量 ORG_GRADLE_PROJECT_tmDebugSign=true）则改用调试证书 ——
+            // 供没有密钥库、只想把工程编译起来试跑的人使用。
+            // ⚠️ 调试签名的包**不能覆盖安装正式版**（签名不同，系统会拒绝）。
+            signingConfig = signingConfigs.getByName(
+                if (project.findProperty("tmDebugSign") == "true") "debug" else "release")
             // 2026-09-17 体积优化：启用 R8 收缩 + 混淆 + 无用资源剔除。
             //
             // 【复盘】本轮曾一度判成「R8 让包变大」而关掉，

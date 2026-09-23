@@ -83,15 +83,45 @@ flutter test                           # 跑测试（当前 630 个用例）
 flutter build apk --release --split-per-abi --target-platform android-arm64
 ```
 
+### 一条命令出包
+
+工程根目录的 `release.py` 把整个出包流程收成一条命令：
+
+```bash
+python release.py                  # 出 pubspec 记账的那个版本，成功后版本 +1
+python release.py --dry-run        # 只打印计划，不构建、不写任何文件
+python release.py --version 0.3.0  # 指定本次要出的版本
+python release.py --debug-sign     # 用调试证书签（没有密钥库也能编出来试跑）
+python release.py --verify-only    # 只对已有产物跑打包断言，不构建
+python release.py --rehash         # 只给已有交付包补 / 重算 .sha1 侧车
+```
+
+它依次做完这些事：对齐界面版本号 → 构建 → 改名成 `TorrentManager-V<版本>-<abi>.apk`
+→ 生成同名 `.sha1` → 对产物跑打包断言（so 压缩态 / CRC / ABI 单一性 / 侧车一致性）
+→ 推进 `pubspec.yaml` 与 `kAppVersion` 到下一个版本。
+
+> 版本号**只在构建成功且断言通过之后**才推进：失败不消耗版本号，重跑还是同一个号。
+> 所以平时不需要手工改 `pubspec.yaml` 或 `app_version.dart`。
+
+两个可选开关（也可用环境变量，免得每次敲）：`--mirror <目录>` 出包后再把交付包
+（连同 `.sha1`）拷一份到别处 —— 目标盘不在只警告、不阻断出包；`--log <文件>`
+把本次构建的版本 / 体积 / MD5 追加进去。
+
+Flutter 与 Android SDK 的定位顺序：环境变量（`FLUTTER_ROOT` / `ANDROID_SDK_ROOT`）
+→ `PATH` → `android/local.properties`。
+
 ### 签名（只有出 release 包才需要）
 
-Release 包使用 `android/app/torrentmanager-release.jks` —— **文件名在 `build.gradle.kts` 里硬编码，不要改**。
-口令按以下优先级取：
+密钥库默认用 `android/app/torrentmanager-release.jks`，也可以在 `key.properties` 里用 `storeFile`
+指向自己的文件（相对路径以 `android/app/` 为基准）。口令按以下优先级取：
 
 1. `android/key.properties`（推荐）：复制 `android/key.properties.example` 为 `key.properties`，填入
-   `storePassword` / `keyPassword` / `keyAlias`；
+   `storeFile` / `storePassword` / `keyPassword` / `keyAlias`；
 2. 环境变量 `TORRENTMANAGER_STORE_PASSWORD` / `TORRENTMANAGER_KEY_PASSWORD` / `TORRENTMANAGER_KEY_ALIAS`；
 3. 两者都缺 → 口令为空，**release 签名会失败**（`flutter run` 的 debug 构建不受影响）。
+
+> 没有密钥库、只想把工程编译起来试跑的：`python release.py --debug-sign` 会用调试证书
+> 签出一个能装能跑的包。⚠️ 它**不能覆盖安装正式版**（签名不同，安装器会拒绝）。
 
 > ⚠️ `key.properties` 与 `*.jks` 已排除在版本管理与分发之外，请自行妥善保管 ——
 > 丢失后无法再签出与既有版本**签名一致**的升级包。
@@ -102,13 +132,13 @@ Release 包使用 `android/app/torrentmanager-release.jks` —— **文件名在
 
 | 位置 | 含义 |
 | --- | --- |
-| `pubspec.yaml` 的 `version:` | `版本名+versionCode`，例如 `0.2.9+32` |
+| `pubspec.yaml` 的 `version:` | `版本名+versionCode`，例如 `0.2.10+33` |
 | `lib/app/app_version.dart` 的 `kAppVersion` | 应用内显示的版本名，必须等于 `+` 号前那一段 |
 
 > ⚠️ `versionCode`（`+` 后的数字）**必须单调递增** —— Android 只认它判断新旧，
 > 回退会被安装器拒装并提示「存在更新版本」。使用 `--split-per-abi` 时每个 ABI 会自动偏移。
 >
-> 两者由出包脚本在构建成功后自动同步并推进，平时无需手工修改。
+> 两者由 `release.py` 在构建前对齐、构建成功后一起推进，平时无需手工修改。
 
 ---
 
