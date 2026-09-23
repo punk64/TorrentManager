@@ -1,22 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -70,10 +51,6 @@ ServerData qbSrv() => ServerData(
       password: 'pw',
     );
 
-
-
-
-
 Dio fakeQb(List<String> calls, {String? rawBody}) {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://192.168.1.10:8080'));
   dio.interceptors.add(InterceptorsWrapper(
@@ -103,7 +80,6 @@ Dio fakeQb(List<String> calls, {String? rawBody}) {
   return dio;
 }
 
-
 String bigTorrentJson(int n) {
   final List<Map<String, dynamic>> rows = <Map<String, dynamic>>[];
   for (int i = 0; i < n; i++) {
@@ -127,14 +103,6 @@ String bigTorrentJson(int n) {
   }
   return jsonEncode(rows);
 }
-
-
-
-
-
-
-
-
 
 Future<TorrentController> pumpList(
   WidgetTester tester, {
@@ -186,7 +154,6 @@ void main() {
 
   tearDown(Get.reset);
 
-  
   group('① A1 visibleItems 结果缓存', () {
     TorrentController newCtl() {
       Get.put(ServerController(qb: QbMethod(dio: fakeQb(<String>[]))));
@@ -235,8 +202,6 @@ void main() {
       tc.debugSetItems(<Torrent>[_t('a', dir: '/dl/电影')]);
       final List<Torrent> first = tc.visibleItems;
 
-      
-      
       tc.selPaths.add('/dl/音乐');
       final List<Torrent> second = tc.visibleItems;
       expect(identical(first, second), isFalse,
@@ -255,7 +220,6 @@ void main() {
     });
   });
 
-  
   group('② A4 滑动期间挂起自动刷新', () {
     test('★ 滑动中 refreshAuto 一个请求都不发（停下才发）', () async {
       final List<String> calls = <String>[];
@@ -290,7 +254,6 @@ void main() {
     });
   });
 
-  
   group('③ 取消首屏分页（回到一笔全量）', () {
     test('★ 一次 refresh 只发一笔 /torrents/info，且不带 limit', () async {
       final List<String> calls = <String>[];
@@ -311,15 +274,11 @@ void main() {
     });
   });
 
-  
   group('④ B3 关掉 KeepAlive', () {
     testWidgets('★ 纵向列表的 KeepAlive 必须关掉（几万条时内存只增不减）',
         (WidgetTester tester) async {
       await pumpList(tester);
 
-      
-      
-      
       final Iterable<SliverChildBuilderDelegate> delegates = tester
           .widgetList<SliverList>(find.byType(SliverList))
           .map((SliverList s) => s.delegate)
@@ -341,10 +300,8 @@ void main() {
     });
   });
 
-  
   group('⑤ A5 大响应解析进 isolate', () {
     test('★ 超过阈值的大响应：解析结果正确（走 isolate 也与主线程一致）', () async {
-      
       final String big = bigTorrentJson(1800);
       expect(big.length, greaterThan(QbMethod.kParseInIsolateBytes),
           reason: '构造的样本必须真的超过阈值，否则测的不是 isolate 分支');
@@ -373,8 +330,6 @@ void main() {
     });
 
     test('★ 已解码的响应（非 String）走回老路径 —— 行为与改动前一致', () async {
-      
-      
       final List<String> calls = <String>[];
       final QbMethod qb = QbMethod(dio: fakeQb(calls));
       final List<Torrent> list = await qb.getTorrentList();
@@ -382,7 +337,6 @@ void main() {
     });
   });
 
-  
   group('⑥ B6 格式化结果缓存', () {
     List<String> sample() => <String>[
           Formatter.setSize(0),
@@ -416,7 +370,7 @@ void main() {
       Formatter.clearFormatCache();
       const ColorScheme light = ColorScheme.light();
       const ColorScheme dark = ColorScheme.dark();
-      
+
       Formatter.setStatusColor('uploading', light);
       Formatter.setStatusColor('uploading', dark);
       expect(Formatter.setStatusColor('uploading', light), light.primary);
@@ -430,14 +384,13 @@ void main() {
       for (int i = 1; i <= n; i++) {
         expect(Formatter.setSize(i * 1024), isNotEmpty);
       }
-      
+
       expect(Formatter.setSize(1024), '1.00 KB');
       expect(Formatter.setSize(1048576), '1.00 MB');
       expect(Formatter.setSize(0), '0 B');
     });
   });
 
-  
   group('⑦ C1 搜索关键词防抖', () {
     List<Torrent> two() => <Torrent>[
           _t('h1', name: '电影A', dir: '/dl'),
@@ -468,7 +421,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       await tester.enterText(find.byType(TextField), '剧集');
       await tester.pump(const Duration(milliseconds: 100));
-      
+
       expect(tc.keyword.value, '',
           reason: '★ 窗口内的中间态不该触发过滤 —— 这正是防抖的意义');
 
@@ -483,7 +436,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(tc.keyword.value, '剧集');
 
-      
       await tester.tap(find.byIcon(Icons.clear_all).first);
       await tester.pump();
       expect(tc.keyword.value, '',

@@ -11,35 +11,6 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../widgets/speed_sparkline.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class TorrentInfoOverviewPage extends StatefulWidget {
   const TorrentInfoOverviewPage({super.key});
 
@@ -52,20 +23,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   TorrentController get _ctrl => Get.find<TorrentController>();
   ServerController get _serverCtrl => Get.find<ServerController>();
 
-  
-  
-  
-  
   bool _busy = false;
 
   static const Color _dlBlue = Color(0xFF1A73E8);
   static const Color _ulGreen = Color(0xFF0F9D58);
 
-  
-  
-  
-  
-  
   static const String _kChecking = '校验中';
 
   @override
@@ -79,10 +41,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         );
       }
       final ColorScheme cs = Theme.of(context).colorScheme;
-      
-      
-      
-      
+
       final String site = t.site;
       final bool checking = t.isChecking;
       final bool running = !t.isPause;
@@ -90,7 +49,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       return ListView(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
         children: <Widget>[
-          
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -114,11 +73,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ],
           ),
 
-          
           const SizedBox(height: 6),
           _liveHeader(t, cs, checking: checking),
 
-          
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
@@ -136,7 +93,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ul: List<double>.of(_ctrl.ulSamples),
           ),
 
-          
           const SizedBox(height: 10),
           LinearProgressIndicator(
             value: t.progress.clamp(0, 1),
@@ -158,7 +114,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          
           const SizedBox(height: 8),
           Row(
             children: <Widget>[
@@ -180,17 +135,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ],
           ),
 
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
           const Divider(height: 20),
           Wrap(
             spacing: 8,
@@ -199,7 +143,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               FilledButton.icon(
                 icon: const Icon(Icons.play_arrow, size: AppTheme.iconSize),
                 label: const Text('继续', style: TextStyle(fontSize: 11)),
-                
+
                 onPressed: (!running && !checking && !_busy)
                     ? () {
                         AppLog.instance.act('种子详情', '按钮[继续]', target: t.name);
@@ -240,16 +184,14 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           const Divider(height: 18),
 
           _kv(S.fieldState, Formatter.setStatus(t.newState)),
-          
-          
-          
+
           _kv('校验进度',
               checking ? Formatter.setProgress(t.progress) : '—'),
           _kv(S.fieldSize, Formatter.setSize(t.newSize)),
           _kv(S.fieldRatio, Formatter.setRatio(t.ratio)),
           _kv(
             S.fieldSeeders,
-            
+
             Formatter.getSeederCount(
               t.numComplete,
               t.numIncomplete,
@@ -276,8 +218,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           _kv(S.fieldCompletionOn, Formatter.setDate(t.newCompletionOn)),
           _kv(S.fieldActiveTime, Formatter.setTime(t.newTimeActive)),
           _kv('做种时长', Formatter.setTime(t.newSeedingTime)),
-          
-          
+
           _kv('最近活动', Formatter.setLastActivity(t.newLastActivity)),
           _kv('Tracker 数量', '${t.newTrackerCount}'),
 
@@ -295,9 +236,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     });
   }
 
-  
-
-  
   Widget _liveHeader(Torrent t, ColorScheme cs, {required bool checking}) {
     final Color st = Formatter.setStatusColor(t.state, cs);
     return Container(
@@ -369,10 +307,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  
-  
-  
-  
   String _syncHint() {
     final DateTime? at = _ctrl.detailSyncedAt.value;
     if (at == null) return '正在获取…';
@@ -431,17 +365,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _run(
     Torrent t,
     Future<void> Function() action,
@@ -486,7 +409,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (err == null) {
-      
       Formatter.showToast('已开始校验 ${t.name}（进度见下方）');
     } else {
       Formatter.showToast('${S.execFailed}: $err', isError: true);
@@ -534,7 +456,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     _ctrl
       ..clearSelection()
       ..toggleSelect(t.hash);
-    
+
     await _ctrl.deleteSelected(
       deleteFiles: opt.deleteFiles,
       deleteSub: opt.deleteSub,
@@ -552,12 +474,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     Get.back<void>();
   }
 
-  
-  
-  
-  
-  
-  
   Future<String?> _write(Future<String?> Function() body) async {
     try {
       return await body();

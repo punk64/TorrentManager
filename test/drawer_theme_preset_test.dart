@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,22 +16,11 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
-
   setUp(() {
-    
-    
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -62,16 +43,12 @@ void main() {
     await pumpDrawer(tester);
 
     expect(find.text(S.groupTheme), findsOneWidget);
-    
-    
+
     expect(find.text(S.themePresets), findsNothing,
         reason: '需求 6：不再有「精选主题」分隔文本');
     expect(find.text(S.themeCustom), findsOneWidget,
         reason: '预设应跟在「自定义主题」条目之后');
 
-    
-    
-    
     expect(find.text(presets[0].name), findsOneWidget);
     expect(find.text(presets[1].name), findsOneWidget);
     expect(find.text(presets[2].name), findsNothing,
@@ -80,12 +57,6 @@ void main() {
     expect(find.text(S.themeShowLess), findsNothing,
         reason: '默认即折叠态，不该出现「收起」');
 
-    
-    
-    
-    
-    
-    
     final Finder showMore = find.text(S.themeShowMore).first;
     await tester.ensureVisible(showMore);
     await tester.pumpAndSettle();
@@ -104,8 +75,6 @@ void main() {
     await pumpDrawer(tester);
     final ThemeController tc = Get.find<ThemeController>();
 
-    
-    
     final Finder green = find.text(presets[1].name); 
     await tester.ensureVisible(green);
     await tester.pumpAndSettle();
@@ -126,7 +95,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(tc.isBuiltinMode(2), isTrue);
 
-    
     tc.markCustomTheme();
     await tester.pump(const Duration(milliseconds: 100));
     expect(tc.isCustomSelected, isTrue);
@@ -134,7 +102,6 @@ void main() {
     expect(find.byIcon(Icons.check), findsOneWidget,
         reason: '同一时刻只能有一个勾');
 
-    
     await tester.tap(find.text(S.themeLight));
     await tester.pump(const Duration(milliseconds: 100));
     expect(tc.isBuiltinMode(1), isTrue);
@@ -146,8 +113,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     final ThemeController tc = Get.find<ThemeController>();
 
-    
-    
     tc.applyPreset(presets.first);
     tc.setThemeMode(2); 
     await tester.pump();
@@ -155,31 +120,22 @@ void main() {
     await tester.tap(find.text(S.restoreDefaults));
     await tester.pump();
 
-    
-    
-    
     expect(tc.themeMode.value, 1, reason: '参数还原成默认参数（首启值：明亮）');
     expect(tc.bgModeValue, 0);
     expect(tc.seed.value, AppTheme.seedColors.first);
     expect(tc.currentPreset.value, isNull);
-    
-    
+
     expect(tc.useCustom.value, isTrue);
     expect(tc.isCustomSelected, isTrue);
     expect(tc.isBuiltinMode(1), isFalse);
 
-    
-    
     await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('★ 改背景后全局容器立即重建（不必重启）', (WidgetTester tester) async {
-    
-    
     final ThemeController tc = Get.find<ThemeController>();
     await tc.load();
-    
-    
+
     await tester.pumpWidget(const TorrentManagerApp());
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -191,8 +147,6 @@ void main() {
 
     expect(hasGradient(), isFalse, reason: '默认纯色背景，不该有渐变容器');
 
-    
-    
     tc.applyPreset(presets.first);
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -206,31 +160,23 @@ void main() {
     expect(find.text(S.themePresets), findsNothing,
         reason: '精选主题已搬到抽屉，主题页不应再出现该栏目');
     for (final ThemePreset p in presets) {
-      
-      
-      
-      
       if (p.builtin) continue;
       expect(find.text(p.name), findsNothing,
           reason: '主题页不应出现预设「${p.name}」');
     }
-    
+
     expect(find.text(S.themeCustom), findsWidgets);
     expect(find.text(S.themeFontColor), findsOneWidget);
 
-    
     expect(find.textContaining('背景背景模式'), findsNothing);
-    
-    
+
     expect(find.textContaining('背景选择'), findsNothing);
-    
+
     expect(find.text(S.themeGlass), findsOneWidget,
         reason: '「透明玻璃面板」开关要移出折叠栏、常驻可点');
     expect(find.text(S.themeOpacity), findsOneWidget,
         reason: '「透明度」滑条要移到菜单图片上方');
 
-    
-    
     expect(find.textContaining(S.themeCurrentPrefix), findsNothing);
     expect(find.text(S.themeFollowSystem), findsNothing);
     expect(find.text(S.themeLight), findsNothing);

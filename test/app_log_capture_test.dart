@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -29,8 +12,6 @@ RequestOptions _req(String method, String path) => RequestOptions(
     );
 
 void main() {
-  
-  
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() => AppLog.instance.clear());
@@ -96,7 +77,7 @@ void main() {
       AppLog.instance.info('m$i');
     }
     expect(AppLog.instance.entries.length, AppLog.maxEntries);
-    
+
     expect(AppLog.instance.entries.first.message, 'm${AppLog.maxEntries + 19}');
   });
 }

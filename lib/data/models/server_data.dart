@@ -1,68 +1,38 @@
 import '../../utils/formatter.dart';
 import 'torrent.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ServerData {
   final String id;
   final String name;
 
-  
   final String type;
   final String host;
   final int port;
 
-  
-  
-  
-  
-  
   final String? lanHost;
 
-  
   final int? lanPort;
 
   final String? username;
   final String? password;
   final bool useHttps;
 
-  
   final String? sid;
 
-  
   final String? sessionId;
 
-  
   final double? ratioLimit;
 
   final String? group;
 
   final bool hideAddress;
 
-  
-  
-  
   final bool hidePort;
 
-  
   final List<Torrent> torrents;
 
-  
   final Set<String> selected;
 
-  
   final Object? state;
 
   ServerData({
@@ -80,8 +50,7 @@ class ServerData {
     this.sessionId,
     this.ratioLimit,
     this.group,
-    
-    
+
     this.hideAddress = true,
     this.hidePort = true,
     this.torrents = const <Torrent>[],
@@ -95,9 +64,7 @@ class ServerData {
       name: Formatter.getString(json, 'name'),
       type: Formatter.getString(json, 'type', def: 'qbittorrent'),
       host: Formatter.getString(json, 'host'),
-      
-      
-      
+
       port: Formatter.getInt(json, 'port', def: 443),
       lanHost: Formatter.getStringOrNull(json, 'lanHost'),
       lanPort: json['lanPort'] == null
@@ -112,7 +79,7 @@ class ServerData {
           ? null
           : Formatter.getDouble(json, 'ratioLimit'),
       group: Formatter.getStringOrNull(json, 'group'),
-      
+
       hideAddress: Formatter.getBool(json, 'hideAddress', def: true),
       hidePort: Formatter.getBool(json, 'hidePort', def: true),
     );
@@ -134,9 +101,7 @@ class ServerData {
       if (sessionId != null) 'sessionId': sessionId,
       if (ratioLimit != null) 'ratioLimit': ratioLimit,
       if (group != null && group!.isNotEmpty) 'group': group,
-      
-      
-      
+
       'hideAddress': hideAddress,
       'hidePort': hidePort,
     };
@@ -190,39 +155,13 @@ class ServerData {
 
   String get scheme => useHttps ? 'https' : 'http';
 
-  
   bool get hasLan =>
       lanHost != null && lanHost!.isNotEmpty && lanPort != null;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   ServerData connectionTarget({required bool viaLan}) => (viaLan && hasLan)
       ? copyWith(host: lanHost!, port: lanPort!, useHttps: false)
       : this;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String get normalizedHost {
     String h = host.trim();
     if (h.isEmpty) return h;
@@ -237,11 +176,7 @@ class ServerData {
     final int slash = h.indexOf('/');
     if (slash >= 0) h = h.substring(0, slash);
     h = h.trim();
-    
-    
-    
-    
-    
+
     if (':'.allMatches(h).length >= 2) {
       return h.startsWith('[') ? h : '[$h]';
     }
@@ -250,25 +185,9 @@ class ServerData {
     return h.trim();
   }
 
-  
-  
-  
-  
   String get baseUrl =>
       Uri(scheme: scheme, host: normalizedHost, port: port).toString();
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String get displayAddress {
     final String h = hideAddress ? Formatter.maskHost(normalizedHost) : normalizedHost;
     final String p = hidePort ? '***' : '$port';
@@ -318,15 +237,9 @@ class ServerData {
       .map((Torrent t) => '${t.name}: ${t.state}')
       .toList();
 
-  
-  
-  
   List<String> get newTrackers {
     final Set<String> set = <String>{};
     for (final Torrent t in torrents) {
-      
-      
-      
       final String host = t.site;
       if (host.isNotEmpty) set.add(host);
     }

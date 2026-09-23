@@ -2,25 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ThemePreview extends StatelessWidget {
   const ThemePreview({
     super.key,
@@ -28,20 +9,8 @@ class ThemePreview extends StatelessWidget {
     required this.transparency,
   });
 
-  
-  
-  
-  
   final ThemeData theme;
 
-  
-  
-  
-  
-  
-  
-  
-  
   final double transparency;
 
   @override
@@ -68,28 +37,25 @@ class ThemePreview extends StatelessWidget {
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-          
-          
+
           child: CustomPaint(
             painter: const _CheckerPainter(),
             child: Theme(
               data: theme,
-              
+
               child: IgnorePointer(
                 child: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Container(
                     decoration: BoxDecoration(
-                      
-                      
+
                       color: cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(AppTheme.radius),
                       border: Border.all(color: theme.dividerColor, width: 0.5),
                     ),
                     padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
                     child: Column(
-                      
-                      
+
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -110,8 +76,7 @@ class ThemePreview extends StatelessWidget {
                             ),
                           ],
                         ),
-                        
-                        
+
                         Text('示例文本',
                             style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant)),
                         Slider(value: 0.62, onChanged: (_) {}),
@@ -128,17 +93,11 @@ class ThemePreview extends StatelessWidget {
   }
 }
 
-
-
-
 class _CheckerPainter extends CustomPainter {
   const _CheckerPainter();
 
-  
   static const double _cell = 12;
 
-  
-  
   static const Color _light = Color(0xFFF2F2F2);
   static const Color _dark = Color(0xFFD9D9D9);
 

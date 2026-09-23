@@ -1,14 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
-
-
-
-
-
-
-
 class SpeedSparkline extends StatelessWidget {
   const SpeedSparkline({
     super.key,
@@ -17,10 +8,8 @@ class SpeedSparkline extends StatelessWidget {
     this.height = 46,
   });
 
-  
   final List<double> dl;
 
-  
   final List<double> ul;
 
   final double height;
@@ -56,7 +45,6 @@ class _SparkPainter extends CustomPainter {
   final List<double> ul;
   final Color grid;
 
-  
   double get _maxV {
     double m = 0;
     for (final double v in dl) {
@@ -70,7 +58,6 @@ class _SparkPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    
     canvas.drawLine(
       const Offset(0, 0),
       Offset(size.width, 0),
@@ -85,7 +72,7 @@ class _SparkPainter extends CustomPainter {
       final Path p = Path();
       for (int i = 0; i < data.length; i++) {
         final double x = i * dx;
-        
+
         final double y =
             size.height - 1 - (data[i] / maxV) * (size.height - 2);
         if (i == 0) {
@@ -110,12 +97,10 @@ class _SparkPainter extends CustomPainter {
       canvas.drawPath(fill, Paint()..color = c.withValues(alpha: 0.12));
     }
 
-    
     line(ul, SpeedSparkline.kUlColor);
     line(dl, SpeedSparkline.kDlColor);
   }
 
-  
   @override
   bool shouldRepaint(_SparkPainter old) => true;
 }

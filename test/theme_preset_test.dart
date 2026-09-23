@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,18 +11,9 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
-
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -55,14 +40,6 @@ void main() {
     });
 
     test('★ 浅色六套：起点浅 / 终点明显加深 / 字色近黑（2026-09-20 改口径）', () {
-      
-      
-      
-      
-      
-      
-      
-      
       for (final ThemePreset p in lightPresets) {
         expect(p.themeMode, 1, reason: '${p.name} 应为明亮档');
         expect(p.bgMode, 1, reason: '${p.name} 走渐变背景');
@@ -79,7 +56,7 @@ void main() {
         expect(l1 - l2, greaterThan(0.15),
             reason: '${p.name} 渐变幅度要看得出来（用户：几乎分辨不出风格）');
         expect(l1 - l2, lessThan(0.35), reason: '${p.name} 渐变别过猛');
-        
+
         expect(AppTheme.contrastOn(p.gradient2), const Color(0xFF1A1A1A),
             reason: '${p.name} 深色端也要保证近黑字可读');
       }
@@ -97,8 +74,7 @@ void main() {
         expect(p.bgImage, isNotNull, reason: '${p.name} 必须自带壁纸');
         expect(p.bgImage!.startsWith('assets/images/wallpapers/'), isTrue,
             reason: '${p.name} 壁纸应放在 assets/images/wallpapers/ 下');
-        
-        
+
         expect(ThemeController.bundledAssets.contains(p.bgImage), isTrue,
             reason: '${p.name} 的壁纸不在 bundledAssets 里');
       }
@@ -141,21 +117,19 @@ void main() {
       expect(tc.themeMode.value, 1);
       expect(tc.glassAlpha, greaterThan(0),
           reason: '图片背景 → 卡片应是半透明亮色玻璃');
-      
+
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
     });
 
     test('套用浅色主题 → 玻璃关闭（观感与以前完全一致）', () {
       final ThemeController tc = makeTc();
       tc.applyPreset(lightPresets.first);
-      
-      
+
       expect(tc.glassAlpha, isNull, reason: '纯色 / 渐变背景不该出现半透明卡片');
       expect(tc.bgModeValue, 1);
     });
 
     test('★ 旧默认图路径失效 → 判为不可用（否则背景是一片空白）', () {
-      
       const String legacy = 'assets/images/drawer_background.webp';
       expect(ThemeController.aliveAsset(legacy), isNull,
           reason: '已删除的资产必须被判为失效');
@@ -163,7 +137,7 @@ void main() {
           ThemeController.defaultMenuImage);
       expect(ThemeController.aliveAsset(wallpaperPresets.first.bgImage),
           wallpaperPresets.first.bgImage);
-      
+
       expect(ThemeController.aliveAsset('/storage/emulated/0/a.png'),
           '/storage/emulated/0/a.png');
       expect(ThemeController.aliveAsset(null), isNull);
@@ -186,13 +160,12 @@ void main() {
       expect(tc.themeMode.value, 1);
       expect(tc.seed.value, const Color(0xFFC2185B));
       expect(tc.bgModeValue, 1);
-      
+
       expect(tc.gradient2, const Color(0xFFF5B9CE));
-      
+
       expect(tc.panelColor.value, ThemeController.defaultPanelColor);
       expect(tc.fontColor.value, isNull);
-      
-      
+
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
     });
 
@@ -203,7 +176,7 @@ void main() {
       expect(tc.themeMode.value, 1);
       expect(tc.seed.value, const Color(0xFF2E7D32));
       expect(tc.bgModeValue, 1);
-      
+
       for (final Color c in <Color>[tc.gradient1, tc.gradient2]) {
         expect(c.g, greaterThan(c.r), reason: '$c 应偏绿');
       }
@@ -218,12 +191,9 @@ void main() {
       expect(tc.seed.value, const Color(0xFF6A1B9A));
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
 
-      
-      
       for (final Color c in <Color>[tc.gradient1, tc.gradient2]) {
         expect(c.b, greaterThan(c.g), reason: '$c 应呈现紫色（蓝通道高于绿通道）');
-        
-        
+
         expect(c.computeLuminance(), greaterThan(0.50),
             reason: '$c 应偏浅（用户要求浅色系，不再用深紫）');
       }
@@ -235,7 +205,7 @@ void main() {
       expect(tc.currentPreset.value, 'dark_sky', reason: '历史 id 保持不变');
       expect(tc.themeMode.value, 1);
       expect(tc.seed.value, const Color(0xFF37474F));
-      
+
       expect(tc.gradient2, const Color(0xFFBFD2D8));
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
     });
@@ -249,14 +219,11 @@ void main() {
     });
 
     test('套用预设的过程中不会被自己的 setter 清掉标记', () {
-      
-      
-      
       final ThemeController tc = makeTc();
       tc.applyPreset(presets[0]);
       expect(tc.currentPreset.value, 'snow_plum');
       expect(tc.seed.value, presets[0].seed);
-      
+
       expect(tc.panelColor.value, ThemeController.defaultPanelColor);
       expect(tc.panel1Alpha.value, ThemeController.defaultPanel1Alpha);
       expect(tc.panel2Alpha.value, ThemeController.defaultPanel2Alpha);
@@ -265,7 +232,7 @@ void main() {
     test('套用后再 load 能恢复 preset id 与各参数', () async {
       final ThemeController tc = makeTc();
       tc.applyPreset(presets[2]); 
-      
+
       final ThemeController tc2 = ThemeController();
       await tc2.load();
       expect(tc2.currentPreset.value, 'blue_sky');
@@ -291,7 +258,6 @@ void main() {
       final ThemeController tc = makeTc();
       tc.applyPreset(presets[0]);
 
-      
       tc.applyBuiltinMode(2);
       expect(tc.currentPreset.value, isNull);
 
@@ -299,10 +265,6 @@ void main() {
       tc.setSeed(const Color(0xFF123456));
       expect(tc.currentPreset.value, isNull);
 
-      
-      
-      
-      
       tc.applyPreset(presets[0]);
       tc.setComponentOpacity(0.5);
       expect(tc.currentPreset.value, presets[0].id,
@@ -337,15 +299,14 @@ void main() {
       expect(tc.isCustomSelected, isTrue);
       expect(tc.isBuiltinMode(2), isFalse,
           reason: '不能同时勾「黑暗模式」和「自定义主题」');
-      
+
       expect(tc.themeMode.value, 2);
     });
 
     test('在主题页改参数（主色）→ 自动算作自定义主题', () {
       final ThemeController tc = makeTc();
       tc.applyBuiltinMode(1);
-      
-      
+
       tc.setSeed(const Color(0xFF112233));
       expect(tc.isCustomSelected, isTrue);
       expect(tc.isBuiltinMode(1), isFalse);

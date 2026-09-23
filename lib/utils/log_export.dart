@@ -1,9 +1,5 @@
 import 'strings.dart';
 
-
-
-
-
 class LogLine {
   const LogLine({
     required this.time,
@@ -12,19 +8,14 @@ class LogLine {
     this.source = '',
   });
 
-  
   final String time;
 
-  
   final String level;
 
-  
   final String message;
 
-  
   final String source;
 
-  
   String toLine() {
     final List<String> parts = <String>[
       if (time.isNotEmpty) time,
@@ -36,17 +27,9 @@ class LogLine {
   }
 }
 
-
-
-
-
 class LogExport {
   LogExport._();
 
-  
-  
-  
-  
   static String buildText(List<LogLine> lines) {
     if (lines.isEmpty) return '';
     final StringBuffer sb = StringBuffer();
@@ -56,10 +39,6 @@ class LogExport {
     return sb.toString();
   }
 
-  
-  
-  
-  
   static String suggestedFileName(DateTime now, {String kind = 'app'}) {
     final String ymd = '${now.year}-${now.month.toString().padLeft(2, '0')}'
         '-${now.day.toString().padLeft(2, '0')}';
@@ -67,9 +46,7 @@ class LogExport {
     return 'torrentmanager-log$suffix-$ymd.txt';
   }
 
-  
   static String copyLabel(int n) => S.logCopyCount(n);
 
-  
   static String copiedMessage(int n) => S.logCopied(n);
 }

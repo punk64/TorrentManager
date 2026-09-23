@@ -1,16 +1,7 @@
-
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/app/app_version.dart';
 import 'package:torrent_manager/utils/update_check.dart';
-
 
 class _FakeFetcher {
   _FakeFetcher(this.body);
@@ -126,7 +117,7 @@ void main() {
       expect(UpdateChecker.parseLatestVersion('v1.2.3'), '1.2.3');
       expect(UpdateChecker.parseLatestVersion('{"latest":"3.0.0"}'), '3.0.0');
       expect(UpdateChecker.parseLatestVersion('{"latest_version":"3.0.0"}'), '3.0.0');
-      
+
       expect(UpdateChecker.parseLatestVersion('{"version": 4.5.6'), '4.5.6');
     });
 
@@ -140,11 +131,6 @@ void main() {
 
   group('默认配置', () {
     test('kUpdateCheckUrl 已接入本项目的 GitHub Releases（https）', () {
-      
-      
-      
-      
-      
       expect(kUpdateCheckUrl, startsWith('https://'));
       expect(kUpdateCheckUrl, contains('punk64/TorrentManager'));
     });

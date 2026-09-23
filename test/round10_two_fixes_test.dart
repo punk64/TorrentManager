@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -42,21 +36,15 @@ void main() {
       await tester.tap(find.text('OPEN'));
       await tester.pumpAndSettle();
 
-      
-      
       final Finder pwd = find.byType(TextFormField).at(6);
       Finder editableOf(Finder f) =>
           find.descendant(of: f, matching: find.byType(EditableText));
 
-      
-      
       await tester.ensureVisible(pwd);
       await tester.pumpAndSettle();
 
-      
       expect(tester.widget<EditableText>(editableOf(pwd)).obscureText, isTrue);
 
-      
       expect(
         find.byWidgetPredicate((Widget w) =>
             w is Semantics && w.properties.label == S.srvShowPassword),
@@ -66,13 +54,11 @@ void main() {
       expect(find.byTooltip(S.srvShowPassword), findsOneWidget,
           reason: '★ 切换按钮需带 title 提示');
 
-      
       await tester.tap(find.byIcon(Icons.visibility_off));
       await tester.pumpAndSettle();
       expect(tester.widget<EditableText>(editableOf(pwd)).obscureText, isFalse);
       expect(find.byIcon(Icons.visibility), findsOneWidget);
 
-      
       await tester.tap(find.byIcon(Icons.visibility));
       await tester.pumpAndSettle();
       expect(tester.widget<EditableText>(editableOf(pwd)).obscureText, isTrue);
@@ -105,11 +91,9 @@ void main() {
       await tester.tap(find.byIcon(Icons.visibility_off));
       await tester.pumpAndSettle();
 
-      
       expect(find.text('p@ss word 含空格'), findsWidgets,
           reason: '★ 切换只改渲染开关，不该清空或改动已输入内容');
 
-      
       await tester.enterText(find.byType(TextFormField).at(1), '192.168.1.9');
       await tester.tap(find.text(S.srvSaveShort));
       await tester.pumpAndSettle();
@@ -148,7 +132,6 @@ void main() {
           reqs.add(o);
           n++;
           if (n == 1) {
-            
             h.resolve(Response<dynamic>(
               requestOptions: o,
               statusCode: 409,
@@ -176,7 +159,6 @@ void main() {
       expect(r.ok, isTrue, reason: '握手 + 鉴权都通过才算登录成功');
       expect(reqs.length, 2, reason: '第一次 409 握手，第二次带 sid 重试');
 
-      
       expect(reqs.first.headers['Authorization'], isNotNull,
           reason: '★ TR 请求必须带 Basic 鉴权头');
       expect(reqs.first.headers['Authorization'], startsWith('Basic '));
@@ -186,7 +168,6 @@ void main() {
         'admin:p@ss 密码',
       );
 
-      
       expect(reqs.last.headers['X-Transmission-Session-Id'], 'SID-123');
     });
 

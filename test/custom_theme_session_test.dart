@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +11,6 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
   setUp(() {
     SecurePrefs.useMemoryBackendForTest();
   });
@@ -44,13 +36,11 @@ void main() {
     expect(tc.isCustomSelected, isFalse,
         reason: '★「自定义主题」模板行不应与它同时打勾');
 
-    
     final ThemePreset base = wallpaperPresets.first;
     tc.applyPreset(base);
     expect(tc.customThemes.any(tc.isCustomThemeSelected), isFalse,
         reason: '切走之后勾应从自定义主题上移开');
 
-    
     tc.enterCustomTheme();
     expect(tc.isCustomSelected, isTrue);
     expect(tc.isCustomThemeSelected(a), isFalse,
@@ -61,22 +51,18 @@ void main() {
     final ThemeController tc = Get.put(ThemeController());
     await tc.load();
 
-    
     final ThemePreset base = wallpaperPresets.first;
     tc.applyPreset(base);
 
-    
     tc.setSeed(AppTheme.seedColors.last);
     tc.setComponentOpacity(0.35);
     final CustomTheme a = await tc.saveCustomTheme('甲');
 
-    
     tc.applyPreset(base);
     final ColorScheme renderedBefore = tc.theme.colorScheme;
     final Color seedBefore = tc.seed.value;
     final double opacityBefore = tc.componentOpacity.value;
 
-    
     tc.beginThemeEditing(load: a);
     expect(tc.editingCustomId, a.id);
     expect(tc.seed.value, isNot(seedBefore), reason: '草稿应把该套参数载入内存');
@@ -87,7 +73,6 @@ void main() {
     expect(tc.customThemes.any(tc.isCustomThemeSelected), isFalse,
         reason: '★ 未点保存前，勾选状态一动不动');
 
-    
     tc.cancelThemeEditing();
     expect(tc.seed.value, seedBefore, reason: '★ 返回后参数完全复原');
     expect(tc.componentOpacity.value, opacityBefore);
@@ -111,13 +96,11 @@ void main() {
     tc.setSeed(AppTheme.seedColors[4]);
     await tc.saveCustomTheme('乙');
 
-    
     tc.applyPreset(lightPresets.first);
     expect(tc.overwriteCandidates.length, 2);
     expect(tc.defaultOverwriteTarget, isNotNull,
         reason: '★ 只要还有已创建的自定义主题，就必须能给出覆盖更新');
 
-    
     tc.beginThemeEditing(load: tc.customThemes[aIndex]);
     expect(tc.editingCustomId, a.id);
     expect(tc.defaultOverwriteTarget?.id, a.id,
@@ -142,7 +125,6 @@ void main() {
     tc.setSeed(AppTheme.seedColors[2]);
     final CustomTheme a = await tc.saveCustomTheme('甲');
 
-    
     Get.reset();
     final ThemeController tc2 = ThemeController();
     await tc2.load();

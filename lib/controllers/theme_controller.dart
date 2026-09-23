@@ -11,253 +11,100 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../utils/theme_backup.dart';
 
-
-
-
-
-
-
-
-
-
-
 class ThemeController extends GetxController {
-  
-  
-  
-  
-  
-  
-  
   static const Color defaultGradient1 = Color(0xFFFFFFFF);
   static const Color defaultGradient2 = Color(0xFFF0F2F5);
   static const Color defaultPanelColor = Color(0xFFFFFFFF);
   static const double defaultPanel1Alpha = 0.92;
   static const double defaultPanel2Alpha = 0.80;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const String defaultMenuImage =
       'assets/images/drawer_menu_default.webp';
   static const String defaultBackgroundImage = defaultMenuImage;
 
-  
-  
-  
-  
-  
-  
-  
   static final Set<String> bundledAssets = <String>{
     defaultMenuImage,
     for (final ThemePreset p in presets)
       if (p.bgImage != null) p.bgImage!,
   };
 
-  
-  
-  
-  
   static String? aliveAsset(String? path) {
     if (path == null || path.isEmpty) return null;
     if (!path.startsWith('assets/')) return path;
     return bundledAssets.contains(path) ? path : null;
   }
 
-  
   final themeMode = 0.obs;
 
-  
   final seed = AppTheme.seedColors.first.obs;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final _bgMode = 0.obs;
   final _gradient1 = defaultGradient1.obs;
   final _gradient2 = defaultGradient2.obs;
 
-  
   int get bgModeValue => _bgMode.value;
 
-  
   Color get gradient1 => _gradient1.value;
   Color get gradient2 => _gradient2.value;
 
-  
   String? get pageBgImage => _pageBgImage.value;
 
-  
   final panelColor = defaultPanelColor.obs;
   final panel1Alpha = defaultPanel1Alpha.obs;
   final panel2Alpha = defaultPanel2Alpha.obs;
 
-  
-  
-  
-  
   final _pageBgImage = RxnString();
 
-  
-  
-  
   final menuImagePath = RxnString();
 
-  
-  
-  
-  
-  
   final menuBgBrightness = 0.0.obs;
 
-  
   final menuBgFade = 0.0.obs;
 
-  
   final menuBgBlur = 0.0.obs;
 
-  
-  
-  
-  
-
-  
-  
-  
-  
   final fontColor = Rxn<Color>();
 
-  
-  
-  
-  
-  
-  
   final globalBgEnabled = false.obs;
   final globalBgImagePath = RxnString();
 
-  
   final globalBgBrightness = 0.0.obs;
 
-  
   final globalBgFade = 0.0.obs;
 
-  
   final globalBgBlur = 0.0.obs;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final componentOpacity = 0.0.obs;
 
-  
-  
-  
-  
   static const double glassPanelTransparency = 0.26;
 
-  
-  
-  
-  
-  
-  
   final pageColors = <String, Color?>{}.obs;
 
-  
   Color? pageColor(AppPageKey page, AppStyleSlot slot) =>
       pageColors[specOf(page).slotKey(slot)];
 
-  
   void setPageColor(AppPageKey page, AppStyleSlot slot, Color? color) {
     final PageStyleSpec spec = specOf(page);
     final String key = spec.slotKey(slot);
     pageColors[key] = color;
-    
+
     pageColors.refresh();
     Formatter.saveGlobalData(key, color?.toARGB32());
     markCustomTheme();
   }
 
-  
   final currentPreset = RxnString();
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final useCustom = false.obs;
 
-  
-  
-  
-  
-  
   final customThemes = <CustomTheme>[].obs;
 
-  
-  
   final currentCustomId = RxnString();
 
-  
-  
-  
-  
   bool _applyingPreset = false;
 
-  
   bool get isFontColorCustom => fontColor.value != null;
 
-  
-  
-  
-  
-  
   Color get effectiveFontColor {
     final Color? custom = fontColor.value;
     if (custom != null) return custom;
@@ -267,15 +114,6 @@ class ThemeController extends GetxController {
         : AppTheme.contrastOn(bg);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Color? get effectiveBackgroundColor {
     switch (_bgMode.value) {
       case 1: 
@@ -290,54 +128,20 @@ class ThemeController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
   Brightness get _brightness =>
       themeMode.value == 2 ? Brightness.dark : Brightness.light;
 
-  
   ThemeMode get materialMode =>
       themeMode.value == 2 ? ThemeMode.dark : ThemeMode.light;
 
-  
-  
-  
-  
-  
-  
-  
-  
   bool get backgroundActive =>
       renderGlobalBgDecorationImage != null || _liveBackgroundDecoration != null;
 
-  
-  
-  
-  
-  
-  
   bool get glassEnabled => componentOpacity.value > 0;
 
-  
-  
-  
-  
-  
-  
-  
-  
   double? get glassAlpha =>
       glassEnabled ? (1.0 - componentOpacity.value).clamp(0.0, 1.0) : null;
 
-  
-  
-  
-  
-  
-  
   ThemeData get theme => AppTheme.of(_liveSeed, _liveBrightness,
       fontColor: _liveEffectiveFontColor,
       background: _liveBackgroundColor,
@@ -354,34 +158,20 @@ class ThemeController extends GetxController {
       transparentScaffold: backgroundActive,
       glassAlpha: _liveGlassAlpha);
 
-  
-  
-  
-  
-  
   ThemeData get previewTheme => AppTheme.of(seed.value, _brightness,
       fontColor: effectiveFontColor,
       background: effectiveBackgroundColor,
       transparentScaffold: backgroundActive,
       glassAlpha: glassAlpha);
 
-  
-  
-  
-  
   double? get _liveGlassAlpha {
     final double t = _liveOpacity;
     return t > 0 ? (1.0 - t).clamp(0.0, 1.0) : null;
   }
 
-  
   Brightness get _liveBrightness =>
       _liveThemeMode == 2 ? Brightness.dark : Brightness.light;
 
-  
-  
-  
-  
   Color get _liveEffectiveFontColor {
     final Color? custom = _liveFontColor;
     if (custom != null) return custom;
@@ -391,25 +181,8 @@ class ThemeController extends GetxController {
         : AppTheme.contrastOn(bg);
   }
 
-  
-  
   String get themeModeName => themeMode.value == 2 ? S.themeDark : S.themeLight;
 
-  
-  
-  
-
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
   Decoration? get backgroundDecoration {
     switch (_bgMode.value) {
       case 1:
@@ -421,39 +194,27 @@ class ThemeController extends GetxController {
           ),
         );
       case 2:
-        
+
         return Formatter.themeBackground(path: _pageBgImage.value);
       default:
         return null;
     }
   }
 
-  
-
   @override
   void onInit() {
     super.onInit();
-    
-    
-    
-    
-    
-    
+
     load();
   }
 
   static const String _kThemeMode = 'torrentmanager.themeMode';
   static const String _kSeed = 'torrentmanager.theme.seed';
-  
-  
+
   static const String _kBgMode = 'torrentmanager.theme.bgMode';
   static const String _kGrad1 = 'torrentmanager.theme.grad1';
   static const String _kGrad2 = 'torrentmanager.theme.grad2';
-  
-  
-  
-  
-  
+
   static const String _kFontColor = 'torrentmanager.theme.fontColor';
   static const String _kPreset = 'torrentmanager.theme.preset';
   static const String _kUseCustom = 'torrentmanager.theme.useCustom';
@@ -466,70 +227,35 @@ class ThemeController extends GetxController {
   static const String _kMenuBgBrightness = 'torrentmanager.theme.menuBgBrightness';
   static const String _kMenuBgFade = 'torrentmanager.theme.menuBgFade';
   static const String _kMenuBgBlur = 'torrentmanager.theme.menuBgBlur';
-  
-  
-  
-  
-  
-  
+
   static const String _kComponentOpacity = 'torrentmanager.theme.componentOpacity';
 
-  
-  
-  
-  
-  
-  
   static const String _kTransparency = 'torrentmanager.theme.transparency';
 
-  
-  
-  
-  
   static const String _kOpacitySemantics = 'torrentmanager.theme.opacitySemantics';
 
-  
   static const String _kCustomThemes = 'torrentmanager.theme.customThemes';
 
-  
-  
-  
-  
-  
   static const String _kCurrentCustomId = 'torrentmanager.theme.currentCustomId';
 
-  
   Future<void> load() async {
-    
-    
-    
     final int storedMode = await Formatter.getGlobalInt(_kThemeMode);
     themeMode.value = storedMode == 2 ? 2 : 1;
     seed.value = await _readColor(_kSeed) ?? AppTheme.seedColors.first;
-    
+
     _bgMode.value = await Formatter.getGlobalInt(_kBgMode);
     _gradient1.value = await _readColor(_kGrad1) ?? defaultGradient1;
     _gradient2.value = await _readColor(_kGrad2) ?? defaultGradient2;
-    
-    
-    
-    
+
     panelColor.value = defaultPanelColor;
     panel1Alpha.value = defaultPanel1Alpha;
     panel2Alpha.value = defaultPanel2Alpha;
-    
-    
-    
-    
-    
-    
-    
-    
+
     _pageBgImage.value = aliveAsset(await Formatter.getBackgroundImage()) ??
         defaultBackgroundImage;
     menuImagePath.value =
         aliveAsset(await Formatter.getMenuBackgroundImage()) ?? defaultMenuImage;
-    
+
     menuBgBrightness.value =
         (await Formatter.getGlobalData(_kMenuBgBrightness) as num?)
                 ?.toDouble() ??
@@ -538,29 +264,21 @@ class ThemeController extends GetxController {
         (await Formatter.getGlobalData(_kMenuBgFade) as num?)?.toDouble() ?? 0;
     menuBgBlur.value =
         (await Formatter.getGlobalData(_kMenuBgBlur) as num?)?.toDouble() ?? 0;
-    
+
     fontColor.value = await _readColor(_kFontColor);
-    
-    
-    
-    
-    
-    
+
     final Object? preset = await Formatter.getGlobalData(_kPreset);
     currentPreset.value = preset is String ? preset : null;
-    
+
     useCustom.value = (await Formatter.getGlobalData(_kUseCustom)) == true;
-    
-    
-    
+
     final Object? cid = await Formatter.getGlobalData(_kCurrentCustomId);
     currentCustomId.value = cid is String && cid.isNotEmpty ? cid : null;
 
-    
     globalBgEnabled.value =
         (await Formatter.getGlobalData(_kGlobalBgOn)) == true;
     final Object? bgPath = await Formatter.getGlobalData(_kGlobalBgPath);
-    
+
     globalBgImagePath.value = aliveAsset(bgPath is String ? bgPath : null);
     globalBgBrightness.value =
         (await Formatter.getGlobalData(_kGlobalBgBrightness) as num?)
@@ -571,27 +289,8 @@ class ThemeController extends GetxController {
     globalBgBlur.value =
         (await Formatter.getGlobalData(_kGlobalBgBlur) as num?)?.toDouble() ?? 0;
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     Object? rawTransparency = await Formatter.getGlobalData(_kTransparency);
     if (rawTransparency is! num) {
-      
-      
       final Object? legacy =
           await Formatter.getGlobalData(_kComponentOpacity);
       final bool legacyMigrated =
@@ -602,11 +301,6 @@ class ThemeController extends GetxController {
         if (!legacyMigrated) {
           t = 1.0 - t; 
         } else if (t >= 1.0) {
-          
-          
-          
-          
-          
           t = 0.0;
         }
       }
@@ -616,7 +310,6 @@ class ThemeController extends GetxController {
     }
     componentOpacity.value = rawTransparency.toDouble().clamp(0.0, 1.0);
 
-    
     for (final PageStyleSpec spec in kPageStyles) {
       for (final AppStyleSlot slot in spec.slots) {
         final String key = spec.slotKey(slot);
@@ -626,13 +319,10 @@ class ThemeController extends GetxController {
     }
     pageColors.refresh();
 
-    
     await _migrateLegacyFreeTheme();
 
-    
     await _loadCustomThemes();
 
-    
     final String? dangling = currentCustomId.value;
     if (dangling != null &&
         !customThemes.any((CustomTheme t) => t.id == dangling)) {
@@ -640,26 +330,10 @@ class ThemeController extends GetxController {
     }
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void resetVisualParams({
     bool includePageStyles = true,
     bool includeImages = false,
   }) {
-    
-    
-    
-    
-    
     seed.value = AppTheme.seedColors.first;
     _writeColor(_kSeed, AppTheme.seedColors.first);
 
@@ -671,54 +345,24 @@ class ThemeController extends GetxController {
     _writeColor(_kGrad1, defaultGradient1);
     _writeColor(_kGrad2, defaultGradient2);
 
-    
-    
     panelColor.value = defaultPanelColor;
     panel1Alpha.value = defaultPanel1Alpha;
     panel2Alpha.value = defaultPanel2Alpha;
 
-    
     fontColor.value = null;
     Formatter.saveGlobalData(_kFontColor, null);
 
     if (includePageStyles) _clearPageStyles();
 
     if (includeImages) {
-      
-      
-      
-      
-      
-      
       _setPageBgImage(defaultBackgroundImage);
       setMenuImage(defaultMenuImage);
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       setComponentOpacity(0.0);
       _resetGlobalBg();
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _resetGlobalBg() {
     globalBgEnabled.value = false;
     globalBgImagePath.value = null;
@@ -732,10 +376,6 @@ class ThemeController extends GetxController {
     Formatter.saveGlobalData(_kGlobalBgBlur, 0.0);
   }
 
-  
-  
-  
-  
   void _clearPageStyles() {
     for (final PageStyleSpec spec in kPageStyles) {
       for (final AppStyleSlot slot in spec.slots) {
@@ -746,29 +386,15 @@ class ThemeController extends GetxController {
     pageColors.refresh();
   }
 
-  
-  
-  
-  
   void restoreFactoryDefaults() {
     _applyingPreset = true;
     try {
-      
-      
-      
-      
-      
       useCustom.value = true;
       Formatter.saveGlobalData(_kUseCustom, true);
       clearPreset(); 
-      
-      
-      
-      
-      
-      
+
       setThemeMode(1);
-      
+
       resetVisualParams(includePageStyles: true, includeImages: true);
     } finally {
       _applyingPreset = false;
@@ -777,42 +403,21 @@ class ThemeController extends GetxController {
     AppLog.instance.op('恢复默认外观（参数复位为出厂明亮档）');
   }
 
-  
-
   static const String _kMigrFreeTheme = 'torrentmanager.theme.mig.freeToLight';
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _migrateLegacyFreeTheme() async {
     final Object? done = await Formatter.getGlobalData(_kMigrFreeTheme);
     if (done == true) return;
     final bool builtin = currentPreset.value == null && !useCustom.value;
-    
-    
-    
+
     final bool dirty = _bgMode.value != 0 ||
         _gradient1.value != defaultGradient1 ||
         _gradient2.value != defaultGradient2 ||
         panelColor.value != defaultPanelColor ||
         pageColors.isNotEmpty ||
-        
-        
-        
-        
-        
-        
+
         menuImagePath.value != defaultMenuImage;
     if (builtin && dirty) {
-      
-      
-      
       _applyingPreset = true;
       try {
         resetVisualParams(includePageStyles: true, includeImages: true);
@@ -837,12 +442,6 @@ class ThemeController extends GetxController {
   static Future<void> _writeColor(String key, Color c) =>
       Formatter.saveGlobalData(key, c.toARGB32());
 
-  
-
-  
-  
-  
-  
   void _markCustom() {
     if (_applyingPreset) return;
     markCustomTheme();
@@ -850,15 +449,6 @@ class ThemeController extends GetxController {
     clearPreset();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void markCustomTheme() {
     if (_applyingPreset) return;
     if (useCustom.value) return;
@@ -866,36 +456,17 @@ class ThemeController extends GetxController {
     Formatter.saveGlobalData(_kUseCustom, true);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void enterCustomTheme() {
     clearPreset();
     markCustomTheme();
-    
-    
-    
-    
+
     currentCustomId.value = null;
     _persistCurrentCustomId();
   }
 
-  
-  
-  
-  
   String get _seedHex =>
       '#${seed.value.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
 
-  
   String get _fontColorDesc {
     final Color? c = fontColor.value;
     return c == null
@@ -903,18 +474,6 @@ class ThemeController extends GetxController {
         : '字色 #${c.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void applyBuiltinMode(int mode) {
     applySpec(mode == 2 ? builtinDark : builtinLight);
     AppLog.instance.op('切换主题：${mode == 2 ? '黑暗模式' : '明亮模式'}'
@@ -924,10 +483,7 @@ class ThemeController extends GetxController {
   void setThemeMode(int mode) {
     themeMode.value = mode.clamp(0, 2);
     Formatter.saveGlobalData(_kThemeMode, themeMode.value);
-    
-    
-    
-    
+
     _apply();
   }
 
@@ -938,69 +494,27 @@ class ThemeController extends GetxController {
     _apply();
   }
 
-  
-  
-  
-  
   void setFontColor(Color? c) {
     fontColor.value = c;
-    
+
     Formatter.saveGlobalData(_kFontColor, c?.toARGB32());
     _apply();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void applyPreset(ThemePreset p) {
     applySpec(p);
     AppLog.instance.op('应用主题：${p.name}'
         '（${themeMode.value == 2 ? '暗' : '亮'} · seed $_seedHex）');
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
   final _draft = Rxn<_ThemeDraft>();
 
-  
   bool get editingTheme => _draft.value != null;
 
-  
-  
-  
-  
-  
   String? _editingCustomId;
 
-  
   String? get editingCustomId => _editingCustomId;
 
-  
-  
-  
-  
-  
   void beginThemeEditing({CustomTheme? load, String? editingId}) {
     if (_draft.value != null) return;
     _draft.value = _snapshotDraft();
@@ -1011,11 +525,6 @@ class ThemeController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
   void cancelThemeEditing() {
     final _ThemeDraft? s = _draft.value;
     _draft.value = null;
@@ -1025,7 +534,6 @@ class ThemeController extends GetxController {
     _restoreDraft(s);
   }
 
-  
   Future<CustomTheme> commitThemeEditing(String name) async {
     _draft.value = null;
     _editingCustomId = null;
@@ -1033,9 +541,6 @@ class ThemeController extends GetxController {
     return saveCustomTheme(name);
   }
 
-  
-  
-  
   Future<void> overwriteThemeEditing(String id, {String? name}) async {
     _draft.value = null;
     _editingCustomId = null;
@@ -1043,7 +548,6 @@ class ThemeController extends GetxController {
     await overwriteCustomTheme(id, name: name);
   }
 
-  
   Future<void> updateThemeEditing(String id) => overwriteThemeEditing(id);
 
   _ThemeDraft _snapshotDraft() => _ThemeDraft(
@@ -1070,7 +574,6 @@ class ThemeController extends GetxController {
         globalBgBlur: globalBgBlur.value,
       );
 
-  
   void _restoreDraft(_ThemeDraft s) {
     themeMode.value = s.themeMode;
     seed.value = s.seed;
@@ -1096,19 +599,6 @@ class ThemeController extends GetxController {
     globalBgBlur.value = s.globalBgBlur;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   int get _liveThemeMode {
     final _ThemeDraft? d = _draft.value;
     final int live = themeMode.value;
@@ -1133,12 +623,6 @@ class ThemeController extends GetxController {
     return d?.componentOpacity ?? live;
   }
 
-  
-  
-  
-  
-  
-  
   int get _liveBgMode {
     final _ThemeDraft? d = _draft.value;
     final int live = _bgMode.value;
@@ -1157,7 +641,6 @@ class ThemeController extends GetxController {
     return d?.gradient2 ?? live;
   }
 
-  
   Color? get _liveBackgroundColor {
     switch (_liveBgMode) {
       case 1:
@@ -1172,7 +655,6 @@ class ThemeController extends GetxController {
     }
   }
 
-  
   Decoration? get _liveBackgroundDecoration {
     switch (_liveBgMode) {
       case 1:
@@ -1190,21 +672,8 @@ class ThemeController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Color get drawerBaseColor {
     if (_bgMode.value == 0) {
-      
-      
-      
       return _brightness == Brightness.dark
           ? AppTheme.darkDrawer
           : AppTheme.lightScaffold;
@@ -1213,13 +682,6 @@ class ThemeController extends GetxController {
         _gradient1.value;
   }
 
-  
-  
-  
-  
-  
-  
-  
   Color get drawerFontColor {
     final Color? slot = pageColor(AppPageKey.drawer, AppStyleSlot.text);
     if (slot != null) return slot;
@@ -1228,13 +690,6 @@ class ThemeController extends GetxController {
     return AppTheme.contrastOn(drawerBaseColor);
   }
 
-  
-
-  
-  
-  
-  
-  
   Future<CustomTheme> saveCustomTheme(String name) async {
     final CustomTheme t = CustomTheme(
       id: 'custom-${DateTime.now().millisecondsSinceEpoch}',
@@ -1255,8 +710,7 @@ class ThemeController extends GetxController {
     customThemes.add(t);
     currentCustomId.value = t.id;
     useCustom.value = true;
-    
-    
+
     Formatter.saveGlobalData(_kUseCustom, true);
     _persistCurrentCustomId();
     await _persistCustomThemes();
@@ -1264,12 +718,6 @@ class ThemeController extends GetxController {
     return t;
   }
 
-  
-  
-  
-  
-  
-  
   Future<void> overwriteCustomTheme(String id, {String? name}) async {
     final int i = customThemes.indexWhere((CustomTheme t) => t.id == id);
     if (i < 0) return;
@@ -1299,19 +747,10 @@ class ThemeController extends GetxController {
     AppLog.instance.op('覆盖更新自定义主题：${fresh.name}');
   }
 
-  
   Future<void> updateCustomTheme(String id) => overwriteCustomTheme(id);
 
-  
-  
-  
-  
-  
   List<CustomTheme> get overwriteCandidates => customThemes.toList();
 
-  
-  
-  
   CustomTheme? get defaultOverwriteTarget {
     if (customThemes.isEmpty) return null;
     final String? editing = _editingCustomId;
@@ -1350,14 +789,6 @@ class ThemeController extends GetxController {
     AppLog.instance.op('删除自定义主题：$name');
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _writeAppearance(CustomTheme t) {
     final bool prevUse = useCustom.value;
     final String? prevId = currentCustomId.value;
@@ -1374,7 +805,7 @@ class ThemeController extends GetxController {
       bgImage: t.bgImage,
       glass: t.componentOpacity > 0,
     ));
-    
+
     setComponentOpacity(t.componentOpacity);
     pageColors.clear();
     for (final MapEntry<String, int> e in t.pageColors.entries) {
@@ -1383,38 +814,25 @@ class ThemeController extends GetxController {
     pageColors.refresh();
     useCustom.value = prevUse;
     currentCustomId.value = prevId;
-    
-    
-    
-    
+
     currentPreset.value = prevPreset;
   }
 
-  
-  
-  
-  
   void applyCustomTheme(CustomTheme t) {
     _writeAppearance(t);
-    
-    
-    
+
     clearPreset();
     currentCustomId.value = t.id;
     useCustom.value = true;
-    
-    
-    
+
     Formatter.saveGlobalData(_kUseCustom, true);
     _persistCurrentCustomId();
     AppLog.instance.op('应用自定义主题：${t.name}（seed $_seedHex）');
   }
 
-  
   void _persistCurrentCustomId() =>
       Formatter.saveGlobalData(_kCurrentCustomId, currentCustomId.value);
 
-  
   bool isCustomThemeSelected(CustomTheme t) =>
       useCustom.value && currentCustomId.value == t.id;
 
@@ -1436,42 +854,22 @@ class ThemeController extends GetxController {
         final CustomTheme? t = CustomTheme.fromJson(e);
         if (t == null) continue;
         loaded.add(t);
-        
-        
-        
-        
-        
+
         if (CustomTheme.needsOpacityMigration(e)) migrated = true;
       }
       customThemes.assignAll(loaded);
       if (migrated) await _persistCustomThemes();
     } catch (_) {
-      
     }
   }
 
-  
-
-  
   String exportPackFileName([DateTime? now]) =>
       ThemePack(themes: const <CustomTheme>[], exportedAt: now ?? DateTime.now())
           .suggestedFileName();
 
-  
-  
-  
-  
   String buildExportPack() =>
       ThemePack(themes: customThemes.toList()).encode();
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<ThemeImportOutcome> applyImportedThemes(
     List<CustomTheme> incoming, {
     required bool overwrite,
@@ -1485,7 +883,6 @@ class ThemeController extends GetxController {
           ? customThemes.indexWhere((CustomTheme x) => x.name == t.name)
           : -1;
       if (at >= 0) {
-        
         final CustomTheme merged =
             t.withIdentity(id: customThemes[at].id, name: t.name);
         customThemes[at] = merged;
@@ -1516,7 +913,6 @@ class ThemeController extends GetxController {
     );
   }
 
-  
   List<String> conflictingNames(List<CustomTheme> incoming) {
     final Set<String> mine = customThemes.map((CustomTheme t) => t.name).toSet();
     final List<String> hit = <String>[];
@@ -1526,19 +922,9 @@ class ThemeController extends GetxController {
     return hit;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void applySpec(ThemePreset p) {
     _applyingPreset = true; 
     try {
-      
-      
       if (p.builtin) {
         clearPreset();
       } else {
@@ -1546,50 +932,23 @@ class ThemeController extends GetxController {
       }
       setThemeMode(p.themeMode);
       setSeed(p.seed);
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       _bgMode.value = p.bgMode;
       Formatter.saveGlobalData(_kBgMode, _bgMode.value);
       _gradient1.value = p.gradient1;
       _gradient2.value = p.gradient2;
       _writeColor(_kGrad1, p.gradient1);
       _writeColor(_kGrad2, p.gradient2);
-      
-      
+
       _setPageBgImage(p.bgImage ?? defaultBackgroundImage);
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       setComponentOpacity(p.glass ? glassPanelTransparency : 0.0);
       setFontColor(null);
-      
-      
-      
+
       _clearPageStyles();
-      
-      
-      
-      
-      
-      
+
       _resetGlobalBg();
-      
+
       useCustom.value = false;
       Formatter.saveGlobalData(_kUseCustom, false);
       Formatter.saveGlobalData(_kPreset, p.builtin ? null : p.id);
@@ -1599,205 +958,106 @@ class ThemeController extends GetxController {
     _apply();
   }
 
-  
-  
-  
-  
   bool isBuiltinMode(int mode) =>
       !useCustom.value &&
       currentPreset.value == null &&
       themeMode.value == mode;
 
-  
-  
-  
-  
-  
-  
   bool get isCustomSelected =>
       useCustom.value &&
       currentPreset.value == null &&
       currentCustomId.value == null;
 
-  
   void clearPreset() {
     currentPreset.value = null;
     Formatter.saveGlobalData(_kPreset, null);
   }
 
-  
-  
-  
-
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
   void _setPageBgImage(String path) {
     _pageBgImage.value = path;
     Formatter.saveBackgroundImage(path);
-    
-    
-    
-    
+
     _markCustom();
   }
 
-  
-  
-  
-  
   void setMenuImage(String path) {
     menuImagePath.value = path;
     Formatter.saveMenuBackgroundImage(path);
-    
+
     _markCustom();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static ImageProvider<Object> imageProviderFor(String path) {
     if (path.startsWith('assets/')) {
       return AssetImage(path) as ImageProvider<Object>;
     }
     if (path.startsWith('content://')) {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       return FileImage(File(path));
     }
     return FileImage(File(path));
   }
 
-  
-
-  
   void setMenuBgBrightness(double v) {
     menuBgBrightness.value = v.clamp(-1.0, 1.0);
     Formatter.saveGlobalData(_kMenuBgBrightness, menuBgBrightness.value);
   }
 
-  
   void setMenuBgFade(double v) {
     menuBgFade.value = v.clamp(0.0, 1.0);
     Formatter.saveGlobalData(_kMenuBgFade, menuBgFade.value);
   }
 
-  
   void setMenuBgBlur(double v) {
     menuBgBlur.value = v.clamp(0.0, 20.0);
     Formatter.saveGlobalData(_kMenuBgBlur, menuBgBlur.value);
   }
 
-  
-
-  
   void setGlobalBgEnabled(bool on) {
     globalBgEnabled.value = on;
     Formatter.saveGlobalData(_kGlobalBgOn, on);
-    
+
     if (on) _markCustom();
   }
 
-  
   void setGlobalBgImage(String path) {
     globalBgImagePath.value = path;
     Formatter.saveGlobalData(_kGlobalBgPath, path);
     _markCustom();
   }
 
-  
   void setGlobalBgBrightness(double v) {
     globalBgBrightness.value = v.clamp(-1.0, 1.0);
     Formatter.saveGlobalData(_kGlobalBgBrightness, globalBgBrightness.value);
   }
 
-  
   void setGlobalBgFade(double v) {
     globalBgFade.value = v.clamp(0.0, 1.0);
     Formatter.saveGlobalData(_kGlobalBgFade, globalBgFade.value);
   }
 
-  
   void setGlobalBgBlur(double v) {
     globalBgBlur.value = v.clamp(0.0, 20.0);
     Formatter.saveGlobalData(_kGlobalBgBlur, globalBgBlur.value);
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void setComponentOpacity(double v) {
     componentOpacity.value = v.clamp(0.0, 1.0);
-    
+
     Formatter.saveGlobalData(_kTransparency, componentOpacity.value);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void setGlassEnabled(bool on) =>
       setComponentOpacity(on ? glassPanelTransparency : 0.0);
 
-  
-  
-  
   DecorationImage? get globalBgDecorationImage {
     if (!globalBgEnabled.value) return null;
-    
-    
-    
-    
-    
+
     final String? p = globalBgImagePath.value;
     if (p == null || p.isEmpty) return null;
-    
+
     return DecorationImage(image: imageProviderFor(p), fit: BoxFit.cover);
   }
 
-  
-  
-  
-  
-  
   DecorationImage? get renderGlobalBgDecorationImage {
     final _ThemeDraft? d = _draft.value;
     final bool on = d?.globalBgEnabled ?? globalBgEnabled.value;
@@ -1806,21 +1066,18 @@ class ThemeController extends GetxController {
     return DecorationImage(image: imageProviderFor(p), fit: BoxFit.cover);
   }
 
-  
   double get renderGlobalBgBrightness {
     final _ThemeDraft? d = _draft.value;
     final double live = globalBgBrightness.value;
     return d?.globalBgBrightness ?? live;
   }
 
-  
   double get renderGlobalBgFade {
     final _ThemeDraft? d = _draft.value;
     final double live = globalBgFade.value;
     return d?.globalBgFade ?? live;
   }
 
-  
   double get renderGlobalBgBlur {
     final _ThemeDraft? d = _draft.value;
     final double live = globalBgBlur.value;
@@ -1829,21 +1086,6 @@ class ThemeController extends GetxController {
 
   void _apply() => Get.changeThemeMode(materialMode);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class _ThemeDraft {
   const _ThemeDraft({

@@ -1,31 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,19 +26,11 @@ ServerData qbSrv() => ServerData(
       password: 'secret',
     );
 
-
-
-
-
-
 class _QbFake {
-  
   bool loginOk = true;
 
-  
   bool loggedIn = false;
 
-  
   final List<String> calls = <String>[];
 
   int countOf(String path) =>
@@ -74,8 +38,7 @@ class _QbFake {
 
   Dio dio() {
     final Dio d = Dio(BaseOptions(
-      
-      
+
       validateStatus: (int? s) => s != null && s < 500,
     ));
     d.interceptors.add(InterceptorsWrapper(
@@ -84,7 +47,7 @@ class _QbFake {
         calls.add('${o.method} $p');
         if (p.endsWith('/auth/login')) {
           loggedIn = loginOk;
-          
+
           h.resolve(Response<dynamic>(
               requestOptions: o,
               statusCode: 200,
@@ -92,7 +55,6 @@ class _QbFake {
           return;
         }
         if (!loggedIn) {
-          
           h.resolve(Response<dynamic>(
               requestOptions: o, statusCode: 403, data: 'Forbidden'));
           return;
@@ -137,19 +99,11 @@ class _QbFake {
   }
 }
 
-
-
-
-
-
-
 Future<void> _pumpSetting(
   WidgetTester tester,
   _QbFake fake, {
   int settleMs = 600,
 }) async {
-  
-  
   ServerSettingPage.debugPrefsOverride = QbPrefsApi(
     client: QbMethod(dio: fake.dio()),
     resolve: (ServerData s) => s,
@@ -172,10 +126,7 @@ void main() {
 
   setUp(() {
     SecurePrefs.useMemoryBackendForTest();
-    
-    
-    
-    
+
     IpGeo.offline = true;
   });
   setUp(() {
@@ -185,15 +136,12 @@ void main() {
             const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
             (MethodCall call) async => null);
   });
-  
+
   tearDown(() {
     ServerSettingPage.debugPrefsOverride = null;
     IpGeo.offline = false;
   });
 
-  
-  
-  
   group('⑤ NetError 不再把 403 说成「账号或密码错误」', () {
     DioException err(int code, [String body = 'Forbidden']) => DioException(
           requestOptions: RequestOptions(path: '/api/v2/x'),
@@ -208,7 +156,7 @@ void main() {
     test('403 → 指向「未登录 / 会话失效」，不再提密码', () {
       final String s = NetError.describe(err(403));
       expect(s, contains('未登录或会话已失效'));
-      
+
       expect(s.contains('密码'), isFalse);
     });
 
@@ -224,27 +172,18 @@ void main() {
     });
   });
 
-  
-  
-  
   testWidgets('① 未登录 → 自动建立会话 → 偏好读得到、不再 403', (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
     await _pumpSetting(tester, fake);
 
-    
     expect(fake.countOf('/auth/login'), 1, reason: '应自动登录一次');
 
-    
     expect(fake.countOf('/app/preferences'), greaterThanOrEqualTo(1));
     expect(fake.countOf('/sync/maindata'), greaterThanOrEqualTo(1));
 
-    
     expect(find.textContaining('没能读取这台服务器的设置'), findsNothing);
   });
 
-  
-  
-  
   testWidgets('② 3 秒轮询跑多轮，登录仍只发一笔', (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
     await _pumpSetting(tester, fake);
@@ -252,39 +191,32 @@ void main() {
     final int afterFirst = fake.countOf('/auth/login');
     expect(afterFirst, 1);
 
-    
     for (int i = 0; i < 4; i++) {
       await tester.pump(const Duration(seconds: 3));
     }
 
     expect(fake.countOf('/auth/login'), 1,
         reason: '会话必须缓存 —— 每轮重登会让 qB 记失败认证并封 IP');
-    
+
     expect(fake.countOf('/sync/maindata'), greaterThan(1));
 
-    
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
 
-  
-  
-  
   testWidgets('③ 登录失败 → 不再发业务请求，并给出准确原因', (WidgetTester tester) async {
     final _QbFake fake = _QbFake()..loginOk = false;
     await _pumpSetting(tester, fake);
 
     expect(fake.countOf('/auth/login'), 1);
-    
+
     expect(fake.countOf('/app/preferences'), 0,
         reason: '会话没建立就不该发偏好请求');
     expect(fake.countOf('/torrents/categories'), 0);
     expect(fake.countOf('/sync/maindata'), 0);
 
-    
     expect(find.textContaining('服务器拒绝了登录'), findsOneWidget);
 
-    
     for (int i = 0; i < 3; i++) {
       await tester.pump(const Duration(seconds: 3));
     }
@@ -294,15 +226,11 @@ void main() {
     await tester.pump();
   });
 
-  
-  
-  
   testWidgets('④ 会话失败后点刷新 → 重开会话，恢复后能读到偏好', (WidgetTester tester) async {
     final _QbFake fake = _QbFake()..loginOk = false;
     await _pumpSetting(tester, fake);
     expect(fake.countOf('/auth/login'), 1);
 
-    
     fake.loginOk = true;
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pump(const Duration(milliseconds: 600));

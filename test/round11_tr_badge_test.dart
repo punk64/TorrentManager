@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -31,7 +16,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/transmission/tr_method.dart';
 import 'package:torrent_manager/pages/server_list_page.dart';
 
-
 ServerData trSrv() => ServerData(
       id: 'tr-1',
       name: 'TR',
@@ -40,12 +24,10 @@ ServerData trSrv() => ServerData(
       port: 9091,
     );
 
-
 Dio fakeTrDio() {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://192.168.1.9:9091'));
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (RequestOptions o, RequestInterceptorHandler h) {
-      
       String method = '';
       final dynamic d = o.data;
       if (d is Map) {
@@ -55,7 +37,6 @@ Dio fakeTrDio() {
           final dynamic m = jsonDecode(d);
           if (m is Map) method = (m['method'] ?? '').toString();
         } catch (_) {
-          
         }
       }
       h.resolve(Response<dynamic>(
@@ -94,22 +75,18 @@ void main() {
     test('★ TR 二次刷新时仍是 ok（修复前会退回 connecting → 徽章闪「获取列表...」）',
         () async {
       final ServerData s = trSrv();
-      
+
       final ServerController sc =
           Get.put(ServerController(tr: TrMethod(dio: fakeTrDio())));
       sc.servers.assignAll(<ServerData>[s]);
       sc.select(s);
 
-      
-      
       final TorrentController tc = TorrentController();
 
       await tc.refresh();
       expect(sc.connStatus[s.id], ConnStatus.ok,
           reason: '假传输返回成功 → 应判定为已连接');
 
-      
-      
       final Future<void> again = tc.refresh();
       expect(sc.connStatus[s.id], ConnStatus.ok,
           reason: '★ 已有连接时轮询刷新不得退回 connecting'
@@ -154,8 +131,7 @@ void main() {
       final ServerController sc = Get.find<ServerController>();
       final ServerData s = trSrv();
       sc.servers.assignAll(<ServerData>[s]);
-      
-      
+
       sc.reportConnected(s.id);
       await tester.pump(const Duration(milliseconds: 50));
 

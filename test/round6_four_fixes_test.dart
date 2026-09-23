@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,8 +5,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:torrent_manager/app/bindings.dart';
-
-
 
 import 'package:torrent_manager/app/routes.dart';
 import 'package:torrent_manager/controllers/server_controller.dart';
@@ -24,8 +14,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/pages/server_list_page.dart';
 import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/widgets/draggable_fab.dart';
-
-
 
 final Finder _fabButton = find.descendant(
   of: find.byType(DraggableFab),
@@ -47,28 +35,18 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
   test('★ 「设置」页已删除：路由不存在，原开关固定为默认值', () {
-    
-    
-    
     expect(AppPages.pages.any((GetPage<dynamic> p) => p.name == '/settings'),
         isFalse,
         reason: '★ 设置页应从路由表移除（其页面/控制器文件也已删除）');
 
-    
     expect(kEnableServerGroup, isFalse);
 
     final ThemeController tc = Get.put(ThemeController());
-    
+
     expect(tc.componentOpacity.value, 0.0, reason: '底衬默认完全不透明（透明度 0）');
   });
 
-  
-  
-  
   testWidgets('★ 首启（无落盘）：底衬完全不透明，抽屉不会透出遮罩', (WidgetTester tester) async {
     final ThemeController tc = Get.put(ThemeController());
     await tc.load();
@@ -78,13 +56,11 @@ void main() {
     expect(tc.glassEnabled, isFalse, reason: '透明度 0 → 不启用玻璃');
     expect(tc.glassAlpha, isNull);
 
-    
     final ColorScheme cs = tc.lightTheme.colorScheme;
     expect(cs.surfaceContainerLow.a, 1.0,
         reason: '★ 必须是**不透明**的，否则抽屉会透出背后变暗的遮罩层');
     expect(cs.surfaceContainerHighest.a, 1.0);
 
-    
     tc.setComponentOpacity(0.5);
     tc.restoreFactoryDefaults();
     expect(tc.componentOpacity.value, 0.0,
@@ -92,11 +68,7 @@ void main() {
             '首启被它设成全透明');
   });
 
-  
-  
-  
   testWidgets('★ 吸附态：长方形 + 只露 20%；点触发区先回圆再完全弹出', (WidgetTester tester) async {
-    
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: Stack(
@@ -114,12 +86,10 @@ void main() {
     ));
     await tester.pump(const Duration(milliseconds: 100));
 
-    
     Rect r = tester.getRect(_fabButton);
     expect(r.width, closeTo(46, 1));
     expect(r.left, closeTo(754, 1));
 
-    
     tester.state<DraggableFabState>(find.byType(DraggableFab))
         .debugInsetToEdge();
     for (int i = 0; i < 8; i++) {
@@ -133,7 +103,6 @@ void main() {
         reason: '★ 只露 20%：长方形宽 60 → 露出 12px');
     expect(r.left, closeTo(788, 1));
 
-    
     await tester.tapAt(Offset(794, r.center.dy));
     await tester.pump(const Duration(milliseconds: 60));
     expect(tester.getRect(_fabButton).width, lessThan(50),
@@ -147,9 +116,6 @@ void main() {
     expect(r.left, closeTo(754, 1), reason: '★ 完全弹出 = 回到停靠位（完全可见）');
   });
 
-  
-  
-  
   testWidgets('★ 种子页标题里的服务器名水平 + 垂直都居中', (WidgetTester tester) async {
     const double statusBar = 24;
     tester.view.padding = FakeViewPadding(
@@ -187,7 +153,6 @@ void main() {
         tester.view.physicalSize.width / tester.view.devicePixelRatio / 2;
     expect((r.center.dx - screenCx).abs(), lessThan(2), reason: '水平居中');
 
-    
     const double toolbar = kToolbarHeight;
     const double expectCy = statusBar + toolbar / 2;
     expect((r.center.dy - expectCy).abs(), lessThan(2),

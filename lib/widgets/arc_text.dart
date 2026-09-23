@@ -2,9 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-
-
-
 class ArcText extends StatelessWidget {
   const ArcText({
     super.key,
@@ -17,15 +14,12 @@ class ArcText extends StatelessWidget {
 
   final String text;
 
-  
   final double radius;
 
   final TextStyle? style;
 
-  
   final double startAngle;
 
-  
   final bool clockwise;
 
   @override
@@ -71,7 +65,6 @@ class _ArcTextPainter extends CustomPainter {
     if (text.isEmpty) return;
     final Offset center = Offset(size.width / 2, size.height / 2);
 
-    
     final List<TextPainter> painters = <TextPainter>[];
     for (final String ch in text.characters) {
       final TextPainter tp = TextPainter(
@@ -93,7 +86,7 @@ class _ArcTextPainter extends CustomPainter {
       canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(clockwise ? angle : angle + math.pi);
-      
+
       final double dy = clockwise ? -radius : radius - tp.height;
       tp.paint(canvas, Offset(-tp.width / 2, dy));
       canvas.restore();

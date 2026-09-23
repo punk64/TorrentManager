@@ -13,19 +13,6 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class TorrentAddPage extends StatefulWidget {
   const TorrentAddPage({super.key});
 
@@ -35,10 +22,6 @@ class TorrentAddPage extends StatefulWidget {
 
 enum _AddMode { url, file }
 
-
-
-
-
 class _PickedFile {
   _PickedFile({required this.name, this.path, this.bytes});
 
@@ -46,10 +29,8 @@ class _PickedFile {
   final String? path;
   final Uint8List? bytes;
 
-  
   String get key => path ?? name;
 
-  
   bool get usable => path != null || bytes != null;
 }
 
@@ -59,22 +40,15 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   final TextEditingController _savepath = TextEditingController();
   final TextEditingController _category = TextEditingController();
 
-  
-  
-  
-  
-  
   bool _paused = false;
 
   _AddMode _mode = _AddMode.url;
   final List<_PickedFile> _files = <_PickedFile>[];
   bool _busy = false;
 
-  
   int _done = 0;
   int _total = 0;
 
-  
   AddBatchResult? _result;
 
   @override
@@ -102,12 +76,12 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         final _PickedFile item =
             _PickedFile(name: f.name, path: f.path, bytes: f.bytes);
         if (!item.usable) continue;
-        
+
         if (_files.any((_PickedFile e) => e.key == item.key)) continue;
         _files.add(item);
         added++;
       }
-      
+
       _result = null;
     });
     if (added == 0) {
@@ -138,8 +112,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       return;
     }
 
-    
-    
     final bool isQb = s.isQbittorrent;
     final String? savepath =
         _savepath.text.trim().isEmpty ? null : _savepath.text.trim();
@@ -165,9 +137,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               paused: _paused,
             );
           } else {
-            
-            
-            
             await ctrl.tr.addTorrents(
               filename: u,
               downloadDir: savepath,
@@ -186,8 +155,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         try {
           if (isQb) {
             final String? p = f.path;
-            
-            
+
             if (p == null) throw StateError(S.filePathUnavailable);
             await ctrl.qb.addTorrents(
               filePath: p,
@@ -197,7 +165,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
             );
           } else {
             final Uint8List bytes = await _readBytes(f);
-            
+
             await ctrl.tr.addTorrents(
               metainfo: base64Encode(bytes),
               downloadDir: savepath,
@@ -219,9 +187,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
 
     if (r.allOk) {
       Formatter.showToast('${S.tAdded}${r.succeeded.length} 个');
-      
-      
-      
+
       AppLog.instance.op(
           '${_mode == _AddMode.url ? '添加种子（链接' : '添加种子（文件'} ${r.succeeded.length} 条）：'
           '${r.succeeded.map(shortLabel).join(' / ')}',
@@ -230,7 +196,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       return;
     }
 
-    
     setState(() => _result = r);
     Formatter.showToast(
       '${S.tAddBatchPartial}：${S.tAdded}${r.succeeded.length} 个，'
@@ -243,7 +208,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         scope: ctrl.current.value?.logScope);
   }
 
-  
   Future<Uint8List> _readBytes(_PickedFile f) async {
     final Uint8List? b = f.bytes;
     if (b != null) return b;
@@ -254,12 +218,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
-    
-    
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('添加种子', style: TextStyle(fontSize: 15)),
@@ -330,8 +288,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
             ),
 
           const SizedBox(height: 12),
-          
-          
+
           Obx(() {
             final bool isQb = ctrl.current.value?.isQbittorrent ?? false;
             return Column(
@@ -352,10 +309,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
-                
-                
-                
+
                 TextField(
                   controller: _category,
                   maxLength: AppTheme.maxLenName,
@@ -370,8 +324,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                     isDense: true,
                   ),
                 ),
-                
-                
+
                 SwitchListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
@@ -386,7 +339,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
             );
           }),
 
-          
           if (_result != null && !_result!.allOk) ...<Widget>[
             const SizedBox(height: 14),
             _failureCard(context, _result!),
@@ -411,7 +363,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     );
   }
 
-  
   Widget _fileTile(BuildContext context, _PickedFile f) {
     final Color border = Theme.of(context).dividerColor.withValues(alpha: 0.6);
     return Padding(
@@ -448,7 +399,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     );
   }
 
-  
   Widget _failureCard(BuildContext context, AddBatchResult r) {
     final Color err = Theme.of(context).colorScheme.error;
     return Container(

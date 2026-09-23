@@ -1,16 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,7 +31,6 @@ Torrent _mk({
     );
 
 void main() {
-  
   group('L5 辅种判定：size=0 不参与', () {
     test('★ 两条都还没取到元数据（size=0）→ 互不认作辅种', () {
       final Torrent main = _mk(hash: 'h1', size: 0, savePath: '/dl');
@@ -71,7 +57,6 @@ void main() {
     });
   });
 
-  
   group('L8 configProblemOf 校验服务器类型', () {
     test('★ 非法 type → 判为「配置不完整」（而不是让它永久转圈）', () {
       final ServerData s = ServerData(
@@ -98,7 +83,6 @@ void main() {
     });
   });
 
-  
   group('L1 TR：探测期间路由被切换 ≠ 登录失败', () {
     ServerData pub() => ServerData(
           id: 'tr',
@@ -130,8 +114,6 @@ void main() {
         onRequest: (RequestOptions o, RequestInterceptorHandler h) {
           calls++;
           if (calls == 1) {
-            
-            
             tr!.setServer(lan());
             h.reject(DioException(
               requestOptions: o,
@@ -169,8 +151,7 @@ void main() {
       dio.interceptors.add(InterceptorsWrapper(
         onRequest: (RequestOptions o, RequestInterceptorHandler h) {
           calls++;
-          
-          
+
           tr!.setServer(calls.isEven ? pub() : lan());
           h.reject(DioException(
             requestOptions: o,
@@ -190,7 +171,6 @@ void main() {
     });
   });
 
-  
   group('S5 4xx/5xx 响应体入日志前先脱敏', () {
     test('★ Basic 鉴权头被抹掉（base64 等于明文口令）', () {
       final String b = AppLogInterceptor.bodyBrief(
@@ -212,7 +192,6 @@ void main() {
     });
   });
 
-  
   group('S6 更新检查只接受 https', () {
     test('★ http 地址直接拒绝，一个请求都不发', () async {
       bool called = false;

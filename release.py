@@ -90,7 +90,8 @@ _TARGET_PLATFORM = {
 
 VERSION_RE = re.compile(r'^(version:\s*)(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$', re.M)
 APP_VERSION_RE = re.compile(r"^const String kAppVersion = '([0-9.]+)';", re.M)
-# 交付包命名：TorrentManager-V<major>.<minor>.<patch>-<abi>[-lite].apk
+# 交付包命名：TorrentManager-V<major>.<minor>.<patch>-<abi>.apk
+# 第 5 组 `-lite` 标记「so 压缩」的精简包型：标准包断言要把它排除，另按 DEFLATED 单独校验。
 NEW_NAME_RE = re.compile(r'TorrentManager-V(\d+)\.(\d+)\.(\d+)-([\w-]+?)(-lite)?\.apk$')
 
 
@@ -452,6 +453,9 @@ def _resolve_standard(out: str) -> tuple[str, list[str]]:
     优先新命名 `TorrentManager-V*`：取版本号最大的一组；
     不假定「三个 ABI 齐全」—— 出包默认只编 arm64-v8a，
     按三个 ABI 逐个点名会把「只出 arm64」误判成「v7a 缺失」。
+
+    带 `-lite` 后缀的一律**排除**：那是「so 压缩」的精简包型（体积小、安装后占用大），
+    不该被当成本次交付包按 STORED 去断言。
     """
     def _by_order(p: str) -> int:
         n = os.path.basename(p)
@@ -463,7 +467,7 @@ def _resolve_standard(out: str) -> tuple[str, list[str]]:
     found = []
     for p in glob.glob(os.path.join(out, 'TorrentManager-V*.apk')):
         m = NEW_NAME_RE.match(os.path.basename(p))
-        if m and not m.group(5):                    # 排除 -lite
+        if m and not m.group(5):                    # 排除 -lite（下面另按 DEFLATED 校验）
             found.append(((int(m.group(1)), int(m.group(2)), int(m.group(3))),
                           m.group(4), p))
     if found:
@@ -483,10 +487,20 @@ def _resolve_standard(out: str) -> tuple[str, list[str]]:
 
 
 def _resolve_lite(out: str) -> list[str]:
-    new = [p for p in glob.glob(os.path.join(out, 'TorrentManager-V*.apk'))
-           if os.path.basename(p).endswith('-lite.apk')]
-    old = [os.path.join(out, 'app-%s-release-lite.apk' % abi) for abi in ABIS]
-    return (new or old) + [p for p in old if p not in new]
+    """选出「lite 包」（so 被压缩的那份）→ [路径]，供**可选**校验用。
+
+    默认构建**不产生** lite 包（`release.py` 从不传 `--android-project-arg=lite=true`），
+    所以这里通常指向不存在的路径 ⇒ 调用方按「不存在即跳过」处理。
+    若有人手工 `flutter build apk --android-project-arg=lite=true` 编了 lite 包、并按
+    `-lite.apk` 后缀改好名，这段就会自动把它按「期望全 DEFLATED」校验。
+
+    ⚠️ 只返回**真实存在**的路径：lite 是可选包，把不存在的旧命名候选也返回，会让
+    `run_checks()` 把「目录里只有新命名 lite 包」误报成一堆「缺失! ⇒ FAIL」。
+    """
+    cand = [p for p in glob.glob(os.path.join(out, 'TorrentManager-V*.apk'))
+            if os.path.basename(p).endswith('-lite.apk')]
+    cand += [os.path.join(out, 'app-%s-release-lite.apk' % abi) for abi in ABIS]
+    return [p for p in cand if os.path.exists(p)]
 
 
 def _check_sha1(path: str) -> tuple[str, bool]:
@@ -511,7 +525,15 @@ def _check_orphan_sha1(out: str) -> list[str]:
 
 
 def _check_one(path: str, want_stored: bool) -> tuple[str, bool]:
-    """校验单个包的 so 压缩态 / CRC / ABI 单一性。返回 (展示行, 是否通过)。"""
+    """校验单个包的 so 压缩态 / CRC / ABI 单一性。返回 (展示行, 是否通过)。
+
+    ⚠️ ★ 这里的期望值必须与 `android/app/build.gradle.kts` 的
+    `useLegacyPackaging = project.hasProperty("lite")` **互为镜像**：
+        默认（不传参数）⇒ false ⇒ so **不压缩（STORED）** ⇒ `want_stored=True`；
+        传 `--android-project-arg=lite=true` ⇒ true ⇒ so 被 DEFLATE 压缩 ⇒ `want_stored=False`。
+    `release.py` 从不传 `lite`，所以交付包一律按 STORED 校验。
+    ⚠️ 历史上两处不同步过一次，结果「构建成功、断言必 FAIL、版本号不推进」——别只改一边。
+    """
     name = os.path.basename(path)
     if not os.path.exists(path):
         return '%-34s 缺失!' % name, False
@@ -544,14 +566,18 @@ def _check_one(path: str, want_stored: bool) -> tuple[str, bool]:
 def run_checks(out: Path | None = None) -> bool:
     """构建后断言：校验 so 打包态是否符合预期。
 
-    光看"构建成功"判断不出打包开关有没有生效 —— `useLegacyPackaging` 若没真正打开，
-    构建照样 exit 0，只是静默编成了标准包。唯一可信的判据是**产物里 so 的压缩态**。
+    光看"构建成功"判断不出打包开关有没有生效 —— `useLegacyPackaging` 若没真正生效，
+    构建照样 exit 0，只是静默编成了另一种包型。唯一可信的判据是**产物里 so 的压缩态**。
 
-    判据：
+    判据（与 `build.gradle.kts` 的 `useLegacyPackaging` **互为镜像**，改一边必须同步另一边）：
         标准包 → so 必须全部 STORED（不压缩）【必需】
         lite 包 → so 必须全部 DEFLATED（压缩）【可选，不存在即跳过】
         + CRC 校验、ABI 单一（确认 --split-per-abi 生效）
         + 每个交付包都必须有**同名且内容一致**的 .sha1 侧车，且无旧命名孤儿
+
+    ⚠️ ★ 默认包型 = 标准包（STORED）。若哪天改了 `build.gradle.kts` 的默认值，这里的期望值
+    **必须同步改**，否则构建成功、断言却必 FAIL，而版本号只在断言通过后才推进
+    （`write_version` 在后面）⇒ 发版被卡住，且报错文案还会误导成「打包开关没生效」。
     """
     out_s = str(out or OUT_DIR)
     log('输出目录: %s' % out_s)
@@ -559,9 +585,9 @@ def run_checks(out: Path | None = None) -> bool:
 
     label, std_paths = _resolve_standard(out_s)
     log('')
-    log('=== %s（期望 so 全 STORED）===' % label)
+    log('=== %s（期望 so 全 STORED —— 默认包型即不压缩）===' % label)
     for p in std_paths:
-        line, ok = _check_one(p, True)
+        line, ok = _check_one(p, want_stored=True)
         log(line)
         allok = allok and ok
 
@@ -585,15 +611,16 @@ def run_checks(out: Path | None = None) -> bool:
     log('')
     log('=== lite 包（可选；期望 so 全 DEFLATED）===')
     if not any(os.path.exists(p) for p in lite_paths):
-        log('未生成 lite 包 —— 已跳过')
+        log('未生成 lite 包 —— 已跳过（默认只出标准包）')
     else:
         for p in lite_paths:
-            line, ok = _check_one(p, False)
+            line, ok = _check_one(p, want_stored=False)
             log(line)
             allok = allok and ok
 
     log('')
-    log('总体: %s' % ('ALL PASS' if allok else '有 FAIL —— 打包开关可能未生效'))
+    log('总体: %s' % ('ALL PASS' if allok else
+                     '有 FAIL —— so 打包态与预期不符（打包开关可能没生效）'))
     return allok
 
 

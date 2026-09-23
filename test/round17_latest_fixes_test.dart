@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,12 +23,6 @@ ServerData qbSrv(String id, String host) => ServerData(
       host: host,
       port: 8080,
     );
-
-
-
-
-
-
 
 Dio fakeQb({
   Map<String, dynamic> Function(int round)? serverState,
@@ -131,9 +110,6 @@ void main() {
 
   tearDown(AppToast.resetForTest);
 
-  
-  
-  
   group('① 提示浮层位置（最新需求 1）', () {
     testWidgets('★ 提示落在屏幕**下半部分**，且仍在根 Overlay（不被遮挡）',
         (WidgetTester tester) async {
@@ -160,7 +136,6 @@ void main() {
       expect(screen.height - r.bottom, lessThan(160),
           reason: '★ 提示应贴着底部（只留 SafeArea + margin 的间距）');
 
-      
       expect(
         find.ancestor(of: toast, matching: find.byType(Overlay)),
         findsOneWidget,
@@ -172,15 +147,11 @@ void main() {
         reason: '★ 提示不得是页面 Scaffold 的后代',
       );
 
-      
       AppToast.resetForTest();
       await tester.pump();
     });
   });
 
-  
-  
-  
   group('② 手动刷新动画（最新需求 2）', () {
     testWidgets('★ 点刷新按钮后**立刻**进入刷新态（showProgress 必须传 true）',
         (WidgetTester tester) async {
@@ -196,8 +167,6 @@ void main() {
       sc.servers.assignAll(<ServerData>[qbSrv('a', '10.0.0.1')]);
       await tester.pump();
 
-      
-      
       final Finder spin = find.descendant(
         of: find.byType(AppBar),
         matching: find.byType(RotationTransition),
@@ -207,22 +176,16 @@ void main() {
       await tester.tap(spin);
       await tester.pump();
 
-      
       expect(sc.isManualRefreshing, isTrue,
           reason: '★ 若调用处没传 `showProgress: true`，`manualRefreshing` 永远是'
               '空集 —— 刷新图标不转、卡片不进刷新态，整段动画形同虚设');
 
-      
-      
-      
-      
-      
       await tester.pump(const Duration(milliseconds: 800));
       await tester.pump(const Duration(milliseconds: 800));
       await tester.pump(const Duration(milliseconds: 800));
 
       expect(sc.isManualRefreshing, isFalse, reason: '刷新结束后标记必须清干净');
-      
+
       AppToast.resetForTest();
       await tester.pump();
     });
@@ -245,15 +208,12 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ I/O 数链路（最新需求 3）', () {
     test('★ server_state 增量缺席 queued_io_jobs 时，保留上一轮的已知值', () async {
       final ServerController sc = Get.put(ServerController());
       sc.qbFactory = () => QbMethod(
             dio: fakeQb(
-              
+
               serverState: (int round) => round == 1
                   ? <String, dynamic>{'queued_io_jobs': 7}
                   : <String, dynamic>{'up_info_speed': 100},
@@ -305,18 +265,12 @@ void main() {
       );
       final ServerData s = qbSrv('a', '10.0.0.1');
       sc.servers.assignAll(<ServerData>[s]);
-      
-      
-      
+
       sc.current.value = s;
       final TorrentController tc = Get.put(TorrentController());
 
-      
-      
-      
       tc.setListVisible(true);
 
-      
       for (int i = 0; i < 60 && tc.items.isEmpty; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }

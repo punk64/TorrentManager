@@ -11,18 +11,6 @@ import '../utils/log_export.dart';
 import '../utils/strings.dart';
 import '../widgets/log_selection.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
 class LogPage extends StatefulWidget {
   const LogPage({super.key});
 
@@ -31,55 +19,21 @@ class LogPage extends StatefulWidget {
 }
 
 class _LogPageState extends State<LogPage> {
-  
-  
-  
-  
-  
   bool _privacy = true;
 
-  
-  
-  
-  
-  
-  
-  
   static const int _kMaskCacheMax = 500;
   final Map<String, String> _maskCache = <String, String>{};
 
-  
   bool _selecting = false;
 
-  
-  
-  
-  
-  
   final Set<LogEntry> _selected = <LogEntry>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Set<String> _srvFilter = <String>{};
 
-  
   bool _hideSystem = false;
 
-  
   bool get _filterActive => _srvFilter.isNotEmpty || _hideSystem;
 
-  
   String _display(String raw) {
     if (!_privacy) return raw;
     final String? hit = _maskCache[raw];
@@ -103,33 +57,17 @@ class _LogPageState extends State<LogPage> {
     }
   }
 
-  
   LogLine _line(LogEntry e, ColorScheme cs) =>
       appLogLine(e, _levelOf(e.level, cs).$1, _privacy);
 
-  
-
-  
-  
-  
-  
-  
-  
-  
   List<LogEntry> _visible() => AppLog.instance.entries
       .where((LogEntry e) => AppLog.passScopeFilter(e,
           selected: _srvFilter, hideSystem: _hideSystem))
       .toList();
 
-  
   int _countOf(String id) =>
       AppLog.instance.entries.where((LogEntry e) => e.serverId == id).length;
 
-  
-  
-  
-  
-  
   List<_SrvOption> _candidates(ServerController sc) {
     final Map<String, _SrvOption> m = <String, _SrvOption>{};
     for (final ServerData s in sc.servers) {
@@ -140,18 +78,17 @@ class _LogPageState extends State<LogPage> {
     }
     for (final LogEntry e in AppLog.instance.entries) {
       final LogScope? s = e.scope;
-      
+
       if (s != null) m.putIfAbsent(s.id, () => _SrvOption(s, ''));
     }
     return m.values.toList();
   }
 
-  
   String _summary(List<_SrvOption> opts) {
     final List<String> names = <String>[
       for (final _SrvOption o in opts)
         if (_srvFilter.contains(o.scope.id)) o.scope.name,
-      
+
       for (final String id in _srvFilter)
         if (!opts.any((_SrvOption o) => o.scope.id == id)) id,
     ];
@@ -161,16 +98,11 @@ class _LogPageState extends State<LogPage> {
     ].join(' · ');
   }
 
-  
   void _resetFilter() => setState(() {
         _srvFilter.clear();
         _hideSystem = false;
       });
 
-  
-  
-  
-  
   Future<void> _openFilterSheet(ServerController sc) async {
     final List<_SrvOption> opts = _candidates(sc);
     await showModalBottomSheet<void>(
@@ -179,8 +111,6 @@ class _LogPageState extends State<LogPage> {
       isScrollControlled: true,
       builder: (BuildContext ctx) => StatefulBuilder(
         builder: (BuildContext ctx, StateSetter setSheet) {
-          
-          
           void bump(VoidCallback mutate) {
             setState(mutate);
             setSheet(() {});
@@ -201,7 +131,7 @@ class _LogPageState extends State<LogPage> {
                               fontSize: 14, fontWeight: FontWeight.w600)),
                       const Spacer(),
                       TextButton(
-                        
+
                         onPressed: _filterActive
                             ? () => bump(() {
                                   _srvFilter.clear();
@@ -215,8 +145,6 @@ class _LogPageState extends State<LogPage> {
                   ),
                 ),
 
-                
-                
                 CheckboxListTile(
                   dense: true,
                   value: _hideSystem,
@@ -249,8 +177,7 @@ class _LogPageState extends State<LogPage> {
                         style: TextStyle(fontSize: 12, color: cs.outline)),
                   )
                 else
-                  
-                  
+
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       maxHeight: MediaQuery.of(ctx).size.height * 0.38,
@@ -305,7 +232,6 @@ class _LogPageState extends State<LogPage> {
                             ? null
                             : () => bump(() {
                                   for (final _SrvOption o in opts) {
-                                    
                                     if (!_srvFilter.remove(o.scope.id)) {
                                       _srvFilter.add(o.scope.id);
                                     }
@@ -331,7 +257,6 @@ class _LogPageState extends State<LogPage> {
     );
   }
 
-  
   Widget _filterChip(ColorScheme cs, List<_SrvOption> opts,
           VoidCallback onTap) =>
       InkWell(
@@ -361,8 +286,6 @@ class _LogPageState extends State<LogPage> {
           ),
         ),
       );
-
-  
 
   void _enterSelection(LogEntry first) => setState(() {
         _selecting = true;
@@ -398,7 +321,6 @@ class _LogPageState extends State<LogPage> {
           ..addAll(next);
       });
 
-  
   List<LogLine> _selectedLines(ColorScheme cs) => AppLog.instance.entries
       .where(_selected.contains)
       .map((LogEntry e) => _line(e, cs))
@@ -418,11 +340,6 @@ class _LogPageState extends State<LogPage> {
     if (ok && mounted) _exitSelection();
   }
 
-  
-  
-  
-  
-  
   Future<void> _exportAll(ColorScheme cs) async {
     final List<LogLine> all =
         _visible().map((LogEntry e) => _line(e, cs)).toList();
@@ -430,13 +347,6 @@ class _LogPageState extends State<LogPage> {
     if (ok && mounted) _exitSelection();
   }
 
-  
-  
-  
-  
-  
-  
-  
   void _showDetail(LogEntry e, ColorScheme cs) {
     final (String label, Color color) = _levelOf(e.level, cs);
     showDialog<void>(
@@ -490,8 +400,7 @@ class _LogPageState extends State<LogPage> {
     final AppLog log = AppLog.instance;
     log.clear();
     _maskCache.clear(); 
-    
-    
+
     log.op('清空应用日志');
     _exitSelection();
   }
@@ -502,15 +411,13 @@ class _LogPageState extends State<LogPage> {
     final AppLog log = AppLog.instance;
     final ColorScheme cs = Theme.of(context).colorScheme;
 
-    
-    
     final List<LogEntry> vis = _visible();
-    
+
     final List<_SrvOption> opts =
         _filterActive ? _candidates(sc) : const <_SrvOption>[];
 
     return PopScope(
-      
+
       canPop: !_selecting,
       onPopInvokedWithResult: (bool didPop, Object? _) {
         if (didPop) return;
@@ -520,8 +427,7 @@ class _LogPageState extends State<LogPage> {
         appBar: _selecting
             ? LogSelectionAppBar(
                 count: _selected.length,
-                
-                
+
                 allSelected: vis.isNotEmpty && vis.every(_selected.contains),
                 onClose: _exitSelection,
                 onToggleAll: () => _toggleAll(vis),
@@ -529,7 +435,7 @@ class _LogPageState extends State<LogPage> {
             : AppBar(
                 title: const Text('日志', style: TextStyle(fontSize: 15)),
                 actions: <Widget>[
-                  
+
                   IconButton(
                     icon: Icon(
                       _privacy ? Icons.visibility_off : Icons.visibility,
@@ -546,11 +452,7 @@ class _LogPageState extends State<LogPage> {
                       Formatter.showToast(S.logRefreshed);
                     },
                   ),
-                  
-                  
-                  
-                  
-                  
+
                   IconButton(
                     icon: Badge.count(
                       count: _srvFilter.length,
@@ -565,9 +467,7 @@ class _LogPageState extends State<LogPage> {
                     tooltip: S.logFilterEntry,
                     onPressed: () => _openFilterSheet(sc),
                   ),
-                  
-                  
-                  
+
                   PopupMenuButton<String>(
                     tooltip: '',
                     icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
@@ -605,11 +505,11 @@ class _LogPageState extends State<LogPage> {
                 count: _selected.length,
                 onCopy: () => _copy(cs),
                 onExportSelected: () => _exportSelected(cs),
-                
+
                 onInvert: () => _invert(vis),
                 onExportAll: () => _exportAll(cs),
                 onClear: _clearAll,
-                
+
                 exportAllLabel: _filterActive ? S.logExportFiltered : null,
               )
             : null,
@@ -618,10 +518,7 @@ class _LogPageState extends State<LogPage> {
             Obx(
               () => ListTile(
                 dense: true,
-                
-                
-                
-                
+
                 leading: Image.asset(
                   sc.current.value?.isTransmission == true
                       ? 'assets/images/transmission.png'
@@ -640,15 +537,13 @@ class _LogPageState extends State<LogPage> {
                 ),
                 trailing:
                     const Icon(Icons.chevron_right, size: AppTheme.iconSize),
-                
+
                 onTap: () => Get.toNamed(Routes.logQb,
                     arguments: sc.current.value),
               ),
             ),
             const Divider(height: 1),
 
-            
-            
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 3),
               child: Row(
@@ -656,15 +551,14 @@ class _LogPageState extends State<LogPage> {
                   const Text('应用日志', style: TextStyle(fontSize: 11)),
                   const SizedBox(width: 6),
                   Obx(() => Text(
-                        
-                        
+
                         _filterActive
                             ? '${_visible().length}/${log.entries.length}'
                             : '${log.entries.length}/${AppLog.maxEntries}',
                         style: const TextStyle(fontSize: 10),
                       )),
                   const Spacer(),
-                  
+
                   if (_filterActive)
                     _filterChip(cs, opts, () => _openFilterSheet(sc)),
                 ],
@@ -674,7 +568,7 @@ class _LogPageState extends State<LogPage> {
             Expanded(
               child: Obx(() {
                 final List<LogEntry> rows = _visible();
-                
+
                 if (log.entries.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.all(24),
@@ -688,8 +582,7 @@ class _LogPageState extends State<LogPage> {
                     ),
                   );
                 }
-                
-                
+
                 if (rows.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.all(24),
@@ -716,7 +609,7 @@ class _LogPageState extends State<LogPage> {
                   );
                 }
                 return ListView.separated(
-                  
+
                   padding: EdgeInsets.only(
                     bottom: _selecting ? LogSelectionBar.listBottomPadding : 0,
                   ),
@@ -729,8 +622,7 @@ class _LogPageState extends State<LogPage> {
                     return ListTile(
                       dense: true,
                       selected: _selecting && checked,
-                      
-                      
+
                       selectedTileColor: cs.primary.withValues(alpha: 0.08),
                       leading: SizedBox(
                         width: 20,
@@ -748,14 +640,9 @@ class _LogPageState extends State<LogPage> {
                               ),
                       ),
                       title: Text(
-                        
+
                         _display(e.message),
-                        
-                        
-                        
-                        
-                        
-                        
+
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11),
@@ -778,15 +665,10 @@ class _LogPageState extends State<LogPage> {
   }
 }
 
-
 class _SrvOption {
   const _SrvOption(this.scope, this.kind);
 
   final LogScope scope;
 
-  
-  
-  
-  
   final String kind;
 }

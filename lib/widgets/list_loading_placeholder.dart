@@ -5,20 +5,6 @@ import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../utils/app_log.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ListLoadingPlaceholder extends StatefulWidget {
   const ListLoadingPlaceholder({super.key});
 
@@ -91,7 +77,6 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
     });
   }
 }
-
 
 class _SkeletonCard extends StatelessWidget {
   const _SkeletonCard();

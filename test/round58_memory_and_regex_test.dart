@@ -1,26 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,7 +16,6 @@ ServerData _srv(String id) => ServerData(
       username: 'u',
       password: 'p',
     );
-
 
 List<Torrent> _many(String prefix, int n) => List<Torrent>.generate(
       n,
@@ -67,10 +43,6 @@ void main() {
 
   tearDown(() => Get.reset());
 
-  
-  
-  
-
   group('第 58 轮 E · M1 缓存总条数阀', () {
     test('E1 常量口径：单台 2 万、总量 4 万（最坏值从 10 万压到 4 万）', () {
       expect(ServerController.kCacheMaxTorrents, 20000);
@@ -92,7 +64,7 @@ void main() {
 
       sc.cacheTorrents('a', _many('a', 20000));
       sc.cacheTorrents('b', _many('b', 20000));
-      
+
       expect(sc.hasAnyCache('a'), isTrue);
       expect(sc.hasAnyCache('b'), isTrue);
 
@@ -111,7 +83,6 @@ void main() {
       sc.servers.assignAll(all);
       sc.current.value = all.first; 
 
-      
       for (int i = 0; i < 7; i++) {
         sc.cacheTorrents('s$i', _many('s$i-', 10));
       }
@@ -125,10 +96,6 @@ void main() {
           reason: '★ 台数阀：最多留 ${ServerController.kCacheMaxServers} 台');
     });
   });
-
-  
-  
-  
 
   group('第 58 轮 F · M3 trackerHost 提为 static final 后结果不变', () {
     test('F1 带 scheme 的完整 URL', () {

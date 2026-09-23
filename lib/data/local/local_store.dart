@@ -4,8 +4,6 @@ import 'secure_prefs.dart';
 
 import '../models/server_data.dart';
 
-
-
 class LocalAccount {
   const LocalAccount({
     required this.displayName,
@@ -13,12 +11,10 @@ class LocalAccount {
     required this.signedInAt,
   });
 
-  
   final String displayName;
 
   final String provider;
 
-  
   final int signedInAt;
 
   factory LocalAccount.fromJson(Map<String, dynamic> json) {
@@ -42,19 +38,6 @@ class LocalAccount {
       );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LocalStore {
   LocalStore._();
 
@@ -64,13 +47,7 @@ class LocalStore {
   static const _kBackupKey = 'torrentmanager.backup.servers';
   static const _kBackupAtKey = 'torrentmanager.backup.at';
 
-  
-
   static Future<List<ServerData>> loadServers() async {
-    
-    
-    
-    
     final Object? v = await SecurePrefs.get(_kServersKey);
     final String raw = v is String ? v : '';
     if (raw.isEmpty) return <ServerData>[];
@@ -91,8 +68,6 @@ class LocalStore {
     await SecurePrefs.set(_kServersKey, raw);
   }
 
-  
-
   static Future<int> loadThemeMode() async {
     final Object? v = await SecurePrefs.get(_kThemeModeKey);
     return v is int ? v : 0;
@@ -101,9 +76,6 @@ class LocalStore {
   static Future<void> saveThemeMode(int mode) =>
       SecurePrefs.set(_kThemeModeKey, mode);
 
-  
-
-  
   static Future<LocalAccount?> loadAccount() async {
     try {
       final Object? raw = await SecurePrefs.get(_kAccountKey);
@@ -117,15 +89,12 @@ class LocalStore {
   }
 
   static Future<void> saveAccount(LocalAccount account) async {
-    
     await SecurePrefs.set(_kAccountKey, jsonEncode(account.toJson()));
   }
 
   static Future<void> clearAccount() async {
     await SecurePrefs.remove(_kAccountKey);
   }
-
-  
 
   static Future<void> saveServersBackup(List<ServerData> servers) async {
     final String raw =
@@ -152,16 +121,13 @@ class LocalStore {
     }
   }
 
-  
   static Future<DateTime?> loadBackupAt() async {
     final Object? v = await SecurePrefs.get(_kBackupAtKey);
     if (v is! int || v <= 0) return null;
     return DateTime.fromMillisecondsSinceEpoch(v);
   }
 
-  
   static Future<bool> hasBackup() async {
-    
     final Object? v = await SecurePrefs.get(_kBackupKey);
     return v is String && v.isNotEmpty;
   }
@@ -171,48 +137,6 @@ class LocalStore {
     await SecurePrefs.remove(_kBackupAtKey);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-  
-  
-  
-  
-  
-  
   static List<ServerData> parseServersJson(String raw) {
     final dynamic decoded;
     try {
@@ -228,7 +152,6 @@ class LocalStore {
       try {
         out.add(ServerData.fromJson(Map<String, dynamic>.from(e)));
       } catch (_) {
-        
       }
     }
     return out;

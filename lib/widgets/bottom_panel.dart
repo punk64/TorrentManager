@@ -4,19 +4,9 @@ import 'package:get/get.dart';
 import '../app/theme.dart';
 import '../controllers/theme_controller.dart';
 
-
-
-
 class BottomPanel {
   BottomPanel._();
 
-  
-  
-  
-  
-  
-  
-  
   static Future<T?> show<T>({
     required Widget child,
     String? title,
@@ -27,9 +17,7 @@ class BottomPanel {
   }) {
     final BuildContext? ctx = context ?? Get.context;
     if (ctx == null) return Future<T?>.value(null);
-    
-    
-    
+
     final ThemeController? tc =
         Get.isRegistered<ThemeController>() ? Get.find<ThemeController>() : null;
     Color? panelBg;
@@ -49,8 +37,7 @@ class BottomPanel {
       builder: (BuildContext context) {
         final double maxH =
             MediaQuery.of(context).size.height * (heightFactor ?? 0.8);
-        
-        
+
         final ThemeData base = Theme.of(context);
         final Color? fg = panelBg == null ? null : AppTheme.contrastOn(panelBg);
         return Theme(

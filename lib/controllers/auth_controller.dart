@@ -3,21 +3,10 @@ import 'package:get/get.dart';
 import '../data/local/local_store.dart';
 import '../utils/app_log.dart';
 
-
-
-
-
-
-
-
-
-
-
 class AuthController extends GetxController {
   final isLoading = false.obs;
   final error = RxnString();
 
-  
   final account = Rxn<LocalAccount>();
 
   @override
@@ -32,14 +21,10 @@ class AuthController extends GetxController {
 
   bool get isSignedIn => account.value != null;
 
-  
   String get displayName => account.value?.displayName ?? 'Signed in';
 
-  
   String get provider => account.value?.provider ?? '';
 
-  
-  
   Future<bool> signInWithProvider(String providerName, {String? name}) async {
     try {
       isLoading.value = true;
@@ -69,7 +54,6 @@ class AuthController extends GetxController {
   Future<bool> signInWithMicrosoft({String? name}) =>
       signInWithProvider('Microsoft', name: name);
 
-  
   Future<void> rename(String name) async {
     final LocalAccount? a = account.value;
     if (a == null || name.trim().isEmpty) return;
@@ -79,8 +63,6 @@ class AuthController extends GetxController {
     AppLog.instance.op('重命名本地账户：${a.displayName} → ${updated.displayName}');
   }
 
-  
-  
   Future<void> signOut() async {
     await LocalStore.clearAccount();
     account.value = null;

@@ -1,23 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -36,8 +16,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/pages/torrent_info_overview_page.dart';
-
-
 
 ServerData qbSrv() => ServerData(
       id: 'qb-1',
@@ -73,10 +51,6 @@ Map<String, dynamic> qbTorrentJson({
       'num_incomplete': 7,
       'save_path': '/downloads',
     };
-
-
-
-
 
 Dio fakeQbDio(
   List<String> calls, {
@@ -117,8 +91,7 @@ Dio fakeQbDio(
         h.resolve(ok('2.11.2'));
         return;
       }
-      
-      
+
       if (path.endsWith('/torrents/files')) {
         h.resolve(ok(<dynamic>[]));
         return;
@@ -127,9 +100,7 @@ Dio fakeQbDio(
         h.resolve(ok(<String, dynamic>{'peers': <String, dynamic>{}}));
         return;
       }
-      
-      
-      
+
       if (path.endsWith('/sync/torrentPeers')) {
         h.resolve(ok(<String, dynamic>{'peers': <String, dynamic>{}}));
         return;
@@ -138,7 +109,7 @@ Dio fakeQbDio(
         h.resolve(ok(<dynamic>[]));
         return;
       }
-      
+
       if (path.endsWith('/torrents/info')) {
         h.resolve(ok(torrents?.call() ?? <Map<String, dynamic>>[]));
         return;
@@ -157,8 +128,7 @@ Dio fakeQbDio(
         h.resolve(writeOk ? ok('') : no(400));
         return;
       }
-      
-      
+
       h.resolve(ok(<String, dynamic>{}));
     },
   ));
@@ -179,15 +149,6 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> drive(
     WidgetTester tester,
     Future<void> Function() action,
@@ -198,7 +159,6 @@ void main() {
     }
   }
 
-  
   Future<TorrentController> pumpDetail(
     WidgetTester tester, {
     required List<String> calls,
@@ -230,9 +190,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     final TorrentController ctrl = Get.find<TorrentController>();
-    
-    
-    
+
     final List<Map<String, dynamic>> seed =
         torrents?.call() ?? <Map<String, dynamic>>[];
     final Torrent t = current ??
@@ -244,16 +202,12 @@ void main() {
     return ctrl;
   }
 
-  
   bool enabled(WidgetTester tester, String label) {
     final Finder f = find.widgetWithText(FilledButton, label);
     expect(f, findsOneWidget, reason: '按钮「$label」应当存在');
     return tester.widget<FilledButton>(f).onPressed != null;
   }
 
-  
-  
-  
   group('A 暂停 / 继续的乐观更新', () {
     testWidgets('★ 调用后**同步**就能看到暂停态，不必等服务器返回',
         (WidgetTester tester) async {
@@ -266,8 +220,7 @@ void main() {
 
       ctrl.clearSelection();
       ctrl.toggleSelect(before.hash);
-      
-      
+
       unawaited(ctrl.pauseSelected());
 
       expect(ctrl.items.first.isPause, isTrue,
@@ -323,15 +276,11 @@ void main() {
     });
   });
 
-  
-  
-  
   group('B 详情页自己做数据源', () {
     testWidgets('★ loadDetailData 后 current 取到服务端新值 —— 不依赖 items',
         (WidgetTester tester) async {
       final List<String> calls = <String>[];
-      
-      
+
       final Torrent stale = Torrent.fromJson(qbTorrentJson(dlSpeed: 0));
       final TorrentController ctrl = await pumpDetail(
         tester,
@@ -384,18 +333,13 @@ void main() {
       ctrl.openDetail(Torrent.fromJson(qbTorrentJson(hash: 'h2')));
       expect(ctrl.dlSamples, isEmpty, reason: '★ 换种子必须清空采样');
       expect(ctrl.ulSamples, isEmpty);
-      
-      
-      
+
       for (int i = 0; i < 30; i++) {
         await tester.pump(const Duration(milliseconds: 60));
       }
     });
   });
 
-  
-  
-  
   group('C 详情页状态区分与校验进度', () {
     testWidgets('★ 运行中：「继续」禁用、「暂停」可点',
         (WidgetTester tester) async {

@@ -90,13 +90,20 @@ android {
         }
     }
 
+    // ★★★ 2026-09-23 铁律：本块的默认包型（**不压缩 = STORED**）与 `release.py` 的
+    //    `run_checks()` 期望值**互为镜像** —— 改一边必须同时改另一边。当天出现过一次
+    //    「只把本文件改成压缩、release.py 没跟着改」⇒ 构建成功但断言必 FAIL、版本号不推进
+    //    （`write_version` 在断言之后）的卡发版故障。判断开关是否真生效**只看产物里 so 的
+    //    压缩态与体积**，别信"构建有没有报错"。
+    //
     // ⚠️ 2026-09-20（推荐落地步骤②）：lite 包开关**参数化**。
     //    标准包（默认，不带 -Plite）：useLegacyPackaging=false → so STORED（不压缩），
-    //      设备直接 mmap、只一份、启动快、占用小。
+    //      设备直接 mmap、只一份、启动快、占用小（≈22.82 MB）。
     //    lite 包（命令行带 -Plite）：useLegacyPackaging=true → so 被 DEFLATE 压缩，
-    //      下载体积减半，但安装后多一份解压副本（占用 +38%），且首装慢一步。
+    //      下载体积减半（≈11~13 MB），但安装后多一份解压副本（占用 +38%），且首装慢一步。
     //    ⚠️ **2026-09-20 用户决定：以后不再编译 lite 包** —— 日常构建**一律不带**
     //    `--android-project-arg`（即标准包）。本开关保留仅为留档，**别再启用 lite**。
+    //    （2026-09-23 用户再次确认：so 不压缩、体积保持 22.82 MB 档。）
     //    （若将来确要恢复 lite，按下面的命令与「先 lite→改名→再标准」顺序走，
     //     并自查 APK 内 so 的压缩方式确为 DEFLATED。）
     //    切换只需在 `flutter build apk` 时加 `--android-project-arg=lite=true`
@@ -108,8 +115,6 @@ android {
     //    **传不到 gradle**（产物与标准包字节级相同、`useLegacyPackaging` 仍为 false，
     //    且第二次构建被判定 up-to-date 只用了 8 秒 —— 两次配置其实一样）。
     //    flutter 的 `-P` / `--android-project-arg` 才是受支持的通道。
-    //    ⚠️ 判断开关是否真的生效，**看体积 / so 压缩态，不要看构建有没有报错** ——
-    //    属性没传进去时构建照样成功，只是 quietly 编成了标准包。
     //    ⚠️ manifest 里**不许**再显式写 `android:extractNativeLibs`：AGP 9 下它与本开关
     //    冲突会**直接构建失败**（"Avoid setting ... explicitly ... instead set
     //    ...useLegacyPackaging"）。已按 AGP 建议从 AndroidManifest.xml 移除，

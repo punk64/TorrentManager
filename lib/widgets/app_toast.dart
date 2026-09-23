@@ -4,63 +4,28 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class AppToast {
   AppToast._();
 
-  
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  
-  
-  
-  
   static const Duration defaultDuration = Duration(milliseconds: 1200);
 
-  
   static const double backgroundOpacity = 0.5;
 
-  
-  
-  
-  
-  
-  
   static const Color warningSurface = Color(0xFFFFB300);
   static const Color onWarningSurface = Color(0xFF1A1A1A);
 
-  
   static final ValueNotifier<_ToastData?> _current =
       ValueNotifier<_ToastData?>(null);
 
-  
   static OverlayEntry? _entry;
 
-  
   static Timer? _timer;
 
-  
   static int _gen = 0;
 
-  
-  
-  
   static void show(
     String message, {
     bool isError = false,
@@ -69,17 +34,13 @@ class AppToast {
   }) {
     if (message.isEmpty) return;
 
-    
-    
     final OverlayState? overlay = navigatorKey.currentState?.overlay;
     if (overlay == null) return;
 
     final BuildContext? ctx = navigatorKey.currentContext;
     final ThemeData? theme = ctx == null ? null : Theme.of(ctx);
     final ColorScheme cs = theme?.colorScheme ?? const ColorScheme.light();
-    
-    
-    
+
     final Color base = isError
         ? cs.error
         : (isWarning ? warningSurface : cs.inverseSurface);
@@ -105,26 +66,19 @@ class AppToast {
     });
   }
 
-  
   static void hide() {
     _timer?.cancel();
     _timer = null;
     _current.value = null;
-    
+
     _entry?.markNeedsBuild();
   }
 
-  
   static void _removeEntry() {
     _entry?.remove();
     _entry = null;
   }
 
-  
-  
-  
-  
-  
   @visibleForTesting
   static void resetForTest() {
     _timer?.cancel();
@@ -140,10 +94,8 @@ class AppToast {
 
   static void error(String message) => show(message, isError: true);
 
-  
   static void warning(String message) => show(message, isWarning: true);
 }
-
 
 class _ToastData {
   const _ToastData({required this.text, required this.bg, required this.fg});
@@ -151,7 +103,6 @@ class _ToastData {
   final Color bg;
   final Color fg;
 }
-
 
 class _ToastLayer extends StatefulWidget {
   const _ToastLayer();
@@ -174,14 +125,13 @@ class _ToastLayerState extends State<_ToastLayer>
       duration: const Duration(milliseconds: 180),
     );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    
-    
+
     _slide = Tween<Offset>(
       begin: const Offset(0, 0.25),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     AppToast._current.addListener(_onData);
-    
+
     if (AppToast._current.value != null) _ctrl.forward();
   }
 
@@ -216,20 +166,12 @@ class _ToastLayerState extends State<_ToastLayer>
     if (data != null) _last = data;
 
     return Align(
-      
-      
-      
-      
-      
-      
-      
-      
+
       alignment: Alignment.bottomCenter,
-      
+
       child: IgnorePointer(
         child: SafeArea(
-          
-          
+
           top: false,
           child: FadeTransition(
             opacity: _fade,
@@ -260,6 +202,5 @@ class _ToastLayerState extends State<_ToastLayer>
     );
   }
 
-  
   _ToastData? _last;
 }

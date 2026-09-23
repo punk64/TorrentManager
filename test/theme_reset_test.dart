@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -18,7 +8,6 @@ import 'package:torrent_manager/app/theme.dart';
 import 'package:torrent_manager/controllers/theme_controller.dart';
 import 'package:torrent_manager/data/local/secure_prefs.dart';
 
-
 const String _p = 'torrentmanager.global.';
 
 ThemePreset presetOf(String id) =>
@@ -27,22 +16,12 @@ ThemePreset presetOf(String id) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
-
   late ThemeController tc;
 
-  
   Future<void> boot() async {
     Get.testMode = true;
     Get.reset();
@@ -58,8 +37,6 @@ void main() {
             (MethodCall call) async => null);
   });
 
-  
-
   group('出厂默认外观 = 明亮系（不再是 #282828 / #1E1E1E）', () {
     test('默认渐变与面板色都是浅色', () async {
       await boot();
@@ -68,7 +45,7 @@ void main() {
       expect(tc.panelColor.value, ThemeController.defaultPanelColor);
       expect(tc.panel1Alpha.value, ThemeController.defaultPanel1Alpha);
       expect(tc.panel2Alpha.value, ThemeController.defaultPanel2Alpha);
-      
+
       expect(tc.gradient1.computeLuminance(), greaterThan(0.8));
       expect(tc.gradient2.computeLuminance(), greaterThan(0.8));
       expect(tc.panelColor.value.computeLuminance(), greaterThan(0.8));
@@ -114,11 +91,7 @@ void main() {
       expect(tc.themeMode.value, 2);
       expect(tc.currentPreset.value, isNull);
       expect(tc.useCustom.value, isFalse);
-      
-      
-      
-      
-      
+
       expect(tc.gradient1, builtinDark.gradient1);
       expect(tc.gradient2, builtinDark.gradient2);
       expect(tc.gradient1.computeLuminance(), lessThan(0.2),
@@ -138,7 +111,6 @@ void main() {
 
       tc.restoreFactoryDefaults();
 
-      
       expect(tc.themeMode.value, 1, reason: '参数还原成默认参数（首启值：明亮）');
       expect(tc.bgModeValue, 0);
       expect(tc.seed.value, AppTheme.seedColors.first);
@@ -148,20 +120,16 @@ void main() {
       expect(tc.panel1Alpha.value, ThemeController.defaultPanel1Alpha);
       expect(tc.panel2Alpha.value, ThemeController.defaultPanel2Alpha);
       expect(tc.fontColor.value, isNull, reason: '字色回到跟随主题');
-      
-      
+
       expect(tc.pageColors.isEmpty, isTrue);
-      
-      
+
       expect(tc.pageBgImage, ThemeController.defaultBackgroundImage);
       expect(tc.menuImagePath.value, ThemeController.defaultMenuImage);
       expect(tc.globalBgEnabled.value, isFalse);
       expect(tc.globalBgImagePath.value, isNull);
       expect(tc.globalBgBlur.value, 0);
       expect(tc.currentPreset.value, isNull, reason: '不再是某套精选主题');
-      
-      
-      
+
       expect(tc.useCustom.value, isTrue);
       expect(tc.isCustomSelected, isTrue);
       expect(tc.isBuiltinMode(1), isFalse);
@@ -170,7 +138,6 @@ void main() {
     test('★「恢复默认」产出的参数集 = 首次启动加载的那套参数', () async {
       await boot();
 
-      
       tc.applyPreset(presetOf('purple_mood'));
       tc.setFontColor(const Color(0xFFFF00FF));
       tc.setPageColor(
@@ -178,7 +145,6 @@ void main() {
       tc.restoreFactoryDefaults();
       final List<Object?> restored = _snapshot(tc);
 
-      
       SharedPreferences.setMockInitialValues(<String, Object>{});
       Get.delete<ThemeController>(force: true);
       final ThemeController fresh = Get.put(ThemeController(), permanent: true);
@@ -245,9 +211,6 @@ void main() {
       await boot();
       expect(tc.bgModeValue, 0, reason: '首次启动已迁移');
 
-      
-      
-      
       SecurePrefs.useMemoryBackendForTest(<String, Object>{
         '${_p}torrentmanager.theme.bgMode': 1,
         '${_p}torrentmanager.theme.grad1': 0xFF4A148C,
@@ -260,7 +223,6 @@ void main() {
     });
   });
 }
-
 
 List<Object?> _snapshot(ThemeController tc) => <Object?>[
       tc.themeMode.value,

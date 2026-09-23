@@ -2,34 +2,20 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:pointycastle/export.dart';
+
+import 'package:pointycastle/api.dart';
+import 'package:pointycastle/block/aes.dart';
+import 'package:pointycastle/block/modes/gcm.dart';
+import 'package:pointycastle/digests/sha256.dart';
+import 'package:pointycastle/key_derivators/api.dart';
+import 'package:pointycastle/key_derivators/pbkdf2.dart';
+import 'package:pointycastle/macs/hmac.dart';
 
 import '../data/local/secure_prefs.dart';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class CryptoBox {
   CryptoBox._();
 
-  
   static const String _kFileKey = 'torrentmanager.fileKey';
 
   static const String _appTag = 'torrentmanager';
@@ -39,52 +25,21 @@ class CryptoBox {
   static const int _keyLen = 32;
   static const int _tagBits = 128;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const int _versionPortable = 2;
   static const String _kdf = 'PBKDF2-HMAC-SHA256';
   static const int _pbkdf2Iterations = 200000;
   static const int _saltLen = 16;
 
-  
   static const String _kdfField = 'kdf';
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const int minIterations = 100000;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   @visibleForTesting
   static int? testIterationsOverride;
 
   static int get _iterations => testIterationsOverride ?? _pbkdf2Iterations;
 
   static Future<Uint8List>? _keyFuture;
-
-  
 
   static final Random _rng = Random.secure();
 
@@ -105,7 +60,6 @@ class CryptoBox {
         final Uint8List k = base64Decode(stored);
         if (k.length == _keyLen) return k;
       } catch (_) {
-        
       }
     }
     final Uint8List key = _randomBytes(_keyLen);
@@ -113,10 +67,7 @@ class CryptoBox {
     return key;
   }
 
-  
   static void resetKeyForTest() => _keyFuture = null;
-
-  
 
   static Uint8List _gcm(
     bool encrypt, {
@@ -132,7 +83,6 @@ class CryptoBox {
     return cipher.process(input);
   }
 
-  
   static Future<String> encrypt(String plain) async {
     final Uint8List key = await _fileKey();
     final Uint8List nonce = _randomBytes(_nonceLen);
@@ -147,13 +97,11 @@ class CryptoBox {
     });
   }
 
-  
   static bool isEnvelope(String text) {
     final Map<String, dynamic>? m = _parseEnvelope(text);
     return m != null;
   }
 
-  
   static bool isPortableEnvelope(String text) {
     final Map<String, dynamic>? m = _parseEnvelope(text);
     return m != null && _isPortableMap(m);
@@ -177,17 +125,10 @@ class CryptoBox {
     }
   }
 
-  
-  
-  
-  
-  
   static Future<String?> tryDecrypt(String text) async {
     final Map<String, dynamic>? m = _parseEnvelope(text);
     if (m == null) return null;
-    
-    
-    
+
     if (_isPortableMap(m)) {
       throw const CryptoBoxException(
           '这是便携备份（口令加密），请用「导入便携备份」并输入口令');
@@ -214,12 +155,6 @@ class CryptoBox {
     }
   }
 
-  
-
-  
-  
-  
-  
   static Uint8List _deriveKey(
     String passphrase,
     Uint8List salt,
@@ -231,10 +166,6 @@ class CryptoBox {
     return d.process(Uint8List.fromList(utf8.encode(passphrase)));
   }
 
-  
-  
-  
-  
   static Future<String> encryptWithPassphrase(
     String plain,
     String passphrase,
@@ -264,13 +195,6 @@ class CryptoBox {
     });
   }
 
-  
-  
-  
-  
-  
-  
-  
   static Future<String> decryptWithPassphrase(
     String text,
     String passphrase,
@@ -293,8 +217,7 @@ class CryptoBox {
     } catch (_) {
       throw const CryptoBoxException('便携备份文件格式损坏（base64 解不开）');
     }
-    
-    
+
     final int iter = (m['iter'] is int) ? m['iter'] as int : 0;
     if (salt.length != _saltLen ||
         nonce.length != _nonceLen ||
@@ -302,13 +225,7 @@ class CryptoBox {
         iter <= 0) {
       throw const CryptoBoxException('便携备份文件格式损坏（参数不合法）');
     }
-    
-    
-    
-    
-    
-    
-    
+
     if (iter < minIterations) {
       throw CryptoBoxException(
           '便携备份的加密强度不足（迭代次数 $iter，低于下限 $minIterations）：'
@@ -325,7 +242,6 @@ class CryptoBox {
     }
   }
 }
-
 
 class CryptoBoxException implements Exception {
   const CryptoBoxException(this.message);

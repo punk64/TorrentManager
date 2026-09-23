@@ -1,19 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -37,7 +21,6 @@ ServerData trSrv() => ServerData(
       port: 9091,
     );
 
-
 Map<String, dynamic> trTorrent({String comment = '', String magnet = ''}) =>
     <String, dynamic>{
       'id': 1,
@@ -56,8 +39,6 @@ Map<String, dynamic> trTorrent({String comment = '', String magnet = ''}) =>
       'magnetLink': magnet,
     };
 
-
-
 Dio fakeTrDio(Map<String, dynamic> torrent, List<dynamic> capturedFields) {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://192.168.1.9:9091'));
   dio.interceptors.add(InterceptorsWrapper(
@@ -71,7 +52,6 @@ Dio fakeTrDio(Map<String, dynamic> torrent, List<dynamic> capturedFields) {
         try {
           parsed = jsonDecode(d);
         } catch (_) {
-          
         }
       }
       if (parsed is Map) method = (parsed['method'] ?? '').toString();
@@ -101,7 +81,6 @@ Dio fakeTrDio(Map<String, dynamic> torrent, List<dynamic> capturedFields) {
   ));
   return dio;
 }
-
 
 Future<List<Torrent>> refreshTr(
     Map<String, dynamic> torrent, List<dynamic> capturedFields) async {
@@ -143,7 +122,7 @@ void main() {
     final List<Torrent> items = await refreshTr(
       trTorrent(
         comment: 'https://tracker.example.com/torrents/12345',
-        
+
         magnet: 'magnet:?xt=urn:btih:${'a' * 40}'
             '&dn=x&tr=http%3A%2F%2Ftr2.example.org%2Fannounce',
       ),

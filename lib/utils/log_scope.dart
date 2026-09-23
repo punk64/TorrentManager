@@ -1,28 +1,10 @@
 import '../data/models/server_data.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LogScope {
   const LogScope(this.id, this.name);
 
-  
   final String id;
 
-  
-  
   final String name;
 
   @override
@@ -36,27 +18,10 @@ class LogScope {
   String toString() => 'LogScope($id, $name)';
 }
 
-
-
-
-
-
 extension ServerDataLogScope on ServerData {
   LogScope get logScope => LogScope(id, name);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 const String kLogServerIdKey = 'logServerId';
-
 
 const String kLogServerNameKey = 'logServerName';

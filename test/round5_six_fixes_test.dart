@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,8 +14,6 @@ import 'package:torrent_manager/pages/server_dialog.dart';
 import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/draggable_fab.dart';
-
-
 
 final Finder _fabButton = find.descendant(
   of: find.byType(DraggableFab),
@@ -46,13 +35,9 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
   test('★ 透明度 100% → 底衬完全透明；0% → 不启用玻璃（不透明）', () {
     final ThemeController tc = Get.put(ThemeController());
 
-    
     tc.setComponentOpacity(1.0);
     expect(tc.glassEnabled, isTrue, reason: '透明度 > 0 即"玻璃开着"');
     expect(tc.glassAlpha, 0.0,
@@ -61,20 +46,15 @@ void main() {
     expect(tc.theme.colorScheme.surface.a, 0.0,
         reason: '★ 必须真的落到 ThemeData 上（这才是用户看到的）');
 
-    
     tc.setComponentOpacity(0.0);
     expect(tc.glassEnabled, isFalse);
     expect(tc.glassAlpha, isNull, reason: '"不启用"用 null 表达，不再用 0');
     expect(tc.theme.colorScheme.surface.a, 1.0);
 
-    
     tc.setComponentOpacity(0.26);
     expect(tc.glassAlpha, closeTo(0.74, 1e-9));
   });
 
-  
-  
-  
   testWidgets('★ 明亮模式下点「自定义主题」→ 勾仍留在明亮模式上', (WidgetTester tester) async {
     final ThemeController tc = Get.put(ThemeController(), permanent: true);
     await tc.load();
@@ -108,7 +88,7 @@ void main() {
     expect(find.text(S.themeCustom), findsOneWidget);
 
     await tester.tap(find.text(S.themeCustom));
-    
+
     for (int i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 150));
     }
@@ -120,9 +100,6 @@ void main() {
     expect(find.text('THEME_PAGE'), findsOneWidget, reason: '确实进了主题页');
   });
 
-  
-  
-  
   testWidgets('★ 缺账号 / 密码时明确提醒，且不发起连接', (WidgetTester tester) async {
     Get.put(ThemeController(), permanent: true);
 
@@ -140,9 +117,6 @@ void main() {
     await tester.tap(find.text('OPEN'));
     await tester.pumpAndSettle();
 
-    
-    
-    
     await tester.enterText(find.byType(TextFormField).at(0), '我的NAS');
     await tester.enterText(find.byType(TextFormField).at(1), '192.168.1.9');
 
@@ -157,9 +131,6 @@ void main() {
         reason: '★ 被拦下了 —— 对话框没关、也没去连服务器');
   });
 
-  
-  
-  
   testWidgets('★ 视口高度为 0 的那一帧：按钮不贴顶，且在指标恢复后自愈', (WidgetTester tester) async {
     Widget host(double mediaHeight) => MaterialApp(
           home: MediaQuery(
@@ -180,14 +151,12 @@ void main() {
           ),
         );
 
-    
     await tester.pumpWidget(host(0));
     await tester.pump(const Duration(milliseconds: 50));
     expect(_fabButton, findsOneWidget);
     expect(tester.getRect(_fabButton).top, greaterThan(100),
         reason: '★ 指标无效时不得把 0 当真实高度、把按钮 clamp 到顶部');
 
-    
     await tester.pumpWidget(host(600));
     await tester.pump(const Duration(milliseconds: 50));
     final Rect r = tester.getRect(_fabButton);
@@ -196,9 +165,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   });
 
-  
-  
-  
   testWidgets('★ 拖过停靠位后松手：能越过边缘，再吸附回边缘', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -219,9 +185,7 @@ void main() {
 
     final TestGesture g = await tester.startGesture(tester.getRect(_fabButton).center);
     await tester.pump(const Duration(milliseconds: 16));
-    
-    
-    
+
     for (int i = 0; i < 4; i++) {
       await g.moveBy(const Offset(-300, 0));
       await tester.pump(const Duration(milliseconds: 16));
@@ -239,9 +203,6 @@ void main() {
         reason: '★ 松手后应吸附到左边缘（视觉左缘 = 0）');
   });
 
-  
-  
-  
   testWidgets('★ 种子页 AppBar 里的服务器名居中', (WidgetTester tester) async {
     Get.put(ThemeController(), permanent: true);
     await tester.pumpWidget(GetMaterialApp(

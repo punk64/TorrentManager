@@ -15,33 +15,11 @@ import '../utils/formatter.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
 @visibleForTesting
 QbMethod Function() qbProbeFactory = QbMethod.new;
 
 @visibleForTesting
 TrMethod Function() trProbeFactory = TrMethod.new;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Future<bool?> showServerDialog(
   BuildContext context, {
@@ -53,16 +31,6 @@ Future<bool?> showServerDialog(
     builder: (BuildContext ctx) => _ServerFormDialog(editing: editing),
   );
 }
-
-
-
-
-
-
-
-
-
-
 
 Future<String?> showConnectionErrorDialog(
   BuildContext context, {
@@ -91,8 +59,7 @@ Future<String?> showConnectionErrorDialog(
             ],
             if (raw != null && raw.isNotEmpty)
               Theme(
-                
-                
+
                 data: Theme.of(context).copyWith(
                   dividerColor: Colors.transparent,
                 ),
@@ -126,28 +93,16 @@ Future<String?> showConnectionErrorDialog(
   );
 }
 
-
 class _ParsedAddress {
   const _ParsedAddress(this.host, this.port, this.useHttps, this.hasScheme);
 
   final String host;
 
-  
   final int? port;
   final bool useHttps;
 
-  
   final bool hasScheme;
 }
-
-
-
-
-
-
-
-
-
 
 _ParsedAddress? _parseAddress(String input) {
   final String s = input.trim();
@@ -165,16 +120,11 @@ _ParsedAddress? _parseAddress(String input) {
     );
   }
 
-  
   String h = s;
   int? port;
   final int slash = h.indexOf('/');
   if (slash >= 0) h = h.substring(0, slash);
 
-  
-  
-  
-  
   if (!h.startsWith('[') && ':'.allMatches(h).length >= 2) {
     if (!_isPlausibleHost(h)) return null;
     return _ParsedAddress(h, null, false, false);
@@ -192,11 +142,6 @@ _ParsedAddress? _parseAddress(String input) {
   if (!_isPlausibleHost(h)) return null;
   return _ParsedAddress(h, port, false, false);
 }
-
-
-
-
-
 
 bool _isPlausibleHost(String h) {
   final String v = h.trim();
@@ -246,10 +191,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       TextEditingController(text: widget.editing?.name ?? '');
   late final TextEditingController _host =
       TextEditingController(text: widget.editing?.host ?? '');
-  
-  
-  
-  
+
   late final TextEditingController _port = TextEditingController(
       text: (widget.editing?.port ??
               (widget.editing?.isTransmission == true ? 9091 : 443))
@@ -264,26 +206,15 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       TextEditingController(text: widget.editing?.password ?? '');
 
   late String _type = widget.editing?.type ?? 'qbittorrent';
-  
-  
+
   late bool _hideDomain = widget.editing?.hideAddress ?? true;
 
-  
   late bool _hidePort = widget.editing?.hidePort ?? true;
 
-  
   bool _saving = false;
 
-  
-  
-  
-  
   bool _saved = false;
 
-  
-  
-  
-  
   bool _obscurePassword = true;
 
   @override
@@ -301,22 +232,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
   bool get _isEdit => widget.editing != null;
   bool get _isQb => _type == 'qbittorrent';
 
-  
-  
-  
-  
-  
-  
   static const EdgeInsets _fieldPadding =
       EdgeInsets.fromLTRB(12, 10, 12, 10);
 
-  
-  
-  
-  
-  
-  
-  
   void _autoSplitPort(String value) {
     final _ParsedAddress? p = _parseAddress(value);
     if (p == null || p.port == null) return;
@@ -331,20 +249,6 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String _draftSummary() {
     final String name = _name.text.trim();
     final String host = _host.text.trim();
@@ -389,9 +293,6 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
     return PopScope<Object?>(
       canPop: true,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -432,20 +333,17 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     initialValue: _type,
                     isDense: true,
                     isExpanded: true,
-                    
-                    
-                    
+
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    
+
                     borderRadius: BorderRadius.circular(AppTheme.radius),
-                    
-                    
+
                     alignment: AlignmentDirectional.centerStart,
                     itemHeight: 48,
-                    
+
                     icon: const Padding(
                       padding: EdgeInsets.only(right: 4),
                       child: Icon(Icons.arrow_drop_down, size: 24),
@@ -456,14 +354,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       isDense: true,
                       contentPadding: _fieldPadding,
                     ),
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+
                     items: <DropdownMenuItem<String>>[
                       for (final String v in <String>[
                         'qbittorrent',
@@ -478,10 +369,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       if (v == null) return;
                       setState(() {
                         _type = v;
-                        
-                        
-                        
-                        
+
                         const Set<String> qbDefaults = <String>{'443', '8080'};
                         if (qbDefaults.contains(_port.text) ||
                             _port.text == '9091') {
@@ -503,10 +391,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       isDense: true,
                       contentPadding: _fieldPadding,
                     ),
-                    
-                    
-                    
-                    
+
                     onChanged: _autoSplitPort,
                     validator: (String? v) {
                       if (v == null || v.trim().isEmpty) {
@@ -585,7 +470,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       isDense: true,
                       contentPadding: _fieldPadding,
                     ),
-                    
+
                     validator: (String? v) =>
                         (v ?? '').trim().isEmpty ? S.srvEnterUsername : null,
                   ),
@@ -595,24 +480,17 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     maxLength: AppTheme.maxLenName,
                     buildCounter: AppTheme.noCounter,
                     style: const TextStyle(fontSize: 13),
-                    
-                    
-                    
-                    
+
                     obscureText: _obscurePassword,
                     autofillHints: const <String>[AutofillHints.password],
                     decoration: InputDecoration(
                       labelText: '密码',
                       isDense: true,
                       contentPadding: _fieldPadding,
-                      
-                      
+
                       hintText: _isEdit ? S.srvPassKeepHint : null,
                       hintStyle: const TextStyle(fontSize: 12),
-                      
-                      
-                      
-                      
+
                       suffixIcon: Semantics(
                         label: _obscurePassword
                             ? S.srvShowPassword
@@ -637,15 +515,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     validator: (String? v) {
                       final String t = (v ?? '').trim();
                       if (t.isNotEmpty) return null;
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
-                      
+
                       return _isEdit ? null : S.srvEnterPassword;
                     },
                   ),
@@ -710,16 +580,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
   }
 
   Future<void> _save() async {
-    
-    
-    
-    
-    
-    
     if (_formKey.currentState?.validate() != true) {
-      
-      
-      
       if (_user.text.trim().isEmpty ||
           (!_isEdit && _pass.text.trim().isEmpty)) {
         AppLog.instance.net(
@@ -731,21 +592,17 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       return;
     }
 
-    
     final _ParsedAddress? parsed = _parseAddress(_host.text);
     if (parsed == null) {
       Formatter.showToast(S.srvAddrInvalid, isError: true);
       return;
     }
-    
-    
+
     final int fallbackPort =
         int.tryParse(_port.text.trim()) ?? (_isQb ? 443 : 9091);
     final int port = parsed.port ?? fallbackPort;
     if (parsed.port != null) _port.text = parsed.port.toString();
 
-    
-    
     final String? lanRaw =
         _lanHost.text.trim().isEmpty ? null : _lanHost.text.trim();
     final int? lanPortRaw = int.tryParse(_lanPort.text.trim());
@@ -759,7 +616,6 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       }
     }
 
-    
     final ServerData s = ServerData(
       id: widget.editing?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
@@ -770,32 +626,18 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       lanHost: lanHost,
       lanPort: lanPort,
       username: _user.text.trim().isEmpty ? null : _user.text.trim(),
-      
-      
-      
-      
-      
-      
+
       password: _pass.text.trim().isEmpty
           ? widget.editing?.password
           : _pass.text.trim(),
-      
-      
-      
-      
-      
-      
-      
+
       useHttps: parsed.hasScheme
           ? parsed.useHttps
           : (widget.editing?.useHttps ?? true),
       hideAddress: _hideDomain,
       hidePort: _hidePort,
       group: widget.editing?.group,
-      
-      
-      
-      
+
       sid: widget.editing?.sid,
       sessionId: widget.editing?.sessionId,
       ratioLimit: widget.editing?.ratioLimit,
@@ -806,27 +648,12 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
     final ServerController ctrl = Get.find<ServerController>();
     bool ok = false;
     Object? error;
-    
+
     String? failReason;
     try {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       if (_isQb) {
         ok = await qbProbeFactory().updateQbServerCookie(s);
       } else {
-        
-        
-        
         final TrLoginResult r = await trProbeFactory().updateTrServerCookie(s);
         ok = r.ok;
         failReason = r.reason;
@@ -840,8 +667,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
 
     if (!ok) {
       setState(() => _saving = false);
-      
-      
+
       final String? action = await showConnectionErrorDialog(
         context,
         reason: failReason ??
@@ -849,31 +675,23 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
         address: s.baseUrl,
         raw: error?.toString(),
       );
-      
-      
-      
+
       if (action == 'retry' && mounted) {
         await _save();
       }
       return;
     }
 
-    
     await ctrl.updateServer(s);
     ctrl.select(s);
     if (!mounted) return;
-    
-    
+
     _saved = true;
     Navigator.of(context).pop(true);
     Formatter.showToast(
       '${_isEdit ? S.srvEdited : S.srvAdded}${s.name}',
     );
 
-    
-    
-    
-    
     unawaited(Get.find<TorrentController>().refresh());
   }
 }

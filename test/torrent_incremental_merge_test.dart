@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/data/models/torrent.dart';
@@ -41,7 +27,7 @@ void main() {
       });
 
       expect(merged.dlSpeed, 2048, reason: '增量里的字段必须生效');
-      
+
       expect(merged.name, 'Ubuntu 24.04.iso');
       expect(merged.size, 5 * 1024 * 1024 * 1024);
       expect(merged.progress, 0.42);
@@ -80,7 +66,7 @@ void main() {
       expect(merged.state, 'seeding');
       expect(merged.numSeeds, 0);
       expect(merged.ratio, 3.5);
-      
+
       expect(merged.dlSpeed, 1024);
       expect(merged.name, 'Ubuntu 24.04.iso');
     });
@@ -118,9 +104,6 @@ void main() {
         'dlspeed': 2048,
       });
 
-      
-      
-      
       expect(blank.name, isEmpty);
       expect(blank.size, 0);
       expect(blank.state, 'unknown');

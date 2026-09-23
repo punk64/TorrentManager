@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/data/models/server_data.dart';
@@ -61,10 +54,10 @@ void main() {
       final t = s.connectionTarget(viaLan: true);
       expect(t.host, '192.168.1.5');
       expect(t.port, 8080);
-      
+
       expect(t.lanHost, '192.168.1.5');
       expect(t.lanPort, 8080);
-      
+
       expect(t.baseUrl, 'http://192.168.1.5:8080');
     });
 
@@ -126,10 +119,6 @@ void main() {
   });
 
   group('★ 回归：网段快判不得否决连接尝试', () {
-    
-    
-    
-
     Future<bool> probeWith(bool tcpResult, void Function(String, int) onCall) async {
       LanDetector.overrideTcp = (String h, int p) async {
         onCall(h, p);

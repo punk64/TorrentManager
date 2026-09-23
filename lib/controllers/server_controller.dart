@@ -21,24 +21,11 @@ import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import 'torrent_controller.dart';
 
-
-
-
-
-
-
 enum ConnStatus { idle, connecting, ok, failed }
 
-
-
-
-
-
 enum ConnStage {
-  
   handshake,
 
-  
   loading;
 
   String get text => switch (this) {
@@ -47,177 +34,65 @@ enum ConnStage {
       };
 }
 
-
-
-
-
-
-
-
-
 class ServerController extends GetxController with WidgetsBindingObserver {
   final servers = <ServerData>[].obs;
   final current = Rxn<ServerData>();
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Directory> Function()? backupFallbackDirProvider;
 
   ServerController({QbMethod? qb, TrMethod? tr})
       : _qbInjected = qb,
         _trInjected = tr;
 
-  
-  
-  
-  
   final QbMethod? _qbInjected;
   final TrMethod? _trInjected;
 
-  
   QbMethod? _qbFallback;
   TrMethod? _trFallback;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   QbMethod get qb => clientForQb(current.value?.id);
   TrMethod get tr => clientForTr(current.value?.id);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   ServerData targetFor(ServerData s) =>
       s.connectionTarget(viaLan: lanUsing[s.id] == true);
 
-  
-  
-  
-  
-  
   QbMethod clientForQb(String? id) {
     final QbMethod? injected = _qbInjected;
     if (id == null) return _qbFallback ??= (injected ?? QbMethod());
     return _bgQb.putIfAbsent(id, () => injected ?? qbFactory());
   }
 
-  
-  
-  
   TrMethod clientForTr(String? id) {
     final TrMethod? injected = _trInjected;
     if (id == null) return _trFallback ??= (injected ?? TrMethod());
     return _bgTr.putIfAbsent(id, () => injected ?? trFactory());
   }
 
-  
-  
-  
-  
   final lanUsing = <String, bool>{}.obs;
 
-  
-  
-  
   final Map<String, bool> _lanMemory = <String, bool>{};
 
-  
   final lanChecking = <String>{}.obs;
 
-  
-  
-  
-  
-  
-  
   final connStatus = <String, ConnStatus>{}.obs;
 
-  
   final connError = <String, String>{}.obs;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   final suspendKind = <String, ConnErrorKind>{}.obs;
 
-  
   final retryAttempt = <String, int>{}.obs;
 
-  
-  
-  
-  
   final Map<String, DateTime> _retryNotBefore = <String, DateTime>{};
 
-  
-  
-  
-  
   @visibleForTesting
   DateTime Function() nowProvider = DateTime.now;
 
-  
   static const List<int> kBackoffSeconds = <int>[3, 6, 12, 30];
 
-  
   static const int kMaxConsecutiveFailures = 10;
 
-  
   bool isSuspended(String id) => suspendKind.containsKey(id);
 
-  
-  
-  
-  
   bool shouldSkipRefresh(String id, {bool force = false}) {
     if (force) return false;
     if (isSuspended(id)) return true;
@@ -226,7 +101,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return false;
   }
 
-  
   void resumeServer(String id) {
     final bool had = suspendKind.remove(id) != null;
     retryAttempt.remove(id);
@@ -239,7 +113,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     retryAttempt.refresh();
   }
 
-  
   void resumeAll() {
     if (suspendKind.isEmpty && retryAttempt.isEmpty && _retryNotBefore.isEmpty) {
       return;
@@ -252,12 +125,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     AppLog.instance.op('手动刷新：解除全部服务器的挂起与退避');
   }
 
-  
-  
-  
-  
-  
-  
   void _resumeIfWasMissingConfig(String id) {
     if (suspendKind[id] == ConnErrorKind.missingConfig) {
       resumeServer(id);
@@ -269,26 +136,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return i >= 0 ? servers[i].name : id;
   }
 
-  
-  
-  
-  
   void _failWith(String id, ConnErrorKind kind, String why) {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     _maybeReprobeLanOnFailure(id, kind);
-    
-    
-    
-    
+
     _connStage.remove(id);
     connStatus[id] = ConnStatus.failed;
     connError[id] = why;
@@ -300,7 +150,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     retryAttempt.refresh();
 
     if (kind.isFatal) {
-      
       suspendKind[id] = kind;
       suspendKind.refresh();
       AppLog.instance.net('$why ｜ 已暂停该服务器的自动重试（${kind.name}）',
@@ -322,29 +171,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         scope: LogScope(id, _nameOf(id)));
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void _maybeReprobeLanOnFailure(String id, ConnErrorKind kind) {
-    
     if (kind != ConnErrorKind.unreachable && kind != ConnErrorKind.unknown) {
       return;
     }
@@ -355,8 +182,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     if (i < 0 || !servers[i].hasLan) return;
 
     _lanFailReprobeInFlight.add(id);
-    
-    
+
     _lanMemory.remove(id);
     _lanMemoryGen.remove(id);
     AppLog.instance.net('连接失败，立即重探局域网可达性：${_nameOf(id)}',
@@ -366,7 +192,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }));
   }
 
-  
   void _succeed(String id) {
     connStatus[id] = ConnStatus.ok;
     connError.remove(id);
@@ -381,21 +206,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
   static ConnErrorKind? configProblemOf(ServerData s) {
-    
-    
-    
-    
-    
-    
-    
     final String t = s.type.trim().toLowerCase();
     if (t != 'qbittorrent' && t != 'transmission') {
       return ConnErrorKind.missingConfig;
@@ -407,15 +218,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return null;
   }
 
-  
-  
-  
-  
-  
   void reportConnecting(String id) {
-    
-    
-    
     final bool changed = connStatus[id] != ConnStatus.connecting;
     _setConn(id, ConnStatus.connecting, null);
     _connStage[id] = ConnStage.handshake;
@@ -428,16 +231,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void reportConnected(String id, {Duration? took, bool sessionOnly = false}) {
     _connStage.remove(id);
     _succeed(id);
@@ -452,11 +245,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     );
   }
 
-  
-  
-  
-  
-  
   void reportRefreshed(String id, {required String detail}) {
     AppLog.instance.view(
       '服务器卡片[${_nameOf(id)}] 信息已刷新：$detail',
@@ -465,83 +253,33 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     );
   }
 
-  
   static String secs(Duration d) =>
       '${(d.inMilliseconds / 1000).toStringAsFixed(1)}s';
 
-  
-  
-  
-  
-  
-  
   final Map<String, ConnStage> _connStage = <String, ConnStage>{};
 
-  
   void reportStage(String id, ConnStage stage) {
     _connStage[id] = stage;
   }
 
-  
   String? stageTextOf(String id) => _connStage[id]?.text;
 
-  
   @visibleForTesting
   Future<void> runNetworkPollForTest() => _onNetworkPoll();
 
-  
   @visibleForTesting
   void primeLanMemory(Map<String, bool> m) => _lanMemory.addAll(m);
 
-  
-  
-  
-  
-  
-  
-  
-  
   final serverVersion = <String, String>{}.obs;
 
-  
   final Set<String> _versionInFlight = <String>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final ioJobs = <String, int>{}.obs;
 
-  
-  
-  
-  
-  
   final manualRefreshing = <String>{}.obs;
 
-  
   bool get isManualRefreshing => manualRefreshing.isNotEmpty;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> ensureVersion(ServerData s) async {
     if (s.id.isEmpty) return;
     final String cached = serverVersion[s.id] ?? '';
@@ -554,7 +292,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       final String v = raw.trim();
       if (v.isEmpty) return;
       serverVersion[s.id] = v;
-      
+
       serverVersion.refresh();
       AppLog.instance.net('${s.name} 版本号：$v', scope: s.logScope);
     } catch (e) {
@@ -565,10 +303,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
-  
   void reportFailure(String id, Object e) {
     final String why = NetError.describe(e);
     _failWith(id, NetError.classify(e), why);
@@ -576,42 +310,15 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     _logCardFailed(id, why);
   }
 
-  
-  
-  
-  
-  
   void reportFailureKind(String id, ConnErrorKind kind, String why) {
     _failWith(id, kind, why);
     AppLog.instance.net('连接失败：$why', scope: LogScope(id, _nameOf(id)));
     _logCardFailed(id, why);
   }
 
-  
-  
-  
-  
-  
-  
   void reportAuthFailure(String id, String reason) {
     final String why = '登录失败：$reason';
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     final ConnErrorKind kind = _isNetworkReason(reason)
         ? ConnErrorKind.unreachable
         : ConnErrorKind.authFailed;
@@ -620,10 +327,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     _logCardFailed(id, why);
   }
 
-  
-  
-  
-  
   static bool _isNetworkReason(String reason) {
     const List<String> keys = <String>[
       '无法解析', 
@@ -636,14 +339,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return keys.any(reason.contains);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _logCardFailed(String id, String why) {
     AppLog.instance.view(
       '服务器卡片[${_nameOf(id)}] 连接失败：$why',
@@ -653,15 +348,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
   Future<bool> relogin(ServerData s) async {
-    
     resumeServer(s.id);
     _setConn(s.id, ConnStatus.connecting, null);
     try {
@@ -669,8 +356,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         qb.setServer(s);
         final bool ok = await qb.updateQbServerCookie(s);
         if (!ok) {
-          
-          
           reportFailureKind(
             s.id,
             qbKindOf(qb),
@@ -694,7 +379,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         }
       }
       reportConnected(s.id);
-      
+
       if (Get.isRegistered<TorrentController>()) {
         unawaited(Get.find<TorrentController>().refresh());
       }
@@ -705,7 +390,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
   static ConnErrorKind qbKindOf(QbMethod c) {
     if (c.lastLoginBanned) return ConnErrorKind.ipBanned;
     if (c.lastLoginMissingCreds) return ConnErrorKind.missingConfig;
@@ -719,130 +403,47 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     } else {
       connError[id] = why;
     }
-    
+
     connStatus.refresh();
     connError.refresh();
   }
 
-  
-
-  
-  
-  
-  
   static Map<String, dynamic>? _asMap(dynamic v) =>
       v is Map ? Map<String, dynamic>.from(v) : null;
 
-  
-  
-  
-  
   final Set<String> _serverInFlight = <String>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, DateTime> _serverInFlightAt = <String, DateTime>{};
 
-  
-  
-  
-  
-  
-  
   @visibleForTesting
   QbMethod Function() qbFactory = QbMethod.new;
 
   @visibleForTesting
   TrMethod Function() trFactory = TrMethod.new;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, int> _bgRid = <String, int>{};
 
-  
   int ridOf(String id) => _bgRid[id] ?? 0;
 
-  
   void setRid(String id, int rid) => _bgRid[id] = rid;
 
-  
   void resetRid(String id) => _bgRid.remove(id);
 
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, ServerState> _bgState = <String, ServerState>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, QbMethod> _bgQb = <String, QbMethod>{};
   final Map<String, TrMethod> _bgTr = <String, TrMethod>{};
 
-  
   void _dropBgClients(String id) {
     _bgQb.remove(id);
     _bgTr.remove(id);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, Future<Object?>> _sessionInFlight = <String, Future<Object?>>{};
 
-  
-  
-  
-  
   Future<T> guardSession<T>(String id, Future<T> Function() run) {
     final Future<Object?>? existing = _sessionInFlight[id];
     if (existing != null) {
-      
       return existing.then((Object? _) => run());
     }
     final Future<T> f = run();
@@ -850,68 +451,32 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return f.whenComplete(() => _sessionInFlight.remove(id));
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> refreshAllServers({
     bool showProgress = false,
     bool force = false,
   }) async {
     if (servers.isEmpty) return;
 
-    
     final bool hard = force || showProgress;
     if (hard) resumeAll();
 
-    
     final List<ServerData> targets = <ServerData>[];
     for (final ServerData s in List<ServerData>.of(servers)) {
-      
-      
-      
-      
       if (shouldSkipRefresh(s.id, force: hard)) continue;
-      
-      
-      
-      
-      
-      
+
       if (!_serverInFlight.contains(s.id)) targets.add(s);
     }
     if (targets.isEmpty) return;
 
     if (showProgress) {
-      
-      
-      
       for (final ServerData s in targets) {
         manualRefreshing.add(s.id);
-        
-        
-        
+
         if (connStatus[s.id] != ConnStatus.ok) reportConnecting(s.id);
       }
       manualRefreshing.refresh();
     }
 
-    
     await Future.wait(targets.map(
       (ServerData s) => _refreshOneServer(s, showProgress: showProgress),
     ));
@@ -921,74 +486,26 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
-  
   Future<void> retryOne(ServerData s) async {
     resumeServer(s.id);
     AppLog.instance.op('手动重试服务器：${s.name}', scope: s.logScope);
-    
+
     if (connStatus[s.id] != ConnStatus.ok) reportConnecting(s.id);
     await _refreshOneServer(s, showProgress: false);
   }
 
-  
-  
-  
-  
-  
-  
   static const int _kMinRefreshVisibleMs = 700;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _refreshOneServer(
     ServerData s, {
     required bool showProgress,
   }) async {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     if (!_serverInFlight.add(s.id)) {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       final DateTime? at = _serverInFlightAt[s.id];
       final String held = at == null
           ? '未知'
           : '${DateTime.now().difference(at).inMilliseconds}ms';
       if (showProgress) {
-        
         AppLog.instance.warn(
           '手动刷新[${s.name}] 被跳过：已有一笔在飞（已持续 $held）',
           scope: s.logScope,
@@ -996,7 +513,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         manualRefreshing.remove(s.id);
         manualRefreshing.refresh();
       } else {
-        
         AppLog.instance.view(
           '服务器卡片[${s.name}] 轮询被跳过：已有一笔在飞（已持续 $held）',
           key: '卡片:${s.id}:inflight-skip',
@@ -1007,42 +523,22 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       return;
     }
     _serverInFlightAt[s.id] = DateTime.now();
-    
+
     final Stopwatch sw = Stopwatch()..start();
     try {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       if (s.hasLan &&
           _lanMemoryGen[s.id] != _netEpoch &&
           lanProbeOf(s.id) == null) {
         _startLanProbe(s);
       }
-      
-      
-      
-      
+
       final Future<void>? probe = lanProbeOf(s.id);
       if (probe != null) await probe;
       await _refreshBackground(s);
     } catch (e) {
-      
       reportFailure(s.id, e);
     } finally {
       if (showProgress) {
-        
-        
-        
         final int rest = _kMinRefreshVisibleMs - sw.elapsedMilliseconds;
         if (rest > 0) {
           await Future<void>.delayed(Duration(milliseconds: rest));
@@ -1051,73 +547,32 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         manualRefreshing.refresh();
       }
       _serverInFlight.remove(s.id);
-      
-      
+
       _serverInFlightAt.remove(s.id);
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _refreshBackground(ServerData s) async {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     if (connStatus[s.id] != ConnStatus.ok) reportConnecting(s.id);
 
-    
-    
-    
     final ConnErrorKind? bad = configProblemOf(s);
     if (bad != null) {
       reportFailureKind(s.id, bad, S.srvConfigIncomplete);
       return;
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
     final ServerData target =
         s.connectionTarget(viaLan: lanUsing[s.id] == true);
 
     if (s.isQbittorrent) {
-      
-      
       final Stopwatch sw = Stopwatch()..start();
-      
-      
+
       final QbMethod c = clientForQb(s.id);
       c.setServer(target);
-      
+
       final bool ok =
           await guardSession<bool>(s.id, () => c.checkQbServerCookie(target));
       if (!ok) {
-        
-        
         reportFailureKind(
           s.id,
           qbKindOf(c),
@@ -1129,47 +584,24 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         );
         return;
       }
-      
-      
-      
-      
-      
-      
-      
-      
+
       final Duration loginTook = sw.elapsed;
       final int rid = _bgRid[s.id] ?? 0;
       final Map<String, dynamic> md = await c.getMaindata(rid: rid);
       _bgRid[s.id] = Formatter.getInt(md, 'rid', def: rid);
-      
+
       final bool full = rid == 0 || Formatter.getBool(md, 'full_update');
 
       final Map<String, dynamic>? ss = _asMap(md['server_state']);
       if (ss != null) {
-        
-        
-        
-        
-        
-        
-        
-        
         final ServerState st = _bgState.putIfAbsent(s.id, ServerState.new);
         st.updateQbData(ss);
-        
-        
-        
-        
-        
+
         if (ss.containsKey('queued_io_jobs')) {
           ioJobs[s.id] = st.queuedIoJobs;
           ioJobs.refresh();
         }
-        
-        
-        
-        
-        
+
         if (current.value?.id == s.id) {
           state.value.updateQbData(ss);
           state.refresh();
@@ -1181,8 +613,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       torrentCache.refresh();
       reportConnected(s.id, took: sw.elapsed);
-      
-      
+
       reportRefreshed(
         s.id,
         detail: '种子 ${torrentsOf(s.id).length} 个'
@@ -1192,23 +623,13 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       await _fetchVersionWith(s, qbClient: c);
     } else if (s.isTransmission) {
-      
-      
-      
-      
       final Stopwatch sw = Stopwatch()..start();
       final TrMethod c = clientForTr(s.id);
       c.setServer(target);
-      
+
       final TrLoginResult r = await guardSession<TrLoginResult>(
           s.id, () => c.checkTrServerCookie());
       if (!r.ok) {
-        
-        
-        
-        
-        
-        
         if (r.routeChanged) {
           AppLog.instance.net(
               '${s.name}：路由切换中，本轮跳过（不判定为登录失败，下一轮重试）',
@@ -1223,21 +644,12 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         return;
       }
       final Duration loginTook = sw.elapsed;
-      
-      
-      
-      
-      
+
       final List<Map<String, dynamic>> raw = await c.torrentGet(lite: true);
-      
-      
-      
-      
-      
-      
+
       cacheTorrents(s.id, TorrentController.fromTr(raw, scope: s.logScope));
       torrentCache.refresh();
-      
+
       reportConnected(s.id, took: sw.elapsed);
       reportRefreshed(
         s.id,
@@ -1249,9 +661,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
   Future<void> _fetchVersionWith(
     ServerData s, {
     QbMethod? qbClient,
@@ -1259,8 +668,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   }) async {
     if ((serverVersion[s.id] ?? '').isNotEmpty) return;
     try {
-      
-      
       String raw =
           s.isQbittorrent ? (qbClient?.probedVersion[s.id] ?? '') : '';
       if (raw.isEmpty) {
@@ -1281,23 +688,20 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   final isBusy = false.obs;
   final isSynced = false.obs;
 
-  
   final backupAt = Rxn<DateTime>();
 
   @override
   void onInit() {
     super.onInit();
-    
+
     loadLocal();
     loadBackupInfo();
     loadBackupDir();
-    
-    
-    
+
     if (!Platform.environment.containsKey('FLUTTER_TEST')) {
       _startNetworkWatch();
     }
-    
+
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -1308,60 +712,25 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     super.onClose();
   }
 
-  
-
-  
   static const Duration _netWatchInterval = Duration(seconds: 5);
 
   Timer? _netWatchTimer;
   Set<String> _lastLocalIps = <String>{};
 
-  
   bool _ipChangePending = false;
 
-  
   static const Duration _lanReprobeCooldown = Duration(seconds: 30);
 
-  
   DateTime? _lastLanReprobeAt;
 
-  
-  
-  
-  
-  
   final Map<String, int> _lanMemoryGen = <String, int>{};
 
-  
-  
-  
-  
   final Set<String> _lanFailReprobeInFlight = <String>{};
 
-  
   int _netEpoch = 0;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final Map<String, int> _lanProbeGenOf = <String, int>{};
 
-  
-  
-  
-  
-  
   void _startNetworkWatch() {
     _refreshLocalIps();
     _netWatchTimer?.cancel();
@@ -1376,10 +745,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    
-    
-    
-    
     if (changed) {
       if (!_ipChangePending) {
         _ipChangePending = true;
@@ -1391,36 +756,15 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
     _ipChangePending = false;
 
-    
     final DateTime now = DateTime.now();
     final DateTime? last = _lastLanReprobeAt;
     if (last != null && now.difference(last) < _lanReprobeCooldown) return;
     _lastLanReprobeAt = now;
 
-    
     _netEpoch++;
     AppLog.instance.net('网络已变化（连续两轮确认），重新探测局域网可达性',
         scope: cur.logScope);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     for (final ServerData s in servers) {
       if (!s.hasLan || s.id == cur.id) continue;
       if (_lanMemoryGen[s.id] == _netEpoch) continue; 
@@ -1432,7 +776,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     await _detectAndApplyLan(cur);
   }
 
-  
   Future<bool> _refreshLocalIps() async {
     try {
       final List<NetworkInterface> ifaces = await NetworkInterface.list(
@@ -1470,34 +813,14 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-
   Future<void> loadLocal() async {
     try {
       isBusy.value = true;
       servers.value = await LocalStore.loadServers();
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       _lanMemory.clear();
       _lanMemoryGen.clear();
-      
-      
-      
-      
+
       final ServerData? cur = current.value;
       final bool stillThere =
           cur != null && servers.any((ServerData e) => e.id == cur.id);
@@ -1507,21 +830,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     } finally {
       isBusy.value = false;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     unawaited(refreshAllServers());
   }
 
@@ -1530,21 +839,16 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     isSynced.value = false;
   }
 
-  
   Future<void> loadBackupInfo() async {
     backupAt.value = await LocalStore.loadBackupAt();
   }
 
-  
-
   Future<void> addServer(ServerData s) async {
     servers.add(s);
     await persist();
-    
+
     AppLog.instance.op('添加服务器：${s.name}（${s.type}）', scope: s.logScope);
-    
-    
-    
+
     unawaited(_refreshOneServer(s, showProgress: false));
   }
 
@@ -1556,38 +860,25 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       servers.add(s);
     }
     await persist();
-    
-    
-    
+
     resumeServer(s.id);
-    
-    
+
     _dropBgClients(s.id);
     AppLog.instance.op('${i >= 0 ? '修改' : '添加'}服务器：${s.name}（${s.type}）',
         scope: s.logScope);
-    
-    
+
     unawaited(_refreshOneServer(s, showProgress: false));
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> deleteServer(String id) async {
     final bool wasCurrent = current.value?.id == id;
-    
+
     final int at = servers.indexWhere((ServerData e) => e.id == id);
     final String name = at >= 0 ? servers[at].name : id;
     servers.removeWhere((ServerData e) => e.id == id);
     if (wasCurrent) {
       current.value = null;
-      
+
       _resetTorrentView(loading: false);
     }
     _clearRuntimeOf(id);
@@ -1597,53 +888,38 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         scope: LogScope(id, name));
   }
 
-  
   void _clearRuntimeOf(String id) {
-    
-    
-    
     _dropCache(id);
-    
+
     lanUsing.remove(id);
     lanChecking.remove(id);
     connStatus.remove(id);
     connError.remove(id);
-    
-    
+
     serverVersion.remove(id);
-    
+
     ioJobs.remove(id);
-    
-    
+
     _bgRid.remove(id);
-    
-    
+
     _bgState.remove(id);
-    
-    
+
     _dropBgClients(id);
     _serverInFlight.remove(id);
     _serverInFlightAt.remove(id);
     manualRefreshing.remove(id);
-    
-    
-    
+
     _connStage.remove(id);
-    
-    
+
     suspendKind.remove(id);
     retryAttempt.remove(id);
     _retryNotBefore.remove(id);
-    
-    
-    
-    
+
     _lanMemory.remove(id);
     _lanMemoryGen.remove(id);
-    
-    
+
     _lanProbeGenOf.remove(id);
-    
+
     torrentCache.refresh();
     lanUsing.refresh();
     lanChecking.refresh();
@@ -1656,10 +932,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     retryAttempt.refresh();
   }
 
-  
-  
-  
-  
   Future<void> reorderServer(int oldIndex, int newIndex) async {
     if (oldIndex < 0 || oldIndex >= servers.length) return;
     final ServerData s = servers.removeAt(oldIndex);
@@ -1669,11 +941,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     AppLog.instance.op('调整服务器排序：${s.name} → 第 ${at + 1} 位', scope: s.logScope);
   }
 
-  
-  
-  
-  
-  
   Future<void> reorderWithinGroup(
     List<String> orderedIds,
     int oldIndex,
@@ -1690,9 +957,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     for (int i = 0; i < result.length; i++) {
       if (!inGroup.contains(result[i].id)) continue;
       final String want = next[k++];
-      
-      
-      
+
       final int at = servers.indexWhere((ServerData s) => s.id == want);
       if (at < 0) continue;
       result[i] = servers[at];
@@ -1704,29 +969,12 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   void select(ServerData s) {
     current.value = s;
-    
-    
-    
-    
+
     _resetTorrentView();
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     final bool rememberedLan = s.hasLan && _lanMemory[s.id] == true;
     final ServerData target = s.connectionTarget(viaLan: rememberedLan);
-    
-    
-    
+
     AppLog.instance.view(
       '服务器卡片[${s.name}] 首笔请求路由：${rememberedLan ? '局域网' : '公网'}'
       '${s.hasLan ? (rememberedLan ? '' : '（待探测）') : '（未配置局域网）'}'
@@ -1739,23 +987,13 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     } else if (s.isTransmission) {
       tr.setServer(target);
     }
-    
+
     if (rememberedLan) {
       lanUsing[s.id] = true;
     } else {
       lanUsing.remove(s.id);
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     if (s.hasLan && _lanMemoryGen[s.id] != _netEpoch) {
       lanChecking.add(s.id);
       lanChecking.refresh();
@@ -1764,60 +1002,19 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     AppLog.instance.op('切换当前服务器：${s.name}（${s.type}）', scope: s.logScope);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void _resetTorrentView({bool loading = true}) {
-    
     if (!Get.isRegistered<TorrentController>()) return;
     Get.find<TorrentController>().resetForServerSwitch(loading: loading);
   }
 
-  
-  
-  
   final Map<String, Future<void>> _lanProbeFutures = <String, Future<void>>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void>? lanProbeOf(String id) => _lanProbeFutures[id];
 
-  
-  
-  
-  
   Future<void> _startLanProbe(ServerData s) {
     final Future<void> f = _detectAndApplyLan(s);
     _lanProbeFutures[s.id] = f;
     unawaited(f.whenComplete(() {
-      
       if (identical(_lanProbeFutures[s.id], f)) {
         _lanProbeFutures.remove(s.id);
       }
@@ -1825,41 +1022,21 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return f;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _detectAndApplyLan(ServerData s) async {
-    
-    
-    
-    
     final Stopwatch sw = Stopwatch()..start();
     AppLog.instance.view(
       '局域网探测[${s.name}] 开始：${s.lanHost}:${s.lanPort}',
       key: '局域网:${s.id}:start',
       scope: s.logScope,
     );
-    
-    
+
     final int gen = _lanProbeGenOf[s.id] = (_lanProbeGenOf[s.id] ?? 0) + 1;
     final bool onLan = await LanDetector.isOnLan(s);
-    
-    
-    
+
     lanChecking.remove(s.id);
     lanChecking.refresh();
-    
+
     if (gen != _lanProbeGenOf[s.id]) {
-      
-      
       AppLog.instance.view(
         '局域网探测[${s.name}] 结果已被更新的探测取代（本次结论作废）'
         ' ｜ 用时 ${secs(sw.elapsed)}',
@@ -1868,29 +1045,16 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       return;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     lanUsing[s.id] = onLan;
-    
-    
+
     _lanMemory[s.id] = onLan;
-    
+
     _lanMemoryGen[s.id] = _netEpoch;
     lanUsing.refresh();
 
     final ServerData? cur = current.value;
     if (cur == null || cur.id != s.id) {
-      
       AppLog.instance.view(
         '局域网探测[${s.name}] ${onLan ? '可达 → 该台此后走局域网' : '不可达 → 该台此后走公网'}'
         '（非当前服务器，仅记录结论） ｜ 用时 ${secs(sw.elapsed)}',
@@ -1899,8 +1063,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       return;
     }
-    
-    
+
     final ServerData target = onLan ? cur.connectionTarget(viaLan: true) : cur;
     if (cur.isQbittorrent) {
       qb.setServer(target);
@@ -1931,95 +1094,59 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   QbMethod? get qbActive => current.value?.isQbittorrent == true ? qb : null;
   TrMethod? get trActive => current.value?.isTransmission == true ? tr : null;
 
-  
-
-  
-
-  
   final backupDir = RxnString();
 
   static const String _kBackupDir = 'torrentmanager.backup.dir';
 
-  
   static const String backupFileName = 'torrentmanager_backup.json';
 
-  
   String? get backupFilePath {
     final String? d = backupDir.value;
     if (d == null || d.isEmpty) return null;
     return '$d/$backupFileName';
   }
 
-  
-  
-  
-  
-  
   Future<void> loadBackupDir() async {
     final Object? v = await Formatter.getGlobalData(_kBackupDir);
     final String s = v is String ? v : '';
     backupDir.value = s.isEmpty ? null : s;
   }
 
-  
   Future<bool> pickBackupDir() async {
     final String? dir = await FilePicker.platform.getDirectoryPath();
     if (dir == null || dir.isEmpty) return false;
     backupDir.value = dir;
-    
-    
-    
+
     await Formatter.saveGlobalData(_kBackupDir, dir);
     AppLog.instance.op('设置备份文件夹：${_logFileName(dir)}');
     return true;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<File> get _fallbackBackupFile async {
     final Directory dir = await (backupFallbackDirProvider?.call() ??
         FileExport.exportDirectory());
     return File('${dir.path}/$backupFileName');
   }
 
-  
   Future<List<File>> _backupCandidates() async {
     final List<File> out = <File>[];
     final String? chosen = backupFilePath;
     if (chosen != null) out.add(File(chosen));
-    
-    
-    
-    
+
     try {
       out.add(await _fallbackBackupFile);
     } catch (_) {
-      
     }
     return out;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<String> saveBackup() async {
     final String raw =
         jsonEncode(servers.map((ServerData s) => s.toJson()).toList());
     final String enc = await CryptoBox.encrypt(raw);
 
     String path = '';
-    
+
     final String? chosen = backupDir.value;
     if (chosen != null && chosen.isNotEmpty) {
       try {
@@ -2027,12 +1154,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         await f.writeAsString(enc, flush: true);
         path = f.path;
       } catch (e) {
-        
         AppLog.instance.warn(
             '备份写入所选文件夹失败，改用应用私有目录：${Formatter.safeErr(e)}');
       }
     }
-    
+
     if (path.isEmpty) {
       final File f = await _fallbackBackupFile;
       await f.writeAsString(enc, flush: true);
@@ -2046,12 +1172,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return path;
   }
 
-  
-  
-  
-  
-  
-  
   Future<String?> exportBackupCopy() async {
     if (servers.isEmpty) return null;
     final String raw =
@@ -2065,8 +1185,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       fileName: name,
       type: FileType.custom,
       allowedExtensions: <String>['json'],
-      
-      
+
       bytes: utf8.encode(enc),
     );
     if (out == null || out.isEmpty) return null;
@@ -2074,20 +1193,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return out;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   static String portableBackupFileName([DateTime? at]) {
     final DateTime d = at ?? DateTime.now();
     final String stamp = '${d.year.toString().padLeft(4, '0')}'
@@ -2096,19 +1201,12 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return 'torrentmanager_backup_portable_$stamp.json';
   }
 
-  
-  
-  
-  
   Future<String> buildPortableBackup(String passphrase) async {
     final String raw =
         jsonEncode(servers.map((ServerData s) => s.toJson()).toList());
     return CryptoBox.encryptWithPassphrase(raw, passphrase);
   }
 
-  
-  
-  
   Future<String?> exportPortableBackup(String passphrase) async {
     if (servers.isEmpty) return null;
     final String enc = await buildPortableBackup(passphrase);
@@ -2117,8 +1215,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       fileName: portableBackupFileName(),
       type: FileType.custom,
       allowedExtensions: <String>['json'],
-      
-      
+
       bytes: utf8.encode(enc),
     );
     if (out == null || out.isEmpty) return null;
@@ -2127,14 +1224,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return out;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<int> importPortableBackup(String text, String passphrase) async {
     final String plain = await CryptoBox.decryptWithPassphrase(text, passphrase);
     final List<ServerData> incoming = LocalStore.parseServersJson(plain);
@@ -2149,19 +1238,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         servers.add(s);
         added++;
       }
-      
-      
-      
+
       _dropBgClients(s.id);
     }
     await persist();
-    
-    
-    
-    
-    
-    
-    
+
     for (final ServerData s in incoming) {
       _resumeIfWasMissingConfig(s.id);
     }
@@ -2170,12 +1251,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return added;
   }
 
-  
-  
-  
   Future<int> restoreBackup() async {
-    
-    
     File? f;
     for (final File c in await _backupCandidates()) {
       if (await c.exists()) {
@@ -2185,14 +1261,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
     if (f == null) throw StateError('BACKUP_FILE_MISSING');
     final String text = await f.readAsString();
-    
-    
-    
-    
-    
-    
-    
-    
+
     final String? plain = await CryptoBox.tryDecrypt(text);
     if (plain == null) {
       throw const CryptoBoxException(
@@ -2208,8 +1277,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         servers.add(r);
         added++;
       }
-      
-      
+
       _dropBgClients(r.id);
       _resumeIfWasMissingConfig(r.id);
     }
@@ -2218,11 +1286,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return added;
   }
 
-  
   Future<void> clearBackup() async {
     final List<String> removed = <String>[];
-    
-    
+
     for (final File f in await _backupCandidates()) {
       if (await f.exists()) {
         await f.delete();
@@ -2235,16 +1301,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
-  
-  
-  
   static String _logFileName(String path) {
     final int i = path.lastIndexOf(RegExp(r'[/\\]'));
     return i >= 0 ? path.substring(i + 1) : path;
   }
 
-  
   String exportJson() {
     final List<Map<String, dynamic>> rows = servers
         .map((ServerData s) => <String, dynamic>{
@@ -2263,8 +1324,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return const JsonEncoder.withIndent('  ').convert(rows);
   }
 
-  
-  
   (int added, int updated) importJson(String raw) {
     final List<ServerData> incoming = LocalStore.parseServersJson(raw);
     int added = 0;
@@ -2272,7 +1331,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     for (final ServerData s in incoming) {
       final int i = servers.indexWhere((ServerData e) => e.id == s.id);
       if (i >= 0) {
-        
         servers[i] = ServerData(
           id: servers[i].id,
           name: s.name.isEmpty ? servers[i].name : s.name,
@@ -2282,8 +1340,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
           username: s.username ?? servers[i].username,
           password: servers[i].password,
           useHttps: s.useHttps,
-          
-          
+
           lanHost: s.lanHost ?? servers[i].lanHost,
           lanPort: s.lanPort ?? servers[i].lanPort,
           sid: servers[i].sid,
@@ -2296,42 +1353,17 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         servers.add(s);
         added++;
       }
-      
-      
+
       _dropBgClients(s.id);
     }
     AppLog.instance.op('导入服务器 JSON：新增 $added 台，更新 $updated 台');
     return (added, updated);
   }
 
-  
-
-  
-  
-  
-  
   final torrentCache = <String, List<Torrent>>{}.obs;
 
-  
-  
   final state = ServerState().obs;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void cacheTorrents(String serverId, List<Torrent> list,
       {bool lite = false}) {
     final List<Torrent> capped = list.length > kCacheMaxTorrents
@@ -2348,9 +1380,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     torrentCache.refresh();
   }
 
-  
-  
-  
   List<Torrent> torrentsOf(String serverId) {
     final List<Torrent>? v = torrentCache[serverId];
     if (v == null) return const <Torrent>[];
@@ -2358,17 +1387,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return v;
   }
 
-  
   bool hasFullCache(String serverId) =>
       torrentCache.containsKey(serverId) && !_liteCacheIds.contains(serverId);
 
-  
   bool hasAnyCache(String serverId) => torrentCache.containsKey(serverId);
 
-  
-  
-  
-  
   void _dropCache(String serverId) {
     torrentCache.remove(serverId);
     _liteCacheIds.remove(serverId);
@@ -2376,34 +1399,16 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     torrentCache.refresh();
   }
 
-  
   final List<String> _lruOrder = <String>[];
 
-  
   final Set<String> _liteCacheIds = <String>{};
 
-  
   static const int kCacheMaxServers = 5;
 
-  
   static const int kCacheMaxTorrents = 20000;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const int kCacheMaxTotalTorrents = 40000;
 
-  
   int get _cachedTotal {
     int n = 0;
     for (final List<Torrent> v in torrentCache.values) {
@@ -2417,17 +1422,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     _lruOrder.add(id);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _evictIfNeeded() {
     final String? keep = current.value?.id;
-    
+
     int guard = _lruOrder.length + 1;
     while (guard-- > 0) {
       final bool tooManyServers = _lruOrder.length > kCacheMaxServers;
@@ -2441,23 +1438,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
   ServerData withSnapshot(ServerData s) =>
       s.copyWith(torrents: torrentsOf(s.id));
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
   void resetServerState() {
     state.value = ServerState();
     state.refresh();
@@ -2466,9 +1449,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   void updateServerState(Map<String, dynamic> serverState) {
     state.value.updateQbData(serverState);
     state.refresh();
-    
-    
-    
+
     final String? id = current.value?.id;
     if (id != null && id.isNotEmpty) {
       ioJobs[id] = state.value.queuedIoJobs;
@@ -2476,23 +1457,32 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  
   int get totalDlSpeed => servers.fold(
         0,
         (int a, ServerData s) =>
             a + torrentsOf(s.id).fold(0, (int b, Torrent t) => b + t.dlSpeed),
       );
 
-  
   int get totalUpSpeed => servers.fold(
         0,
         (int a, ServerData s) =>
             a + torrentsOf(s.id).fold(0, (int b, Torrent t) => b + t.upSpeed),
       );
 
-  
   int get totalTorrents =>
       servers.fold(0, (int a, ServerData s) => a + torrentsOf(s.id).length);
+
+  TorrentStatusCounts get totalStatusCounts {
+    final List<Torrent> all = <Torrent>[];
+    for (final ServerData s in servers) {
+      all.addAll(torrentsOf(s.id));
+    }
+    return TorrentStatusCounts.of(all);
+  }
+
+  int get onlineServerCount => servers
+      .where((ServerData s) => connStatus[s.id] == ConnStatus.ok)
+      .length;
 
   Future<void> toggleHideAddress(String id) async {
     final int i = servers.indexWhere((ServerData e) => e.id == id);
@@ -2503,11 +1493,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         '${servers[i].hideAddress ? '隐藏' : '显示'}服务器地址：${servers[i].name}');
   }
 
-  
-  
-  
-  
-  
   Future<void> toggleHidePort(String id) async {
     final int i = servers.indexWhere((ServerData e) => e.id == id);
     if (i < 0) return;

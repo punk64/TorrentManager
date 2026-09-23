@@ -7,7 +7,6 @@ import '../controllers/theme_controller.dart';
 import 'style_keys.dart';
 import 'theme.dart';
 
-
 IconData pageIconOf(AppPageKey key) {
   switch (key) {
     case AppPageKey.drawer:
@@ -31,23 +30,6 @@ IconData pageIconOf(AppPageKey key) {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class AppPageTheme extends StatelessWidget {
   const AppPageTheme({
     super.key,
@@ -62,35 +44,10 @@ class AppPageTheme extends StatelessWidget {
 
   final Widget child;
 
-  
-  
   final bool applyCardBackground;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final bool pageLevel;
 
-  
-  
-  
-  
-  
   final double? fixedScrim;
 
   @override
@@ -104,26 +61,17 @@ class AppPageTheme extends StatelessWidget {
       return Theme(
         data: base.copyWith(
           scaffoldBackgroundColor: bg ?? base.scaffoldBackgroundColor,
-          
-          
-          
-          
-          
-          
+
           colorScheme: bg == null
               ? base.colorScheme
               : base.colorScheme.copyWith(
                   surface: bg,
                   surfaceContainerLow: bg,
                   surfaceContainer: bg,
-                  
-                  
-                  
+
                   surfaceContainerHighest: bg,
                 ),
-          
-          
-          
+
           appBarTheme: tt == null
               ? base.appBarTheme
               : base.appBarTheme.copyWith(
@@ -136,8 +84,7 @@ class AppPageTheme extends StatelessWidget {
               applyCardBackground && bg != null ? bg : base.canvasColor,
           textTheme: (fg == null && tt == null)
               ? base.textTheme
-              
-              
+
               : base.textTheme
                   .apply(
                     bodyColor: fg,
@@ -156,8 +103,7 @@ class AppPageTheme extends StatelessWidget {
               ? base.primaryIconTheme
               : base.primaryIconTheme.copyWith(color: fg),
         ),
-        
-        
+
         child: pageLevel
             ? Stack(
                 fit: StackFit.expand,
@@ -172,10 +118,6 @@ class AppPageTheme extends StatelessWidget {
   }
 }
 
-
-
-
-
 Color? cardBackgroundFor(AppPageKey page, {bool selected = false}) {
   final ThemeController tc = Get.find<ThemeController>();
   final Color? own = tc.pageColor(page, AppStyleSlot.background);
@@ -183,68 +125,27 @@ Color? cardBackgroundFor(AppPageKey page, {bool selected = false}) {
   return selected ? own.withValues(alpha: 0.9) : own;
 }
 
-
 Color? cardTextFor(AppPageKey page) =>
     Get.find<ThemeController>().pageColor(page, AppStyleSlot.text);
-
 
 Color? pageTitleColorFor(AppPageKey page) =>
     Get.find<ThemeController>().pageColor(page, AppStyleSlot.title);
 
-
 Color? pageTextColorFor(AppPageKey page) =>
     Get.find<ThemeController>().pageColor(page, AppStyleSlot.text);
-
 
 Color? pageBackgroundFor(AppPageKey page) =>
     Get.find<ThemeController>().pageColor(page, AppStyleSlot.background);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class AppPageBackground extends StatelessWidget {
   const AppPageBackground({super.key, this.pageColor, this.fixedScrim});
 
-  
-  
-  
-  
   static const Key scrimKey = ValueKey<String>('appPageBackgroundScrim');
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const double fixedScrimValue = 0.62;
 
-  
   final Color? pageColor;
 
-  
-  
-  
-  
   final double? fixedScrim;
 
   @override
@@ -252,23 +153,15 @@ class AppPageBackground extends StatelessWidget {
     final ThemeController tc = Get.find<ThemeController>();
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Obx(() {
-      
-      
-      
-      
       final ImageProvider<Object>? img =
           tc.renderGlobalBgDecorationImage?.image;
       if (img != null) return _globalImage(tc, img, isDark);
-      
+
       final Decoration? deco = tc.backgroundDecoration;
       if (deco != null) {
-        
-        
-        
-        
         return _scrimmed(Container(decoration: deco), isDark);
       }
-      
+
       return Container(
         color: pageColor ??
             (isDark ? AppTheme.darkScaffold : AppTheme.lightScaffold),
@@ -276,23 +169,6 @@ class AppPageBackground extends StatelessWidget {
     });
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _scrimmed(Widget background, bool isDark) {
     final double? fixed = fixedScrim;
     if (fixed == null) return background;
@@ -302,11 +178,10 @@ class AppPageBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: <Widget>[
         background,
-        
+
         IgnorePointer(
           child: ColoredBox(
-            
-            
+
             key: AppPageBackground.scrimKey,
             color: (isDark ? Colors.black : Colors.white).withValues(alpha: a),
           ),
@@ -315,18 +190,15 @@ class AppPageBackground extends StatelessWidget {
     );
   }
 
-  
   Widget _globalImage(
     ThemeController tc,
     ImageProvider<Object> img,
     bool isDark,
   ) {
-    
     final double brightness = tc.renderGlobalBgBrightness;
     final double fade = tc.renderGlobalBgFade.clamp(0.0, 1.0);
     final double blur = tc.renderGlobalBgBlur;
 
-    
     final Color? tint = brightness == 0
         ? null
         : (brightness > 0 ? Colors.white : Colors.black)
@@ -341,7 +213,7 @@ class AppPageBackground extends StatelessWidget {
       colorBlendMode: tint == null ? null : BlendMode.srcATop,
       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
     );
-    
+
     if (fade > 0) {
       bg = ColorFiltered(
         colorFilter: AppTheme.saturationFilter(1.0 - fade),
@@ -354,12 +226,7 @@ class AppPageBackground extends StatelessWidget {
         child: bg,
       );
     }
-    
-    
-    
-    
-    
-    
+
     return _scrimmed(bg, isDark);
   }
 }

@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,9 +32,7 @@ ServerData trSrv() => ServerData(
       port: 9091,
     );
 
-
 const String kIpv6 = '2409:8a00:6b10:1c30:1a2b:3c4d:5e6f:7a8b';
-
 
 Map<String, dynamic> peer(String ip, {int port = 51413}) => <String, dynamic>{
       'ip': ip,
@@ -72,15 +61,10 @@ void main() {
             (MethodCall call) async => null);
     Get.testMode = true;
     Get.reset();
-    
+
     IpGeo.offline = true;
   });
 
-  
-  
-  
-  
-  
   Dio fakeDio() {
     final Dio dio = Dio(BaseOptions(baseUrl: 'http://127.0.0.1:1'));
     dio.interceptors.add(InterceptorsWrapper(
@@ -96,9 +80,6 @@ void main() {
   }
 
   Future<void> pumpPeers(WidgetTester tester, ServerData srv) async {
-    
-    
-    
     final ServerController sc = Get.put(ServerController(
       qb: QbMethod(dio: fakeDio()),
       tr: TrMethod(dio: fakeDio()),
@@ -110,7 +91,7 @@ void main() {
     ));
 
     sc.current.value = srv;
-    
+
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump(const Duration(milliseconds: 50));
@@ -122,9 +103,6 @@ void main() {
         .assignAll(ips.map(peer).toList(growable: false));
   }
 
-  
-  
-  
   group('① 归属地：公网才查，内网本地判定', () {
     testWidgets('★ 内网 IP 不发起查询（无转圈），直接出本地判定的文案',
         (WidgetTester tester) async {
@@ -160,9 +138,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('② IP 完整显示与协议徽章', () {
     testWidgets('★ 39 字符的 IPv6 完整显示，并标 IPv6',
         (WidgetTester tester) async {
@@ -186,9 +161,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ 第三行的累计总量', () {
     testWidgets('★ qBittorrent：显示与该 Peer 的累计上传 / 下载',
         (WidgetTester tester) async {
@@ -214,9 +186,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ 行最右侧的操作按钮', () {
     testWidgets('★ qB：复制 IP / 复制 IP:端口 / 封禁 三个都在',
         (WidgetTester tester) async {
@@ -242,9 +211,6 @@ void main() {
     });
   });
 
-  
-  
-  
   testWidgets('★ 点「复制 IP」把 IP 写进系统剪贴板',
       (WidgetTester tester) async {
     final List<dynamic> copied = <dynamic>[];
@@ -265,15 +231,11 @@ void main() {
     expect(copied.isNotEmpty, isTrue, reason: '★ 应发生一次剪贴板写入');
     expect(copied.last['text'], '10.0.0.31');
 
-    
     await tester.tap(find.byIcon(Icons.copy_all).first);
     await tester.pump();
     expect(copied.last['text'], '10.0.0.31:51413');
   });
 
-  
-  
-  
   test('★ 封禁走 /transfer/banPeers，且参数是 ip:port', () async {
     final List<RequestOptions> reqs = <RequestOptions>[];
     final Dio dio = Dio(BaseOptions(baseUrl: 'http://192.168.1.10:8080'));
@@ -289,9 +251,7 @@ void main() {
     expect(reqs, hasLength(1));
     expect(reqs.single.path, '/api/v2/transfer/banPeers',
         reason: '★ 旧代码写成 /torrents/banPeers，端点不存在 → 点了没效果');
-    
-    
-    
+
     expect(
       (reqs.single.data as Map<String, dynamic>?)?['peers'],
       '1.2.3.4:51413',

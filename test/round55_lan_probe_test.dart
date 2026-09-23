@@ -1,27 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -31,9 +7,6 @@ import 'package:torrent_manager/controllers/server_controller.dart';
 import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/utils/lan_detector.dart';
 import 'package:torrent_manager/utils/net_error.dart';
-
-
-
 
 ServerData _lanSrv() => ServerData(
       id: 'qb-1',
@@ -48,7 +21,6 @@ ServerData _lanSrv() => ServerData(
       password: 'adminadmin',
     );
 
-
 Future<void> _pump() =>
     Future<void>.delayed(const Duration(milliseconds: 1));
 
@@ -57,8 +29,6 @@ void main() {
     LanDetector.overrideProbe = null;
     LanDetector.overrideTcp = null;
   });
-
-  
 
   test('第 55 轮 A · 冷启动没有记忆 → select 必定先探测', () async {
     int probes = 0;
@@ -101,8 +71,6 @@ void main() {
             '不是"每次都重探"（后者会让 3 秒轮询每拍多付 0.6 秒）');
   });
 
-  
-
   test('第 55 轮 B · 探测超时统一 600ms（不再有 800 / 1500 两档）', () {
     expect(LanDetector.kProbeTimeout.inMilliseconds, 600,
         reason: '★ 两档的实测效果相反：人在外面连家里的私有地址会把'
@@ -111,8 +79,6 @@ void main() {
 
   test('第 55 轮 B2 · 探测不可达地址时不超过 600ms 量级（真实 Socket）',
       () async {
-    
-    
     final ServerData s = ServerData(
       id: 'dead',
       name: '不可能连上的',
@@ -134,8 +100,6 @@ void main() {
             '是**串行**的，最坏 2.3 秒，而这段等待毫无收益（结论必然是不可达）');
   });
 
-  
-
   test('第 55 轮 C · 走局域网时首次网络失败 → 立刻重探并把路由改回公网',
       () async {
     int probes = 0;
@@ -153,8 +117,6 @@ void main() {
     expect(probes, 1, reason: '前置：开局探测到局域网可达');
     expect(sc.lanUsing[s.id], isTrue, reason: '前置：当前走局域网');
 
-    
-    
     reachable = false;
     sc.reportFailureKind(s.id, ConnErrorKind.unreachable, '连接超时');
     await _pump();

@@ -9,24 +9,6 @@ import '../utils/formatter.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LogSelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LogSelectionAppBar({
     super.key,
@@ -67,11 +49,6 @@ class LogSelectionAppBar extends StatelessWidget implements PreferredSizeWidget 
   }
 }
 
-
-
-
-
-
 class LogSelectionBar extends StatelessWidget {
   const LogSelectionBar({
     super.key,
@@ -84,10 +61,8 @@ class LogSelectionBar extends StatelessWidget {
     this.exportAllLabel,
   });
 
-  
   static const double barHeight = 56;
 
-  
   static const double listBottomPadding = 76;
 
   final int count;
@@ -97,12 +72,6 @@ class LogSelectionBar extends StatelessWidget {
   final VoidCallback onExportAll;
   final VoidCallback onClear;
 
-  
-  
-  
-  
-  
-  
   final String? exportAllLabel;
 
   @override
@@ -111,9 +80,7 @@ class LogSelectionBar extends StatelessWidget {
     final bool none = count == 0;
     return Material(
       color: cs.surfaceContainerHigh,
-      
-      
-      
+
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppTheme.cardBorder(cs))),
@@ -188,12 +155,6 @@ class LogSelectionBar extends StatelessWidget {
   }
 }
 
-
-
-
-
-
-
 LogLine appLogLine(LogEntry e, String label, bool masked) => LogLine(
       time: e.formattedTime,
       level: label,
@@ -201,31 +162,17 @@ LogLine appLogLine(LogEntry e, String label, bool masked) => LogLine(
       message: masked ? Formatter.maskLogText(e.message) : e.message,
     );
 
-
 LogLine qbLogLine(QbLog l, String label, bool masked) => LogLine(
       time: Formatter.setDate(l.timestamp),
       level: label,
       message: masked ? Formatter.maskLogText(l.message) : l.message,
     );
 
-
-
-
 Future<void> copyLogLines(List<LogLine> lines) async {
   if (lines.isEmpty) return;
   await Clipboard.setData(ClipboardData(text: LogExport.buildText(lines)));
   Formatter.showToast(LogExport.copiedMessage(lines.length));
 }
-
-
-
-
-
-
-
-
-
-
 
 Future<bool> exportLogLines(
   BuildContext context, {
@@ -255,7 +202,6 @@ Future<bool> exportLogLines(
     if (masked) {
       Formatter.showToast('${S.logExportOk(n)}$fileName');
     } else {
-      
       Formatter.showToast(S.logExportPrivacyOff(n), isWarning: true);
     }
     AppLog.instance.op('导出日志：$fileName（$n 条，${masked ? '已打码' : '未打码'}）');
@@ -268,7 +214,6 @@ Future<bool> exportLogLines(
     return false;
   }
 }
-
 
 Future<String?> askExportFileName(BuildContext context, String suggested) {
   final TextEditingController ctrl =

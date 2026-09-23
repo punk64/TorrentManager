@@ -1,25 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -36,8 +14,6 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/crypto_box.dart';
-
-
 
 ServerData srv({
   String id = 'qb-1',
@@ -58,18 +34,11 @@ ServerData srv({
       password: 'p',
     );
 
-
-
-
-
-
 class _SessionQbServer implements HttpClientAdapter {
   _SessionQbServer(this.log, {this.onUnauthedVersion});
 
-  
   final List<String> log;
 
-  
   final void Function()? onUnauthedVersion;
 
   bool _hookFired = false;
@@ -145,7 +114,7 @@ class _SessionQbServer implements HttpClientAdapter {
 
 QbMethod _qbWith(_SessionQbServer server) {
   final Dio dio = Dio(BaseOptions(
-    
+
     validateStatus: (int? s) => s != null && s < 500,
   ));
   dio.httpClientAdapter = server;
@@ -164,7 +133,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     Get.testMode = true;
     Get.reset();
-    
+
     CryptoBox.testIterationsOverride = CryptoBox.minIterations;
   });
 
@@ -172,16 +141,12 @@ void main() {
     CryptoBox.testIterationsOverride = null;
   });
 
-  
-
   test('★ 探测期间切到局域网：必须在新路由上登录，而不是放弃导致 403', () async {
     final List<String> log = <String>[];
     final ServerData pub = srv(host: '5.5.5.5', lanHost: '10.0.0.1', lanPort: 8080);
     final ServerData lan = pub.connectionTarget(viaLan: true);
     expect(lan.host, '10.0.0.1', reason: '前置：connectionTarget 应给出局域网地址');
 
-    
-    
     QbMethod? self;
     final QbMethod c = _qbWith(_SessionQbServer(
       log,
@@ -192,18 +157,14 @@ void main() {
     final bool ok = await c.checkQbServerCookie(pub);
     expect(ok, isTrue, reason: '★ 修复前：这里直接 false，上层裸奔请求 → 403 挂起');
 
-    
     expect(_loginsTo(log, '10.0.0.1'), 1,
         reason: '★ 登录要发到切换后的局域网地址');
     expect(_loginsTo(log, '5.5.5.5'), 0,
         reason: '★ 不该再把登录浪费在已被放弃的公网路由上');
 
-    
-    
     try {
       await c.getTorrentList();
     } catch (_) {
-      
     }
     expect(
       log.any((String e) => e.startsWith('200 GET 10.0.0.1/api/v2/torrents/info')),
@@ -221,8 +182,6 @@ void main() {
     expect(_loginsTo(log, '10.9.9.9'), 1, reason: '常规路径：登录一次');
   });
 
-  
-
   test('★ 列表请求 403（会话失效）：补登录后重试成功，不再误报密码错误', () async {
     final List<String> log = <String>[];
     int infoCalls = 0;
@@ -239,11 +198,10 @@ void main() {
         if (p.endsWith('/auth/login')) {
           h.resolve(ok('Ok.'));
         } else if (p.endsWith('/app/version')) {
-          
           h.resolve(ok('v4.6.2'));
         } else if (p.endsWith('/torrents/info')) {
           infoCalls++;
-          
+
           h.resolve(infoCalls == 1
               ? Response<dynamic>(
                   requestOptions: o, statusCode: 403, data: 'Forbidden')
@@ -276,7 +234,6 @@ void main() {
     Get.put<ThemeController>(ThemeController(), permanent: true);
     final TorrentController ctrl = Get.put(TorrentController());
 
-    
     await Future<void>.delayed(const Duration(milliseconds: 300));
     log.clear();
     infoCalls = 0;
@@ -291,8 +248,6 @@ void main() {
         reason: '★ 不能再把这次 403 上报成 authFailed 挂起');
   });
 
-  
-
   test('★ addServer / updateServer 后立即刷新该卡片', () async {
     final List<String> log = <String>[];
     final ServerController sc = ServerController(qb: _qbWith(_SessionQbServer(log)));
@@ -300,7 +255,7 @@ void main() {
     final ServerData s = srv(id: 'qb-2', host: '10.0.0.9', port: 8080);
 
     await sc.addServer(s);
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 200));
 
     expect(
@@ -311,7 +266,6 @@ void main() {
     expect(sc.connStatus['qb-2'], ConnStatus.ok,
         reason: '★ 卡片应直接亮起（连接成功）');
 
-    
     log.clear();
     final ServerData s2 = s.copyWith(host: '10.0.0.10');
     await sc.updateServer(s2);

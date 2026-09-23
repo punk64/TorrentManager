@@ -24,17 +24,6 @@ import '../widgets/slidable_tile.dart';
 import '../widgets/sort_filter_panel.dart';
 import 'drawer_page.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class TorrentListPage extends StatefulWidget {
   const TorrentListPage({super.key});
 
@@ -48,57 +37,39 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   bool _selecting = false;
 
-  
-  
   final Set<String> _expanded = <String>{};
 
-  
   bool _drawerOpen = false;
 
-  
   bool _cardOpen = false;
 
-  
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  
   late final Worker _serverWorker;
 
-  
-  
   final ScrollController _scrollCtl = ScrollController();
-  
+
   Timer? _scrollIdleTimer;
-  
+
   bool _scrolling = false;
   static const Duration _kScrollIdle = Duration(milliseconds: 120);
 
-  
-  
   Timer? _kwTimer;
-  
-  
-  
-  
-  
+
   static const Duration _kKeywordDebounce = Duration(milliseconds: 220);
 
   @override
   void initState() {
     super.initState();
-    
-    
+
     ctrl.setListVisible(true);
-    
-    
-    
-    
+
     _serverWorker =
         ever<ServerData?>(ctrl.serverCtrl.current, (ServerData? s) {
       if (!mounted || _expanded.isEmpty) return;
       setState(_expanded.clear);
     });
-    
+
     _scrollCtl.addListener(_onScroll);
   }
 
@@ -108,21 +79,16 @@ class _TorrentListPageState extends State<TorrentListPage> {
     _scrollIdleTimer?.cancel();
     _kwTimer?.cancel();
     _scrollCtl.dispose();
-    
+
     if (Get.isRegistered<TorrentController>()) ctrl.setListVisible(false);
     _search.dispose();
     super.dispose();
   }
 
-  
-  
-  
-  
-  
   void _onScroll() {
     if (!_scrolling) {
       _scrolling = true;
-      
+
       ctrl.setScrollPaused(true);
     }
     _scrollIdleTimer?.cancel();
@@ -130,29 +96,18 @@ class _TorrentListPageState extends State<TorrentListPage> {
       if (!mounted) return;
       _scrolling = false;
       ctrl.setScrollPaused(false);
-      
+
       unawaited(ctrl.refreshAuto());
     });
   }
 
-  
   void _onCardSlideChanged(bool open) {
     if (!mounted || _cardOpen == open) return;
     setState(() => _cardOpen = open);
   }
 
-  
-  
-  
-  
-  
-  
   List<Torrent> get _list => ctrl.visibleItems;
 
-  
-  
-  
-  
   Color _actColor(MaterialColor ramp) =>
       Theme.of(context).brightness == Brightness.dark
           ? ramp.shade300
@@ -160,10 +115,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
-    
     return PopScope(
       canPop: !_cardOpen && !_drawerOpen,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -174,7 +125,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
           return;
         }
         if (_drawerOpen) {
-          
           _scaffoldKey.currentState?.closeDrawer();
         }
       },
@@ -187,10 +137,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         if (mounted) setState(() => _drawerOpen = open);
       },
       appBar: AppBar(
-        
-        
-        
-        
+
         leading: _selecting
             ? IconButton(
                 icon: const Icon(Icons.close, size: AppTheme.iconSize),
@@ -202,30 +149,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
                 ),
               ),
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         flexibleSpace: Padding(
           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
           child: Center(
             child: ConstrainedBox(
-              
+
               constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width * 0.4,
               ),
@@ -235,15 +164,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
+
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -253,7 +174,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
             ),
           ),
         ),
-        
+
         title: Align(
           alignment: Alignment.centerLeft,
           child: _selecting
@@ -262,11 +183,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
         ),
         actions: <Widget>[
           if (_selecting) ...<Widget>[
-            
-            
+
             IconButton(
               icon: const Icon(Icons.play_arrow, size: AppTheme.iconSize),
-              
+
               tooltip: '开始做种',
               color: _actColor(Colors.green),
               onPressed: () async {
@@ -299,11 +219,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 _exitSelect();
               },
             ),
-            
-            
-            
-            
-            
+
             Obx(() {
               final bool isTr = Get.find<ServerController>()
                       .current
@@ -345,8 +261,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 ],
               );
             }),
-            
-            
+
             IconButton(
               icon: const Icon(Icons.delete, size: AppTheme.iconSize),
               tooltip: S.delete,
@@ -358,10 +273,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               },
             ),
           ] else ...<Widget>[
-            
-            
-            
-            
+
             IconButton(
               icon: const Icon(Icons.tune, size: AppTheme.iconSize),
               tooltip: '排序与筛选',
@@ -372,15 +284,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               tooltip: '多选',
               onPressed: () => setState(() => _selecting = true),
             ),
-            
-            
-            
-            
-            
-            
-            
-            
-            
+
             Obx(
               () => IconButton(
                 icon: Icon(
@@ -398,24 +302,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 },
               ),
             ),
-            
+
           ],
         ],
       ),
       drawer: const AppDrawer(),
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       body: Stack(
         children: <Widget>[
           AutoRefresh(
@@ -423,13 +315,9 @@ class _TorrentListPageState extends State<TorrentListPage> {
             enabled: !_selecting,
             child: Obx(() {
           if (ctrl.isLoading.value && ctrl.items.isEmpty) {
-            
             return const ListLoadingPlaceholder();
           }
-          
-          
-          
-          
+
           final ServerController sc = Get.find<ServerController>();
           final ServerData? cur = sc.current.value;
           final String? why = cur == null ? null : sc.connError[cur.id];
@@ -437,11 +325,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
           final bool hasError =
               ctrl.error.value != null || (suspended && why != null);
           if (hasError) {
-            
-            
-            
-            
-            
             final bool authFailed = why != null && why.startsWith('登录失败');
             return Center(
               child: Padding(
@@ -472,7 +355,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                       )
                     else
                       TextButton.icon(
-                        
+
                         onPressed: () => ctrl.refresh(),
                         icon: const Icon(Icons.refresh, size: 16),
                         label: Text(S.retry),
@@ -492,18 +375,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
           );
           }),
           ),
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
           Positioned.fill(
             child: Visibility(
               visible: !_selecting,
@@ -512,10 +384,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               maintainAnimation: true,
               child: DraggableFab(
                 topInset: kToolbarHeight + MediaQuery.of(context).padding.top,
-                
-                
-                
-                
+
                 initialYRatio: DraggableFab.listPageInitialYRatio,
                 onPressed: () => Get.toNamed(Routes.torrentAdd),
               ),
@@ -529,8 +398,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-
   Widget _searchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 3),
@@ -540,14 +407,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         buildCounter: AppTheme.noCounter,
         style: const TextStyle(fontSize: 12),
         decoration: InputDecoration(
-          
-          
-          
-          
-          
-          
-          
-          
+
           filled: true,
           fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
           prefixIcon: const Icon(Icons.search, size: AppTheme.iconSize),
@@ -563,7 +423,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
           hintText: S.search,
           hintStyle: const TextStyle(fontSize: 12),
           isDense: true,
-          
+
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
@@ -573,30 +433,17 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void _onKeywordInput(String v) {
     setState(() {}); 
     _kwTimer?.cancel();
     _kwTimer = Timer(_kKeywordDebounce, () {
       if (!mounted) return;
       ctrl.setKeyword(v);
-      
+
       setState(() {});
     });
   }
 
-  
   void _clearKeywordNow() {
     _kwTimer?.cancel();
     _search.clear();
@@ -681,8 +528,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
       .where((Torrent t) => ctrl.selected.contains(t.hash))
       .fold(0, (int a, Torrent t) => a + t.size);
 
-  
-
   Widget _body(BuildContext context) {
     final List<Torrent> list = _list;
     if (list.isEmpty) {
@@ -698,34 +543,21 @@ class _TorrentListPageState extends State<TorrentListPage> {
       );
     }
     return RefreshIndicator(
-      
-      
+
       onRefresh: () {
         AppLog.instance.act('种子列表', '下拉[刷新]');
         return ctrl.refresh();
       },
-      
-      
-      
-      
+
       child: SlidableAutoCloseGroup(
         child: ListView.builder(
-          
+
           controller: _scrollCtl,
-          
-          
-          
-          
-          
-          
-          
-          
+
           addAutomaticKeepAlives: false,
           padding: const EdgeInsets.only(top: 4, bottom: 88),
           itemCount: list.length,
-          
-          
-          
+
           itemBuilder: (BuildContext context, int i) => AppPageTheme(
             key: ValueKey<String>(list[i].hash),
             page: AppPageKey.torrentCard,
@@ -737,14 +569,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _tile(Torrent t) {
     return Obx(() {
       final bool selected = ctrl.selected.contains(t.hash);
@@ -753,39 +577,26 @@ class _TorrentListPageState extends State<TorrentListPage> {
           cardBackgroundFor(AppPageKey.torrentCard, selected: selected) ??
               (selected ? cs.secondaryContainer : cs.surfaceContainerLow);
 
-      
-      
-      
-      
-      
-      
-      
       return SlidableTile(
       margin: const EdgeInsets.fromLTRB(10, 4, 10, 4),
       motion: SlidableMotionKind.scroll,
-      
+
       extentRatio: 0.30,
-      
-      
-      
+
       slotCount: 2,
       borderRadius: BorderRadius.circular(AppTheme.radius),
-      
+
       contentBackground: cardBg,
       enabled: !_selecting,
-      
-      
+
       onLongPress: () {
         AppLog.instance.act('种子列表', '卡片[长按多选]', target: t.name);
         setState(() => _selecting = true);
         ctrl.toggleSelect(t.hash);
       },
-      
+
       onSlideChanged: _onCardSlideChanged,
-      
-      
-      
-      
+
       onTap: () => _openDetail(t),
       startActions: <SlidableActionItem>[
         SlidableActionItem(
@@ -793,9 +604,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
           badgeColor: Colors.indigoAccent,
           tooltip: S.querySubTorrents,
           onPressed: () {
-            
-            
-            
             AppLog.instance.act('种子列表', '右滑[查询辅种]', target: t.name);
             _showSubTorrents(t);
           },
@@ -805,10 +613,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         SlidableActionItem(
           icon: t.isPause ? Icons.play_arrow : Icons.pause,
           badgeColor: t.isPause ? Colors.green : Colors.orangeAccent,
-          
-          
-          
-          
+
           tooltip: t.isPause ? S.actResume : S.actPause,
           onPressed: () {
             AppLog.instance.act(
@@ -833,25 +638,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
           },
         ),
       ],
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       child: _pauseFade(
         t,
         Container(
-          
+
           margin: EdgeInsets.zero,
           decoration: BoxDecoration(
             color: cardBg,
@@ -863,11 +654,9 @@ class _TorrentListPageState extends State<TorrentListPage> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               InkWell(
-                
+
                 onTap: () => _openDetail(t),
-                
-                
-                
+
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                   child: Column(
@@ -912,14 +701,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
                               color: Formatter.setStatusColor(t.state, cs),
                             ),
                           ),
-                          
-                          
-                          
+
                           if (t.isPause) ...<Widget>[
                             const SizedBox(width: 6),
                             _pausedChip(cs),
                           ],
-                          
+
                           InkWell(
                             onTap: () => setState(() {
                               if (!_expanded.add(t.hash)) _expanded.remove(t.hash);
@@ -971,21 +758,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   ),
                 ),
               ),
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
               Container(
                 width: double.infinity,
                 color: _sectionTint(cardBg),
@@ -996,14 +769,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
+
                         Expanded(
                           flex: 2,
                           child: Column(
@@ -1034,25 +800,20 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              
-                              
-                              
+
                               DiskIoChip(written: t.downloaded, read: t.uploaded),
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        
+
                         Expanded(
                           flex: 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                            
-                            
-                            
-                            
+
                             _metricRow(Icons.save_alt,
                                 Formatter.setSize(t.newSize), strong: true),
                             const SizedBox(height: 3),
@@ -1066,15 +827,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppTheme.radiusBar),
                       child: LinearProgressIndicator(
@@ -1093,18 +846,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     });
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _pauseFade(Torrent t, Widget child) {
     if (!t.isPause) return child;
     return Opacity(
@@ -1121,9 +862,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
   Widget _pausedChip(ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -1138,14 +876,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Color _sectionTint(Color cardBg) {
     final bool onDark =
         ThemeData.estimateBrightnessForColor(cardBg) == Brightness.dark;
@@ -1153,14 +883,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
         .withValues(alpha: AppTheme.sectionTintShift);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _metricRow(IconData icon, String text, {bool strong = false}) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Row(
@@ -1184,28 +906,21 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
   String _siteHost(Torrent t) => t.site;
 
-  
   String _metaLine(Torrent t) {
     final List<String> parts = <String>[];
     final String cat = (t.category ?? '').trim();
     if (cat.isNotEmpty) parts.add(cat);
     final String tags = (t.tags ?? '').trim();
     if (tags.isNotEmpty) parts.add(tags);
-    
+
     parts.add(
       '${S.fieldSeeders} '
       '${Formatter.getSeederCount(t.numComplete, t.numIncomplete, t.transferPeers)}',
     );
     final String site = _siteHost(t);
     if (site.isNotEmpty) {
-      
-      
       parts.add(ctrl.siteMasked.value
           ? Formatter.maskSite(site)
           : site);
@@ -1213,8 +928,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return parts.join(' · ');
   }
 
-  
-  
   Widget _detail(Torrent t, ColorScheme cs) {
     Widget kv(String k, String v) => Padding(
           padding: const EdgeInsets.only(top: 2),
@@ -1249,14 +962,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _openDetail(Torrent t) {
     if (_selecting) {
       ctrl.toggleSelect(t.hash);
@@ -1268,22 +973,16 @@ class _TorrentListPageState extends State<TorrentListPage> {
     Get.toNamed(Routes.torrentInfo);
   }
 
-  
-
   void _exitSelect() {
     ctrl.clearSelection();
     setState(() => _selecting = false);
   }
 
   Future<void> _onSelected(Future<void> Function() action) async {
-    
-    
-    
     if (ctrl.selected.isEmpty) return;
     await action();
   }
 
-  
   Future<void> _single(
     Torrent t,
     Future<void> Function() action, {
@@ -1295,27 +994,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     if (!silent) await action();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _showSubTorrents(Torrent t) async {
-    
-    
-    
-    
     final List<Torrent> subs = ctrl.items
         .where((Torrent x) => TorrentController.isCrossSeed(t, x))
         .toList();
@@ -1337,7 +1016,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 final Torrent s = subs[i];
                 final ColorScheme cs = Theme.of(context).colorScheme;
                 final String site = s.site;
-                
+
                 Widget line(String text) => Text(
                       text,
                       maxLines: 1,
@@ -1361,13 +1040,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      
-                      
+
                       line('${S.fieldSiteShort} ${site.isEmpty ? '-' : site}'
                           ' · ${S.fieldSeeders} '
                           '${Formatter.getSeederCount(s.numComplete, s.numIncomplete, s.transferPeers)}'
                           ' · ${Formatter.setStatus(s.state)}'),
-                      
+
                       line('${Formatter.setSize(s.size)}'
                           ' · ${S.fieldRatioShort} ${Formatter.setRatio(s.ratio)}'
                           ' · ${S.fieldUpShort} ${Formatter.setSize(s.uploaded)}'
@@ -1385,17 +1063,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-
-  
   Future<void> _confirmDelete() async {
-    
-    
     if (ctrl.selected.isEmpty) return;
     final DeleteOptions? opt = await Formatter.showDeleteTorrent(
       context,
@@ -1405,8 +1073,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
       defaultNoSubDeleteFiles: false,
     );
     if (opt == null) return;
-    
-    
+
     await ctrl.deleteSelected(
       deleteFiles: opt.deleteFiles,
       deleteSub: opt.deleteSub,
@@ -1415,12 +1082,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     _exitSelect();
   }
 }
-
-
-
-
-
-
 
 class _SpeedTitle extends StatefulWidget {
   const _SpeedTitle();
@@ -1436,9 +1097,6 @@ class _SpeedTitleState extends State<_SpeedTitle> {
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      
-      
-      
       if (!mounted) return;
       if (ModalRoute.of(context)?.isCurrent != true) return;
       setState(() {});
@@ -1454,11 +1112,7 @@ class _SpeedTitleState extends State<_SpeedTitle> {
   @override
   Widget build(BuildContext context) {
     final TorrentController ctrl = Get.find<TorrentController>();
-    
-    
-    
-    
-    
+
     final Color? bg = Get.find<ThemeController>().effectiveBackgroundColor;
     final bool dark = bg == null
         ? Theme.of(context).brightness == Brightness.dark

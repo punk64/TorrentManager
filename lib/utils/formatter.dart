@@ -16,30 +16,9 @@ import 'strings.dart';
 import 'app_log.dart';
 import 'i18n.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Formatter {
   Formatter._();
 
-  
-  
-
-  
-  
   static String getString(Map? json, String key, {String def = ''}) {
     if (json == null) return def;
     final dynamic v = json[key];
@@ -84,8 +63,6 @@ class Formatter {
     return def;
   }
 
-  
-  
   static bool getBool(Map? json, String key, {bool def = false}) {
     if (json == null) return def;
     final dynamic v = json[key];
@@ -112,17 +89,8 @@ class Formatter {
     return v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
   }
 
-  
-  
-  
-
-  
-  
-  
-  
   static const int fmtCacheSize = 2048;
 
-  
   static final _FmtCache<String> _cacheSize =
       _FmtCache<String>(fmtCacheSize);
   static final _FmtCache<String> _cacheSizeCompact =
@@ -138,7 +106,6 @@ class Formatter {
   static final _FmtCache<int> _cacheColorKind =
       _FmtCache<int>(fmtCacheSize);
 
-  
   @visibleForTesting
   static void clearFormatCache() {
     _cacheSize.clear();
@@ -150,12 +117,6 @@ class Formatter {
     _cacheColorKind.clear();
   }
 
-  
-  
-  
-  
-  
-  
   static String setSize(num bytes) {
     final String? hit = _cacheSize.get(bytes);
     if (hit != null) return hit;
@@ -179,14 +140,8 @@ class Formatter {
     return '$s ${units[i]}';
   }
 
-  
   static String bytes(int bytes) => setSize(bytes);
 
-  
-  
-  
-  
-  
   static String setSizeCompact(num bytes) {
     final String? hit = _cacheSizeCompact.get(bytes);
     if (hit != null) return hit;
@@ -209,8 +164,6 @@ class Formatter {
     return '${v.toStringAsFixed(1)}${units[i]}';
   }
 
-  
-  
   static String setSpeed(num bytesPerSec) {
     if (bytesPerSec <= 0) return '0 B/s';
     final String? hit = _cacheSpeed.get(bytesPerSec);
@@ -220,17 +173,11 @@ class Formatter {
     return out;
   }
 
-  
   static String speed(int bytesPerSec) => setSpeed(bytesPerSec);
 
-  
-  
   static String setTime(int seconds) {
     if (seconds <= 0) return '-';
-    
-    
-    
-    
+
     final int d = seconds ~/ 86400;
     final int h = (seconds % 86400) ~/ 3600;
     final int m = (seconds % 3600) ~/ 60;
@@ -241,7 +188,6 @@ class Formatter {
     return '$s${S.unitSecond}';
   }
 
-  
   static String setDuration(int seconds) => setTime(seconds);
 
   static String setEta(int seconds) {
@@ -261,13 +207,6 @@ class Formatter {
         .format(DateTime.fromMillisecondsSinceEpoch(epochSeconds * 1000));
   }
 
-  
-  
-  
-  
-  
-  
-  
   static String setLastActivity(int? epochSeconds) {
     if (epochSeconds == null || epochSeconds <= 0) return S.activeNever;
     final Duration diff =
@@ -280,7 +219,6 @@ class Formatter {
     return '${diff.inDays}${S.unitDay}${S.activeAgo}';
   }
 
-  
   static String setRatio(num ratio) {
     final String? hit = _cacheRatio.get(ratio);
     if (hit != null) return hit;
@@ -289,9 +227,6 @@ class Formatter {
     return out;
   }
 
-  
-  
-  
   static String setProgress(double progress) {
     final String? hit = _cacheProgress.get(progress);
     if (hit != null) return hit;
@@ -300,20 +235,10 @@ class Formatter {
     return out;
   }
 
-  
-  
-  
-
-  
-  
-  
-  
-  
   static String setStatus(String state) {
     final String s = state.toLowerCase();
     if (s.isEmpty) return S.stUnknownState;
 
-    
     if (s.contains('error')) return S.error;
     if (s.contains('missingfiles')) return S.stMissingFiles;
     if (s.contains('moving')) return S.stMoving;
@@ -321,10 +246,8 @@ class Formatter {
     if (s.contains('checkingresumedata')) return S.stCheckingResume;
     if (s.contains('checking')) return S.stVerifyColon.replaceAll(': ', '');
 
-    
     if (s.contains('metadl')) return S.stMetaDl;
 
-    
     if (s.contains('pausedup') ||
         s.contains('pausedseed') ||
         s.contains('stoppedup')) {
@@ -336,18 +259,10 @@ class Formatter {
       return S.stPausedDl;
     }
 
-    
     if (s.contains('queued')) return S.stQueued;
 
-    
-    
-    
-    
-    
-    
     if (s == 'stopped') return S.stPaused;
 
-    
     if (s.contains('up') || s.contains('seed') || s.contains('upload')) {
       return S.stSeeding;
     }
@@ -356,9 +271,6 @@ class Formatter {
     return S.stUnknownState;
   }
 
-  
-  
-  
   static Color setStatusColor(String state, ColorScheme cs) {
     switch (_statusColorKind(state)) {
       case 0:
@@ -376,14 +288,6 @@ class Formatter {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   static int _statusColorKind(String state) {
     final int? hit = _cacheColorKind.get(state);
     if (hit != null) return hit;
@@ -412,8 +316,6 @@ class Formatter {
     return out;
   }
 
-  
-  
   static IconData statusIcon(String state) {
     final IconData? hit = _cacheIcon.get(state);
     if (hit != null) return hit;
@@ -425,10 +327,7 @@ class Formatter {
   static IconData _calcStatusIcon(String state) {
     final String s = state.toLowerCase();
     if (s.contains('error') || s.contains('missingfiles')) return Icons.error;
-    
-    
-    
-    
+
     if (s.contains('paused') || s.contains('stop')) return Icons.pause;
     if (s.contains('check')) return Icons.fact_check_outlined;
     if (s.contains('moving') || s.contains('allocating')) return Icons.sync;
@@ -443,9 +342,6 @@ class Formatter {
     return Icons.help_outline;
   }
 
-  
-  
-  
   static IconData iconExtension(String fileName) {
     final String n = fileName.toLowerCase().trim();
     if (n.isEmpty) return Icons.insert_drive_file;
@@ -477,22 +373,9 @@ class Formatter {
     return Icons.insert_drive_file;
   }
 
-  
-  
-  
-  
-  
-  
   static String getSeederCount(int totalSeeds, int totalLeechs, int active) =>
       '$totalSeeds/$totalLeechs($active)';
 
-  
-
-  
-  
-  
-  
-  
   static const Set<String> _logFileExt = <String>{
     'txt', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg',
     'csv', 'dat', 'db', 'rar', 'zip', 'tar', 'gz', 'iso', 'img', 'bin',
@@ -502,30 +385,13 @@ class Formatter {
     'webp', 'bmp', 'svg', 'png',
   };
 
-  
-  
   static final RegExp _reLogIp =
       RegExp(r'\b((?:\d{1,3}\.){3}\d{1,3})(:\d{1,5})?\b');
-  
-  
-  
-  
-  
-  
+
   static final RegExp _reLogHost = RegExp(
       r'\b([A-Za-z][A-Za-z0-9-]*(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})(?![\w-])(:\d{1,5})?');
   static final RegExp _reStartsWithDigit = RegExp(r'^\d');
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String maskLogText(String raw) {
     if (raw.isEmpty) return raw;
     String out = raw.replaceAllMapped(_reLogIp, (Match m) {
@@ -535,9 +401,9 @@ class Formatter {
     out = out.replaceAllMapped(_reLogHost, (Match m) {
       final String host = m.group(1) ?? '';
       final String port = m.group(2) ?? '';
-      
+
       if (host.isEmpty || _reStartsWithDigit.hasMatch(host)) return m.group(0)!;
-      
+
       if (_logFileExt.contains(host.split('.').last.toLowerCase())) {
         return m.group(0)!;
       }
@@ -546,42 +412,23 @@ class Formatter {
     return out;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String maskSite(String host) {
     final String s = host.trim();
     if (s.isEmpty) return s;
 
     final List<String> seg = s.split('.');
     if (seg.length < 2) {
-      
       if (s.length <= 4) return '***';
       return '${s.substring(0, 1)}***${s.substring(s.length - 1)}';
     }
-    
+
     final String tail = '.${seg.last}';
     final String main = seg[seg.length - 2];
     if (main.length <= 2) return '***$tail'; 
-    
+
     return '${main.substring(0, 1)}***$tail';
   }
 
-  
-  
-  
-  
   static int? sumSeederCount(dynamic stats, bool isSeeder) {
     if (stats is! List) return null;
     final String key = isSeeder ? 'seederCount' : 'leecherCount';
@@ -596,10 +443,6 @@ class Formatter {
     }
     return used == 0 ? null : total;
   }
-
-  
-  
-  
 
   static Map<String, int> getTotalCounts(List<Torrent> list) {
     final Map<String, int> map = <String, int>{
@@ -645,8 +488,6 @@ class Formatter {
     };
   }
 
-  
-  
   static List<double> updateLineChartData(List<num> samples) {
     if (samples.isEmpty) return <double>[0, 0];
     final List<double> out =
@@ -664,15 +505,8 @@ class Formatter {
   static String setGlobalRatio(num session, num alltime) =>
       '${setRatio(session)} / ${setRatio(alltime)}';
 
-  
   static String thousands(num v) => NumberFormat.decimalPattern().format(v);
 
-  
-  
-  
-
-  
-  
   static Map<String, List<ServerData>> getServersGroupData(
     List<ServerData> servers, {
     bool enableGroup = true,
@@ -685,33 +519,10 @@ class Formatter {
     return map;
   }
 
-  
-  
-  
-
   static const String _globalPrefix = 'torrentmanager.global.';
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static bool persistSuspended = false;
 
-  
-  
-  
-  
-  
-  
   static const String _themeKeyPrefix = 'torrentmanager.theme';
 
   static Future<void> saveGlobalData(String key, Object? value) {
@@ -737,8 +548,6 @@ class Formatter {
     return def;
   }
 
-  
-  
   static List<String> getFilterFields() => <String>[
         'name',
         'state',
@@ -756,18 +565,8 @@ class Formatter {
         'tracker',
       ];
 
-  
-  
-  
-  
-  
-  
-  
   static String safeErr(Object e) => NetError.describe(e);
 
-  
-  
-  
   static Future<bool> checkConnection() async {
     try {
       final List<InternetAddress> r =
@@ -779,24 +578,11 @@ class Formatter {
     }
   }
 
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String safeFileName(String raw) {
     String s = raw
         .replaceAll(RegExp(r'[\x00-\x1F\x7F/\\:*?"<>|]'), '_')
         .trim();
-    
+
     s = s.replaceAll(RegExp(r'[.\s]+$'), '');
     if (s.isEmpty || s == '.' || s == '..') s = 'torrent';
     if (s.length > 80) s = s.substring(0, 80);
@@ -833,19 +619,6 @@ class Formatter {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String maskHost(String host) {
     final String h = host.trim();
     if (h.isEmpty) return '***';
@@ -870,18 +643,6 @@ class Formatter {
     return 'Basic ${base64EncodeUtf8(raw)}';
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static final RegExp _reTrackerWithScheme =
       RegExp(r'(?:https?|udp)://(?:www\.)?([^/&:?\s]+)');
   static final RegExp _reTrackerBare = RegExp(r'&tr=(?:www\.)?([^/&:?\s]+)');
@@ -890,18 +651,14 @@ class Formatter {
     if (raw == null || raw.trim().isEmpty) return null;
     try {
       final String text = _percentDecode(raw);
-      
-      
-      
+
       final String withScheme =
           _reTrackerWithScheme.firstMatch(text)?.group(1) ?? '';
-      
+
       final String bare = _reTrackerBare.firstMatch(text)?.group(1) ?? '';
       final String host = withScheme.isNotEmpty ? withScheme : bare;
       if (host.isEmpty) return null;
-      
-      
-      
+
       final String lower = host.toLowerCase();
       if (lower == 'http' || lower == 'https' || lower == 'udp') return null;
       return decodeIdn(host);
@@ -910,7 +667,6 @@ class Formatter {
     }
   }
 
-  
   static String _percentDecode(String s) {
     if (!s.contains('%')) return s;
     try {
@@ -921,15 +677,11 @@ class Formatter {
     }
   }
 
-  
-  
-  
   static String decodeIdn(String host) {
     if (!host.toLowerCase().contains('xn--')) return host;
     return host.split('.').map(decodePunycodeLabel).join('.');
   }
 
-  
   static String decodePunycodeLabel(String label) {
     const int base = 36;
     const int tmin = 1;
@@ -940,10 +692,7 @@ class Formatter {
     if (!lower.startsWith('xn--')) return label;
     final String body = lower.substring(4);
     final int pos = body.lastIndexOf('-');
-    
-    
-    
-    
+
     final List<int> output =
         pos > 0 ? body.substring(0, pos).codeUnits.toList() : <int>[];
     final String rest = pos >= 0 ? body.substring(pos + 1) : body;
@@ -976,7 +725,6 @@ class Formatter {
     return String.fromCharCodes(output);
   }
 
-  
   static int _punycodeDigit(int code) {
     if (code >= 0x61 && code <= 0x7A) return code - 0x61;
     if (code >= 0x41 && code <= 0x5A) return code - 0x41;
@@ -984,7 +732,6 @@ class Formatter {
     return -1;
   }
 
-  
   static int _punycodeAdapt(int delta, int numPoints, bool firstTime) {
     const int base = 36;
     const int tmin = 1;
@@ -1001,9 +748,6 @@ class Formatter {
     return k + (((base - tmin + 1) * d) ~/ (d + skew));
   }
 
-  
-  
-  
   static String getIpInfo(String ip) {
     final String v = ip.trim();
     if (v.isEmpty) return S.unknown;
@@ -1017,35 +761,18 @@ class Formatter {
     if (a == 192 && b == 168) return L.t('内网 IP');
     if (a == 127) return L.t('本机');
     if (a == 169 && b == 254) return L.t('链路本地');
-    
-    
+
     return 'IPv4';
   }
 
-  
-  
-  
-  
   static bool ipNeedsLookup(String ip) {
     final String info = getIpInfo(ip);
     return info == 'IPv4' || info == 'IPv6';
   }
 
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
   static bool getNewVersion(String remote, String local) =>
       compareVersions(remote, local) > 0;
 
-  
   static int compareVersions(String remote, String local) {
     final List<int> r = _versionParts(remote);
     final List<int> l = _versionParts(local);
@@ -1068,19 +795,6 @@ class Formatter {
     return out;
   }
 
-  
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static void showToast(
     String message, {
     bool isError = false,
@@ -1090,12 +804,6 @@ class Formatter {
     AppToast.show(message, isError: isError, isWarning: isWarning);
   }
 
-  
-  
-  
-  
-  
-  
   static String _oneLine(String s) {
     final String one = s.replaceAll(RegExp(r'\s+'), ' ').trim();
     return one.length <= NetError.maxFallbackLength
@@ -1103,7 +811,6 @@ class Formatter {
         : '${one.substring(0, NetError.maxFallbackLength)}\u2026';
   }
 
-  
   static Future<T?> showCustomBottomSheet<T>({
     required Widget child,
     String? title,
@@ -1117,17 +824,14 @@ class Formatter {
         context: context,
       );
 
-  
-  
-  
-  
-  
   static Future<void> showTerms(BuildContext context) =>
       _showLegal(context, S.termsTitle, S.termsBody);
 
-  
   static Future<void> showPrivacy(BuildContext context) =>
       _showLegal(context, S.privacyTitle, S.privacyBody);
+
+  static Future<void> showOpenSource(BuildContext context) =>
+      _showLegal(context, S.openSourceTitle, S.openSourceBody);
 
   static Future<void> _showLegal(
     BuildContext context,
@@ -1152,9 +856,6 @@ class Formatter {
     );
   }
 
-  
-  
-  
   static Future<DeleteOptions?> showDeleteTorrent(
     BuildContext context, {
     int count = 1,
@@ -1221,22 +922,9 @@ class Formatter {
     );
   }
 
-  
-  
-  
-
   static const String _kBgKey = 'torrentmanager.theme.background';
   static const String _kMenuBgKey = 'torrentmanager.theme.menuBackground';
-  
-  
-  
 
-  
-  
-  
-  
-  
-  
   static Future<String?> getBackgroundImage() async {
     final String? local = await _readPath(_kBgKey);
     if (local != null) return local;
@@ -1303,23 +991,7 @@ class DeleteOptions {
       'DeleteOptions(files=$deleteFiles, sub=$deleteSub, noSub=$noSubDeleteFiles)';
 }
 
-
-
-
-
-
-
-
 String base64EncodeUtf8(String raw) => base64.encode(utf8.encode(raw));
-
-
-
-
-
-
-
-
-
 
 class _FmtCache<V> {
   _FmtCache(this.limit);
@@ -1328,10 +1000,6 @@ class _FmtCache<V> {
 
   final LinkedHashMap<Object, V> _map = LinkedHashMap<Object, V>();
 
-  
-  
-  
-  
   V? get(Object key) => _map[key];
 
   void put(Object key, V value) {

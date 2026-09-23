@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
-
-
-
-
-
 class SlidableActionItem {
   const SlidableActionItem({
     required this.icon,
@@ -20,12 +15,10 @@ class SlidableActionItem {
   final IconData icon;
   final VoidCallback onPressed;
 
-  
   final Color? badgeColor;
 
   final Color foregroundColor;
 
-  
   final int flex;
 
   final double iconSize;
@@ -33,25 +26,11 @@ class SlidableActionItem {
   final String? tooltip;
 }
 
-
-
-
-
-
 enum SlidableMotionKind {
-  
   scroll,
 
-  
   behind,
 }
-
-
-
-
-
-
-
 
 class SlidableAutoCloseGroup extends StatefulWidget {
   const SlidableAutoCloseGroup({super.key, required this.child});
@@ -110,15 +89,6 @@ class _SlidableAutoCloseScope extends InheritedWidget {
   bool updateShouldNotify(_SlidableAutoCloseScope oldWidget) => false;
 }
 
-
-
-
-
-
-
-
-
-
 class SlidableTile extends StatefulWidget {
   const SlidableTile({
     super.key,
@@ -140,118 +110,40 @@ class SlidableTile extends StatefulWidget {
 
   final Widget child;
 
-  
-  
-  
-  
-  
   final EdgeInsetsGeometry? margin;
 
-  
   final List<SlidableActionItem> startActions;
 
-  
   final List<SlidableActionItem> endActions;
 
-  
-  
-  
-  
   final VoidCallback? onLongPress;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final VoidCallback? onTap;
 
-  
-  
-  
-  
-  
   final ValueChanged<bool>? onSlideChanged;
 
-  
-  
   final double extentRatio;
 
-  
-  
-  
-  
-  
-  
-  
-  
   final int? slotCount;
 
-  
-  
-  
-  
-  
-  
   final double dragResistance;
 
   final SlidableMotionKind motion;
 
   final bool enabled;
 
-  
   final BorderRadius? borderRadius;
 
-  
-  
-  
-  
   final Color? contentBackground;
 
-  
-  
-  
-  
-  
-  
   static const double defaultDragResistance = 2.6;
 
-  
   static const double flingVelocity = 300;
 
-  
   static const double settleRatio = 0.5;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const double crossSettleRatio = 0.05;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static double settleTarget({
     required double ratio,
     required double vx,
@@ -275,23 +167,13 @@ class SlidableTile extends StatefulWidget {
   State<SlidableTile> createState() => _SlidableTileState();
 }
 
-
-
-
-
-
 final Set<_SlidableTileState> _liveSlidables = <_SlidableTileState>{};
-
-
-
-
 
 void closeAllSlidables() {
   for (final _SlidableTileState t in _liveSlidables.toList()) {
     t.close();
   }
 }
-
 
 bool hasOpenSlidable() {
   for (final _SlidableTileState t in _liveSlidables.toList()) {
@@ -302,30 +184,18 @@ bool hasOpenSlidable() {
 
 class _SlidableTileState extends State<SlidableTile>
     with SingleTickerProviderStateMixin {
-  
-  
-  
-  
   late final AnimationController _controller =
       AnimationController.unbounded(vsync: this);
 
   SlidableAutoCloseGroupState? _group;
   double _width = 0;
 
-  
   bool _crossedZero = false;
 
-  
-  
-  
-  
-  
   double _originRatio = 0;
 
-  
   int _lastSign = 0;
 
-  
   static const double _flingRatioCap = 8;
 
   static final SpringDescription _spring =
@@ -339,10 +209,8 @@ class _SlidableTileState extends State<SlidableTile>
 
   double get _ratio => _controller.value.clamp(-1.0, 1.0);
 
-  
   bool get isOpen => _controller.value.abs() > 0.001;
 
-  
   bool _reportedOpen = false;
 
   @override
@@ -352,7 +220,6 @@ class _SlidableTileState extends State<SlidableTile>
     _liveSlidables.add(this);
   }
 
-  
   void _notifySlide() {
     final bool open = isOpen;
     if (open == _reportedOpen) return;
@@ -380,7 +247,6 @@ class _SlidableTileState extends State<SlidableTile>
     super.dispose();
   }
 
-  
   void close() {
     if (!mounted || _controller.value == 0) return;
     _animateTo(0);
@@ -392,8 +258,6 @@ class _SlidableTileState extends State<SlidableTile>
       SpringSimulation(_spring, _controller.value, target, velocity),
     );
   }
-
-  
 
   void _onDragStart(DragStartDetails details) {
     if (!widget.enabled) return;
@@ -408,27 +272,18 @@ class _SlidableTileState extends State<SlidableTile>
     if (!widget.enabled || _width <= 0) return;
     final double delta = details.primaryDelta ?? 0;
     if (delta == 0) return;
-    
-    
-    
+
     final double pane = delta < 0 ? _endExtent : _startExtent;
     if (pane <= 0) return;
     final double r = widget.dragResistance <= 0 ? 1.0 : widget.dragResistance;
     double next =
         (_controller.value - delta / (pane * r)).clamp(-1.0, 1.0).toDouble();
 
-    
-    
-    
-    
-    
     if (_originRatio.abs() > 0.001) {
       next = _originRatio > 0 ? next.clamp(0.0, 1.0) : next.clamp(-1.0, 0.0);
     }
     _controller.value = next;
 
-    
-    
     final int sign = next == 0 ? _lastSign : next.sign.toInt();
     if (_lastSign != 0 && sign != 0 && sign != _lastSign) {
       _crossedZero = true;
@@ -456,8 +311,6 @@ class _SlidableTileState extends State<SlidableTile>
         ? (-vx / (pane * r)).clamp(-_flingRatioCap, _flingRatioCap).toDouble()
         : 0.0;
 
-    
-    
     final bool sameDir = (target > 0 && vRatio > 0) || (target < 0 && vRatio < 0);
     _animateTo(target, sameDir ? vRatio : 0.0);
   }
@@ -466,8 +319,6 @@ class _SlidableTileState extends State<SlidableTile>
     close();
     item.onPressed();
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -487,31 +338,22 @@ class _SlidableTileState extends State<SlidableTile>
           onHorizontalDragStart: _onDragStart,
           onHorizontalDragUpdate: _onDragUpdate,
           onHorizontalDragEnd: _onDragEnd,
-          
-          
-          
+
           onTap: () {
             if (_controller.value.abs() > 0.001) {
               close();
               return;
             }
-            
-            
-            
+
             widget.onTap?.call();
           },
-          
-          
-          
-          
-          
+
           onLongPress: widget.onLongPress,
           child: ClipRRect(
             borderRadius: widget.borderRadius ?? BorderRadius.zero,
             child: AnimatedBuilder(
               animation: _controller,
-              
-              
+
               child: _contentLayer(),
               builder: (BuildContext context, Widget? child) {
                 final double r = _ratio;
@@ -525,7 +367,7 @@ class _SlidableTileState extends State<SlidableTile>
                         widget.startActions,
                         extent: _startExtent,
                         isStart: true,
-                        
+
                         dx: behind ? 0.0 : -_startExtent + contentDx,
                       ),
                     if (_hasEnd)
@@ -537,16 +379,10 @@ class _SlidableTileState extends State<SlidableTile>
                       ),
                     Transform.translate(
                       offset: Offset(contentDx, 0),
-                      
-                      
-                      
+
                       child: AbsorbPointer(
                         absorbing: r.abs() > 0.001,
-                        
-                        
-                        
-                        
-                        
+
                         child: ClipRRect(
                           borderRadius:
                               widget.borderRadius ?? BorderRadius.zero,
@@ -566,8 +402,7 @@ class _SlidableTileState extends State<SlidableTile>
 
   Widget _contentLayer() {
     final Color? bg = widget.contentBackground;
-    
-    
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       child: bg == null
@@ -582,8 +417,6 @@ class _SlidableTileState extends State<SlidableTile>
     required double dx,
     required bool isStart,
   }) {
-    
-    
     final int want = widget.slotCount ?? items.length;
     final int slots = want < items.length ? items.length : want;
     final double slotW = extent / slots;
@@ -595,8 +428,7 @@ class _SlidableTileState extends State<SlidableTile>
       width: extent,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        
-        
+
         mainAxisAlignment:
             isStart ? MainAxisAlignment.end : MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,

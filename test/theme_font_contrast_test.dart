@@ -1,8 +1,3 @@
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,20 +11,11 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
   setUp(() {
-    
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -72,7 +58,7 @@ void main() {
       await tc.load();
       tc.setThemeMode(1);
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
-      
+
       expect(tc.theme.textTheme.bodyMedium?.color, const Color(0xFF1A1A1A));
     });
 
@@ -88,9 +74,7 @@ void main() {
     test('★ 明亮档位但背景是深色渐变 → 仍取浅色字（本次修复的核心）', () async {
       final ThemeController tc = Get.put(ThemeController());
       await tc.load();
-      
-      
-      
+
       const ThemePreset darkGradient = ThemePreset(
         id: 'test_dark_gradient',
         name: '深色渐变（测试用）',
@@ -112,10 +96,7 @@ void main() {
     test('图片背景：字色回落到按明暗档的默认值（调亮/调暗滑条已删除）', () async {
       final ThemeController tc = Get.put(ThemeController());
       await tc.load();
-      
-      
-      
-      
+
       tc.applyPreset(wallpaperPresets.first);
       expect(tc.effectiveBackgroundColor, isNull, reason: '图片色彩无从推断');
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
@@ -145,7 +126,6 @@ void main() {
   });
 
   group('★ 页面底色：明亮 = 纯白黑字，黑暗 = 纯黑白字', () {
-    
     test('明亮模式：scaffold 纯白 + 正文近黑', () async {
       final ThemeController tc = Get.put(ThemeController());
       await tc.load();
@@ -153,7 +133,7 @@ void main() {
       expect(tc.lightTheme.scaffoldBackgroundColor, const Color(0xFFFFFFFF));
       expect(tc.lightTheme.textTheme.bodyMedium?.color,
           const Color(0xFF1A1A1A));
-      
+
       expect(tc.effectiveBackgroundColor, const Color(0xFFFFFFFF));
     });
 

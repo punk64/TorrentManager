@@ -17,39 +17,11 @@ import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const int _kBanPreview = 30;
 
 class ServerSettingPage extends StatefulWidget {
   const ServerSettingPage({super.key});
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   @visibleForTesting
   static ServerPrefsApi? debugPrefsOverride;
 
@@ -60,28 +32,6 @@ class ServerSettingPage extends StatefulWidget {
 class _ServerSettingPageState extends State<ServerSettingPage> {
   final ServerController ctrl = Get.find<ServerController>();
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   late final ServerPrefsApi _api = _buildApi();
 
   ServerPrefsApi _buildApi() {
@@ -89,8 +39,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     if (injected != null) return injected;
     final ServerData? s = _server ?? ctrl.current.value;
     if (s == null) {
-      
-      
       return QbPrefsApi(client: QbMethod(), resolve: (ServerData x) => x);
     }
     return createPrefsApi(
@@ -101,76 +49,35 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
-  
   QbMethod? get _qb => _api.qb;
 
   ServerData? _server;
   bool _busy = false;
 
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   Map<String, dynamic> _prefs = <String, dynamic>{};
 
-  
-  
-  
   Map<String, dynamic> _ss = <String, dynamic>{};
 
-  
   final Set<String> _touched = <String>{};
 
-  
   bool _prefsLoaded = false;
 
-  
-  
-  
-  
-  
   String? _prefsError;
 
-  
-  
-  
-  
-  
-
-  
   QbIpFilter? _banLoaded;
 
-  
   QbIpFilter _banDraft = QbIpFilter.empty;
 
-  
   bool _banTouched = false;
 
-  
   bool _banShowAll = false;
 
   final TextEditingController _banInput = TextEditingController();
 
-  
   final TextEditingController _blocklistUrl = TextEditingController();
 
-  
-  
-  
-  
-  
   final Map<String, String?> _geo = <String, String?>{};
 
-  
   final Set<String> _geoLoading = <String>{};
 
   final TextEditingController _upLimit = TextEditingController();
@@ -190,7 +97,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   final TextEditingController _maxUpConnec = TextEditingController();
   final TextEditingController _maxUpConnecPerTorrent = TextEditingController();
 
-  
   final List<String> _categories = <String>[];
   final List<String> _tags = <String>[];
   final Set<String> _selectedCategories = <String>{};
@@ -201,61 +107,24 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     super.initState();
     final dynamic arg = Get.arguments;
     _server = arg is ServerData ? arg : ctrl.current.value;
-    
-    
-    
-    
+
     final ServerData? s = _server;
     if (s != null) _api.attach(s);
-    
+
     unawaited(_loadPreferences());
     _loadCategoriesAndTags();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<bool> _ensureSession() =>
       _sessionFuture ??= _api.ensureSession();
 
-  
-  
-  
   Future<bool>? _sessionFuture;
 
-  
-  
-  
-  
   void _reopenSession() {
     _sessionFuture = null;
     _api.reopenSession();
   }
 
-  
-  
-  
-  
-  
-  
   String _sessionFailReason() {
     if (_api.lastBanned) return S.srvIpBanned;
     if (_api.lastMissingCreds) return S.srvCredsMissing;
@@ -263,16 +132,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return (e == null || e.isEmpty) ? '未能在服务器上建立会话' : e;
   }
 
-  
-  
-  
-  
-  
   Future<void> _loadPreferences() async {
     if (!_isSupported || _server == null) return;
     try {
-      
-      
       if (!await _ensureSession()) {
         if (!mounted) return;
         final String reason = _sessionFailReason();
@@ -284,12 +146,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         scope: _server?.logScope);
         return;
       }
-      
-      
+
       final Map<String, dynamic> p = await _api.read();
-      
-      
-      
+
       final Map<String, dynamic>? ss = await _api.readServerState();
       if (!mounted) return;
       setState(() {
@@ -300,7 +159,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         _applyPreferences();
       });
     } catch (e) {
-      
       if (!mounted) return;
       setState(() {
         _prefsLoaded = false;
@@ -311,26 +169,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   bool get _isSupported => _server != null;
 
-  
-  
-  
-  
   bool get _isQb => _api.isQb;
 
-  
   bool _supports(String key) => _api.supports(key);
 
-  
   bool _prefBool(String key, {bool def = false}) {
     final dynamic v = _prefs[key];
     if (v is bool) return v;
@@ -339,10 +183,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return def;
   }
 
-  
-  
-  
-  
   bool _ssBool(String key, {bool def = false}) {
     final dynamic v = _ss[key];
     if (v is bool) return v;
@@ -350,12 +190,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return def;
   }
 
-  
-  
-  
-  
-  
-  
   String _prefKbOf(String key) {
     if (!_prefsLoaded) return '';
     final dynamic v = _prefs[key];
@@ -363,31 +197,22 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return (bytes ~/ 1024).toString();
   }
 
-  
-  
-  
-  
   void _applyPreferences() {
     void put(String key, TextEditingController c, String value) {
       if (_touched.contains(key)) return;
-      
-      
-      
+
       if (c.text == value) return;
       c.text = value;
     }
 
     put('save_path', _savePath, (_prefs['save_path'] ?? '').toString());
-    
+
     put(PrefKey.blocklistUrl, _blocklistUrl,
         (_prefs[PrefKey.blocklistUrl] ?? '').toString());
     put('temp_path', _tempPath, (_prefs['temp_path'] ?? '').toString());
     put('alt_up_limit', _altUpLimit, _prefKbOf('alt_up_limit'));
     put('alt_dl_limit', _altDlLimit, _prefKbOf('alt_dl_limit'));
 
-    
-    
-    
     put('up_limit', _upLimit, _prefKbOf('up_limit'));
     put('dl_limit', _dlLimit, _prefKbOf('dl_limit'));
 
@@ -397,7 +222,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     put('max_active_torrents', _maxActiveTorrents,
         _prefNumText('max_active_torrents'));
 
-    
     final dynamic ratio = _prefs['max_ratio'];
     put('max_ratio', _maxRatio, _numText(ratio));
     put('max_seeding_time', _maxSeedingTime, _prefNumText('max_seeding_time'));
@@ -411,27 +235,17 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     put('max_uploads_per_torrent', _maxUpConnecPerTorrent,
         _prefNumText('max_uploads_per_torrent'));
 
-    
     _applyBanPrefs();
   }
 
-  
-  
-  
-  
   void _applyBanPrefs() {
     final QbIpFilter real = QbIpFilter.fromPrefs(_prefs);
     _banLoaded = real;
     if (!_banTouched) _banDraft = real;
   }
 
-  
-  
   String _prefNumText(String key) => _numText(_prefs[key]);
 
-  
-  
-  
   int? _prefInt(String key) {
     final dynamic v = _prefs[key];
     if (v is num) return v.toInt();
@@ -439,10 +253,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return null;
   }
 
-  
-  
-  
-  
   static String _numText(dynamic v) {
     if (v is! num) return '';
     final double d = v.toDouble();
@@ -465,34 +275,15 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     super.dispose();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   bool get _isCurrentServer {
     final ServerData? cur = ctrl.current.value;
     final ServerData? s = _server;
     return cur != null && s != null && cur.id == s.id;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _tick() async {
     if (_busy || !_isSupported) return;
-    
-    
-    
-    
+
     final Future<bool>? pending = _sessionFuture;
     if (pending == null || !await pending) return;
     try {
@@ -502,24 +293,16 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           next[PrefKey.altSpeedEnabled] != _ss[PrefKey.altSpeedEnabled];
       if (!mounted) return;
       if (_ss.isEmpty || changed) setState(() => _ss = next);
-      
-      
-      
+
       if (_isQb && _isCurrentServer) ctrl.updateServerState(next);
     } catch (_) {
-      
     }
   }
 
-  
-  
-  
-  
   Future<void> _loadCategoriesAndTags() async {
     final QbMethod? qb = _qb;
     if (qb == null) return;
     try {
-      
       if (!await _ensureSession()) return;
       final Map<String, dynamic> cats = await qb.getCategories();
       final List<String> tags = await qb.getTags();
@@ -533,18 +316,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ..addAll(tags);
       });
     } catch (_) {
-      
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _run(
     String label,
     String okMsg,
@@ -553,7 +327,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     VoidCallback? after,
     String? detail,
   }) async {
-    
     AppLog.instance.act('服务器设置', label,
         target: _server?.name, detail: detail);
     setState(() => _busy = true);
@@ -562,11 +335,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       Formatter.showToast(okMsg);
       after?.call();
       await _loadCategoriesAndTags();
-      
-      
+
       await _loadPreferences();
     } catch (e) {
-      
       AppLog.instance.op('$label 失败：${Formatter.safeErr(e)}',
           level: 'ERROR', scope: _server?.logScope);
       Formatter.showToast('$failMsg ${Formatter.safeErr(e)}', isError: true);
@@ -577,11 +348,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   int _kb(TextEditingController c) {
     final int? v = int.tryParse(c.text.trim());
-    
+
     return v == null ? 0 : v * 1024;
   }
 
-  
   String _kbText(TextEditingController c) {
     final String t = c.text.trim();
     return t.isEmpty ? '0' : t;
@@ -597,16 +367,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           IconButton(
             icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
             tooltip: S.fieldUpdating,
-            
-            
+
             onPressed: () async {
               AppLog.instance.act('服务器设置', 'AppBar[刷新]',
                   target: _server?.name, detail: '重开会话 + 重拉偏好 + 分类标签');
-              
-              
+
               _reopenSession();
-              
-              
+
               await _loadPreferences();
               await _loadCategoriesAndTags();
               await _tick();
@@ -620,14 +387,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 24),
           children: <Widget>[
-            
-            
-            
-            
-            
-            
-            
-            
+
             if (_server == null)
               Padding(
                 padding: const EdgeInsets.all(28),
@@ -640,9 +400,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             if (_server != null) ...<Widget>[
               _globalLimitGroup(),
               _altLimitGroup(),
-              
-              
-              
+
               if (_isQb) _categoryGroup(),
               if (_isQb) _tagGroup(),
               _savePathGroup(),
@@ -659,8 +417,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-
   Widget _globalLimitGroup() => _group(
         title: '设置全局限速',
         help: '${S.setNoLimitZero}\n${S.setSwitchToEnable}',
@@ -671,7 +427,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             '全局限速[更改]',
             S.qbSetServerLimit,
             S.qbSetServerLimitFail,
-            
+
             () => _api.write(<String, dynamic>{
               PrefKey.upLimit: _kb(_upLimit),
               PrefKey.dlLimit: _kb(_dlLimit),
@@ -682,17 +438,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _altLimitGroup() => _group(
         title: '设置备用限速',
         help: S.setAltLimitHelp,
         children: <Widget>[
-          
-          
-          
-          
-          
+
           _switchRow(
             S.setEnableAltLimit,
             _ssBool(PrefKey.altSpeedEnabled),
@@ -704,9 +454,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 await _api.write(<String, dynamic>{
                   PrefKey.altSpeedEnabled: v,
                 });
-                
-                
-                
+
                 _ss[PrefKey.altSpeedEnabled] = v;
                 if (_isCurrentServer) {
                   ctrl.state.value.useAltSpeedLimits = v;
@@ -738,8 +486,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
         ],
       );
-
-  
 
   Widget _categoryGroup() => _group(
         title: '管理分类',
@@ -809,8 +555,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-
   Widget _tagGroup() => _group(
         title: '管理标签',
         help: S.setTagDeleteHelp,
@@ -868,8 +612,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-
   Widget _savePathGroup() => _group(
         title: '默认保存路径',
         help: S.setPickFromBelowNoAutoTmm,
@@ -887,15 +629,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _tempPathGroup() => _group(
         title: '临时保存路径',
         help: S.setTempPathHelp,
         children: <Widget>[
-          
-          
-          
+
           _switchRow(
             S.setEnableTempPath,
             _prefBool('temp_path_enabled'),
@@ -920,26 +658,19 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _queueGroup() => _group(
         title: '设置队列限制',
         help: S.setQueueSwitchHelp,
         children: <Widget>[
           _switchRow(
             S.setEnableQueueLimit,
-            
-            
-            
+
             _prefBool('queueing_enabled'),
             (bool v) => _run(
               '开关[启用队列限制]${v ? ' → 开' : ' → 关'}',
               S.qbSetQueueing,
               S.qbSetQueueingFail,
               () async {
-                
-                
-                
                 await _api.write(<String, dynamic>{PrefKey.queueingEnabled: v});
                 _prefs['queueing_enabled'] = v;
                 if (_isCurrentServer) {
@@ -949,9 +680,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               },
             ),
           ),
-          
-          
-          
+
           if (_supports(PrefKey.maxActiveUploads))
             _textRow('最大活动上传数', _maxActiveUp,
                 numeric: true, prefKey: PrefKey.maxActiveUploads),
@@ -978,16 +707,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _seedingGroup() => _group(
         title: '设置做种限制',
         help: S.setRatioHelp,
         children: <Widget>[
           _textRow('最大分享比率', _maxRatio,
               help: S.setNoLimitMinusOneShort, prefKey: PrefKey.maxRatio),
-          
-          
+
           if (_supports(PrefKey.maxSeedingTime))
             _textRow('最长做种时间', _maxSeedingTime,
                 numeric: true, prefKey: PrefKey.maxSeedingTime),
@@ -999,8 +725,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             S.qbSetRatioFail,
             () => _api.write(<String, dynamic>{
               PrefKey.maxRatio: double.tryParse(_maxRatio.text.trim()) ?? -1,
-              
-              
+
               PrefKey.maxRatioEnabled: true,
               PrefKey.maxSeedingTime:
                   int.tryParse(_maxSeedingTime.text.trim()) ?? -1,
@@ -1014,8 +739,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _connectionGroup() => _group(
         title: '设置连接限制',
         help: S.setQueueSwitchHelp,
@@ -1024,7 +747,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               numeric: true, prefKey: PrefKey.maxConnec),
           _textRow('单种最大连接数', _maxConnecPerTorrent,
               numeric: true, prefKey: PrefKey.maxConnecPerTorrent),
-          
+
           if (_supports(PrefKey.maxUploads))
             _textRow('全局上传连接数', _maxUpConnec,
                 numeric: true, prefKey: PrefKey.maxUploads),
@@ -1050,13 +773,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
   Widget _miscGroup() => _group(
         title: '自动种子管理',
         help: S.setCategoryAutoTmmHelp,
         children: <Widget>[
-          
+
           if (_supports(PrefKey.autoTmmEnabled))
             _switchRow(
               S.setEnableAutoTmm,
@@ -1069,7 +790,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 after: () => _prefs[PrefKey.autoTmmEnabled] = v,
               ),
             ),
-          
+
           if (_supports(PrefKey.preallocateAll))
             _switchRow(
               S.setPreallocate,
@@ -1082,13 +803,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 after: () => _prefs[PrefKey.preallocateAll] = v,
               ),
             ),
-          
-          
-          
-          
-          
-          
-          
+
           _switchRow(
             S.setUnfinishedExtQb,
             _prefBool('incomplete_files_ext'),
@@ -1103,25 +818,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _banGroup() => _isQb ? _qbBanGroup() : _trBlocklistGroup();
 
-  
-  
-  
-  
-  
   Widget _trBlocklistGroup() => _group(
         title: '黑名单 / IP 过滤',
         help: 'Transmission 只能整份**订阅**黑名单文件（blocklist-url），\n'
@@ -1161,7 +859,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
   Widget _qbBanGroup() => _group(
         title: '黑名单 / IP 过滤',
         help: '服务器（qBittorrent）上被封禁的来源 IP / 网段，每行一条、支持 CIDR。\n'
@@ -1206,7 +903,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       );
 
-  
   Widget _banAddRow() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
@@ -1247,9 +943,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
   Widget _banSaveRow() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 12, 2),
@@ -1272,7 +965,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
   String? get _banDirtyHint {
     final QbIpFilter? base = _banLoaded;
     if (base == null || !_banTouched) return null;
@@ -1308,10 +1000,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
-  
   List<Widget> _banListRows() {
     if (!_prefsLoaded) {
       return const <Widget>[
@@ -1354,16 +1042,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return rows;
   }
 
-  
-  
-  
-  
-  
   String _geoLine(String entry) {
     if (_geo.containsKey(entry)) return _decorate(entry, _geo[entry]);
     final String ip = _ipPart(entry);
     if (!Formatter.ipNeedsLookup(ip)) {
-      
       _geo[entry] = Formatter.getIpInfo(ip);
       return _decorate(entry, _geo[entry]);
     }
@@ -1373,11 +1055,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return '查询归属地…';
   }
 
-  
-  
-  
-  
-  
   Future<void> _fetchGeo(String entry) async {
     final String? text = await IpGeo.instance.lookup(_ipPart(entry));
     if (!mounted) return;
@@ -1387,23 +1064,17 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     });
   }
 
-  
   String _decorate(String entry, String? geo) {
     if (geo == null) return '查询归属地…';
     final int? n = _cidrCount(entry);
     return n == null ? geo : '$geo · 网段内 $n 个地址';
   }
 
-  
-  
-  
-  
   static String _ipPart(String entry) {
     final int i = entry.indexOf('/');
     return (i < 0 ? entry : entry.substring(0, i)).trim();
   }
 
-  
   static int? _cidrCount(String entry) {
     final int i = entry.indexOf('/');
     if (i < 0) return null;
@@ -1412,7 +1083,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return 1 << (32 - bits);
   }
 
-  
   Widget _banRow(int index, String ip) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
@@ -1452,10 +1122,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                       ),
                   ],
                 ),
-                
-                
-                
-                
+
                 Row(
                   children: <Widget>[
                     if (_geoLoading.contains(ip)) ...<Widget>[
@@ -1498,7 +1165,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
   void _addBanEntry() {
     final String v = _banInput.text.trim();
     if (v.isEmpty) return;
@@ -1524,7 +1190,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
   }
 
-  
   Future<void> _editBanEntry(int index, String old) async {
     final String? v = await _promptText(
       title: '编辑黑名单条目',
@@ -1555,9 +1220,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
   }
 
-  
-  
-  
   void _removeBanEntry(int index, String ip) {
     setState(() {
       _banTouched = true;
@@ -1571,7 +1233,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
   }
 
-  
   Future<void> _bulkEditBanList() async {
     final int before = _banDraft.count;
     final String? text = await _promptMultiline(
@@ -1609,7 +1270,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         target: _server?.name, detail: '$before 条 → ${lines.length} 条（未保存）');
   }
 
-  
   Future<void> _saveBanList() async {
     final QbIpFilter? base = _banLoaded;
     final QbIpFilter next = _banDraft;
@@ -1623,10 +1283,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
-  
   Widget _prefsErrorNotice() {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
@@ -1648,9 +1304,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
   Future<String?> _promptMultiline({
     required String title,
     required String initial,
@@ -1693,11 +1346,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
         ],
       ),
-      
+
     ).whenComplete(c.dispose);
   }
-
-  
 
   Widget _group({
     required String title,
@@ -1705,8 +1356,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     String? help,
   }) {
     return Theme(
-      
-      
+
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         clipBehavior: Clip.antiAlias,
@@ -1732,13 +1382,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
   Widget _switchRow(
     String label,
     bool value,
@@ -1758,9 +1401,6 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  
-  
-  
   Widget _kbRow(
     String label,
     TextEditingController c, {
@@ -1804,11 +1444,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 isDense: true,
-                
-                
+
                 hintText: prefKey != null && !_prefsLoaded ? '--' : null,
               ),
-              
+
               onChanged: prefKey == null
                   ? null
                   : (String _) => setState(() => _touched.add(prefKey)),
@@ -1907,8 +1546,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
         ],
       ),
-      
-      
+
     ).whenComplete(c.dispose);
   }
 }

@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,7 +15,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    
     SecurePrefs.useMemoryBackendForTest();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -39,7 +26,6 @@ void main() {
     AppLog.instance.clear();
   });
 
-  
   group('★ AppLog.op —— 用户操作专用来源', () {
     test('op() 打 OP 标记、级别 INFO，且与 APP/NET/UI 互不相同', () {
       AppLog.instance.op('添加服务器：NAS');
@@ -47,7 +33,7 @@ void main() {
       expect(e.source, AppLog.srcOp);
       expect(e.level, 'INFO');
       expect(e.message, '添加服务器：NAS');
-      
+
       final Set<String> all = <String>{
         AppLog.srcApp,
         AppLog.srcNet,
@@ -75,10 +61,6 @@ void main() {
           port: 8080,
         );
 
-    
-    
-    
-    
     LogEntry lastOp() => AppLog.instance.entries
         .firstWhere((LogEntry e) => e.source == AppLog.srcOp);
 
@@ -92,30 +74,19 @@ void main() {
       await c.updateServer(mk('a', 'NAS-2'));
       expect(lastOp().message, '修改服务器：NAS-2（qbittorrent）');
 
-      
-      
       c.select(c.servers.first);
       expect(lastOp().message, '切换当前服务器：NAS-2（qbittorrent）');
 
       await c.deleteServer('a');
-      
+
       expect(lastOp().message, contains('删除服务器：NAS-2'));
       expect(c.servers, isEmpty);
     });
   });
 
-  
   group('★ 应用显示名 —— 未选过时跟随系统语言，未适配语言回落默认中文', () {
-    
-    
-    
-    
-    
     setUp(() => L.code.value = '');
 
-    
-    
-    
     setUp(() => L.useHostLocaleInTest = true);
     tearDown(() => L.useHostLocaleInTest = false);
 
@@ -126,8 +97,6 @@ void main() {
       tester.platformDispatcher.localeTestValue = const Locale('en', 'US');
       expect(S.appNameLocalized, S.appNameEn);
 
-      
-      
       tester.platformDispatcher.localeTestValue = const Locale('ja', 'JP');
       expect(S.appNameLocalized, S.appName,
           reason: '未适配系统语言时必须使用默认中文');
@@ -136,11 +105,8 @@ void main() {
     });
 
     test('中英文名与 Android 资源目录的取值一致', () {
-      
-      
-      
       L.code.value = L.zh;
-      
+
       expect(S.appName, '种子管理器');
       expect(S.appNameEn, 'Torrent Manager');
       L.code.value = '';

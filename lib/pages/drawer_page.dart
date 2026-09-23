@@ -4,14 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-
-
 import '../app/app_version.dart';
 import '../app/page_style.dart';
 import '../app/style_keys.dart';
 import '../app/theme.dart';
-
-
 
 import '../controllers/locale_controller.dart';
 import '../controllers/theme_controller.dart';
@@ -21,28 +17,9 @@ import '../utils/i18n.dart';
 import '../utils/formatter.dart';
 import '../utils/theme_backup.dart';
 import '../utils/update_check.dart';
+import '../utils/startup_update.dart';
 import '../widgets/filtered_image.dart';
 import '../utils/strings.dart';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key});
@@ -51,33 +28,8 @@ class DrawerMenu extends StatelessWidget {
 
   static const double _groupFontSize = 15;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Color get _fontColor => Get.find<ThemeController>().drawerFontColor;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Color get _titleColor => _fontColor;
 
   static Color get _itemColor => _fontColor.withValues(alpha: 0.87);
@@ -88,37 +40,21 @@ class DrawerMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
     final ThemeController tc = Get.find<ThemeController>();
-    
-    
-    
+
     final LocaleController? lc = Get.isRegistered<LocaleController>()
         ? Get.find<LocaleController>()
         : null;
     final ThemeData theme = Theme.of(context);
 
-    
-    
-    
-    
-    
-    
-    
     return Obx(() {
-      
       tc.drawerFontColor;
-      
-      
+
       LocaleController.langRx.value;
       return ListView(
       padding: EdgeInsets.zero,
       children: <Widget>[
-        
-        
-        
+
         Obx(() => _header(theme, tc)),
 
         _group(context, 
@@ -126,9 +62,7 @@ class DrawerMenu extends StatelessWidget {
           leading: Icons.palette,
           initiallyExpanded: true,
           children: <Widget>[
-            
-            
-            
+
             Obx(() => _button(context, 
                   icon: Icons.light_mode,
                   title: S.themeLight,
@@ -141,68 +75,24 @@ class DrawerMenu extends StatelessWidget {
                   trailingCheck: tc.isBuiltinMode(2),
                   onTap: () => tc.applyBuiltinMode(2),
                 )),
-            
-            
-            
+
             Obx(() => _button(context, 
                   icon: Icons.color_lens,
                   title: S.themeCustom,
                   subtitle: '${S.themeCurrentPrefix}${tc.themeModeName}',
                   trailingCheck: tc.isCustomSelected,
                   onTap: () {
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
                     _push(context, '/theme');
                   },
                 )),
 
-            
-            
-            
-            
-            
             _dashedDivider(context),
             const _ThemeBackupButtons(),
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             _PresetGroup(presets: lightPresets, tc: tc),
 
-            
             _sectionLabel(context, S.themePresetWallpaperGroup),
 
-            
-            
-            
-            
-            
-            
             Obx(() => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
@@ -217,36 +107,23 @@ class DrawerMenu extends StatelessWidget {
                         subtitle: S.themeCustom,
                         trailingCheck: tc.isCustomThemeSelected(t),
                         onTap: () => tc.applyCustomTheme(t),
-                        
+
                         onLongPress: () => _customThemeMenu(context, tc, t),
                       ),
                   ],
                 )),
-            
+
             _PresetGroup(presets: wallpaperPresets, tc: tc),
           ],
         ),
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         _group(context,
           title: S.langTitle,
           leading: Icons.translate,
-          
-          
+
           initiallyExpanded: true,
           children: <Widget>[
-            
-            
+
             Obx(() => _button(context,
                   icon: Icons.translate,
                   title: lc == null ? S.langZh : lc.currentName,
@@ -256,14 +133,6 @@ class DrawerMenu extends StatelessWidget {
           ],
         ),
 
-        
-        
-        
-        
-        
-        
-        
-        
         _group(context,
           title: S.groupShare,
           leading: Icons.ios_share,
@@ -277,17 +146,14 @@ class DrawerMenu extends StatelessWidget {
           ],
         ),
 
-        
         _group(context, 
-          title: '关于',
+          title: S.aboutGroup,
           leading: Icons.contact_support,
           children: <Widget>[
             _button(context, 
               icon: Icons.mark_as_unread,
               title: S.termsTitle,
-              
-              
-              
+
               onTap: () => Formatter.showTerms(context),
             ),
             _button(context, 
@@ -295,81 +161,33 @@ class DrawerMenu extends StatelessWidget {
               title: S.privacyTitle,
               onTap: () => Formatter.showPrivacy(context),
             ),
+            _button(context, 
+              icon: Icons.source_outlined,
+              title: S.openSourceTitle,
+              subtitle: kProjectUrl,
+              onTap: () => Formatter.showOpenSource(context),
+            ),
           ],
         ),
 
-        
-        
-        
         Divider(height: 12, color: _fontColor.withValues(alpha: 0.15)),
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
-        _button(context, 
-          icon: Icons.system_update_alt,
-          title: S.aboutCheckUpdate,
-          
-          subtitle: S.appVersionText(),
-          onTap: () => compareVersions(context),
+        ValueListenableBuilder<UpdateCheckResult?>(
+          valueListenable: StartupUpdatePrompt.pendingNotifier,
+          builder: (BuildContext _, UpdateCheckResult? pending, __) {
+            final bool has = pending?.hasUpdate ?? false;
+            final String? latest = pending?.latest;
+            return _button(context, 
+              icon: Icons.system_update_alt,
+              title: has ? S.hasUpdate : S.aboutCheckUpdate,
+              subtitle: has && latest != null && latest.isNotEmpty
+                  ? 'V$latest'
+                  : S.appVersionText(),
+              onTap: () => has
+                  ? StartupUpdatePrompt.showDetails(context)
+                  : compareVersions(context),
+            );
+          },
         ),
         const SizedBox(height: 12),
       ],
@@ -377,57 +195,29 @@ class DrawerMenu extends StatelessWidget {
     });
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _menuImage(ImageProvider<Object> image, ThemeController tc) {
-    
-    
-    
-    
     return FilteredImage(
       image: image,
       brightness: tc.menuBgBrightness.value,
       fade: tc.menuBgFade.value.clamp(0.0, 1.0),
       blur: tc.menuBgBlur.value,
-      
-      
+
       fallback: const AssetImage(ThemeController.defaultMenuImage),
     );
   }
 
   Widget _header(ThemeData theme, ThemeController tc) {
-    
-    
-    
-    
-    
-    
-    
     final bool customPanel =
         tc.panelColor.value != ThemeController.defaultPanelColor;
     final Color panelBase =
         customPanel || tc.bgModeValue != 0 ? tc.panelColor.value : tc.drawerBaseColor;
     final Color headerText = AppTheme.contrastOn(panelBase);
     final String? custom = tc.menuImagePath.value;
-    
-    
+
     final String path = (custom == null || custom.isEmpty)
         ? ThemeController.defaultMenuImage
         : custom;
-    
-    
-    
+
     final ImageProvider<Object> image = ThemeController.imageProviderFor(path);
 
     return SizedBox(
@@ -437,7 +227,7 @@ class DrawerMenu extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            
+
             _menuImage(image, tc),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -445,16 +235,14 @@ class DrawerMenu extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: <Color>[
-                    
-                    
-                    
+
                     Colors.black.withValues(alpha: 0.25),
                     panelBase.withValues(alpha: tc.panel1Alpha.value),
                   ],
                 ),
               ),
             ),
-            
+
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
               child: Column(
@@ -462,16 +250,13 @@ class DrawerMenu extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   Text(
-                    
-                    
+
                     S.appNameLocalized,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: _groupFontSize,
                       fontWeight: FontWeight.bold,
                       height: 1.3,
-                      
-                      
-                      
+
                       color: headerText,
                     ),
                   ),
@@ -492,12 +277,6 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  
-  
-  
-  
-  
-  
   static Widget _sectionLabel(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, top: 8, bottom: 2),
@@ -523,11 +302,6 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  
-  
-  
-  
-  
   Widget _group(
     BuildContext context, {
     required String title,
@@ -536,22 +310,12 @@ class DrawerMenu extends StatelessWidget {
     bool initiallyExpanded = false,
   }) {
     return Theme(
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         clipBehavior: Clip.antiAlias,
         initiallyExpanded: initiallyExpanded,
-        
-        
-        
+
         leading: Icon(leading, size: 20, color: _iconColor),
         iconColor: _iconColor,
         collapsedIconColor: _iconColor,
@@ -571,13 +335,6 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
   static Widget _button(
     BuildContext context, {
     IconData? icon,
@@ -591,14 +348,13 @@ class DrawerMenu extends StatelessWidget {
     bool busy = false,
   }) {
     final bool inactive = disabled || busy;
-    
+
     final double dim = inactive ? 0.38 : 1.0;
     final Widget tile = ListTile(
       dense: true,
       enabled: !inactive,
       leading: leadingWidget ??
-          
-          
+
           Icon(icon, size: 20, color: _iconColor.withValues(alpha: 0.75 * dim)),
       title: Text(title,
           style: TextStyle(
@@ -619,7 +375,7 @@ class DrawerMenu extends StatelessWidget {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                
+
                 valueColor: AlwaysStoppedAnimation<Color>(_iconColor),
               ),
             )
@@ -627,18 +383,13 @@ class DrawerMenu extends StatelessWidget {
               ? Icon(Icons.check,
                   size: 20, color: Theme.of(context).colorScheme.primary)
               : null),
-      
-      
+
       onTap: inactive ? null : onTap,
       onLongPress: onLongPress,
     );
     return busy ? Opacity(opacity: 0.6, child: tile) : tile;
   }
 
-  
-  
-  
-  
   static Widget _dashedDivider(BuildContext context) {
     final Color c = _fontColor.withValues(alpha: 0.3);
     return Padding(
@@ -658,14 +409,6 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   static Future<void> _pickLanguage(BuildContext context) async {
     final LocaleController lc = Get.isRegistered<LocaleController>()
         ? Get.find<LocaleController>()
@@ -706,7 +449,6 @@ class DrawerMenu extends StatelessWidget {
     if (context.mounted) Formatter.showToast(S.langSwitched);
   }
 
-  
   static Widget _langRow(BuildContext ctx, bool selected, String label) {
     return Row(
       children: <Widget>[
@@ -723,11 +465,6 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  
-  
-  
-  
-  
   Future<void> _customThemeMenu(
     BuildContext context,
     ThemeController tc,
@@ -738,11 +475,7 @@ class DrawerMenu extends StatelessWidget {
       builder: (BuildContext ctx) => SimpleDialog(
         title: Text(t.name, style: const TextStyle(fontSize: 14)),
         children: <Widget>[
-          
-          
-          
-          
-          
+
           SimpleDialogOption(
             onPressed: () => Navigator.of(ctx).pop('edit'),
             child: Text(S.edit, style: const TextStyle(fontSize: 13)),
@@ -762,11 +495,8 @@ class DrawerMenu extends StatelessWidget {
     if (action == null || !context.mounted) return;
 
     if (action == 'edit') {
-      
-      
-      
       tc.beginThemeEditing(load: t);
-      
+
       await _push(context, '/theme');
       return;
     }
@@ -829,28 +559,10 @@ class DrawerMenu extends StatelessWidget {
     ctrl.dispose();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Widget _presetSwatch(
       BuildContext context, ThemePreset p, bool selected) {
     final BorderRadius br = BorderRadius.circular(AppTheme.radius);
-    
-    
-    
+
     final Widget fill = p.bgImage == null
         ? DecoratedBox(
             decoration: BoxDecoration(
@@ -859,8 +571,7 @@ class DrawerMenu extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: <Color>[
                   p.seed,
-                  
-                  
+
                   Color.lerp(p.seed, p.gradient2, 0.45) ?? p.seed,
                 ],
               ),
@@ -876,41 +587,25 @@ class DrawerMenu extends StatelessWidget {
         border: Border.all(
           color: selected
               ? Theme.of(context).colorScheme.primary
-              
+
               : _fontColor.withValues(alpha: 0.55),
           width: selected ? 2 : 1,
         ),
       ),
-      
-      
+
       child: fill,
     );
   }
 
-  
-  
-  
-  
-  
-  
   Future<void> _push(BuildContext context, String route) async {
-    
-    
     final ScaffoldState? scaffold = Scaffold.maybeOf(context);
     scaffold?.closeDrawer();
-    
-    
-    
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 280));
     await Get.toNamed<dynamic>(route);
     scaffold?.openDrawer();
   }
 
-  
-  
-  
-  
   // ignore: unused_element
   Future<void> _showLink(
     BuildContext context,
@@ -954,19 +649,6 @@ class DrawerMenu extends StatelessWidget {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class _ThemeBackupButtons extends StatefulWidget {
   const _ThemeBackupButtons();
 
@@ -975,7 +657,6 @@ class _ThemeBackupButtons extends StatefulWidget {
 }
 
 class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
-  
   bool _exporting = false;
   bool _importing = false;
 
@@ -1007,7 +688,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
                 ? S.themeExportEmpty
                 : '${S.themeExportCountPrefix}$n${S.themeExportCountSuffix}',
             busy: _exporting,
-            
+
             disabled: n == 0 || _importing,
             onTap: _export,
           ),
@@ -1016,8 +697,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       );
     });
   }
-
-  
 
   Future<void> _export() async {
     final ThemeController tc = _tc;
@@ -1032,7 +711,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
         fileName: tc.exportPackFileName(),
         content: tc.buildExportPack(),
       );
-      
+
       final String name = path.split(RegExp(r'[/\\]')).last;
       Formatter.showToast(
         '${S.themeExportOkPrefix}$count${S.themeExportOkInfix}$name',
@@ -1048,20 +727,17 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
     }
   }
 
-  
-
   Future<void> _import() async {
     setState(() => _importing = true);
     try {
       final PickedTextFile? file = await FileExport.pickText();
       if (file == null) {
-        
         Formatter.showToast(S.themeImportCancelled);
         return;
       }
       if (!mounted) return;
       final ThemePackResult r = ThemeBackup.parse(file.content);
-      
+
       for (final String s in r.skipped) {
         AppLog.instance.warn(s);
       }
@@ -1072,7 +748,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       final ThemePack pack = r.pack!;
       if (!mounted) return;
 
-      
       final List<String> conflicts = _tc.conflictingNames(pack.themes);
       bool overwrite = true;
       if (conflicts.isNotEmpty) {
@@ -1086,7 +761,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
 
       final ThemeImportOutcome out =
           await _tc.applyImportedThemes(pack.themes, overwrite: overwrite);
-      
+
       final CustomTheme? first = out.first;
       if (first != null) _tc.applyCustomTheme(first);
 
@@ -1105,7 +780,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
     }
   }
 
-  
   Future<String?> _askConflict(int n) => showDialog<String>(
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
@@ -1131,7 +805,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
         ),
       );
 
-  
   Future<void> _showImportError(String reason, String? hint) => showDialog<void>(
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
@@ -1156,17 +829,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       );
 }
 
-
-
-
-
-
-
-
-
-
-
-
 Future<void> compareVersions(BuildContext context) async {
   UpdateCheckResult? result;                 
   bool started = false;
@@ -1177,13 +839,11 @@ Future<void> compareVersions(BuildContext context) async {
       builder: (BuildContext ctx, StateSetter setState) {
         if (!started) {
           started = true;
-          
+
           unawaited(Future<void>.microtask(() async {
             final UpdateCheckResult r = await UpdateChecker().check();
             if (!ctx.mounted) return;
             if (r.status == UpdateCheckStatus.failed) {
-              
-              
               AppLog.instance.net('检查更新失败（按已是最新处理）：${r.reason}',
                   level: 'WARN');
             } else if (r.hasUpdate) {
@@ -1215,19 +875,6 @@ Future<void> compareVersions(BuildContext context) async {
     ),
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const int kPresetCollapsedCount = 2;
 
@@ -1262,8 +909,7 @@ class _PresetGroupState extends State<_PresetGroup> {
                 context,
                 leadingWidget: DrawerMenu._presetSwatch(
                     context, p, widget.tc.currentPreset.value == p.id),
-                
-                
+
                 title: L.t(p.name),
                 subtitle: L.t(p.descriptor),
                 trailingCheck: widget.tc.currentPreset.value == p.id,
@@ -1286,35 +932,11 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final ThemeController tc = Get.find<ThemeController>();
     return AppPageTheme(
       page: AppPageKey.drawer,
       applyCardBackground: true,
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       child: Obx(() {
         final bool customBg = tc.pageColor(AppPageKey.drawer, AppStyleSlot.background) != null;
         final bool solid = tc.bgModeValue == 0;
@@ -1338,7 +960,6 @@ class AppDrawer extends StatelessWidget {
     );
   }
 }
-
 
 class DrawerPage extends StatelessWidget {
   const DrawerPage({super.key});

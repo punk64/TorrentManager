@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,15 +37,7 @@ class _Case {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
@@ -81,14 +59,12 @@ void main() {
     _Case('ServerSettingPage', () => const ServerSettingPage()),
     _Case('TorrentAddPage', () => const TorrentAddPage()),
     _Case('TorrentInfoPage', () => const TorrentInfoPage()),
-    
+
     _Case('InfoOverviewPage', () => const Scaffold(body: TorrentInfoOverviewPage())),
     _Case('InfoFilesPage', () => const Scaffold(body: TorrentInfoFilesPage())),
     _Case('InfoPeersPage', () => const Scaffold(body: TorrentInfoPeersPage())),
     _Case('InfoTrackersPage', () => const Scaffold(body: TorrentInfoTrackersPage())),
-    
-    
-    
+
     _Case('DrawerPage', () => const DrawerPage()),
   ];
 
@@ -96,7 +72,7 @@ void main() {
     testWidgets('smoke: ${c.name}', (WidgetTester tester) async {
       Get.testMode = true;
       Get.reset();
-      
+
       Get.put(ThemeController(), permanent: true);
       Object? err;
       try {
@@ -121,14 +97,6 @@ void main() {
     });
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   testWidgets('layout: 种子行有数据时不溢出', (WidgetTester tester) async {
     Get.testMode = true;
     Get.reset();
@@ -138,7 +106,7 @@ void main() {
     final void Function(FlutterErrorDetails)? oldOnError = FlutterError.onError;
     FlutterError.onError = (FlutterErrorDetails d) {
       final String s = d.exceptionAsString();
-      
+
       if (s.contains('Unable to load asset')) return;
       problems.add(s);
     };
@@ -150,7 +118,6 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 50));
 
-      
       final TorrentController ctrl = Get.find<TorrentController>();
       ctrl.items.assignAll(<Torrent>[
         Torrent.fromJson(<String, dynamic>{
@@ -192,7 +159,7 @@ void main() {
         }),
       ]);
       await tester.pump(const Duration(milliseconds: 400));
-      
+
       await tester.tap(find.byIcon(Icons.expand_more).first);
       await tester.pump(const Duration(milliseconds: 400));
     } finally {
@@ -206,11 +173,6 @@ void main() {
         '其它异常=${problems.length - overflows.length}');
     expect(overflows, isEmpty, reason: '种子行布局溢出：\n${overflows.join('\n---\n')}');
 
-    
-    
-    
-    
-    
     final List<SlidableTile> rows =
         tester.widgetList<SlidableTile>(find.byType(SlidableTile)).toList();
     expect(rows, isNotEmpty);
@@ -226,11 +188,6 @@ void main() {
         reason: '行间距必须在侧滑容器**外层**，否则会漏色');
   });
 
-  
-  
-  
-  
-  
   testWidgets('layout: 服务器卡片有数据时不溢出', (WidgetTester tester) async {
     Get.testMode = true;
     Get.reset();
@@ -274,10 +231,6 @@ void main() {
       expect(find.byType(ReorderableListView), findsOneWidget);
       expect(find.byType(SlidableTile), findsNWidgets(2));
 
-      
-      
-      
-      
       final SlidableTile card =
           tester.widget<SlidableTile>(find.byType(SlidableTile).first);
       expect(card.motion, SlidableMotionKind.scroll);

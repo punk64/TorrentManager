@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,9 +68,6 @@ void main() {
     await tester.pump();
   }
 
-  
-  
-  
   group('A. 概览页：操作按钮上移到字段之上', () {
     testWidgets('★ 五个操作按钮都在，且排在字段列表之前',
         (WidgetTester tester) async {
@@ -98,7 +80,6 @@ void main() {
       }
       expect(find.text(S.delete), findsOneWidget);
 
-      
       final double opY = tester.getCenter(find.text('继续')).dy;
       final double progressY =
           tester.getCenter(find.textContaining(S.fieldProgress)).dy;
@@ -117,7 +98,6 @@ void main() {
       expect(find.byType(Wrap), findsWidgets,
           reason: '★ 需求 3：改用 Wrap 让宽度不足时自动换行，全部按钮可见');
 
-      
       for (final ScrollableState s
           in tester.stateList<ScrollableState>(find.byType(Scrollable))) {
         expect(s.position.axis, Axis.vertical,
@@ -126,9 +106,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('C. Peers 排序条：Wrap 换行 + 全部可见', () {
     testWidgets('★ 不再是横向 ListView：页面上没有横向 Scrollable',
         (WidgetTester tester) async {
@@ -165,7 +142,6 @@ void main() {
     testWidgets('★ 每个排序按钮都带 Tooltip 说明', (WidgetTester tester) async {
       await pumpPeers(tester);
 
-      
       expect(find.byType(Tooltip), findsNWidgets(5),
           reason: '★ 需求 2：排序切换类按钮要有 tooltip / 说明，'
               '让用户知道它是"切换排序依据"而不是某个动作');
@@ -183,21 +159,15 @@ void main() {
       expect(find.text('方向'), findsNothing,
           reason: '★ 旧文案「方向」含义不明，必须换成动态说明');
 
-      
-      
       final Finder dirChip = find.byType(ActionChip);
 
-      
       expect(find.text('从快到慢'), findsOneWidget);
 
-      
       await tester.tap(dirChip);
       await tester.pump();
       expect(find.text('从慢到快'), findsOneWidget,
           reason: '★ 切换后文案应同步反转');
 
-      
-      
       await tester.tap(find.text(S.fieldIp));
       await tester.pump();
       expect(find.text('正序'), findsOneWidget,

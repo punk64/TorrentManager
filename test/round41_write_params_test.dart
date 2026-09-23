@@ -1,23 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -32,8 +12,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 
-
-
 ServerData srv({String id = 'qb-1', String host = '10.0.0.7'}) => ServerData(
       id: id,
       name: 'NAS-$id',
@@ -44,15 +22,9 @@ ServerData srv({String id = 'qb-1', String host = '10.0.0.7'}) => ServerData(
       password: 'p',
     );
 
-
-
-
-
-
 class _ParamStyleQbServer implements HttpClientAdapter {
   _ParamStyleQbServer(this.log, {this.rejectBody = false});
 
-  
   final List<String> log;
 
   final bool rejectBody;
@@ -66,7 +38,7 @@ class _ParamStyleQbServer implements HttpClientAdapter {
     final String path = o.uri.path;
     final String ct = o.contentType ?? '';
     final String body = o.data?.toString() ?? '';
-    
+
     final bool bodyHas = ct.contains('x-www-form-urlencoded') && body.contains('hashes');
     final bool queryHas = o.uri.query.contains('hashes');
     int code = 200;
@@ -104,7 +76,7 @@ class _ParamStyleQbServer implements HttpClientAdapter {
 
 QbMethod _qbWith(_ParamStyleQbServer server) {
   final Dio dio = Dio(BaseOptions(
-    
+
     validateStatus: (int? s) => s != null && s < 500,
   ));
   dio.httpClientAdapter = server;
@@ -123,8 +95,6 @@ void main() {
     Get.testMode = true;
     Get.reset();
   });
-
-  
 
   test('★ 只认 form body 的 qB：暂停参数走 body，不再被 400 拒', () async {
     final List<String> log = <String>[];
@@ -168,8 +138,6 @@ void main() {
     );
   });
 
-  
-
   test('★ 只认 query 的老式部署：400 后自动回退 query 并成功', () async {
     final List<String> log = <String>[];
     final QbMethod c = _qbWith(_ParamStyleQbServer(log, rejectBody: true));
@@ -185,7 +153,6 @@ void main() {
       reason: '★ 回退那一笔要用 query string：$log',
     );
 
-    
     log.clear();
     await c.pauseTorrent('abc123def456');
     expect(_stopCalls(log), 1,
@@ -194,11 +161,6 @@ void main() {
         reason: '★ 第二次直接用对的形式：$log');
   });
 
-  
-  
-  
-  
-  
   test('★ 写入超大列表时被截断到 2 万条', () {
     final ServerController sc = ServerController(qb: QbMethod());
     sc.cacheTorrents('big', List<Torrent>.generate(

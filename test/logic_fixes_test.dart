@@ -1,16 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -52,20 +39,10 @@ Torrent mk({
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
-
-  
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -78,7 +55,6 @@ void main() {
 
   group('① setTime 不再把长时长显示成 ∞', () {
     test('做种 110 天应显示真实天数', () {
-      
       final String s = Formatter.setTime(9500000);
       expect(s, isNot('∞'), reason: '∞ 只属于 ETA 语义，不属于「做种时长」');
       expect(s.startsWith('109'), isTrue, reason: '实际输出：$s');
@@ -207,9 +183,9 @@ void main() {
 
   group('⑦ planDelete：删除对话框三个勾选项真正生效', () {
     final Torrent main = mk(hash: 'h1', size: 500, savePath: '/dl/show');
-    
+
     final Torrent sub = mk(hash: 'h2', size: 500, savePath: '/dl/show/');
-    
+
     final Torrent other = mk(hash: 'h3', size: 700, savePath: '/dl/show');
     final List<Torrent> all = <Torrent>[main, sub, other];
     final List<Torrent> chosen = <Torrent>[main];

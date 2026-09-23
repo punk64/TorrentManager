@@ -1,27 +1,12 @@
 import '../../utils/formatter.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class Torrent {
-  
-
   final String hash;
   final String name;
   final int size;
 
-  
   final double progress;
 
-  
   final String state;
 
   final int dlSpeed;
@@ -29,74 +14,50 @@ class Torrent {
   final int numSeeds;
   final int numLeechs;
 
-  
-  
-  
-  
-  
   final int activePeers;
 
-  
   final double ratio;
 
   final String? savePath;
   final String? category;
   final String? tags;
 
-  
   final String? contentPath;
 
-  
   final String? magnetUri;
 
   final String? comment;
 
-  
   final int uploaded;
 
-  
   final int downloaded;
 
-  
   final int dlLimit;
 
-  
   final int upLimit;
 
-  
   final int eta;
 
-  
   final int addedOn;
 
-  
   final int lastActivity;
 
-  
   final int completionOn;
 
-  
   final int seedingTime;
 
-  
   final int timeActive;
 
-  
   final int trackerCount;
 
-  
   final int numComplete;
 
-  
   final int numIncomplete;
 
-  
   final double availability;
 
-  
   final int priority;
 
-  
   final int? trId;
 
   const Torrent({
@@ -172,8 +133,6 @@ class Torrent {
     );
   }
 
-  
-  
   Torrent updateQbData(Map<String, dynamic> delta) {
     if (delta.isEmpty) return this;
     final Map<String, dynamic> base = <String, dynamic>{
@@ -290,9 +249,6 @@ class Torrent {
         'priority': priority,
       };
 
-  
-  
-  
   String get newState => state;
 
   bool get isPause {
@@ -331,14 +287,6 @@ class Torrent {
 
   int get newCompletionOn => completionOn;
 
-  
-
-  
-  
-  
-  
-  
-  
   bool get isDownloading {
     if (isPause) return false;
     final String s = state.toLowerCase();
@@ -348,7 +296,6 @@ class Torrent {
         s.contains('forceddl');
   }
 
-  
   bool get isSeeding {
     if (isPause) return false;
     final String s = state.toLowerCase();
@@ -366,12 +313,6 @@ class Torrent {
 
   bool get isChecking => state.toLowerCase().contains('check');
 
-  
-  
-  
-  
-  
-  
   bool get isError {
     final String s = state.toLowerCase();
     return s.contains('error') || s.contains('missing');
@@ -379,11 +320,6 @@ class Torrent {
 
   bool get isStalled => state.toLowerCase().contains('stall');
 
-  
-  
-  
-  
-  
   int get transferPeers {
     if (activePeers >= 0) return activePeers;
     return (dlSpeed > 0 || upSpeed > 0) ? numSeeds + numLeechs : 0;
@@ -393,34 +329,80 @@ class Torrent {
 
   bool get isActive => dlSpeed > 0 || upSpeed > 0;
 
-  
-  
-  
-  
-  
-
-  
   List<String> get tagList => (tags ?? '')
       .split(',')
       .map((String s) => s.trim())
       .where((String s) => s.isNotEmpty)
       .toList();
 
-  
   String get categoryName =>
       (category == null || category!.isEmpty) ? '未分类' : category!;
 
-  
   String get pathName =>
       (savePath == null || savePath!.isEmpty) ? '未指定' : savePath!;
 
-  
-  
-  
-  
-  
-  
-  
   String get site =>
       Formatter.trackerHost(comment) ?? Formatter.trackerHost(magnetUri) ?? '';
+}
+
+class TorrentStatusCounts {
+  const TorrentStatusCounts({
+    required this.downloading,
+    required this.seeding,
+    required this.paused,
+    required this.checking,
+    required this.error,
+    required this.other,
+  });
+
+  factory TorrentStatusCounts.of(Iterable<Torrent> list) {
+    int dl = 0;
+    int up = 0;
+    int paused = 0;
+    int checking = 0;
+    int error = 0;
+    int other = 0;
+    for (final Torrent t in list) {
+      if (t.isError) {
+        error++;
+      } else if (t.isChecking) {
+        checking++;
+      } else if (t.isPause) {
+        paused++;
+      } else if (t.isDownloading) {
+        dl++;
+      } else if (t.isSeeding || t.isUploading) {
+        up++;
+      } else {
+        other++;
+      }
+    }
+    return TorrentStatusCounts(
+      downloading: dl,
+      seeding: up,
+      paused: paused,
+      checking: checking,
+      error: error,
+      other: other,
+    );
+  }
+
+  const TorrentStatusCounts.empty()
+      : downloading = 0,
+        seeding = 0,
+        paused = 0,
+        checking = 0,
+        error = 0,
+        other = 0;
+
+  final int downloading;
+  final int seeding;
+  final int paused;
+  final int checking;
+  final int error;
+
+  final int other;
+
+  int get total =>
+      downloading + seeding + paused + checking + error + other;
 }

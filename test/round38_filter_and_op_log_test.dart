@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,8 +16,6 @@ import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/pages/server_dialog.dart';
 import 'package:torrent_manager/utils/app_log.dart';
 import 'package:torrent_manager/utils/strings.dart';
-
-
 
 ServerData qbSrv() => ServerData(
       id: 'qb-1',
@@ -58,10 +44,6 @@ Torrent mk({
       numLeechs: 3,
       ratio: 2.31,
     );
-
-
-
-
 
 Dio fakeQb(
   List<String> calls, {
@@ -110,12 +92,10 @@ Dio fakeQb(
   return dio;
 }
 
-
 String opLog() => AppLog.instance.entries
     .where((LogEntry e) => e.source == AppLog.srcOp)
     .map((LogEntry e) => e.message)
     .join('\n');
-
 
 String netLog() => AppLog.instance.entries
     .where((LogEntry e) => e.source == AppLog.srcNet)
@@ -137,9 +117,6 @@ void main() {
     AppLog.instance.clear();
   });
 
-  
-  
-  
   group('① 下载中筛选排除暂停态', () {
     test('★ pausedDL（4.x）/ stoppedDL（5.x）都不再算「下载中」', () {
       expect(TorrentFilter.downloading.matches(mk(hash: 'a', state: 'pausedDL')),
@@ -171,9 +148,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('② 操作日志：暂停 / 继续', () {
     test('★ 记下种子名与服务器（此前只有一个数字，无法复盘）', () async {
       final List<String> calls = <String>[];
@@ -232,9 +206,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ 端点自适应留痕', () {
     test('★ 5.x 用 stop，日志写明实际端点与版本风格', () async {
       final List<String> calls = <String>[];
@@ -250,7 +221,7 @@ void main() {
 
     test('★ 版本探测误判时：404 换端点并把纠偏过程记下来', () async {
       final List<String> calls = <String>[];
-      
+
       final QbMethod qb = QbMethod(
         dio: fakeQb(calls, version: 'v4.6.2', pauseOk: false, stopOk: true),
       );
@@ -279,9 +250,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ 取消添加服务器', () {
     testWidgets('★ 点「取消」记一条未保存的操作日志', (WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);

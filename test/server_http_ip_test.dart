@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/data/models/server_data.dart';
@@ -14,9 +7,7 @@ ServerData _srv({
   int port = 8080,
   bool https = false,
   bool hideAddress = false,
-  
-  
-  
+
   bool hidePort = false,
 }) =>
     ServerData(
@@ -43,8 +34,6 @@ void main() {
     });
 
     test('https + IPv4', () {
-      
-      
       expect(_srv(host: '192.168.1.5', port: 8443, https: true).baseUrl,
           'https://192.168.1.5:8443');
       expect(_srv(host: '192.168.1.5', port: 443, https: true).baseUrl,
@@ -52,7 +41,6 @@ void main() {
     });
 
     test('主机里即便写成了 host:port，也要能剥出纯 IP', () {
-      
       expect(_srv(host: '192.168.1.5:8080', port: 8080).normalizedHost,
           '192.168.1.5');
     });
@@ -78,7 +66,6 @@ void main() {
     });
 
     test('主机名恰好叫 https 时不能被当成 scheme', () {
-      
       expect(_srv(host: 'https', port: 55908).normalizedHost, 'https');
       expect(_srv(host: 'https', port: 55908).baseUrl, 'http://https:55908',
           reason: '这是**主机名**就叫 https，语义上确实如此，仅固定当前行为');
@@ -107,7 +94,7 @@ void main() {
       );
       expect(s.displayAddress, 'http://192.*.*.*:***',
           reason: '默认就是「不显示真实内容」：主机只留首段、端口整体打码');
-      
+
       expect(s.baseUrl, 'http://192.168.1.5:8080');
     });
   });

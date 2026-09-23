@@ -1,23 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,8 +18,6 @@ import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/utils/formatter.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/slidable_tile.dart';
-
-
 
 ServerData qbSrv() => ServerData(
       id: 'qb-1',
@@ -62,9 +40,7 @@ Torrent mkTorrent({
   int numIncomplete = 0,
   int uploaded = 0,
   int downloaded = 0,
-  
-  
-  
+
   String? savePath,
 }) =>
     Torrent(
@@ -86,7 +62,6 @@ Torrent mkTorrent({
       savePath: savePath,
     );
 
-
 Map<String, dynamic> qbTorrentJson({
   String hash = 'h1',
   String state = 'downloading',
@@ -107,14 +82,6 @@ Map<String, dynamic> qbTorrentJson({
       'num_complete': 88,
       'num_incomplete': 7,
     };
-
-
-
-
-
-
-
-
 
 Dio fakeQbDio(
   List<String> calls, {
@@ -168,7 +135,7 @@ Dio fakeQbDio(
         }));
         return;
       }
-      
+
       if (path.endsWith('/torrents/pause') || path.endsWith('/torrents/resume')) {
         h.resolve(pauseOk ? ok('') : no(404));
         return;
@@ -197,10 +164,6 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
-  
   Future<TorrentController> pumpListPage(
     WidgetTester tester, {
     required List<String> calls,
@@ -244,12 +207,7 @@ void main() {
     return ctrl;
   }
 
-  
-  
-  
-  
   Future<void> swipe(WidgetTester tester, double dx) async {
-    
     await tester.drag(find.byType(SlidableTile).first, Offset(dx, 0));
     for (int i = 0; i < 12; i++) {
       await tester.pump(const Duration(milliseconds: 50));
@@ -262,15 +220,11 @@ void main() {
     }
   }
 
-  
-  
-  
   group('① 查询辅种弹层信息', () {
     testWidgets('★ 每行显示站点（主域名）+ 做种人数 + 上传下载量',
         (WidgetTester tester) async {
       final List<String> calls = <String>[];
-      
-      
+
       final Torrent me = mkTorrent(
         hash: 'h1',
         name: '同名资源',
@@ -296,7 +250,6 @@ void main() {
         items: <Torrent>[me, sub],
       );
 
-      
       await swipe(tester, 600);
       await tester.tap(
         find
@@ -311,20 +264,15 @@ void main() {
       expect(find.textContaining(S.querySubTorrents), findsOneWidget,
           reason: '★ 弹层标题应带条目数');
 
-      
-      
       Finder inSheet(Finder f) =>
           find.descendant(of: find.byType(ListTile), matching: f);
 
-      
-      
       final List<Text> lines =
           tester.widgetList<Text>(inSheet(find.byType(Text))).toList();
       expect(lines.length, 3, reason: '★ 每行只允许两行小字（外加标题的种子名）');
       final String row1 = lines[1].data ?? '';
       final String row2 = lines[2].data ?? '';
 
-      
       expect(row1, contains(S.fieldSiteShort), reason: '★ 简写字段名「站点」');
       expect(row1, contains('hdsky.me'),
           reason: '★ 辅种行必须显示站点主域名（用户点名要的信息）');
@@ -333,14 +281,12 @@ void main() {
       expect(row1, isNot(contains('hdcity.com')),
           reason: '★ 列表里只列**其它**辅种，当前这条不该出现');
 
-      
       expect(row1, contains(S.fieldSeeders), reason: '★ 做种人数与站点同行');
       expect(row1, contains('88/7'),
           reason: '★ 人数口径与卡片一致（`做种/下载(连接)`）');
       expect(row1, contains(Formatter.setStatus('seeding')),
           reason: '★ 种子状态与站点同行');
 
-      
       expect(row2, contains(S.fieldRatioShort), reason: '★ 分享率（简写）');
       expect(row2, contains(S.fieldUpShort), reason: '★ 上传量（简写）');
       expect(row2, contains(S.fieldDlShort), reason: '★ 下载量（简写）');
@@ -348,7 +294,6 @@ void main() {
       expect(row2, isNot(contains(Formatter.setStatus('seeding'))),
           reason: '★ 状态只在第一行');
 
-      
       expect(inSheet(find.textContaining(S.fieldUploaded)), findsNothing,
           reason: '★ 「上传总量」已简写为「上传」');
       expect(inSheet(find.textContaining(S.fieldDownloaded)), findsNothing,
@@ -356,9 +301,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('② 暂停 / 继续端点按 qB 版本自适应', () {
     test('★ 版本号解析', () {
       expect(QbMethod.qbMajorOf('v4.6.2'), 4);
@@ -412,14 +354,14 @@ void main() {
     testWidgets('★ 探测不准时用 404 反推换端点，并把结论写回（第二笔不再试错）',
         (WidgetTester tester) async {
       final List<String> calls = <String>[];
-      
+
       await pumpListPage(
         tester,
         calls: calls,
         version: 'v4.6.2',
         pauseOk: false,
         stopOk: true,
-        
+
         torrents: () => <Map<String, dynamic>>[qbTorrentJson()],
       );
       await swipe(tester, -600);
@@ -435,12 +377,6 @@ void main() {
       expect(calls.where((String c) => c.contains('/torrents/stop')).length, 1,
           reason: '★ 404 后必须自动换新端点重试');
 
-      
-      
-      
-      
-      
-      
       final TorrentController tc = Get.find<TorrentController>();
       tc.items.value = tc.items
           .map((Torrent x) =>
@@ -479,17 +415,12 @@ void main() {
       ));
       await settle(tester);
 
-      
-      
       expect(ctrl.error.value, isNotNull,
           reason: '★ 写操作 4xx 必须冒泡成错误，不能再"静默成功"');
       expect(ctrl.error.value, contains('404'));
     });
   });
 
-  
-  
-  
   group('③ 暂停生效后的界面反馈', () {
     testWidgets('★ 列表卡片：暂停后按钮翻转为 `play_arrow`（绿色开始）',
         (WidgetTester tester) async {
@@ -583,9 +514,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ qB 5.x 状态串 `stopped*`', () {
     test('★ 文案 / 图标 / 颜色都要认 `stoppedDL` `stoppedUP`', () {
       expect(Formatter.setStatus('stoppedDL'), S.stPausedDl,
@@ -594,18 +522,14 @@ void main() {
           reason: '★ 不认的话会显示成「做种中」');
       expect(Formatter.statusIcon('stoppedDL'), Icons.pause);
       expect(Formatter.statusIcon('stoppedUP'), Icons.pause);
-      
+
       expect(Formatter.setStatus('pausedDL'), S.stPausedDl);
       expect(Formatter.setStatus('pausedUP'), S.stPausedUp);
       expect(Formatter.statusIcon('pausedDL'), Icons.pause);
-      
-      
-      
-      
-      
+
       expect(Formatter.setStatus('stopped'), S.stPaused);
       expect(Formatter.statusIcon('stopped'), Icons.pause);
-      
+
       expect(Formatter.statusIcon('downloading'), Icons.arrow_circle_down);
       expect(Formatter.statusIcon('uploading'), Icons.arrow_circle_up);
     });

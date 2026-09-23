@@ -1,39 +1,7 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/controllers/torrent_controller.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
-
 
 Torrent _t(String hash, int size, String? dir) => Torrent(
       hash: hash,
@@ -50,24 +18,18 @@ Torrent _t(String hash, int size, String? dir) => Torrent(
     );
 
 void main() {
-  
   final Torrent main = _t('h1', 500, '/dl/show');
   final Torrent sub = _t('h2', 500, '/dl/show/'); 
   final Torrent other = _t('h3', 700, '/dl/show'); 
   final List<Torrent> all = <Torrent>[main, sub, other];
   final List<Torrent> chosen = <Torrent>[main];
 
-  
-  
-  
-
   group('第 58 轮 A · P0-1 只勾「无辅种时删除文件」不能误删文件', () {
     test('A1 ★ 有辅种 + **只勾第三项** → 必须不删文件', () {
       final DeletePlan p = TorrentController.planDelete(
         all: all,
         chosen: chosen,
-        
-        
+
         noSubDeleteFiles: true,
       );
       expect(p.deleteFiles, isFalse,
@@ -112,10 +74,6 @@ void main() {
       expect(p.subs, isEmpty, reason: '没勾「删除辅种」就不该动别人的任务');
     });
   });
-
-  
-  
-  
 
   group('第 58 轮 B · P0-2 辅种单独一批且恒不删文件', () {
     test('B1 ★ 勾「删除文件 + 删除辅种」→ 辅种那一批不得删文件', () {
@@ -176,7 +134,7 @@ void main() {
       expect(p.deleteFiles, isFalse, reason: '前置：A1 已钉住');
       final List<DeleteBatch> bs =
           TorrentController.planBatches(chosen: chosen, plan: p);
-      
+
       expect(bs.length, 1);
       expect(bs.single.deleteFiles, isFalse);
     });

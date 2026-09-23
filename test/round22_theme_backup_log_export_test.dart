@@ -1,24 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -39,8 +18,6 @@ import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/utils/theme_backup.dart';
 import 'package:torrent_manager/widgets/log_selection.dart';
 
-
-
 CustomTheme _theme(String id, String name) => CustomTheme(
       id: id,
       name: name,
@@ -54,7 +31,6 @@ CustomTheme _theme(String id, String name) => CustomTheme(
       componentOpacity: 0.26,
       pageColors: <String, int>{'server': 0xFF123456, 'torrent': 0xFF654321},
     );
-
 
 void _expectSameTheme(CustomTheme a, CustomTheme b) {
   expect(a.id, b.id);
@@ -80,8 +56,6 @@ void main() {
     Get.reset();
     AppLog.instance.clear();
   });
-
-  
 
   group('主题包 信封 / round-trip', () {
     test('导出 → 导入，参数逐字段完全相等', () {
@@ -141,8 +115,6 @@ void main() {
       expect(r.skipped.first, contains('第 2 套'));
     });
   });
-
-  
 
   group('坏数据 四类', () {
     test('① 非 JSON → 具体到"不是合法的 JSON"', () {
@@ -204,8 +176,6 @@ void main() {
     });
   });
 
-  
-
   group('日志文本拼装 / 隐私开关', () {
     test('每行含 时间 / 等级 / 来源 / 正文', () {
       LogLine l = LogLine(
@@ -220,7 +190,7 @@ void main() {
         l,
         LogLine(time: '2026-09-20 16:41:31', level: S.warning, message: '超时'),
       ]);
-      
+
       expect(text, contains('16:41:02 信息 APP 已连接服务器\n'));
       expect(text, contains('16:41:31 警告 超时\n'));
       expect(text.endsWith('\n'), isTrue);
@@ -247,21 +217,18 @@ void main() {
       final LogLine raw = appLogLine(e, S.info, false);
       final LogLine masked = appLogLine(e, S.info, true);
 
-      
       expect(raw.message, contains('192.168.1.8:8080'));
       expect(raw.message, contains('tracker.example.com'));
-      
+
       expect(masked.message, isNot(contains('192.168.1.8')));
       expect(masked.message, contains('***.***.***.***'));
       expect(masked.message, isNot(contains('example.com')));
-      
+
       expect(masked.time, raw.time);
       expect(masked.level, raw.level);
       expect(masked.source, raw.source);
     });
   });
-
-  
 
   group('配色 S1', () {
     test('浅色：卡片比页面背景暗 4 个百分点', () {
@@ -277,7 +244,7 @@ void main() {
       final double bg = AppTheme.lightnessOf(t.scaffoldBackgroundColor);
       final double card = AppTheme.lightnessOf(t.colorScheme.surfaceContainerLow);
       expect(card - bg, greaterThanOrEqualTo(AppTheme.cardLuminanceShift - 0.005));
-      
+
       expect(card, greaterThan(bg));
     });
 
@@ -302,7 +269,7 @@ void main() {
       final RoundedRectangleBorder shape =
           t.cardTheme.shape! as RoundedRectangleBorder;
       expect(shape.side.width, AppTheme.cardBorderWidth);
-      
+
       expect(t.colorScheme.surfaceContainerLow.a, closeTo(0.26, 0.01));
     });
 
@@ -310,8 +277,6 @@ void main() {
       expect(AppTheme.sectionTintShift, lessThan(AppTheme.cardLuminanceShift));
     });
   });
-
-  
 
   group('日志页 多选模式', () {
     Future<void> pumpLog(WidgetTester tester) async {
@@ -331,7 +296,6 @@ void main() {
       AppLog.instance.info('第二条日志');
       await pumpLog(tester);
 
-      
       expect(find.byType(LogSelectionBar), findsNothing);
 
       await tester.longPress(find.text('第一条日志'));
@@ -341,12 +305,10 @@ void main() {
       expect(find.text(S.logSelectedCount(1)), findsOneWidget);
       expect(find.text(S.logCopyCount(1)), findsOneWidget);
 
-      
       await tester.tap(find.text(S.logSelectAll));
       await tester.pump();
       expect(find.text(S.logSelectedCount(2)), findsOneWidget);
 
-      
       await tester.tap(find.byIcon(Icons.close));
       await tester.pump();
       expect(find.byType(LogSelectionBar), findsNothing);
@@ -378,12 +340,10 @@ void main() {
       expect(clip, isNotNull, reason: '复制必须真的写进剪贴板');
       expect(clip, contains('待复制的日志内容'));
       expect(clip, contains(S.info));
-      
+
       expect(find.byType(LogSelectionBar), findsNothing);
     });
   });
-
-  
 
   group('导入落库与抽屉入口', () {
     testWidgets('导入落库：换新 id、「保留两者」改名、「覆盖」保留原 id 与位置',
@@ -391,7 +351,6 @@ void main() {
       Get.put(ThemeController(), permanent: true);
       final ThemeController tc = Get.find<ThemeController>();
 
-      
       final ThemeImportOutcome first =
           await tc.applyImportedThemes(<CustomTheme>[_theme('fromFile', '夜航')],
               overwrite: false);
@@ -401,7 +360,6 @@ void main() {
       expect(localId, isNot('fromFile'), reason: '必须换新 id，否则会与本机既有主题撞号');
       expect(tc.customThemes.first.name, '夜航');
 
-      
       final ThemeImportOutcome second = await tc.applyImportedThemes(
           <CustomTheme>[_theme('fromFile2', '夜航')],
           overwrite: false);
@@ -409,7 +367,6 @@ void main() {
       expect(tc.customThemes.length, 2);
       expect(tc.customThemes.last.name, '夜航${S.themeImportNameSuffix}');
 
-      
       final ThemeImportOutcome third = await tc.applyImportedThemes(
           <CustomTheme>[_theme('fromFile3', '夜航')],
           overwrite: true);
@@ -418,16 +375,12 @@ void main() {
       expect(tc.customThemes.first.id, localId, reason: '覆盖必须保留原 id');
       expect(tc.customThemes.first.name, '夜航');
 
-      
       expect(tc.conflictingNames(<CustomTheme>[_theme('z', '夜航')]), <String>['夜航']);
       expect(tc.conflictingNames(<CustomTheme>[_theme('z', '没这个名字')]), isEmpty);
     });
 
     testWidgets('抽屉主题分组出现导入 / 导出两行，且排在「自定义主题」之后',
         (WidgetTester tester) async {
-      
-      
-      
       Get.put(ThemeController(), permanent: true);
       tester.view.physicalSize = const Size(400, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -439,24 +392,21 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 300));
 
-      
       await tester.ensureVisible(find.text(S.themeImport));
       await tester.pumpAndSettle();
 
       expect(find.text(S.themeImport), findsOneWidget);
       expect(find.text(S.themeImportSub), findsOneWidget);
       expect(find.text(S.themeExport), findsOneWidget);
-      
+
       expect(find.text(S.themeExportEmpty), findsOneWidget);
 
-      
       final double yCustom = tester.getTopLeft(find.text(S.themeCustom)).dy;
       final double yImport = tester.getTopLeft(find.text(S.themeImport)).dy;
       final double yExport = tester.getTopLeft(find.text(S.themeExport)).dy;
       expect(yImport, greaterThan(yCustom));
       expect(yExport, greaterThan(yImport));
 
-      
       final ListTile exportTile = tester.widget<ListTile>(find.ancestor(
         of: find.text(S.themeExport),
         matching: find.byType(ListTile),

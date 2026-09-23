@@ -1,12 +1,8 @@
-
-
-
 class QbLog {
   final int id;
   final String message;
   final int timestamp;
 
-  
   final int type;
 
   const QbLog({

@@ -9,25 +9,6 @@ import '../controllers/theme_controller.dart';
 import '../utils/strings.dart';
 import 'filtered_image.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class PagePreview extends StatelessWidget {
   const PagePreview({
     super.key,
@@ -38,40 +19,28 @@ class PagePreview extends StatelessWidget {
     this.useDefaultBackgroundIfEmpty = false,
   });
 
-  
   static const double screenAspect = 9 / 19.5;
 
-  
   static const double _lw = 300;
   static const double _lh = 650;
 
-  
   final AppPageKey page;
 
-  
   final double width;
 
-  
   final ImageProvider? backgroundImage;
 
-  
   final ImageProvider? topImage;
 
-  
-  
-  
-  
   final bool useDefaultBackgroundIfEmpty;
 
-  
   double get height => width / screenAspect;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final ThemeController tc = Get.find<ThemeController>();
-      
-      
+
       final ColorScheme cs = tc.previewTheme.colorScheme;
 
       final Color? userBg = tc.pageColor(page, AppStyleSlot.background);
@@ -88,8 +57,6 @@ class PagePreview extends StatelessWidget {
               ? const AssetImage(ThemeController.defaultMenuImage)
               : null);
 
-      
-      
       final Widget content = page == AppPageKey.drawer
           ? _drawerPreview(tc, cs)
           : _realPagePreview(tc, cs, cardBg, titleC, bodyC);
@@ -106,8 +73,7 @@ class PagePreview extends StatelessWidget {
                 border: Border.all(color: cs.outlineVariant),
                 borderRadius: BorderRadius.circular(AppTheme.radius),
               ),
-              
-              
+
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
@@ -122,8 +88,6 @@ class PagePreview extends StatelessWidget {
     });
   }
 
-  
-  
   Widget _background(ThemeController tc, ImageProvider<Object> img) {
     return FilteredImage(
       image: img,
@@ -136,9 +100,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
-
-  
   Widget _drawerPreview(ThemeController tc, ColorScheme cs) {
     return FittedBox(
       fit: BoxFit.contain,
@@ -151,7 +112,7 @@ class PagePreview extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _drawerHeader(tc),
-              
+
               Padding(
                 padding: const EdgeInsets.only(left: 16, top: 10, bottom: 4),
                 child: Row(
@@ -180,8 +141,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
-  
   ImageProvider<Object> _menuImageOf(ThemeController tc) {
     if (topImage != null) return topImage!;
     final String? custom = tc.menuImagePath.value;
@@ -191,17 +150,6 @@ class PagePreview extends StatelessWidget {
     return ThemeController.imageProviderFor(path);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _drawerHeader(ThemeController tc) {
     return SizedBox(
       height: 150,
@@ -256,11 +204,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
-
-  
-  
-  
   Widget _realPagePreview(
     ThemeController tc,
     ColorScheme cs,
@@ -284,7 +227,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
   Widget _appBar(ColorScheme cs, Color titleC) {
     final String t = specOf(page).titleLocalized;
     return Container(
@@ -368,15 +310,14 @@ class PagePreview extends StatelessWidget {
           _logRow(cs, bodyC),
         ], padTop: 10);
       case AppPageKey.drawer:
-        
+
         return const SizedBox.shrink();
     }
   }
 
-  
   Widget _listBody(List<Widget> children, {double padTop = 12}) {
     return SingleChildScrollView(
-      
+
       physics: const NeverScrollableScrollPhysics(),
       child: Padding(
         padding: EdgeInsets.fromLTRB(12, padTop, 12, 12),
@@ -400,7 +341,6 @@ class PagePreview extends StatelessWidget {
         child: child,
       );
 
-  
   Widget _speedBar(ColorScheme cs, Color bodyC) => Container(
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -482,7 +422,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
   Widget _searchField(ColorScheme cs, Color bodyC) => Container(
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -499,7 +438,6 @@ class PagePreview extends StatelessWidget {
         ),
       );
 
-  
   Widget _filterChips(ColorScheme cs, Color bodyC) => Row(
         children: <Widget>[
           for (int i = 0; i < 3; i++)
@@ -540,7 +478,7 @@ class PagePreview extends StatelessWidget {
               style: TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600, color: titleC)),
           const SizedBox(height: 6),
-          
+
           Container(
             height: 5,
             decoration: BoxDecoration(
@@ -582,7 +520,6 @@ class PagePreview extends StatelessWidget {
     );
   }
 
-  
   Widget _tabs(ColorScheme cs, Color titleC, Color bodyC) => Container(
         height: 40,
         color: cs.surfaceContainerHigh,
@@ -609,7 +546,6 @@ class PagePreview extends StatelessWidget {
         ),
       );
 
-  
   Widget _infoRow(ColorScheme cs, Color bodyC, Color titleC) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
@@ -621,7 +557,6 @@ class PagePreview extends StatelessWidget {
         ),
       );
 
-  
   Widget _switchRow(ColorScheme cs, Color bodyC, IconData icon) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
@@ -639,7 +574,6 @@ class PagePreview extends StatelessWidget {
         ),
       );
 
-  
   Widget _logRow(ColorScheme cs, Color bodyC) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(

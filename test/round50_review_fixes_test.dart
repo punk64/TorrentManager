@@ -1,22 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -51,7 +32,6 @@ Torrent _t(
       savePath: dir,
     );
 
-
 ({Dio dio, List<String> bodies}) _fakeTr() {
   final List<String> bodies = <String>[];
   final Dio dio = Dio(
@@ -74,10 +54,8 @@ Torrent _t(
 }
 
 void main() {
-  
   group('N6 辅种判定：全应用唯一口径（体积 + 同目录）', () {
     test('★ 名字不同、但字节数相同 + 同目录 → 仍是辅种', () {
-      
       final Torrent a = _t('h1', name: '[站A] 影片 2160p', dir: '/dl/影片');
       final Torrent b = _t('h2', name: '影片.2160p.站B', dir: '/dl/影片');
       expect(TorrentController.isCrossSeed(a, b), isTrue,
@@ -126,12 +104,11 @@ void main() {
       ];
 
       for (final Torrent t in all) {
-        
         final Set<String> viaQuery = all
             .where((Torrent x) => TorrentController.isCrossSeed(t, x))
             .map((Torrent x) => x.hash)
             .toSet();
-        
+
         final Set<String> viaDelete = TorrentController.planDelete(
           all: all,
           chosen: <Torrent>[t],
@@ -143,7 +120,6 @@ void main() {
                 '否则用户看不到的任务被一并删掉（不可逆）');
       }
 
-      
       expect(
         TorrentController.planDelete(
           all: all,
@@ -155,7 +131,6 @@ void main() {
     });
   });
 
-  
   group('N13 planDelete：O(n+m) 规模保护', () {
     test('★ 3000 条 + 选中半数 + 删除辅种 → 毫秒级完成', () {
       final List<Torrent> all = <Torrent>[
@@ -179,7 +154,6 @@ void main() {
     });
   });
 
-  
   group('N8 TR 文件优先级：三档（无"最高"）', () {
     test('TR 没有"最高"这一档 → 界面必须隐藏', () {
       expect(FilePrio.maximal.trSupported, isFalse);
@@ -214,7 +188,6 @@ void main() {
     });
   });
 
-  
   group('N9 TR 添加种子：分类与暂停不再被丢弃', () {
     test('★ labels（分类）与 paused 都要进 torrent-add', () async {
       final ({Dio dio, List<String> bodies}) f = _fakeTr();
@@ -238,15 +211,12 @@ void main() {
     });
   });
 
-  
   group('N15 VIEW 日志节流表限量', () {
     test('★ 灌入超过上限的不同 key → 节流表被清，老 key 不再被拦住', () {
       final AppLog log = AppLog.instance;
       log.clear();
       AppLog.resetViewThrottle();
 
-      
-      
       const int n = AppLog.viewKeyLimit + 1;
       for (int i = 0; i < n; i++) {
         log.view('刷新详情', key: '详情:$i:refresh');
@@ -254,7 +224,6 @@ void main() {
       expect(log.entries.length, n,
           reason: '每条 key 都不同 → 都该被记下来（节流只拦重复 key）');
 
-      
       final int before = log.entries.length;
       log.view('刷新详情', key: '详情:0:refresh');
       expect(log.entries.length, before + 1,
@@ -272,7 +241,6 @@ void main() {
     });
   });
 
-  
   group('N1~N5 文案就位', () {
     test('TR 缺 trId / 无服务器 / 非 qB 导出 → 都有专门提示', () {
       expect(S.noTrId, isNotEmpty);
@@ -300,19 +268,11 @@ void main() {
     });
   });
 
-  
-  
-  
-  
-  
-  
   group('S4 迭代次数下限（防「改小 iter 干掉慢哈希」）', () {
     tearDown(() {
       CryptoBox.testIterationsOverride = null;
     });
 
-    
-    
     String retag(String env, Object? iter) {
       final Map<String, dynamic> m =
           Map<String, dynamic>.from(jsonDecode(env) as Map);
@@ -324,8 +284,6 @@ void main() {
       return jsonEncode(m);
     }
 
-    
-    
     setUp(() {
       CryptoBox.testIterationsOverride = CryptoBox.minIterations;
     });

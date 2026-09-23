@@ -2,101 +2,44 @@ import 'package:dio/dio.dart';
 
 import 'strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 enum ConnErrorKind {
-  
   none,
 
-  
-  
-  
-  
   missingConfig,
 
-  
-  
-  
-  
   authFailed,
 
-  
-  
-  
   ipBanned,
 
-  
-  
-  
   addressInvalid,
 
-  
-  
-  
   unreachable,
 
-  
   unknown,
 }
 
-
 extension ConnErrorKindX on ConnErrorKind {
-  
-  
-  
-  
   bool get isFatal =>
       this == ConnErrorKind.missingConfig ||
       this == ConnErrorKind.authFailed ||
       this == ConnErrorKind.ipBanned ||
       this == ConnErrorKind.addressInvalid;
 
-  
   bool get isRetryable => this == ConnErrorKind.unreachable ||
       this == ConnErrorKind.unknown;
 }
 
-
-
-
-
-
-
-
-
-
-
 class NetError {
   NetError._();
 
-  
-  
-  
-  
-  
   static const int maxFallbackLength = 2000;
 
-  
-  
-  
-  
-  
   static bool _isBanned(DioException e) {
     final String body = e.response?.data?.toString().toLowerCase() ?? '';
     final String inner = e.error?.toString().toLowerCase() ?? '';
     return body.contains('banned') || inner.contains('banned');
   }
 
-  
   static String describe(Object e) {
     String raw = e.toString();
     if (e is DioException) {
@@ -111,28 +54,14 @@ class NetError {
         case DioExceptionType.transformTimeout:
           return S.srvTimeout;
         case DioExceptionType.badCertificate:
-          
-          
-          
+
           return 'HTTPS 证书校验失败：请为服务端配置受信任的证书，'
               '或在客户端信任该自签名证书（改用 http 会明文传输账号密码）';
         case DioExceptionType.badResponse:
           final int? code = e.response?.statusCode;
-          
-          
-          
-          
-          
-          
+
           if (_isBanned(e)) return S.srvIpBanned;
-          
-          
-          
-          
-          
-          
-          
-          
+
           if (code == 401) return '账号或密码错误（HTTP 401）';
           if (code == 403) {
             return '服务器拒绝访问：未登录或会话已失效（HTTP 403）';
@@ -164,12 +93,6 @@ class NetError {
       return 'HTTPS 握手 / 证书失败';
     }
 
-    
-    
-    
-    
-    
-    
     String scrubbed = raw.replaceAll(
       RegExp(r'\s*uri:\s*\S+', caseSensitive: false),
       ' ',
@@ -178,34 +101,13 @@ class NetError {
       RegExp(r'https?://[^\s/]+', caseSensitive: false),
       'http://…',
     );
-    
-    
-    
-    
-    
-    
-    
-    
+
     final String one = scrubbed.replaceAll(RegExp(r'\s+'), ' ').trim();
     return one.length <= maxFallbackLength
         ? one
         : '${one.substring(0, maxFallbackLength)}…';
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static ConnErrorKind classify(Object e) {
     if (e is DioException) {
       if (_isBanned(e)) return ConnErrorKind.ipBanned;
@@ -217,8 +119,7 @@ class NetError {
         case DioExceptionType.transformTimeout:
           return ConnErrorKind.unreachable;
         case DioExceptionType.badCertificate:
-          
-          
+
           return ConnErrorKind.addressInvalid;
         case DioExceptionType.badResponse:
           final int? code = e.response?.statusCode;

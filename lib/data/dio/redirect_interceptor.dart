@@ -2,43 +2,15 @@ import 'package:dio/dio.dart';
 
 import '../../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class RedirectInterceptor extends Interceptor {
   RedirectInterceptor({this.dio, this.maxHops = 3});
 
-  
   final Dio? dio;
 
-  
   final int maxHops;
 
-  
-  
   static const String _kHops = 'torrentmanager.redirectHops';
 
-  
-  
-  
-  
-  
   static bool isAllowed(Uri from, Uri to) {
     if (from.host.isEmpty || to.host.isEmpty) return false;
     if (from.host != to.host) return false;
@@ -56,7 +28,7 @@ class RedirectInterceptor extends Interceptor {
       Response<dynamic> response, ResponseInterceptorHandler handler) async {
     final Dio? d = dio;
     final int code = response.statusCode ?? 0;
-    
+
     if (d == null || code < 300 || code >= 400) {
       handler.next(response);
       return;
@@ -70,7 +42,6 @@ class RedirectInterceptor extends Interceptor {
     final Uri from = ro.uri;
     final Uri? to = Uri.tryParse(loc) == null ? null : from.resolve(loc);
     if (to == null) {
-      
       handler.next(response);
       return;
     }
@@ -100,10 +71,9 @@ class RedirectInterceptor extends Interceptor {
       );
       return;
     }
-    
-    
+
     ro.extra[_kHops] = hops;
-    
+
     ro.path = to.toString();
     try {
       final Response<dynamic> r = await d.fetch<dynamic>(ro);

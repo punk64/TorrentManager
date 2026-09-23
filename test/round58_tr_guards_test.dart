@@ -1,27 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -35,10 +11,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/data/prefs/server_prefs.dart';
 import 'package:torrent_manager/data/transmission/tr_method.dart';
-
-
-
-
 
 Dio _fakeTrDio(List<String> calls) {
   final Dio dio = Dio(BaseOptions(
@@ -76,7 +48,6 @@ Dio _fakeTrDio(List<String> calls) {
   return dio;
 }
 
-
 Torrent _t(String hash, {int? trId}) => Torrent(
       hash: hash,
       name: '种子$hash',
@@ -104,10 +75,6 @@ void main() {
   });
 
   tearDown(() => Get.reset());
-
-  
-  
-  
 
   group('第 58 轮 C · P1-3 TR 改订阅地址必须触发 blocklist-update', () {
     test('C1 ★ 写入 blocklistUrl → 必须补一次 blocklist-update', () async {
@@ -144,10 +111,6 @@ void main() {
               '黑名单（可能几 MB）纯属浪费');
     });
   });
-
-  
-  
-  
 
   group('第 58 轮 D · P1-1 TR 空 id 不得照发', () {
     test('D1 ★ 选中项全缺 trId → 不发请求，且明确报错', () async {

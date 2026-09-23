@@ -5,12 +5,6 @@ import '../app/theme.dart';
 import '../controllers/torrent_controller.dart';
 import 'bottom_panel.dart';
 
-
-
-
-
-
-
 Future<void> showSortFilterPanel([BuildContext? context]) =>
     BottomPanel.show<void>(
       title: '排序与筛选',
@@ -19,70 +13,35 @@ Future<void> showSortFilterPanel([BuildContext? context]) =>
       context: context,
     );
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class _PanelMetrics {
   const _PanelMetrics(this.btnWidth);
 
-  
   static const double listPadH = 12;
 
-  
   static const double cardPadH = 14;
 
-  
   static const double gap = 8;
 
-  
   static const int cols = 4;
 
-  
   static const int maxLabelChars = 4;
 
-  
   static const double maxFontSize = 13;
 
-  
   static const double minFontSize = 9;
 
-  
   factory _PanelMetrics.forPanelWidth(double panelW) {
     final double gridW = panelW - 2 * listPadH - 2 * cardPadH;
     final double btn = (gridW - gap * (cols - 1)) / cols;
     return _PanelMetrics(btn);
   }
 
-  
   final double btnWidth;
 
-  
-  
   double get hPad => (btnWidth * 0.08).clamp(3.0, 8.0);
 
-  
   double get vPad => (btnWidth * 0.09).clamp(5.0, 9.0);
 
-  
-  
-  
-  
   double get fontSize => ((btnWidth - 2 * hPad) / maxLabelChars - 0.3)
       .clamp(minFontSize, maxFontSize);
 }
@@ -97,29 +56,18 @@ class SortFilterPanel extends StatefulWidget {
 class _SortFilterPanelState extends State<SortFilterPanel> {
   final TorrentController ctrl = Get.find<TorrentController>();
 
-  
   bool _sortOpen = true;
 
-  
-  
   final Set<FilterDim> _open = <FilterDim>{};
 
-  
-  
-  
-  
   _PanelMetrics _m = const _PanelMetrics(64);
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
     return LayoutBuilder(
       builder: (BuildContext ctx, BoxConstraints c) {
         _m = _PanelMetrics.forPanelWidth(c.maxWidth);
-        
-        
+
         return Obx(
           () => ListView(
             shrinkWrap: true,
@@ -142,8 +90,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  
-
   Widget _sortSection() {
     return _card(
       title: '排序方式',
@@ -152,15 +98,10 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          
-          
-          
-          
-          
-          
+
           _sortGrid(),
           const SizedBox(height: 12),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
@@ -182,10 +123,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  
-  
-  
-  
   Widget _sortGrid() {
     const int cols = _PanelMetrics.cols;
     const double spacing = _PanelMetrics.gap;
@@ -198,7 +135,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             Padding(
               padding: const EdgeInsets.only(bottom: spacing),
               child: Row(
-                
+
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   for (int j = 0; j < row.length; j++) ...<Widget>[
@@ -223,8 +160,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  
-
   Widget _facetSection(FilterDim d, {bool center = true}) {
     final List<FacetEntry> list = ctrl.facets(d);
     return _card(
@@ -236,15 +171,13 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          
-          
-          
+
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: ctrl.hasFacet(d) ? () => ctrl.clearFacet(d) : null,
               icon: const Icon(Icons.filter_alt_off, size: 16),
-              
+
               label: Text(
                 '清除筛选',
                 style: TextStyle(fontSize: _m.fontSize),
@@ -255,8 +188,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
           list.isEmpty
               ? Text('（暂无数据）', style: TextStyle(fontSize: _m.fontSize))
               : Wrap(
-              
-              
+
               alignment:
                   center ? WrapAlignment.center : WrapAlignment.start,
               spacing: 8,
@@ -264,7 +196,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
               children: <Widget>[
                 for (final FacetEntry e in list)
                   _btn(
-                    
+
                     text: '${e.value} (${e.count})',
                     selected: ctrl.selection(d).contains(e.value),
                     onTap: () => ctrl.toggleFacet(d, e.value),
@@ -282,17 +214,12 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       child: TextButton.icon(
         onPressed: ctrl.hasFacets ? ctrl.clearFacets : null,
         icon: const Icon(Icons.filter_alt_off, size: 18),
-        
-        
-        
+
         label: Text('清除全部筛选', style: TextStyle(fontSize: _m.fontSize)),
       ),
     );
   }
 
-  
-
-  
   Widget _card({
     required String title,
     required bool open,
@@ -304,7 +231,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-        
+
         borderRadius: BorderRadius.circular(AppTheme.radius),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -334,9 +261,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             ),
             if (open)
               Padding(
-                
-                
-                
+
                 padding: const EdgeInsets.fromLTRB(
                   _PanelMetrics.cardPadH,
                   0,
@@ -346,8 +271,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    
-                    
+
                     Divider(
                       height: 1,
                       thickness: 0.5,
@@ -367,10 +291,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  
-  
-  
-  
   Widget _btn({
     required String text,
     required bool selected,
@@ -378,9 +298,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Material(
-      
-      
-      
+
       color: selected ? cs.primary : cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -395,14 +313,11 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          
-          
-          
-          
+
           padding: EdgeInsets.symmetric(horizontal: _m.hPad, vertical: _m.vPad),
           child: Text(
             text,
-            
+
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,

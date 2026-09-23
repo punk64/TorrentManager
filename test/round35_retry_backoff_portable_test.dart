@@ -1,23 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -43,8 +23,6 @@ import 'package:torrent_manager/pages/server_list_page.dart';
 import 'package:torrent_manager/utils/crypto_box.dart';
 import 'package:torrent_manager/utils/net_error.dart';
 
-
-
 ServerData qbSrv(String id, String host, {String? user, String? pass}) =>
     ServerData(
       id: id,
@@ -56,15 +34,12 @@ ServerData qbSrv(String id, String host, {String? user, String? pass}) =>
       password: pass,
     );
 
-
-
 class _TextAdapter implements HttpClientAdapter {
   _TextAdapter(this.body, {this.statusCode = 200});
 
   final String body;
   final int statusCode;
 
-  
   final List<String> paths = <String>[];
 
   @override
@@ -103,12 +78,6 @@ DioException _dioErr(
     error: inner,
   );
 }
-
-
-
-
-
-
 
 Dio _countingDio(List<String> log) {
   final Dio dio = Dio();
@@ -150,13 +119,6 @@ Dio _countingDio(List<String> log) {
   return dio;
 }
 
-
-
-
-
-
-
-
 Dio _qbDio(String baseUrl) => Dio(BaseOptions(
       baseUrl: baseUrl,
       validateStatus: (int? s) => s != null && s < 500,
@@ -166,22 +128,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    
     SecurePrefs.useMemoryBackendForTest();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     Get.testMode = true;
     Get.reset();
-    
-    
-    
+
     CryptoBox.testIterationsOverride = CryptoBox.minIterations;
   });
 
   tearDown(() {
     CryptoBox.testIterationsOverride = null;
   });
-
-  
 
   group('★ ConnErrorKind：错误分类决定「挂起」还是「退避」', () {
     test('IP 封禁（403 + banned 正文）→ ipBanned，且文案说清是封禁不是密码错', () {
@@ -259,8 +216,6 @@ void main() {
       expect(ConnErrorKind.unknown.isFatal, isFalse);
     });
   });
-
-  
 
   group('★ qB 登录：凭据不全绝不发请求（封 IP 的根因闸门）', () {
     test('密码为空 → 返回 false、标记 missingCreds，且**一个请求都没发**', () async {
@@ -345,8 +300,6 @@ void main() {
     });
   });
 
-  
-
   group('★ 指数退避与停机挂起', () {
     test('可重试类：失败后进入退避窗口，窗口过后放行', () {
       final ServerController sc = ServerController();
@@ -371,7 +324,7 @@ void main() {
       for (int i = 0; i < want.length; i++) {
         sc.reportFailure('a', Exception('boom'));
         expect(sc.retryAttempt['a'], i + 1);
-        
+
         now = now.add(Duration(milliseconds: want[i] * 1000 - 1));
         expect(sc.shouldSkipRefresh('a'), isTrue,
             reason: '第 ${i + 1} 次失败后应等 ${want[i]}s');
@@ -488,8 +441,6 @@ void main() {
     });
   });
 
-  
-
   group('★ refreshAllServers 的门控', () {
     test('挂起的服务器不参与轮询；手动刷新（showProgress）强制重试全部',
         () async {
@@ -550,8 +501,6 @@ void main() {
           reason: '★ 只重试它一台');
     });
   });
-
-  
 
   group('★ 便携口令加密备份（信封 v2）', () {
     test('round-trip：口令加密 → 同一口令可解出原文', () async {
@@ -679,8 +628,6 @@ void main() {
     });
   });
 
-  
-
   group('★ 服务器卡片：重试按钮 / 挂起芯片 / 失败文案', () {
     Future<void> pumpPage(WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);
@@ -720,8 +667,7 @@ void main() {
 
       expect(find.text('已暂停重试'), findsOneWidget);
       expect(find.text('重试'), findsOneWidget);
-      
-      
+
       expect(find.textContaining('刷新失败：登录失败'), findsNothing);
       expect(find.text('登录失败：账号或密码错误（HTTP 401）'), findsOneWidget);
     });
@@ -755,9 +701,7 @@ void main() {
 
       log.clear();
       await tester.tap(find.text('重试'));
-      
-      
-      
+
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pump(const Duration(milliseconds: 50));
@@ -767,8 +711,6 @@ void main() {
       expect(log.any((String p) => p.contains('/app/version')), isTrue);
     });
   });
-
-  
 
   group('★ server_dialog：编辑保存时的密码语义', () {
     Future<void> pumpPage(WidgetTester tester) async {
@@ -781,7 +723,6 @@ void main() {
     }
 
     tearDown(() {
-      
       qbProbeFactory = QbMethod.new;
       trProbeFactory = TrMethod.new;
     });
@@ -794,7 +735,6 @@ void main() {
       sc.servers.assignAll(<ServerData>[s]);
       await tester.pump();
 
-      
       ServerData? submitted;
       qbProbeFactory = () => _CapturingQb((ServerData v) => submitted = v);
 
@@ -803,7 +743,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
-      
       await tester.enterText(
           find.widgetWithText(TextFormField, '密码'), '');
       await tester.pump();
@@ -833,11 +772,6 @@ void main() {
     });
   });
 }
-
-
-
-
-
 
 class _CapturingQb extends QbMethod {
   _CapturingQb(this.onCall);

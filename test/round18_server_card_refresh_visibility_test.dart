@@ -1,22 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -42,10 +23,6 @@ ServerData qbSrv(String id, String host) => ServerData(
       host: host,
       port: 8080,
     );
-
-
-
-
 
 Dio gatedQb(Future<void> gate) {
   final Dio dio = Dio();
@@ -95,12 +72,6 @@ Dio gatedQb(Future<void> gate) {
   return dio;
 }
 
-
-
-
-
-
-
 ServerController createControllers(Dio dio) {
   final ServerController sc =
       Get.put(ServerController(qb: QbMethod(dio: dio)));
@@ -108,7 +79,6 @@ ServerController createControllers(Dio dio) {
   Get.put(TorrentController());
   return sc;
 }
-
 
 void installTwoServers(ServerController sc, Dio dio) {
   sc.qbFactory = () => QbMethod(dio: dio);
@@ -141,16 +111,15 @@ void main() {
       final Completer<void> gate = Completer<void>();
       final Dio dio = gatedQb(gate.future);
       final ServerController sc = createControllers(dio);
-      
+
       await Future<void>.delayed(const Duration(milliseconds: 30));
       installTwoServers(sc, dio);
       expect(Get.isRegistered<TorrentController>(), isTrue,
           reason: '对照组成立的前提：当前服务器走的是主链路');
       expect(sc.servers.length, 2);
 
-      
       final Future<void> run = sc.refreshAllServers();
-      
+
       await Future<void>.delayed(const Duration(milliseconds: 60));
 
       expect(sc.connStatus['a'], ConnStatus.connecting,
@@ -160,7 +129,6 @@ void main() {
               '「第二的卡片没有显示」的根因：后台链路此前全程不上报 connecting，'
               '卡片从 idle 直接跳到终态，刷新过程对用户完全不可见');
 
-      
       gate.complete();
       await run;
       expect(sc.connStatus['a'], ConnStatus.ok);
@@ -174,12 +142,10 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 30));
       installTwoServers(sc, dio);
 
-      
       await sc.refreshAllServers();
       expect(sc.connStatus['a'], ConnStatus.ok);
       expect(sc.connStatus['b'], ConnStatus.ok);
 
-      
       final Completer<void> gate2 = Completer<void>();
       sc.qbFactory = () => QbMethod(dio: gatedQb(gate2.future));
       final Future<void> run = sc.refreshAllServers();
@@ -197,7 +163,6 @@ void main() {
 
     testWidgets('★ 页面上要同时出现**两处**「获取列表...」（用户可见口径）',
         (WidgetTester tester) async {
-      
       tester.view.physicalSize = const Size(1200, 2600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -206,11 +171,8 @@ void main() {
       final Dio dio = gatedQb(gate.future);
       final ServerController sc = createControllers(dio);
 
-      
-      
       await tester.pumpWidget(const GetMaterialApp(home: ServerListPage()));
-      
-      
+
       await tester.pump(const Duration(milliseconds: 50));
       expect(identical(Get.find<ServerController>(), sc), isTrue,
           reason: '页面拿到的必须是我们注入的那个实例');
@@ -218,18 +180,16 @@ void main() {
       installTwoServers(sc, dio);
       await tester.pump();
 
-      
       unawaited(sc.refreshAllServers());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 30));
 
-      
       expect(find.text('连接中...'), findsNWidgets(2),
           reason: '★ 两张卡片都应显示「获取列表...」—— 用户反馈的正是'
               '「只有排第一的卡片会显示，第二的卡片没有显示」');
 
       gate.complete();
-      
+
       for (int i = 0; i < 8; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }

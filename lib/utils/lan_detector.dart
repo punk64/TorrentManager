@@ -3,57 +3,15 @@ import 'dart:io';
 
 import '../data/models/server_data.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LanDetector {
   LanDetector._();
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const Duration kProbeTimeout = Duration(milliseconds: 600);
 
-  
   static Future<bool> Function(ServerData)? overrideProbe;
 
-  
-  
-  
   static Future<bool> Function(String host, int port)? overrideTcp;
 
-  
   static Future<bool> isOnLan(ServerData s) async {
     if (!s.hasLan) return false; 
     return overrideProbe != null ? overrideProbe!(s) : _realIsOnLan(s);
@@ -84,7 +42,6 @@ class LanDetector {
       try {
         await sock?.close();
       } catch (_) {
-        
       }
     }
   }

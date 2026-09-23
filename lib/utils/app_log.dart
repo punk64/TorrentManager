@@ -4,12 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'log_scope.dart';
 
-
-
-
-
 export 'log_scope.dart';
-
 
 class LogEntry {
   LogEntry(
@@ -23,51 +18,19 @@ class LogEntry {
 
   final String message;
 
-  
-  
   final String source;
 
-  
-  
-  
-  
-  
-  
-  
   final LogScope? scope;
 
   final DateTime time;
 
-  
   String? get serverId => scope?.id;
 
-  
   String? get serverName => scope?.name;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String get formattedTime =>
       DateFormat('yyyy-MM-dd HH:mm:ss.SSS').format(time);
 }
-
-
-
-
-
-
-
-
-
-
 
 class AppLog {
   AppLog._();
@@ -76,67 +39,27 @@ class AppLog {
 
   static const int maxEntries = 500;
 
-  
   static const String srcApp = 'APP';
   static const String srcNet = 'NET';
   static const String srcUi = 'UI';
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const String srcOp = 'OP';
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const String srcView = 'VIEW';
 
-  
-  
-  
-  
-  
   static Duration viewLogWindow = const Duration(seconds: 60);
 
-  
   static DateTime Function() viewNow = DateTime.now;
 
   static final Map<String, DateTime> _viewAt = <String, DateTime>{};
 
-  
-  
-  
-  
-  
   static const int viewKeyLimit = 200;
 
-  
   @visibleForTesting
   static void resetViewThrottle() => _viewAt.clear();
 
   final entries = <LogEntry>[].obs;
 
-  
-  
   void add(
     String message, {
     String level = 'INFO',
@@ -159,48 +82,15 @@ class AppLog {
   void error(String message, {String source = srcApp, LogScope? scope}) =>
       add(message, level: 'ERROR', source: source, scope: scope);
 
-  
   void net(String message, {String level = 'INFO', LogScope? scope}) =>
       add(message, level: level, source: srcNet, scope: scope);
 
-  
-  
-  
-  
-  
   void ui(String message, {bool isError = false, LogScope? scope}) =>
       add(message, level: isError ? 'ERROR' : 'INFO', source: srcUi, scope: scope);
 
-  
-  
-  
-  
   void op(String message, {String level = 'INFO', LogScope? scope}) =>
       add(message, level: level, source: srcOp, scope: scope);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void act(String page, String control,
       {String? target, String? detail, LogScope? scope}) {
     final String t = (target ?? '').trim();
@@ -209,20 +99,6 @@ class AppLog {
     op(d.isEmpty ? head : '$head ｜ $d', scope: scope);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void view(String message,
       {String? key, String level = 'INFO', LogScope? scope}) {
     final String k = key ?? message;
@@ -230,12 +106,7 @@ class AppLog {
     final DateTime? last = _viewAt[k];
     if (last != null && now.difference(last) < viewLogWindow) return;
     _viewAt[k] = now;
-    
-    
-    
-    
-    
-    
+
     if (_viewAt.length > viewKeyLimit) {
       _viewAt.removeWhere(
           (String _, DateTime at) => now.difference(at) >= viewLogWindow);
@@ -244,17 +115,6 @@ class AppLog {
     add(message, level: level, source: srcView, scope: scope);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static bool passScopeFilter(
     LogEntry e, {
     required Set<String> selected,

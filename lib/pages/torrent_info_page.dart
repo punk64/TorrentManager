@@ -15,13 +15,6 @@ import 'torrent_info_overview_page.dart';
 import 'torrent_info_peers_page.dart';
 import 'torrent_info_trackers_page.dart';
 
-
-
-
-
-
-
-
 class TorrentInfoPage extends StatelessWidget {
   const TorrentInfoPage({super.key});
 
@@ -50,11 +43,7 @@ class TorrentInfoPage extends StatelessWidget {
                   Formatter.showToast(S.noServer, isError: true);
                   return;
                 }
-                
-                
-                
-                
-                
+
                 if (!s.isQbittorrent) {
                   Formatter.showToast(S.btExportTrUnsupported, isError: true);
                   return;
@@ -67,9 +56,7 @@ class TorrentInfoPage extends StatelessWidget {
                   }
                   final Directory dir =
                       await getApplicationDocumentsDirectory();
-                  
-                  
-                  
+
                   final File f = File(
                       '${dir.path}/${Formatter.safeFileName(t.name)}.torrent');
                   await f.writeAsBytes(bytes);
@@ -87,10 +74,7 @@ class TorrentInfoPage extends StatelessWidget {
           ],
           bottom: const TabBar(
             labelStyle: TextStyle(fontSize: 12),
-            
-            
-            
-            
+
             tabs: <Widget>[
               Tab(text: '概览', height: 38),
               Tab(text: 'Tracker', height: 38),

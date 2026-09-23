@@ -1,32 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -41,10 +12,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/lan_detector.dart';
 
-
-
-
-
 ServerData _srv() => ServerData(
       id: 'qb-1',
       name: '家庭 NAS',
@@ -54,7 +21,6 @@ ServerData _srv() => ServerData(
       username: 'admin',
       password: 'adminadmin',
     );
-
 
 ServerData _lanSrv() => ServerData(
       id: 'qb-1',
@@ -68,10 +34,6 @@ ServerData _lanSrv() => ServerData(
       username: 'admin',
       password: 'adminadmin',
     );
-
-
-
-
 
 Dio _fakeQbDio(List<String> calls) {
   final Dio dio = Dio(BaseOptions(
@@ -118,16 +80,11 @@ Dio _fakeQbDio(List<String> calls) {
   return dio;
 }
 
-
-
-
-
 Future<void> _pump([int times = 6]) async {
   for (int i = 0; i < times; i++) {
     await Future<void>.delayed(const Duration(milliseconds: 1));
   }
 }
-
 
 int _countOf(List<String> calls, String path) =>
     calls.where((String c) => c.contains(path)).length;
@@ -136,12 +93,11 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    
     SecurePrefs.useMemoryBackendForTest();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     Get.testMode = true;
     Get.reset();
-    
+
     LanDetector.overrideProbe = (_) async => false;
   });
 
@@ -149,8 +105,6 @@ void main() {
     LanDetector.overrideProbe = null;
     Get.reset();
   });
-
-  
 
   test('第 56 轮 A · loadLocal 装进服务器后立刻补刷，不等 3 秒轮询', () async {
     await LocalStore.saveServers(<ServerData>[_srv()]);
@@ -169,10 +123,7 @@ void main() {
             '连第 55 轮刚压到 0.6 秒的探测结论都跟着浪费掉）');
   });
 
-  
-
   test('第 56 轮 B · servers 为空时零请求（不破坏既有用例的时序前提）', () async {
-    
     final List<String> calls = <String>[];
     final ServerController c = ServerController();
     c.qbFactory = () => QbMethod(dio: _fakeQbDio(calls));
@@ -187,8 +138,6 @@ void main() {
             '`round14/18/43/47` 能安然无恙的原因 —— 那些用例里 LocalStore '
             '走内存后端、装进来的是空列表，补刷同步早退、零请求');
   });
-
-  
 
   test('第 56 轮 C · 补刷不得抢在探测落地之前发请求', () async {
     await LocalStore.saveServers(<ServerData>[_lanSrv()]);
@@ -218,8 +167,6 @@ void main() {
     expect(_countOf(calls, '/sync/maindata'), 1,
         reason: '探测一落地就立刻放行（这正是省下那 2 秒的机制）');
   });
-
-  
 
   test('第 56 轮 D · 补刷与随后的手动刷新并发 → 同一台仍只有一笔', () async {
     await LocalStore.saveServers(<ServerData>[_srv()]);

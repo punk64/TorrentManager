@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/data/models/server_data.dart';
@@ -59,7 +52,7 @@ void main() {
       expect(hidden.displayAddress, isNot(shown.displayAddress),
           reason: '隐藏开关必须改变显示文本，否则等于没实现');
       expect(hidden.displayAddress, 'http://192.*.*.*:8080');
-      
+
       expect(hidden.displayAddress, isNot(contains('192.168.1.5')));
     });
 

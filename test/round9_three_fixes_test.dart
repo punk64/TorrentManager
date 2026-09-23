@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,7 +30,6 @@ void main() {
     Get.reset();
   });
 
-  
   Future<void> pumpPreview(
     WidgetTester tester, {
     required AppPageKey page,
@@ -77,7 +68,6 @@ void main() {
       await tc.load();
       await pumpPreview(tester, page: AppPageKey.drawer, tc: tc);
 
-      
       tc.setMenuBgFade(0.8);
       tc.setMenuBgBlur(6);
       await tester.pump();
@@ -159,7 +149,6 @@ void main() {
     });
 
     test('鉴权失败与「连不上」在状态上报上可区分', () {
-      
       final ServerController sc = ServerController();
       sc.reportAuthFailure('srv-1', '账号或密码错误（HTTP 401）');
 
@@ -167,7 +156,6 @@ void main() {
       expect(sc.connError['srv-1'], startsWith('登录失败'),
           reason: '★ UI 依据该前缀决定显示「重新登录」还是「重试」');
 
-      
       sc.reportFailure('srv-2', Exception('connection refused'));
       expect(sc.connError['srv-2'], isNot(startsWith('登录失败')));
     });

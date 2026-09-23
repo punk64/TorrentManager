@@ -1,27 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -37,8 +13,6 @@ import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/app_log.dart';
 import 'package:torrent_manager/utils/net_error.dart';
-
-
 
 ServerData qbSrv() => ServerData(
       id: 'qb-1',
@@ -61,25 +35,16 @@ Map<String, dynamic> qbTorrentJson(String hash) => <String, dynamic>{
       'save_path': '/downloads',
     };
 
-
-
-
-
-
 class GateAdapter implements HttpClientAdapter {
-  
   final List<String> calls = <String>[];
 
-  
   final List<RequestOptions> seen = <RequestOptions>[];
 
-  
   final Map<String, Completer<void>> gates = <String, Completer<void>>{};
 
   Dio dio() => Dio(BaseOptions(
         baseUrl: 'http://192.168.1.10:8080',
-        
-        
+
         validateStatus: (int? s) => s != null && s < 500,
         followRedirects: false,
         connectTimeout: const Duration(seconds: 8),
@@ -102,9 +67,6 @@ class GateAdapter implements HttpClientAdapter {
     final String body;
     final String type;
     if (p.endsWith('/auth/login')) {
-      
-      
-      
       body = 'Ok.';
       type = 'text/plain';
     } else if (p.endsWith('/app/webapiVersion')) {
@@ -141,7 +103,6 @@ class GateAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-
 List<String> viewLines() => AppLog.instance.entries
     .where((LogEntry e) => e.source == AppLog.srcView)
     .map((LogEntry e) => e.message)
@@ -163,8 +124,6 @@ void main() {
     Get.reset();
   });
 
-  
-
   test('第 44 轮 A · VIEW 日志：来源正确，同 key 在窗口内只记一条', () {
     AppLog.instance.view('服务器卡片[甲] 连接中…', key: 'k1');
     AppLog.instance.view('服务器卡片[甲] 连接中…', key: 'k1');
@@ -174,11 +133,9 @@ void main() {
     expect(AppLog.instance.entries.first.source, AppLog.srcView,
         reason: '组件状态必须单独一个来源，才能和 OP / NET / UI 区分开');
 
-    
     AppLog.instance.view('服务器卡片[乙] 连接中…', key: 'k2');
     expect(viewLines().length, 2);
 
-    
     AppLog.resetViewThrottle();
     DateTime fake = DateTime(2026, 9, 22, 8, 0, 0);
     AppLog.viewNow = () => fake;
@@ -190,13 +147,10 @@ void main() {
     AppLog.viewNow = DateTime.now;
   });
 
-  
-
   test('第 44 轮 B · 卡片「连接中」只在状态真的变化时记', () {
     final ServerController sc = ServerController();
     const String id = 'qb-1';
 
-    
     for (int i = 0; i < 10; i++) {
       AppLog.resetViewThrottle();
       sc.reportConnecting(id);
@@ -204,15 +158,12 @@ void main() {
     expect(viewLines().length, 1,
         reason: '★ 状态没变（一直是 connecting）就不该重复记 —— 3 秒轮询下会刷屏');
 
-    
     sc.reportFailureKind(id, ConnErrorKind.unreachable, '连不上服务器');
     AppLog.resetViewThrottle();
     sc.reportConnecting(id);
     expect(viewLines().where((String m) => m.contains('连接中')).length, 2,
         reason: '失败之后重新连接是一次新的状态变化，必须留痕');
   });
-
-  
 
   test('第 44 轮 C · 卡片"数据已获取"与"信息已刷新"都留痕且能区分', () {
     final ServerController sc = ServerController();
@@ -231,14 +182,9 @@ void main() {
       isTrue,
       reason: '用户要求日志里能看到"服务器卡片信息已刷新"',
     );
-    
+
     expect(vs.length, 2);
   });
-
-  
-  
-  
-  
 
   test('第 53 轮 D · 手上有缓存也**不**提前点亮（卡片不再显示假数字）', () async {
     final GateAdapter ad = GateAdapter();
@@ -246,8 +192,7 @@ void main() {
     final ServerData s = qbSrv();
     sc.servers.assignAll(<ServerData>[s]);
     sc.current.value = s;
-    
-    
+
     sc.cacheTorrents(s.id, <Torrent>[
       Torrent.fromJson(<String, dynamic>{
         'hash': 'h1',
@@ -256,7 +201,6 @@ void main() {
       }),
     ]);
 
-    
     ad.gates['/api/v2/sync/maindata'] = Completer<void>();
 
     unawaited(sc.refreshAllServers());
@@ -282,7 +226,6 @@ void main() {
     final ServerData s = qbSrv();
     sc.servers.assignAll(<ServerData>[s]);
     sc.current.value = s;
-    
 
     ad.gates['/api/v2/sync/maindata'] = Completer<void>();
     unawaited(sc.refreshAllServers());
@@ -297,15 +240,12 @@ void main() {
     expect(sc.connStatus[s.id], ConnStatus.ok);
   });
 
-  
-
   test('第 44 轮 E · setServer 只在路由真的变了才推进世代号', () {
     final QbMethod qb = QbMethod(dio: GateAdapter().dio());
     final ServerData s = qbSrv();
     qb.setServer(s);
     final int g1 = qb.routeGen;
 
-    
     qb.setServer(qbSrv());
     expect(qb.routeGen, g1,
         reason: '★ 同一个 baseUrl 再设一次**不算**路由变更。'
@@ -313,7 +253,6 @@ void main() {
             '`checkQbServerCookie` 走"改用新路由重新建立会话"→ '
             '白多一次探测 + 一次登录（约 2.5 秒，用户日志里那 8 秒的组成部分）');
 
-    
     qb.setServer(ServerData(
       id: 'qb-1',
       name: '家庭 NAS',
@@ -326,14 +265,11 @@ void main() {
     expect(qb.routeGen, greaterThan(g1));
   });
 
-  
-
   test('第 44 轮 F · 版本号两笔并行发起，且用探测级短超时', () async {
     final GateAdapter ad = GateAdapter();
     final QbMethod qb = QbMethod(dio: ad.dio());
     qb.setServer(qbSrv());
 
-    
     ad.gates['/api/v2/app/webapiVersion'] = Completer<void>();
     final Future<Map<String, String>> f = qb.updateQbInfo();
     await Future<void>.delayed(const Duration(milliseconds: 40));

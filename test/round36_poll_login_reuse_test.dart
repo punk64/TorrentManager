@@ -1,26 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -35,8 +12,6 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/crypto_box.dart';
-
-
 
 ServerData qbSrv(
   String id,
@@ -59,15 +34,9 @@ ServerData qbSrv(
       password: pass,
     );
 
-
-
-
-
-
 class _FakeQbServer implements HttpClientAdapter {
   _FakeQbServer(this.log);
 
-  
   final List<String> log;
 
   @override
@@ -84,7 +53,7 @@ class _FakeQbServer implements HttpClientAdapter {
 
     if (path.contains('/auth/login')) {
       body = 'Ok.';
-      
+
       setCookie = 'SID=${o.uri.host}; path=/';
     } else if (path.contains('/app/webapiVersion')) {
       body = '2.11.2';
@@ -114,7 +83,7 @@ class _FakeQbServer implements HttpClientAdapter {
       code,
       headers: <String, List<String>>{
         Headers.contentTypeHeader: <String>['text/plain'],
-        
+
         if (setCookie != null) 'set-cookie': <String>[setCookie],
       },
     );
@@ -123,8 +92,6 @@ class _FakeQbServer implements HttpClientAdapter {
   @override
   void close({bool force = false}) {}
 }
-
-
 
 QbMethod Function() _factory(_FakeQbServer server) => () {
       final Dio dio = Dio(BaseOptions(
@@ -145,16 +112,13 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     Get.testMode = true;
     Get.reset();
-    
-    
+
     CryptoBox.testIterationsOverride = CryptoBox.minIterations;
   });
 
   tearDown(() {
     CryptoBox.testIterationsOverride = null;
   });
-
-  
 
   group('★ 客户端实例复用：不再每 3 秒重登一次', () {
     test('首次连接登录一次；第二轮轮询**不再登录**（cookie 保住了）', () async {
@@ -163,7 +127,6 @@ void main() {
       sc.qbFactory = _factory(_FakeQbServer(log));
       sc.servers.assignAll(<ServerData>[qbSrv('a', '10.0.0.1')]);
 
-      
       await sc.refreshAllServers();
       expect(_logins(log), 1, reason: '首次连接总要建立一次会话');
       expect(
@@ -178,7 +141,6 @@ void main() {
       );
       expect(sc.connStatus['a'], ConnStatus.ok);
 
-      
       log.clear();
       await sc.refreshAllServers();
       expect(_logins(log), 0,
@@ -221,21 +183,9 @@ void main() {
       await sc.refreshAllServers();
       expect(_logins(log), 0, reason: '缓存生效');
 
-      
-      
-      
-      
-      
-      
-      
-      
-      
       log.clear();
       await sc.updateServer(qbSrv('a', '10.0.0.1', port: 8081));
-      
-      
-      
-      
+
       await sc.refreshAllServers();
       await Future<void>.delayed(const Duration(milliseconds: 50));
       expect(_logins(log), 1,
@@ -260,8 +210,6 @@ void main() {
     });
   });
 
-  
-
   group('★ 轮询选路：局域网可达就该打内网地址', () {
     test('lanUsing 为真 → 请求打到局域网地址；为假 → 打公网', () async {
       final List<String> log = <String>[];
@@ -277,7 +225,6 @@ void main() {
       expect(log.any((String e) => e.contains('192.168.1.50')), isFalse,
           reason: '未标记局域网时维持公网（与改动前行为一致）');
 
-      
       sc.lanUsing['a'] = true;
       log.clear();
       await sc.refreshAllServers();
@@ -287,8 +234,6 @@ void main() {
           reason: '切到局域网后不该再走公网');
     });
   });
-
-  
 
   group('★ 默认端口 443：baseUrl 的规范化', () {
     ServerData s({required int port, required bool https}) => ServerData(

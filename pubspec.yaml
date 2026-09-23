@@ -15,7 +15,7 @@ publish_to: 'none'
 #   构建 → 成功后把这里自增一位（0.1.0+11 → 0.1.1+12）→
 #   把产物重命名为 TorrentManager-V0.1.N-<abi>.apk → 跑打包断言。
 #   因此**这里存的是"下一次要出的版本"**，而不是"上一次出的版本"。
-version: 0.2.10+33
+version: 0.2.11+34
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
@@ -42,6 +42,9 @@ dependencies:
   # 加密（需求 5）：备份文件用 AES-256-GCM 加密后再写盘，密钥存
   # flutter_secure_storage（Android Keystore 托管）。
   # ⚠️ 它本来就是传递依赖（pubspec.lock 已锁 4.0.0），这里提升为直接依赖。
+  # ⚠️ 引用时**禁止** `import 'package:pointycastle/export.dart'`（全量导出会拖进
+  #    ECC/ASN.1/RSA 等几十种用不到的算法）→ 精确引 `api.dart` + 具体算法文件，
+  #    详见 lib/utils/crypto_box.dart 的注释。
   pointycastle: ^4.0.0
 
   # 文件选择：从本地文件系统选 .torrent 添加
@@ -53,19 +56,37 @@ dependencies:
   # 国际化
   intl: ^0.19.0
 
-  # 后端（Supabase auth / postgrest / functions 客户端）
-  #
-  # ⚠️ 本项目为**纯本地实现**：`lib/` 下没有任何 import 引用本包 ——
-  # 账户与备份分别由 LocalStore / AuthController 用设备内存储实现，
-  # 因此 release AOT 构建时本依赖的全部代码都会被 tree-shaking 剔除，不进入 APK。
-  # 保留声明是为了避免改动依赖树（改动后需重新联网 `pub get`）。
-  # 如需彻底移除：删掉下面这行后执行 `flutter pub get` 即可，功能不受影响。
-  supabase_flutter: ^2.8.0
+  # ⚠️ 2026-09-23 **已移除 `supabase_flutter`**（原先声明为 ^2.8.0）。
+  #    本项目为**纯本地实现**：`lib/` 下 0 处 import 引用它及它的任何传递依赖 ——
+  #    账户与备份分别由 LocalStore / AuthController 用设备内存储实现。
+  #    实测（V0.2.9 APK）它拖进来的东西：
+  #      · Dart 侧：supabase / gotrue / postgrest / storage_client / functions_client /
+  #        realtime_client 已被 tree-shaking 剔除，不进 libapp.so；
+  #      · 原生侧：**没有被剔除** —— 它直接依赖 app_links 与 url_launcher，这两是有
+  #        Android 原生实现的插件，`GeneratedPluginRegistrant` 会 new 它们的 Plugin 类
+  #        ⇒ classes.dex 里保留了 io.flutter.plugins.urllauncher.* 共 5 个类，
+  #        Manifest 也被合并进 `<queries>` 节点。
+  #    删除后的实际收益：约 0.1 MB（APK 的 0.4%）——**主要价值不在体积**，
+  #    而在依赖树整洁 ＋ 鸿蒙移植时原生插件从 6 个降到 4 个。
+  #    移除方式：删掉该行后 `flutter pub get`，功能不受影响（已验证 lib/ 零引用）。
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+
+# ⚠️ 2026-09-23（体积优化 · 剔除 jni / jni_flutter）：
+#   `path_provider_android` 从 2.3.0 起改用 Dart 官方的 jni 插件直接调 Android API，
+#   由此把 jni ＋ jni_flutter 两个**原生插件**拖进依赖树 —— 实测 APK 里多出
+#   `lib/arm64-v8a/libdartjni.so`（131 KB）与 dex 里的 com.github.dart_lang.jni.*，
+#   并且 jni 的 native asset 会为 armeabi-v7a / x86 / x86_64 **各编一份**（详见本日前日志）。
+#   本项目只用 path_provider 取临时目录与文档目录，2.2.x 的纯 MethodChannel 实现够用。
+#   ★ 版本号为什么这么写：上游 path_provider 2.1.6 声明的是 `path_provider_android: ^2.2.5`
+#     ⇒ 锁到 `>=2.2.5 <2.3.0` **仍在上游允许区间内**，不会产生版本冲突、风险最低。
+#   ⚠️ 改本段后**必须重新 `flutter pub get`**（会联网拉 2.2.x），否则 pubspec.lock
+#     不更新、本段等于没生效。回退方式：删掉整段再 pub get。
+dependency_overrides:
+  path_provider_android: ">=2.2.5 <2.3.0"
 
 flutter:
   uses-material-design: true

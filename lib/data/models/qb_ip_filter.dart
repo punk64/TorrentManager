@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 class QbIpFilter {
   const QbIpFilter({
     required this.enabled,
@@ -17,7 +5,6 @@ class QbIpFilter {
     required this.bannedIps,
   });
 
-  
   static const QbIpFilter empty = QbIpFilter(
     enabled: false,
     filterTrackers: false,
@@ -28,29 +15,23 @@ class QbIpFilter {
   static const String keyTrackers = 'ip_filter_trackers';
   static const String keyBanned = 'banned_IPs';
 
-  
   static const int maxEntries = 5000;
 
   final bool enabled;
   final bool filterTrackers;
 
-  
   final String bannedIps;
 
-  
   factory QbIpFilter.fromPrefs(Map<String, dynamic> prefs) => QbIpFilter(
         enabled: asBool(prefs[keyEnabled]),
         filterTrackers: asBool(prefs[keyTrackers]),
         bannedIps: prefs[keyBanned]?.toString() ?? '',
       );
 
-  
   List<String> get entries => splitEntries(bannedIps);
 
   int get count => entries.length;
 
-  
-  
   Map<String, dynamic> diffFrom(QbIpFilter old) {
     final Map<String, dynamic> out = <String, dynamic>{};
     if (enabled != old.enabled) out[keyEnabled] = enabled;
@@ -70,7 +51,6 @@ class QbIpFilter {
         bannedIps: bannedIps ?? this.bannedIps,
       );
 
-  
   String diffSummary(QbIpFilter old) {
     final List<String> a = entries;
     final List<String> b = old.entries;
@@ -81,8 +61,6 @@ class QbIpFilter {
     return '${a.length} 条（+${added.length} / -${removed.length}）';
   }
 
-  
-
   static bool asBool(dynamic v) {
     if (v is bool) return v;
     if (v is num) return v != 0;
@@ -90,20 +68,17 @@ class QbIpFilter {
     return false;
   }
 
-  
   static List<String> splitEntries(String raw) => raw
       .split(RegExp(r'[\r\n]+'))
       .map((String e) => e.trim())
       .where((String e) => e.isNotEmpty)
       .toList(growable: false);
 
-  
   static String joinEntries(Iterable<String> entries) => entries
       .map((String e) => e.trim())
       .where((String e) => e.isNotEmpty)
       .join('\n');
 
-  
   static List<String> addEntry(Iterable<String> entries, String value) {
     final String v = value.trim();
     final List<String> out = List<String>.of(entries);
@@ -112,7 +87,6 @@ class QbIpFilter {
     return out;
   }
 
-  
   static List<String> replaceEntry(
     List<String> entries,
     int index,
@@ -125,7 +99,6 @@ class QbIpFilter {
     return out;
   }
 
-  
   static List<String> removeEntry(List<String> entries, int index) {
     if (index < 0 || index >= entries.length) return entries;
     final List<String> out = List<String>.of(entries);
@@ -133,11 +106,6 @@ class QbIpFilter {
     return out;
   }
 
-  
-  
-  
-  
-  
   static bool isValidEntry(String raw) {
     final String s = raw.trim();
     if (s.isEmpty) return false;
@@ -149,7 +117,6 @@ class QbIpFilter {
 
     final bool v6 = addr.contains(':');
     if (v6) {
-      
       if (prefix != null && (prefix < 0 || prefix > 128)) return false;
       final bool ok = RegExp(r'^[0-9a-fA-F:]+$').hasMatch(addr) &&
           addr.split(':').length >= 3;

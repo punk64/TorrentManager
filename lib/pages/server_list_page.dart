@@ -14,47 +14,18 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/i18n.dart';
 import '../utils/strings.dart';
+import '../utils/startup_update.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/draggable_fab.dart';
 import '../widgets/io_chip.dart';
+import '../widgets/server_stats_panel.dart';
 import '../widgets/slidable_tile.dart';
 import 'drawer_page.dart';
 import 'server_dialog.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const bool kEnableServerGroup = false;
 
-
-
-
-
-
 const double _kStatsBlockHeight = 82;
-
-
-
-
 
 class ServerListPage extends StatefulWidget {
   const ServerListPage({super.key});
@@ -64,14 +35,20 @@ class ServerListPage extends StatefulWidget {
 }
 
 class _ServerListPageState extends State<ServerListPage> {
-  
   bool _cardOpen = false;
   bool _drawerOpen = false;
 
-  
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(StartupUpdatePrompt.runOnce());
+    });
+  }
+
   void _onCardSlideChanged(bool open) {
     if (!mounted || _cardOpen == open) return;
     setState(() => _cardOpen = open);
@@ -81,10 +58,6 @@ class _ServerListPageState extends State<ServerListPage> {
   Widget build(BuildContext context) {
     final ServerController ctrl = Get.find<ServerController>();
 
-    
-    
-    
-    
     return PopScope(
       canPop: !_cardOpen && !_drawerOpen,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -107,51 +80,19 @@ class _ServerListPageState extends State<ServerListPage> {
         if (mounted) setState(() => _drawerOpen = open);
       },
       appBar: AppBar(
-        
-        
-        
-        
+
         title: Obx(() => Text('服务器（${ctrl.servers.length}）')),
         actions: <Widget>[
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
           Obx(() => _SpinningRefreshIcon(
                 spinning: ctrl.isManualRefreshing,
                 onPressed: () async {
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
-                  
                   AppLog.instance.act('服务器列表', 'AppBar[刷新全部]');
                   await ctrl.refreshAllServers(showProgress: true);
                   Formatter.showToast(S.srvRefreshedAll);
                 },
               )),
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
+
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
             onSelected: (String v) => Get.toNamed(v),
@@ -164,33 +105,11 @@ class _ServerListPageState extends State<ServerListPage> {
         ],
       ),
       drawer: const AppDrawer(),
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
+
       body: Stack(
         children: <Widget>[
           AutoRefresh(
             onTick: () async {
-              
-              
-              
-              
-              
-              
-              
-              
-              
               final ServerController sc = Get.find<ServerController>();
               unawaited(sc.refreshAllServers());
             },
@@ -222,12 +141,10 @@ class _ServerListPageState extends State<ServerListPage> {
             enableGroup: kEnableServerGroup,
           );
 
-          
-          
           return Column(
             children: <Widget>[
               _totalSpeedPanel(context, ctrl),
-              
+
               Expanded(
                 child: SlidableAutoCloseGroup(
                   child: _serverList(context, ctrl, groups),
@@ -237,19 +154,11 @@ class _ServerListPageState extends State<ServerListPage> {
           );
           }),
           ),
-          
-          
-          
-          
+
           Positioned.fill(
             child: DraggableFab(
               topInset: kToolbarHeight + MediaQuery.of(context).padding.top,
-              
-              
-              
-              
-              
-              
+
               initialYRatio: DraggableFab.listPageInitialYRatio,
               onPressed: () {
                 AppLog.instance.act('服务器列表', '悬浮按钮[添加服务器]');
@@ -265,32 +174,24 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-
-
-
-
   Widget _serverList(
     BuildContext context,
     ServerController ctrl,
     Map<String, List<ServerData>> groups,
   ) {
-    
     if (!kEnableServerGroup) {
       return ReorderableListView.builder(
         padding: const EdgeInsets.only(bottom: 96),
         itemCount: ctrl.servers.length,
-        
+
         onReorderItem: ctrl.reorderServer,
-        
-        
+
         proxyDecorator: _noProxyMaterial,
         itemBuilder: (BuildContext ctx, int i) {
           final ServerData s = ctrl.servers[i];
           return KeyedSubtree(
             key: ValueKey<String>('srv-${s.id}'),
-            
+
             child: AppPageTheme(
               page: AppPageKey.serverCard,
               applyCardBackground: true,
@@ -301,7 +202,6 @@ class _ServerListPageState extends State<ServerListPage> {
       );
     }
 
-    
     return ListView(
       padding: const EdgeInsets.only(bottom: 96),
       children: <Widget>[
@@ -317,7 +217,7 @@ class _ServerListPageState extends State<ServerListPage> {
                 from,
                 to,
               ),
-              
+
               proxyDecorator: _noProxyMaterial,
               itemBuilder: (BuildContext ctx, int i) {
                 final ServerData s = e.value[i];
@@ -336,8 +236,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
   Widget _groupPanel(
     BuildContext context,
     String name,
@@ -384,93 +282,14 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
   Widget _totalSpeedPanel(BuildContext context, ServerController ctrl) {
-    final int dl = ctrl.totalDlSpeed;
-    final int up = ctrl.totalUpSpeed;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _metric(
-                  Icons.arrow_circle_down,
-                  S.fieldTotalDl,
-                  Formatter.setSpeed(dl),
-                ),
-              ),
-              Expanded(
-                child: _metric(
-                  Icons.arrow_circle_up,
-                  S.fieldTotalUp,
-                  Formatter.setSpeed(up),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Obx(() {
-            final st = ctrl.state.value;
-            return Row(
-              children: <Widget>[
-                Expanded(
-                  child: _metric(
-                    Icons.swap_vert,
-                    S.fieldSessionStats,
-                    Formatter.setGlobalRatio(st.sessionRatio, st.alltimeRatio),
-                  ),
-                ),
-                Expanded(
-                  child: _metric(
-                    Icons.storage,
-                    S.fieldFreeSpace,
-                    Formatter.setSize(st.newFreeSpaceOnDisk),
-                  ),
-                ),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _metric(IconData icon, String label, String value) {
-    return Row(
-      children: <Widget>[
-        Icon(icon, size: 15),
-        const SizedBox(width: 5),
-        
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 9)),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    return Obx(() => ServerStatsPanel(
+          dlSpeed: ctrl.totalDlSpeed,
+          upSpeed: ctrl.totalUpSpeed,
+          counts: ctrl.totalStatusCounts,
+          serversOnline: ctrl.onlineServerCount,
+          serversTotal: ctrl.servers.length,
+        ));
   }
 
   Widget _serverPanel(
@@ -478,45 +297,21 @@ class _ServerListPageState extends State<ServerListPage> {
     ServerController ctrl,
     ServerData raw,
   ) {
-    
     final ServerData s = ctrl.withSnapshot(raw);
-    
-    
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     return SlidableTile(
       margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       motion: SlidableMotionKind.scroll,
       extentRatio: 0.30,
-      
-      
+
       slotCount: 2,
-      
-      
+
       borderRadius: BorderRadius.circular(AppTheme.radius),
       contentBackground: Theme.of(context).colorScheme.surfaceContainerLow,
-      
+
       onSlideChanged: _onCardSlideChanged,
       startActions: <SlidableActionItem>[
-        
-        
-        
-        
-        
-        
-        
-        
+
         SlidableActionItem(
             icon: Icons.article,
             badgeColor: Colors.blue,
@@ -556,16 +351,9 @@ class _ServerListPageState extends State<ServerListPage> {
         ),
       ],
       child: Card(
-        
-        
+
         margin: EdgeInsets.zero,
-        
-        
-        
-        
-        
-        
-        
+
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radius),
         ),
@@ -608,13 +396,7 @@ class _ServerListPageState extends State<ServerListPage> {
                                 ),
                               ),
                             ),
-                            
-                            
-                            
-                            
-                            
-                            
-                            
+
                           ],
                         ),
                         Text(
@@ -623,64 +405,30 @@ class _ServerListPageState extends State<ServerListPage> {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 10),
                         ),
-                        
-                        
-                        
-                        
-                        
+
                         Obx(() {
                           final ConnStatus st =
                               ctrl.connStatus[s.id] ?? ConnStatus.idle;
                           final bool checking = ctrl.lanChecking.contains(s.id);
                           final bool onLan = ctrl.lanUsing[s.id] ?? false;
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
+
                         final bool busy = ctrl.manualRefreshing.contains(s.id);
                         final bool refreshing =
                             busy || st == ConnStatus.connecting || checking;
                         final bool showBadge =
                             s.hasLan || st != ConnStatus.idle;
-                        
-                        
-                        
-                        
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
+
                           final bool showIo = s.isQbittorrent &&
                               ctrl.ioJobs.containsKey(s.id) &&
                               !refreshing;
-                          
+
                           final String verText =
                               refreshing ? '' : ctrl.serverVersion[s.id] ?? '';
-                          
-                          
-                          
-                          
-                          
-                          
-                          
-                          
+
                           final bool suspended = ctrl.isSuspended(s.id);
                           final bool showRetry = suspended ||
                               st == ConnStatus.failed;
-                          
-                          
+
                           if (!showBadge &&
                               verText.isEmpty &&
                               !showIo &&
@@ -690,12 +438,7 @@ class _ServerListPageState extends State<ServerListPage> {
                           }
                           return Padding(
                             padding: const EdgeInsets.only(top: 3),
-                            
-                            
-                            
-                            
-                            
-                            
+
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
@@ -706,13 +449,7 @@ class _ServerListPageState extends State<ServerListPage> {
                                     crossAxisAlignment:
                                         WrapCrossAlignment.center,
                                     children: <Widget>[
-                                      
-                                      
-                                      
-                                      
-                                      
-                                      
-                                      
+
                                       if (busy) _refreshingChip(context),
                                       if (showBadge)
                                         _connBadge(
@@ -749,18 +486,10 @@ class _ServerListPageState extends State<ServerListPage> {
                       ],
                     ),
                   ),
-                  
-                  
+
                   PopupMenuButton<String>(
                     onSelected: (String v) async {
-                      
-                      
-                      
-                      
                       if (v == 'hide') {
-                        
-                        
-                        
                         AppLog.instance.act('服务器列表', '卡片菜单[隐藏地址]',
                             target: raw.name,
                             detail: raw.hideAddress ? '改为显示' : '改为隐藏');
@@ -769,7 +498,7 @@ class _ServerListPageState extends State<ServerListPage> {
                         AppLog.instance.act('服务器列表', '卡片菜单[隐藏端口]',
                             target: raw.name,
                             detail: raw.hidePort ? '改为显示' : '改为隐藏');
-                        
+
                         await ctrl.toggleHidePort(raw.id);
                       }
                     },
@@ -793,68 +522,18 @@ class _ServerListPageState extends State<ServerListPage> {
                 ],
               ),
               const SizedBox(height: 8),
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
               Obx(() {
                 final ConnStatus stNow =
                     ctrl.connStatus[s.id] ?? ConnStatus.idle;
-                
-                
-                
-                
-                
 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
                 final List<Torrent> liveTs = ctrl.torrentsOf(raw.id);
-                
-                
-                
-                
-                
-                
-                
+
                 if (stNow == ConnStatus.failed) {
                   return _statsRefreshingPlaceholder(
                     context,
                     error: ctrl.connError[s.id],
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+
                     errorIsFinal: ctrl.isSuspended(s.id),
                   );
                 }
@@ -862,24 +541,10 @@ class _ServerListPageState extends State<ServerListPage> {
                   return _statsRefreshingPlaceholder(context);
                 }
                 final ServerData live = raw.copyWith(torrents: liveTs);
-                
-                
-                
-                
+
                 int num(String key, int Function() real) => real();
                 final ColorScheme cs = Theme.of(context).colorScheme;
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -937,11 +602,7 @@ class _ServerListPageState extends State<ServerListPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    
-                    
-                    
-                    
-                    
+
                     Row(
                       children: <Widget>[
                         Expanded(
@@ -954,9 +615,7 @@ class _ServerListPageState extends State<ServerListPage> {
                           child: _speedCell(context, Icons.arrow_circle_down,
                               num('dlSpeed', () => live.totalDlSpeed), cs.secondary),
                         ),
-                        
-                        
-                        
+
                         Expanded(
                           flex: 3,
                           child: _sizeCell(
@@ -976,13 +635,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
   Widget _connBadge(
     BuildContext context, {
     required ConnStatus status,
@@ -1001,11 +653,7 @@ class _ServerListPageState extends State<ServerListPage> {
         ? Icons.error_outline
         : (busy ? Icons.hourglass_top : (onLan ? Icons.wifi : Icons.public));
     final String label = failed
-        
-        
-        
-        
-        
+
         ? L.t('连接失败')
         : (busy ? L.t('连接中...') : (onLan ? L.t('局域网') : L.t('公网')));
 
@@ -1035,19 +683,10 @@ class _ServerListPageState extends State<ServerListPage> {
     final Widget body = failed && error != null && error.isNotEmpty
         ? Tooltip(message: error, child: chip)
         : chip;
-    
-    
+
     return failed ? _BlinkingBadge(child: body) : body;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _suspendedChip(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1069,14 +708,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _retryButton(BuildContext context, {required VoidCallback onPressed}) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Material(
@@ -1109,14 +740,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _statCell(
     BuildContext context,
     IconData icon,
@@ -1157,7 +780,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
   Widget _speedCell(
     BuildContext context,
     IconData icon,
@@ -1181,7 +803,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
   Widget _sizeCell(String text, Color color) {
     return Text(
       text,
@@ -1192,10 +813,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-  
-  
   Widget _versionChip(BuildContext context, String text) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
@@ -1211,18 +828,8 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
   String _verTag(ServerData s) => s.isQbittorrent ? 'qB' : 'TR';
 
-  
-
-  
-  
-  
-  
-  
-  
-  
   Widget _refreshingChip(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
@@ -1249,19 +856,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String _failureLine(String error, {bool isFinal = false}) {
     if (isFinal) return error;
     const List<String> prefixed = <String>[
@@ -1282,19 +876,6 @@ class _ServerListPageState extends State<ServerListPage> {
     return '刷新失败：$error';
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Widget _statsRefreshingPlaceholder(
     BuildContext context, {
     String? error,
@@ -1304,7 +885,6 @@ class _ServerListPageState extends State<ServerListPage> {
     final Color barColor = cs.onSurface.withValues(alpha: 0.08);
     final Color barLabel = cs.onSurface.withValues(alpha: 0.14);
 
-    
     Widget cell({required double valueWidth}) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -1329,8 +909,7 @@ class _ServerListPageState extends State<ServerListPage> {
         );
 
     return SizedBox(
-      
-      
+
       key: const Key('serverStatsPlaceholder'),
       height: error == null ? _kStatsBlockHeight : null,
       child: Column(
@@ -1351,7 +930,7 @@ class _ServerListPageState extends State<ServerListPage> {
             ],
           ),
           const SizedBox(height: 8),
-          
+
           Row(
             children: <Widget>[
               Expanded(
@@ -1392,7 +971,7 @@ class _ServerListPageState extends State<ServerListPage> {
               ),
             ],
           ),
-          
+
           if (error != null && error.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
             Row(
@@ -1415,10 +994,6 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 }
-
-
-
-
 
 class _BlinkingBadge extends StatefulWidget {
   const _BlinkingBadge({required this.child});
@@ -1450,14 +1025,6 @@ class _BlinkingBadgeState extends State<_BlinkingBadge>
     );
   }
 }
-
-
-
-
-
-
-
-
 
 class _SpinningRefreshIcon extends StatefulWidget {
   const _SpinningRefreshIcon({
@@ -1522,21 +1089,6 @@ class _SpinningRefreshIconState extends State<_SpinningRefreshIcon>
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Widget _noProxyMaterial(
   Widget child,

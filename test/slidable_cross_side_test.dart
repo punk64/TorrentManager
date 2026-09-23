@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -62,19 +54,17 @@ void main() {
     final double base = _dx(tester);
 
     await _move(tester, g, -100);
-    
-    
+
     expect(_dx(tester) - base, closeTo(-100 / kResistance, 1.0),
         reason: '前提：左滑应跟手（含 1.3 阻尼）');
 
-    
     await _move(tester, g, 140);
     expect(_dx(tester) - base, greaterThan(1.0),
         reason: '同一个手势内应能跨过零点进入左侧，实际=${_dx(tester) - base}');
 
     await g.up();
     await tester.pumpAndSettle();
-    
+
     expect(_dx(tester), closeTo(rest + kExtent, 1.0),
         reason: '跨过零点后松手应停在左侧展开态，而不是弹回中间');
   });
@@ -108,8 +98,7 @@ void main() {
 
     final double rest = _dx(tester);
     final TestGesture g = await _press(tester);
-    
-    
+
     await _move(tester, g, -50);
     await g.up();
     await tester.pumpAndSettle();
@@ -125,12 +114,10 @@ void main() {
           crossedZero: crossed,
         );
 
-    
     expect(t(0.3), 0);
     expect(t(-0.3), 0);
     expect(t(0.6), 1);
 
-    
     expect(t(0.06, crossed: true), 1);
     expect(t(-0.06, crossed: true), -1);
     expect(t(0.01, crossed: true), 0, reason: '抖动级别（1%）仍不展开');

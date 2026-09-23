@@ -9,28 +9,12 @@ import '../utils/formatter.dart';
 import '../utils/i18n.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
 class TorrentInfoFilesPage extends StatefulWidget {
   const TorrentInfoFilesPage({super.key});
 
   @override
   State<TorrentInfoFilesPage> createState() => _TorrentInfoFilesPageState();
 }
-
-
-
-
-
-
 
 enum FilePrio {
   skip(0, 0),
@@ -43,7 +27,6 @@ enum FilePrio {
   final int value;
   final int trValue;
 
-  
   bool get trSupported => this != FilePrio.maximal;
 
   String get label => switch (this) {
@@ -58,7 +41,6 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
   final TorrentController ctrl = Get.find<TorrentController>();
   final ServerController sc = Get.find<ServerController>();
 
-  
   final Set<String> _selected = <String>{};
 
   @override
@@ -90,8 +72,6 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
   }
 
   Widget _prioBar() {
-    
-    
     final bool isTr = sc.current.value?.isTransmission == true;
     return Material(
       color: Theme.of(context).colorScheme.secondaryContainer,
@@ -153,20 +133,14 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       if (s.isQbittorrent) {
         await sc.qb.filePrio(t.hash, ids.join('|'), p.value);
       } else {
-        
-        
-        
         if (t.trId == null) {
           Formatter.showToast(S.noTrId, isError: true);
           return;
         }
         final int trId = t.trId!;
         if (p == FilePrio.skip) {
-          
           await sc.tr.setFilesWanted(<int>[trId], indexes, wanted: false);
         } else {
-          
-          
           await sc.tr.setFilesWanted(<int>[trId], indexes, wanted: true);
           await sc.tr.filePrio(<int>[trId], indexes, p.trValue);
         }
@@ -180,7 +154,6 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     }
   }
 
-  
   Map<String, int> get _indexByPath {
     final Map<String, int> m = <String, int>{};
     for (int i = 0; i < ctrl.files.length; i++) {
@@ -200,7 +173,6 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     );
   }
 
-  
   Widget _fileRow(FileNode n, int depth) {
     final bool checked = _selected.contains(n.path);
     return ListTile(

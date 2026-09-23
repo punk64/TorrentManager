@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,10 +25,9 @@ void main() {
             (MethodCall call) async => null);
     Get.testMode = true;
     Get.reset();
-    
+
     L.code.value = '';
-    
-    
+
     LocaleController.updateSystemLocale = false;
   });
 
@@ -52,8 +43,7 @@ void main() {
       for (int i = 0; i < ts.length; i++) {
         final ThemeData t = ts[i];
         final String n = lightPresets[i].name;
-        
-        
+
         expect(t.appBarTheme.backgroundColor, isNotNull,
             reason: '$n：标题栏底色缺失 → 切主题时标题栏不变色');
         expect(t.dialogTheme.backgroundColor, isNotNull,
@@ -62,13 +52,12 @@ void main() {
             reason: '$n：抽屉底色缺失 → 切主题时抽屉不变色');
         expect(t.popupMenuTheme.color, isNotNull,
             reason: '$n：弹出菜单底色缺失 → 切主题时菜单不变色');
-        
+
         expect(t.appBarTheme.backgroundColor,
             isNot(t.scaffoldBackgroundColor),
             reason: '$n：标题栏应与页面底色有区分');
       }
 
-      
       expect(
         ts.map((ThemeData t) => t.appBarTheme.backgroundColor).toSet().length,
         6,
@@ -91,7 +80,7 @@ void main() {
       for (final ThemePreset p in lightPresets) {
         tc.applyPreset(p);
         final ThemeData t = tc.lightTheme;
-        
+
         for (final Color? bg in <Color?>[
           t.appBarTheme.backgroundColor,
           t.dialogTheme.backgroundColor,
@@ -106,7 +95,6 @@ void main() {
 
   group('★ ② 语言：抽屉入口的位置与切换', () {
     testWidgets('「语言」分组排在「分享与导出」之上', (WidgetTester tester) async {
-      
       tester.view.physicalSize = const Size(340 * 2, 1400 * 2);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.reset);
@@ -139,53 +127,40 @@ void main() {
       ));
       await tester.pump();
 
-      
       expect(find.text(S.groupShare), findsWidgets);
 
-      
-      
-      
       await tester.tap(find.text(S.langZh));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       expect(find.text(S.langZh), findsWidgets);
       expect(find.text(S.langEn), findsOneWidget);
 
-      
-      
-      
-      
       await lc.setLang(L.en);
       await tester.pump();
 
       expect(L.current, L.en, reason: '选中 English 后语言层应切到 en');
       expect(lc.currentName, S.langEn);
-      
+
       expect(find.text('Share & export'), findsWidgets,
           reason: '切完语言后抽屉应整体重建为英文');
 
-      
       expect(await Formatter.getGlobalData(LocaleController.kLang), L.en);
     });
 
-    
-    
-    
     testWidgets('未选过语言时按系统语言判定；选过之后系统语言不再覆盖',
         (WidgetTester tester) async {
       await tester.pumpWidget(const GetMaterialApp(home: SizedBox.shrink()));
       final LocaleController lc = Get.put(LocaleController());
-      
+
       await tester.pump();
-      
+
       expect(L.code.value, isEmpty);
       await lc.load();
       expect(L.code.value, isEmpty,
           reason: 'load() 不应把系统语言固化成落盘值，否则换系统语言就跟不上了');
       expect(L.current, isIn(<String>[L.zh, L.en]));
 
-      
       await lc.setLang(L.en);
       expect(L.code.value, L.en);
       expect(await Formatter.getGlobalData(LocaleController.kLang), L.en);

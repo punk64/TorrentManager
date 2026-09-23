@@ -1,166 +1,79 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import '../models/server_data.dart';
 import '../qbittorrent/qb_method.dart';
 import '../transmission/tr_method.dart';
 
-
-
-
-
-
 class PrefKey {
   PrefKey._();
 
-  
   static const String upLimit = 'up_limit';
   static const String dlLimit = 'dl_limit';
   static const String altUpLimit = 'alt_up_limit';
   static const String altDlLimit = 'alt_dl_limit';
 
-  
-  
   static const String altSpeedEnabled = 'alt_speed_enabled';
 
-  
   static const String savePath = 'save_path';
   static const String tempPath = 'temp_path';
   static const String tempPathEnabled = 'temp_path_enabled';
 
-  
   static const String queueingEnabled = 'queueing_enabled';
   static const String maxActiveUploads = 'max_active_uploads';
   static const String maxActiveDownloads = 'max_active_downloads';
   static const String maxActiveTorrents = 'max_active_torrents';
 
-  
   static const String maxRatio = 'max_ratio';
-  
+
   static const String maxRatioEnabled = 'max_ratio_enabled';
   static const String maxSeedingTime = 'max_seeding_time';
   static const String maxInactiveSeedingTime = 'max_inactive_seeding_time';
 
-  
   static const String maxConnec = 'max_connec';
   static const String maxConnecPerTorrent = 'max_connec_per_torrent';
   static const String maxUploads = 'max_uploads';
   static const String maxUploadsPerTorrent = 'max_uploads_per_torrent';
 
-  
   static const String autoTmmEnabled = 'auto_tmm_enabled';
   static const String preallocateAll = 'preallocate_all';
   static const String incompleteFilesExt = 'incomplete_files_ext';
 
-  
   static const String ipFilterEnabled = 'ip_filter_enabled';
   static const String ipFilterTrackers = 'ip_filter_trackers';
   static const String bannedIps = 'banned_IPs';
-  
+
   static const String blocklistUrl = 'blocklist_url';
-  
+
   static const String blocklistSize = 'blocklist_size';
 }
 
-
-
-
-
 typedef PrefsTargetResolver = ServerData Function(ServerData s);
-
-
-
 
 abstract class ServerPrefsApi {
   const ServerPrefsApi();
 
-  
-  
-  
-  
   bool get isQb;
 
-  
   QbMethod? get qb;
 
-  
-  
-  
   void attach(ServerData s);
 
-  
-  
-  
-  
-  
   Future<bool> ensureSession();
 
-  
   void reopenSession();
 
-  
   String? get lastError;
 
-  
   bool get lastBanned;
 
-  
   bool get lastMissingCreds;
 
-  
-  
-  
   Future<Map<String, dynamic>> read();
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Map<String, dynamic>?> readServerState();
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> write(Map<String, dynamic> patch);
 
-  
   bool supports(String key);
 }
-
-
-
-
-
-
 
 class QbPrefsApi extends ServerPrefsApi {
   QbPrefsApi({required QbMethod client, required PrefsTargetResolver resolve})
@@ -191,9 +104,6 @@ class QbPrefsApi extends ServerPrefsApi {
     return _c.checkQbServerCookie(_resolve(s));
   }
 
-  
-  
-  
   @override
   void reopenSession() {}
 
@@ -209,7 +119,7 @@ class QbPrefsApi extends ServerPrefsApi {
   @override
   Future<Map<String, dynamic>> read() async {
     final Map<String, dynamic> p = await _c.getPreferences();
-    
+
     final Map<String, dynamic> out = <String, dynamic>{};
     for (final String k in _knownKeys) {
       if (p.containsKey(k)) out[k] = p[k];
@@ -224,9 +134,7 @@ class QbPrefsApi extends ServerPrefsApi {
       final dynamic raw = md['server_state'];
       if (raw is! Map) return null;
       final Map<String, dynamic> ss = Map<String, dynamic>.from(raw);
-      
-      
-      
+
       ss[PrefKey.altSpeedEnabled] = _asBool(ss['use_alt_speed_limits']) ?? false;
       return ss;
     } catch (_) {
@@ -241,9 +149,6 @@ class QbPrefsApi extends ServerPrefsApi {
     for (final MapEntry<String, dynamic> e in patch.entries) {
       if (e.value == null) continue; 
       if (e.key == PrefKey.altSpeedEnabled) {
-        
-        
-        
         final Map<String, dynamic>? st = await readServerState();
         final bool? cur = _asBool(st?[PrefKey.altSpeedEnabled]);
         if (cur != null && cur != (e.value == true)) {
@@ -256,7 +161,6 @@ class QbPrefsApi extends ServerPrefsApi {
     if (prefs.isNotEmpty) await _c.setPreferences(prefs);
   }
 
-  
   static bool? _asBool(dynamic v) {
     if (v is bool) return v;
     if (v is num) return v != 0;
@@ -267,7 +171,6 @@ class QbPrefsApi extends ServerPrefsApi {
   @override
   bool supports(String key) => true; 
 
-  
   static const List<String> _knownKeys = <String>[
     PrefKey.upLimit,
     PrefKey.dlLimit,
@@ -297,19 +200,6 @@ class QbPrefsApi extends ServerPrefsApi {
   ];
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class TrPrefsApi extends ServerPrefsApi {
   TrPrefsApi({required TrMethod client, required PrefsTargetResolver resolve})
       : _c = client,
@@ -320,7 +210,6 @@ class TrPrefsApi extends ServerPrefsApi {
 
   ServerData? _server;
 
-  
   static const Set<String> _unsupported = <String>{
     PrefKey.maxActiveTorrents,
     PrefKey.maxSeedingTime,
@@ -348,8 +237,7 @@ class TrPrefsApi extends ServerPrefsApi {
     final ServerData? s = _server;
     if (s == null) return false;
     final TrLoginResult r = await _c.checkTrServerCookie(_resolve(s));
-    
-    
+
     noteLoginResult(r);
     return r.ok;
   }
@@ -357,7 +245,6 @@ class TrPrefsApi extends ServerPrefsApi {
   @override
   void reopenSession() => _c.invalidateSession();
 
-  
   String? _lastError;
   bool _lastMissing = false;
 
@@ -370,10 +257,6 @@ class TrPrefsApi extends ServerPrefsApi {
   @override
   bool get lastMissingCreds => _lastMissing;
 
-  
-  
-  
-  
   void noteLoginResult(TrLoginResult r) {
     _lastError = r.ok ? null : r.reason;
     _lastMissing = r.missingCreds;
@@ -397,8 +280,7 @@ class TrPrefsApi extends ServerPrefsApi {
       final dynamic v = s['alt-speed-enabled'];
       final bool? alt = v is bool ? v : (v is num ? v != 0 : null);
       if (alt == null) return null;
-      
-      
+
       return <String, dynamic>{PrefKey.altSpeedEnabled: alt};
     } catch (_) {
       return null;
@@ -410,27 +292,20 @@ class TrPrefsApi extends ServerPrefsApi {
     if (patch.isEmpty) return;
     final Map<String, dynamic> fields = <String, dynamic>{};
     for (final MapEntry<String, dynamic> e in patch.entries) {
-      
       if (e.value == null) continue;
       final String? trKey = _toTr[e.key];
-      
-      
+
       if (trKey == null) continue;
       fields[trKey] = _scaleOut(trKey, e.value);
-      
+
       if (trKey == 'speed-limit-up' || trKey == 'speed-limit-down') {
         fields['$trKey-enabled'] = (e.value as num) > 0;
       }
-      
-      
-      
-      
-      
-      
+
       if (trKey == 'download-queue-enabled') {
         fields['seed-queue-enabled'] = e.value;
       }
-      
+
       if (trKey == 'seedRatioLimit') fields['seedRatioLimited'] = true;
       if (trKey == 'idle-seeding-limit') {
         fields['idle-seeding-limit-enabled'] = (e.value as num) > 0;
@@ -444,17 +319,6 @@ class TrPrefsApi extends ServerPrefsApi {
       rethrow;
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     if (patch.containsKey(PrefKey.blocklistUrl)) {
       await _c.blocklistUpdate();
     }
@@ -463,7 +327,6 @@ class TrPrefsApi extends ServerPrefsApi {
   @override
   bool supports(String key) => !_unsupported.contains(key);
 
-  
   static const Map<String, String> _toTr = <String, String>{
     PrefKey.upLimit: 'speed-limit-up',
     PrefKey.dlLimit: 'speed-limit-down',
@@ -487,13 +350,11 @@ class TrPrefsApi extends ServerPrefsApi {
     PrefKey.blocklistUrl: 'blocklist-url',
   };
 
-  
   static final Map<String, String> _fromTr = <String, String>{
     for (final MapEntry<String, String> e in _toTr.entries) e.value: e.key,
     'blocklist-size': PrefKey.blocklistSize,
   };
 
-  
   static dynamic _scaleIn(String trKey, dynamic v) {
     if (trKey == 'speed-limit-up' ||
         trKey == 'speed-limit-down' ||
@@ -504,7 +365,6 @@ class TrPrefsApi extends ServerPrefsApi {
     return v;
   }
 
-  
   static dynamic _scaleOut(String trKey, dynamic v) {
     if (trKey == 'speed-limit-up' ||
         trKey == 'speed-limit-down' ||
@@ -515,7 +375,6 @@ class TrPrefsApi extends ServerPrefsApi {
     return v;
   }
 }
-
 
 ServerPrefsApi createPrefsApi({
   required ServerData server,

@@ -1,16 +1,5 @@
 import '../../utils/formatter.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class ServerState {
   ServerState({
     this.dlInfoSpeed = 0,
@@ -53,10 +42,8 @@ class ServerState {
 
   int freeSpaceOnDisk;
 
-  
   double globalRatio;
 
-  
   String connectionStatus;
 
   int dhtNodes;
@@ -64,27 +51,13 @@ class ServerState {
   bool useAltSpeedLimits;
   int totalPeerConnections;
 
-  
   int refreshInterval;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   int queuedIoJobs;
 
-  
   final List<int> dlHistory;
   final List<int> upHistory;
 
-  
   static const int maxHistory = 60;
 
   factory ServerState.fromJson(Map<String, dynamic> json) {
@@ -110,9 +83,6 @@ class ServerState {
     );
   }
 
-  
-  
-  
   void updateQbData(Map<String, dynamic> delta, {bool appendHistory = true}) {
     if (delta.isEmpty) return;
     final Map<String, dynamic> d = delta;
@@ -175,13 +145,10 @@ class ServerState {
   double get sessionRatio =>
       dlInfoData <= 0 ? 0 : upInfoData / dlInfoData;
 
-  
-  
   double get alltimeRatio {
     if (globalRatio > 0) return globalRatio;
     return alltimeDl <= 0 ? 0 : alltimeUl / alltimeDl;
   }
 
-  
   bool get isConnected => connectionStatus.toLowerCase() == 'connected';
 }

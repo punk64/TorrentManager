@@ -6,6 +6,8 @@
 > 管理 Tracker 与文件优先级、查看 Peers 与下载器日志，并支持主题 / 壁纸自定义。
 >
 > 预编译的 APK 见本仓库的 **Releases** 页面。
+>
+> 项目主页：<https://github.com/punk64/TorrentManager> —— 以 **MIT License** 开源。
 
 ---
 
@@ -30,15 +32,15 @@
 ## 二、代码结构
 
 ```
-lib/                  应用源码（70 个文件 / 约 35,300 行）
+lib/                  应用源码（73 个文件 / 约 27,200 行）
   app/                启动与全局装配（6）
   controllers/        GetX 控制器（5）
   data/               数据层（12）
   pages/              页面（15）
-  utils/              工具（15）
-  widgets/            通用组件（16）
+  utils/              工具（17）
+  widgets/            通用组件（17）
   main.dart           入口
-test/                 单元 / Widget 测试（67 个文件 / 约 17,600 行）
+test/                 单元 / Widget 测试（69 个文件 / 约 15,700 行）
 android/              仅 Android 平台工程
 assets/images/        图标素材 + 六套壁纸
 pubspec.yaml          依赖与版本号
@@ -53,8 +55,8 @@ analysis_options.yaml 静态检查配置
 | `controllers/` | 全局状态（GetX） | `server_controller.dart` · `torrent_controller.dart` · `theme_controller.dart` · `locale_controller.dart` · `auth_controller.dart` |
 | `data/` | 数据层 | `dio/log_interceptor.dart` · `dio/redirect_interceptor.dart` · `local/local_store.dart` · `local/secure_prefs.dart` · `models/`（`server_data` · `server_state` · `torrent` · `qb_log` · `qb_ip_filter`）· `prefs/server_prefs.dart` · `qbittorrent/qb_method.dart` · `transmission/tr_method.dart` |
 | `pages/` | 页面 | `server_list_page`（首屏）· `torrent_list_page` · `torrent_info_page` + 四个分页（`_overview` / `_files` / `_peers` / `_trackers`）· `torrent_add_page` · `server_setting_page` · `server_dialog` · `theme_page` · `share_page` · `log_page` · `log_qb_page` · `drawer_page` |
-| `utils/` | 工具 | `formatter` · `strings` · `i18n` / `i18n_en` · `app_log` / `log_scope` / `log_export` · `net_error` · `crypto_box` · `lan_detector` · `ip_geo` · `add_batch` · `file_export` · `theme_backup` · `update_check` |
-| `widgets/` | 通用组件 | `auto_refresh` · `app_toast` · `bottom_panel` · `color_picker` · `draggable_fab` · `filtered_image` · `disk_io_chip` / `io_chip` · `list_loading_placeholder` · `log_selection` · `page_preview` / `theme_preview` · `slidable_tile` · `sort_filter_panel` · `speed_sparkline` · `arc_text` |
+| `utils/` | 工具 | `formatter` · `strings` · `i18n` / `i18n_en` · `app_log` / `log_scope` / `log_export` · `net_error` · `crypto_box` · `lan_detector` · `ip_geo` / `ip_geo_sources` · `startup_update` · `add_batch` · `file_export` · `theme_backup` · `update_check` |
+| `widgets/` | 通用组件 | `auto_refresh` · `app_toast` · `bottom_panel` · `color_picker` · `draggable_fab` · `filtered_image` · `disk_io_chip` / `io_chip` · `list_loading_placeholder` · `log_selection` · `page_preview` / `theme_preview` · `server_stats_panel` · `slidable_tile` · `sort_filter_panel` · `speed_sparkline` · `arc_text` |
 
 ### 关键实现位置
 
@@ -68,8 +70,11 @@ analysis_options.yaml 静态检查配置
 | 服务器偏好适配（两套客户端字段名 / 单位换算） | `lib/data/prefs/server_prefs.dart` |
 | 会话保活与重试退避 | `lib/controllers/server_controller.dart` |
 | 局域网 / 公网自动选路 | `lib/controllers/server_controller.dart` + `lib/utils/lan_detector.dart` |
+| Peer IP 归属地查询（多源池 / 洗牌轮转 / 失败冷却） | `lib/utils/ip_geo.dart` + `lib/utils/ip_geo_sources.dart` |
 | 错误归一（把 Dio 异常转成一句人话） | `lib/utils/net_error.dart` |
 | 应用内日志总线 | `lib/utils/app_log.dart` |
+| 启动版本检测（只检测并挂提醒，不弹窗） | `lib/utils/startup_update.dart` |
+| 服务器列表「总计数据卡」 | `lib/widgets/server_stats_panel.dart` |
 
 ---
 
@@ -79,7 +84,7 @@ analysis_options.yaml 静态检查配置
 flutter pub get                        # 拉依赖
 flutter run                            # 连真机 / 模拟器调试
 flutter analyze                        # 静态检查
-flutter test                           # 跑测试（当前 630 个用例）
+flutter test                           # 跑测试（当前 647 个用例）
 flutter build apk --release --split-per-abi --target-platform android-arm64
 ```
 
@@ -148,7 +153,7 @@ Flutter 与 Android SDK 的定位顺序：环境变量（`FLUTTER_ROOT` / `ANDRO
 | --- | --- |
 | R8 收缩与混淆 | `android/app/proguard-rules.pro`。**不要**写 `-keep class androidx.**` / `io.flutter.**` 这类宽泛规则 —— `-keep` 会同时禁止混淆并把整棵依赖树钉死，实测会让 `classes.dex` 从约 1.1 MB 涨到 4.3 MB |
 | 签名版本 | 强制开启 v1(JAR) + v2 + v3。AGP 在 `minSdk >= 24` 时会自动关掉 v1，而部分国产 ROM 的安装器仍会检查 `META-INF` 下的 v1 证书 |
-| so 打包方式 | `packaging.jniLibs.useLegacyPackaging` 是唯一来源（manifest 里**不要**再写 `extractNativeLibs`，两处并存会在 AGP 9 下直接报错）。默认标准包 = so 不压缩、设备直接 mmap；构建时加 `--android-project-arg=lite=true` 可得到体积更小但安装后占用更大的 lite 包 |
+| so 打包方式 | `packaging.jniLibs.useLegacyPackaging` 是唯一来源（manifest 里**不要**再写 `extractNativeLibs`，两处并存会在 AGP 9 下直接报错）。**默认不压缩**：`useLegacyPackaging = project.hasProperty("lite")` ⇒ so 以 STORED 存放（设备直接 mmap、只有一份、安装后占用省），APK ≈ 22.82 MB。想要下载体积减半（22.82 MB → 约 11~13 MB，代价是安装时多解压出一份副本、安装后占用 +38%）就加 `--android-project-arg=lite=true`。⚠️ 判断开关是否真生效只能看产物里 so 的压缩态，属性没传进去时构建照样成功；⚠️ 改这个默认值**必须同步** `release.py` 的断言期望值（两处互为镜像，历史上不同步过一次，导致构建成功但断言必 FAIL） |
 | 明文流量策略 | `android/app/src/main/res/xml/network_security_config.xml` —— 局域网内的服务器多用明文 http，放行范围与理由都写在该文件里 |
 | 权限 | 见 `android/app/src/main/AndroidManifest.xml`，其中两个存储权限设了 `maxSdkVersion`（Android 10+ 已改分区存储、由 SAF 接管） |
 
@@ -160,12 +165,22 @@ Flutter 与 Android SDK 的定位顺序：环境变量（`FLUTTER_ROOT` / `ANDRO
    指向 `api.github.com/repos/punk64/TorrentManager/releases/latest` —— 发新版时打 `vX.Y.Z`
    标签建 Release 即可被查到，**无需维护额外的版本文件**。两种静默降级情形（界面都显示
    「已是最新版本」、不报错）：① 仓库还没有 Release，接口返回 404；② 国内网络访问
-   `api.github.com` 失败。换源只需改那一个常量。
-2. **Transmission 侧不提供服务器日志**：其 RPC 规范里没有日志方法，故「服务器日志」页在选中
+   `api.github.com` 失败。换源只需改那一个常量。⚠️ 该请求**必须带 `User-Agent`**，缺了会被 403。
+2. **启动更新检测只挂提醒、不打扰**：每次启动自动查一次（`lib/utils/startup_update.dart`），
+   **不弹窗** —— 只是把结果挂到抽屉的「检查更新」入口上（有新版时该条目变成「有更新」），
+   点它才展开详情并可复制发布页地址。同一进程内只查一次；查询失败与「已是最新」都静默处理
+   （对用户而言是同一件事）。抽屉里的手动检查（`compareVersions`）随时可用，两者互不影响。
+3. **Peer 归属地走多源池**：`lib/utils/ip_geo_sources.dart` 注册了中 / 英文两套查询源
+   （中文池 = 优先返回中文的国内源 + 国际源兜底，英文池 = 全部国际源；按应用语言选池，
+   运行时切换即时生效）。为避免被风控，同一源设有请求最小间隔并按洗牌袋轮转，
+   连续失败或 429/403 会进冷却；响应体超限直接丢弃不解析，展示字段统一做字符净化
+   （剔除控制字符、双向重写符、零宽字符），并校验回环地址以免拿到「查出来是别人」的脏数据。
+   **只发送被查询的 IP 本身**，内网与保留地址不发。加源只需在该文件追加一条注册项。
+4. **Transmission 侧不提供服务器日志**：其 RPC 规范里没有日志方法，故「服务器日志」页在选中
    Transmission 服务器时展示**会话诊断信息**（`session-get` / `session-stats`）并明确说明这一点。
-3. **`lib/utils/i18n_en.dart` 与 `lib/utils/strings.dart` 是成对的文案表**：前者的 key 必须覆盖
+5. **`lib/utils/i18n_en.dart` 与 `lib/utils/strings.dart` 是成对的文案表**：前者的 key 必须覆盖
    后者 `L.t(...)` 用到的全部 key，缺哪条就会回落到中文原文。两者需同步修改。
-4. 首次构建耗时较长（NDK / Gradle 首次下载与编译），属正常现象。
+6. 首次构建耗时较长（NDK / Gradle 首次下载与编译），属正常现象。
 
 ---
 

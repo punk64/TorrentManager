@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -30,9 +18,6 @@ ServerData qbSrv(String id, String host) => ServerData(
       host: host,
       port: 8080,
     );
-
-
-
 
 Dio fakeQbPrefs({
   Map<String, dynamic>? prefs,
@@ -56,14 +41,13 @@ Dio fakeQbPrefs({
             requestOptions: o, statusCode: 200, data: 'v5.0.5'));
         return;
       }
-      
+
       h.resolve(
           Response<dynamic>(requestOptions: o, statusCode: 200, data: 'Ok.'));
     },
   ));
   return dio;
 }
-
 
 Future<Map<String, dynamic>> sentPrefs(List<RequestOptions> log) async {
   final RequestOptions w = log

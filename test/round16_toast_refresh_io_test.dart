@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -50,16 +36,6 @@ ServerData trSrv() => ServerData(
       host: '192.168.1.9',
       port: 9091,
     );
-
-
-
-
-
-
-
-
-
-
 
 Dio fakeQbDio({
   required int Function(String host) ioJobsFor,
@@ -127,7 +103,6 @@ Dio fakeQbDio({
   return dio;
 }
 
-
 Torrent tn(String hash, String name, {int size = 100, int dlSpeed = 0}) => Torrent(
       hash: hash,
       name: name,
@@ -158,9 +133,6 @@ void main() {
 
   tearDown(AppToast.resetForTest);
 
-  
-  
-  
   group('① 提示层（需求 1）', () {
     testWidgets('★ 提示挂在 Navigator 根 Overlay 上，不挂在页面 Scaffold 内',
         (WidgetTester tester) async {
@@ -190,9 +162,6 @@ void main() {
         reason: '★ 提示**不得**是页面 Scaffold 的后代（那是旧实现的层级问题根源）',
       );
 
-      
-      
-      
       AppToast.resetForTest();
       await tester.pump();
     });
@@ -219,14 +188,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('确认删除'), findsOneWidget);
 
-      
       AppToast.show('已在最上层');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('已在最上层'), findsOneWidget,
           reason: '★ 对话框打开时提示也必须渲染');
-      
+
       expect(
         find.ancestor(
             of: find.text('已在最上层'), matching: find.byType(AlertDialog)),
@@ -234,7 +202,6 @@ void main() {
         reason: '★ 提示应该是压在对话框**之上**的独立浮层',
       );
 
-      
       AppToast.resetForTest();
       await tester.pump();
     });
@@ -249,16 +216,12 @@ void main() {
       await tester.pump();
       expect(find.text('短提示'), findsOneWidget);
 
-      
       await tester.pump(const Duration(milliseconds: 1400));
       await tester.pumpAndSettle();
       expect(find.text('短提示'), findsNothing, reason: '到点应自动消失');
     });
   });
 
-  
-  
-  
   group('② refreshAllServers（需求 2 / 3）', () {
     test('★ 调用后**同一帧内**所有卡片一起进入「刷新中」；且请求是并发的',
         () async {
@@ -268,7 +231,7 @@ void main() {
       final List<String> reached = <String>[];
 
       final ServerController sc = Get.put(ServerController());
-      
+
       sc.qbFactory = () => QbMethod(
             dio: fakeQbDio(
               ioJobsFor: (String h) => h == '10.0.0.1' ? 12 : 999,
@@ -280,14 +243,11 @@ void main() {
 
       final Future<void> run = sc.refreshAllServers(showProgress: true);
 
-      
-      
       expect(sc.manualRefreshing.containsAll(<String>['a', 'b']), isTrue,
           reason: '★ 需求 3：所有卡片必须**同步**进入刷新态，不能一张张先后点亮');
       expect(sc.manualRefreshing.length, 2);
       expect(sc.isManualRefreshing, isTrue);
 
-      
       for (int i = 0; i < 40 && reached.length < 2; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 5));
       }
@@ -301,10 +261,10 @@ void main() {
       expect(sc.manualRefreshing, isEmpty, reason: '刷新结束标记必须清干净');
       expect(sc.connStatus['a'], ConnStatus.ok);
       expect(sc.connStatus['b'], ConnStatus.ok);
-      
+
       expect(sc.ioJobs['a'], 12);
       expect(sc.ioJobs['b'], 999);
-      
+
       expect(sc.torrentsOf('a'), hasLength(1));
       expect(sc.torrentsOf('b'), hasLength(1));
       expect(sc.serverVersion['a'], '4.6.2');
@@ -330,8 +290,7 @@ void main() {
       final ServerData bad = qbSrv('bad', '10.0.0.8');
       final ServerController sc = Get.put(ServerController());
       int created = 0;
-      
-      
+
       sc.qbFactory = () {
         created++;
         return QbMethod(
@@ -356,9 +315,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ mergeQbMaindata', () {
     test('全量：忽略旧快照（已删除的种子不得残留）', () {
       final List<Torrent> base = <Torrent>[tn('stale', '已被删掉的种子')];
@@ -380,7 +336,6 @@ void main() {
         base,
         <String, dynamic>{
           'torrents': <String, dynamic>{
-            
             'h1': <String, dynamic>{'dlspeed': 999},
           },
         },
@@ -419,9 +374,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ 卡片刷新动画与 I/O 格', () {
     Future<void> pumpPage(WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);
@@ -432,21 +384,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     testWidgets('★ 需求 3：刷新中的卡片清空数据改占位符；失败则维持占位符',
         (WidgetTester tester) async {
       await pumpPage(tester);
@@ -454,10 +391,7 @@ void main() {
       final ServerData a = qbSrv('a', '10.0.0.1');
       final ServerData b = qbSrv('b', '10.0.0.2');
       sc.servers.assignAll(<ServerData>[a, b]);
-      
-      
-      
-      
+
       sc.reportConnected('a');
       sc.cacheTorrents('a', <Torrent>[
         Torrent.fromJson(<String, dynamic>{
@@ -472,24 +406,19 @@ void main() {
       expect(find.byKey(const Key('serverStatsPlaceholder')), findsOneWidget,
           reason: '★ 第 53 轮：b 没有真实数据 → 骨架屏（与"是否在刷新"无关）');
 
-      
       sc.manualRefreshing.addAll(<String>['a', 'b']);
       sc.manualRefreshing.refresh();
       await tester.pump();
 
-      
       expect(find.byKey(const Key('serverStatsPlaceholder')), findsOneWidget,
           reason: '★ 第 41/53 轮：有真实数据就继续显示 —— 不能因为"在刷新"就清成骨架，'
               '用户抱怨的正是"每次进页面都空白两三秒"');
-      
-      
-      
+
       expect(find.text('I/O: 42'), findsNothing,
           reason: '★ I/O 属于芯片行：刷新期间隐藏（与统计区是否保留无关）');
-      
+
       expect(find.text('刷新中'), findsNWidgets(2));
 
-      
       sc.manualRefreshing.clear();
       sc.manualRefreshing.refresh();
       sc.reportFailure('a', Exception('boom'));
@@ -499,7 +428,6 @@ void main() {
       expect(find.textContaining('刷新失败'), findsOneWidget,
           reason: '★ 刷新失败要给出明确的失败提示');
 
-      
       sc.reportConnected('a');
       await tester.pump();
       expect(find.byKey(const Key('serverStatsPlaceholder')), findsOneWidget,
@@ -508,18 +436,13 @@ void main() {
       expect(find.text('I/O: 42'), findsOneWidget);
     });
 
-    
-    
-    
-    
-    
     testWidgets('★ 第 41 轮：刷新中若有数据可显示则保留（不再清成骨架）',
         (WidgetTester tester) async {
       await pumpPage(tester);
       final ServerController sc = Get.find<ServerController>();
       final ServerData a = qbSrv('a', '10.0.0.1');
       sc.servers.assignAll(<ServerData>[a]);
-      
+
       sc.cacheTorrents('a', <Torrent>[
         Torrent.fromJson(<String, dynamic>{
           'hash': 'h1', 'name': 'A', 'state': 'downloading', 'size': 100,
@@ -535,7 +458,6 @@ void main() {
       sc.reportConnected('a');
       await tester.pump(const Duration(milliseconds: 50));
 
-      
       sc.manualRefreshing.add('a');
       sc.manualRefreshing.refresh();
       await tester.pump();
@@ -544,9 +466,6 @@ void main() {
       expect(find.text('刷新中'), findsOneWidget,
           reason: '★ "正在刷新"仍要由芯片明确表达，避免旧数字被误读成实时值');
 
-      
-      
-      
       sc.cacheTorrents('a', <Torrent>[]);
       sc.torrentCache.refresh();
       await tester.pump();
@@ -561,9 +480,6 @@ void main() {
       sc.servers.assignAll(<ServerData>[qbSrv('a', '10.0.0.1')]);
       await tester.pump(const Duration(milliseconds: 50));
 
-      
-      
-      
       Finder spinIcon() => find.descendant(
             of: find.byType(AppBar),
             matching: find.byType(RotationTransition),
@@ -589,9 +505,6 @@ void main() {
   });
 }
 
-
-
-
 Dio _fakeTrDio() {
   final Dio dio = Dio();
   dio.interceptors.add(InterceptorsWrapper(
@@ -603,7 +516,6 @@ Dio _fakeTrDio() {
           final dynamic m = jsonDecode(d);
           if (m is Map) method = (m['method'] ?? '').toString();
         } catch (_) {
-          
         }
       }
       h.resolve(Response<dynamic>(
@@ -620,8 +532,6 @@ Dio _fakeTrDio() {
   ));
   return dio;
 }
-
-
 
 Dio _failingQbDio() {
   final Dio dio = Dio();

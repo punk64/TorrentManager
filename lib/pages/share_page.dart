@@ -4,26 +4,12 @@ import 'package:get/get.dart';
 
 import '../app/theme.dart';
 
-
-
 import '../controllers/server_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/crypto_box.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
-
-
-
-
-
-
-
-
-
-
-
-
 
 class SharePage extends StatefulWidget {
   const SharePage({super.key});
@@ -35,11 +21,6 @@ class SharePage extends StatefulWidget {
 class _SharePageState extends State<SharePage> {
   bool _busy = false;
 
-  
-  
-  
-  
-  
   Future<bool> _confirmSensitiveExport(BuildContext context) async {
     final bool? ok = await showDialog<bool>(
       context: context,
@@ -69,7 +50,6 @@ class _SharePageState extends State<SharePage> {
   @override
   Widget build(BuildContext context) {
     final ServerController sc = Get.find<ServerController>();
-    
 
     return Scaffold(
       appBar: AppBar(
@@ -81,11 +61,7 @@ class _SharePageState extends State<SharePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              
-              
-              
-              
-              
+
               const Text(
                 '本构建为纯本地版：备份保存在本机，'
                 '如需迁移到其他设备请使用「导出 / 导入 JSON」。',
@@ -100,17 +76,12 @@ class _SharePageState extends State<SharePage> {
               ),
               const SizedBox(height: 10),
 
-              
-              
-              
-              
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      
-                      
+
                       sc.backupDir.value == null
                           ? '备份位置：应用私有目录（未指定文件夹时的默认位置）'
                           : '备份文件夹：${sc.backupDir.value}'
@@ -127,7 +98,7 @@ class _SharePageState extends State<SharePage> {
                   ),
                 ],
               ),
-              
+
               const Text(
                 '备份文件已加密（AES-256-GCM，密钥由本机 Keystore 托管），'
                 '因此只能在本机恢复；换设备请用「导出 / 导入 JSON」。',
@@ -173,16 +144,6 @@ class _SharePageState extends State<SharePage> {
               ),
               const SizedBox(height: 10),
 
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -201,9 +162,7 @@ class _SharePageState extends State<SharePage> {
                 ),
               ),
               const SizedBox(height: 8),
-              
-              
-              
+
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -229,9 +188,7 @@ class _SharePageState extends State<SharePage> {
                       style: TextStyle(fontSize: 12)),
                   onPressed: _busy
                       ? null
-                      
-                      
-                      
+
                       : () => _run(() async {
                             final int n = await sc.restoreBackup();
                             Formatter.showToast(
@@ -243,12 +200,7 @@ class _SharePageState extends State<SharePage> {
                 ),
               ),
               const SizedBox(height: 8),
-              
-              
-              
-              
-              
-              
+
               Text(S.bkPortableHint,
                   style: const TextStyle(fontSize: 10, height: 1.4)),
               const SizedBox(height: 8),
@@ -289,7 +241,7 @@ class _SharePageState extends State<SharePage> {
                             final PickedTextFile? f =
                                 await FileExport.pickText();
                             if (f == null) return;
-                            
+
                             if (!CryptoBox.isPortableEnvelope(f.content)) {
                               throw CryptoBoxException(S.bkPortableNotPortable);
                             }
@@ -308,7 +260,6 @@ class _SharePageState extends State<SharePage> {
               ),
               const SizedBox(height: 8),
 
-              
               Row(
                 children: <Widget>[
                   Expanded(
@@ -319,10 +270,6 @@ class _SharePageState extends State<SharePage> {
                       onPressed: sc.servers.isEmpty
                           ? null
                           : () async {
-                              
-                              
-                              
-                              
                               if (!await _confirmSensitiveExport(context)) {
                                 return;
                               }
@@ -347,20 +294,7 @@ class _SharePageState extends State<SharePage> {
                   ),
                 ],
               ),
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
               const SizedBox(height: 8),
             ],
           ),
@@ -369,15 +303,6 @@ class _SharePageState extends State<SharePage> {
     );
   }
 
-  
-  
-  
-
-  
-  
-  
-  
-  
   String _shortPath(String path) {
     final List<String> seg = path.split(RegExp(r'[/\\]'))
         .where((String s) => s.isNotEmpty)
@@ -391,7 +316,6 @@ class _SharePageState extends State<SharePage> {
     try {
       await action();
     } catch (e) {
-      
       Formatter.showToast(
         e is CryptoBoxException ? e.message : '${S.execFailed}: ${Formatter.safeErr(e)}',
         isError: true,
@@ -401,10 +325,6 @@ class _SharePageState extends State<SharePage> {
     }
   }
 
-  
-  
-  
-  
   Future<String?> _askPassphrase({
     required String title,
     required String body,
@@ -470,7 +390,7 @@ class _SharePageState extends State<SharePage> {
           ),
         ],
       ),
-      
+
     ).whenComplete(input.dispose);
     if (ok != true) return;
     final ServerController sc = Get.find<ServerController>();
@@ -482,13 +402,6 @@ class _SharePageState extends State<SharePage> {
   }
 }
 
-
-
-
-
-
-
-
 class _PassphraseDialog extends StatefulWidget {
   const _PassphraseDialog({
     required this.title,
@@ -499,7 +412,6 @@ class _PassphraseDialog extends StatefulWidget {
   final String title;
   final String body;
 
-  
   final bool withConfirm;
 
   @override
@@ -511,8 +423,6 @@ class _PassphraseDialogState extends State<_PassphraseDialog> {
   final TextEditingController _confirm = TextEditingController();
   bool _obscure = true;
 
-  
-  
   static const int _minLen = 6;
 
   @override
@@ -522,7 +432,6 @@ class _PassphraseDialogState extends State<_PassphraseDialog> {
     super.dispose();
   }
 
-  
   String? get _error {
     final String p = _pass.text;
     if (p.isEmpty) return null; 

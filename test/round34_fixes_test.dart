@@ -17,20 +17,6 @@ import 'package:torrent_manager/utils/app_log.dart';
 import 'package:torrent_manager/utils/crypto_box.dart';
 import 'package:torrent_manager/utils/net_error.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -44,12 +30,9 @@ void main() {
     Get.reset();
   });
 
-  
-
   test('① 黑暗模式：抽屉底色为深色，字色反成浅色', () async {
     final ThemeController tc = Get.put(ThemeController());
-    
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 300));
     tc.applyBuiltinMode(2);
     await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -64,14 +47,13 @@ void main() {
     expect(font.computeLuminance(), greaterThan(0.5),
         reason: '暗底抽屉的字色应当是浅色（用户报的正是白字压白底）');
 
-    
     expect(tc.gradient1.computeLuminance(), lessThan(0.179));
     expect(tc.gradient2.computeLuminance(), lessThan(0.179));
   });
 
   test('① 明亮模式不回归：底色浅、字色深', () async {
     final ThemeController tc = Get.put(ThemeController());
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 300));
     tc.applyBuiltinMode(1);
     await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -95,8 +77,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
-    
-    
+
     tc.applyBuiltinMode(2);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
@@ -108,8 +89,6 @@ void main() {
     expect(lum, lessThan(0.179),
         reason: '黑暗模式下抽屉底色必须是深色，实测 luminance=$lum');
   });
-
-  
 
   testWidgets('② 「类型」下拉菜单项显式取 onSurface（浅色主题下为深色字）', (
     WidgetTester tester,
@@ -140,8 +119,6 @@ void main() {
     expect(item.style!.color!.computeLuminance(), lessThan(0.5));
   });
 
-  
-
   test('③ 用户目录不可写 → 自动回落到私有目录，且内容是本机加密信封', () async {
     final Directory tmp =
         Directory.systemTemp.createTempSync('tm_r34_fallback');
@@ -154,7 +131,7 @@ void main() {
       tr: TrMethod(),
     ));
     sc.backupFallbackDirProvider = () async => tmp;
-    
+
     sc.backupDir.value = 'bad${String.fromCharCode(0)}dir';
 
     sc.servers.add(ServerData(
@@ -169,13 +146,10 @@ void main() {
     expect(path, startsWith(tmp.path), reason: '写不动时必须回落到私有目录');
     expect(path, contains(ServerController.backupFileName));
 
-    
     final String raw = File(path).readAsStringSync();
     expect(raw, isNot(contains('127.0.0.1')));
     expect(await CryptoBox.tryDecrypt(raw), isNotNull);
 
-    
-    
     final int added = await sc.restoreBackup();
     expect(added, greaterThanOrEqualTo(0));
     expect(sc.servers.where((ServerData s) => s.host == '127.0.0.1'),
@@ -183,9 +157,6 @@ void main() {
         reason: '回落到私有目录的那份备份必须能被恢复读到');
   });
 
-  
-
-  
   const String kRealError =
       "PathAccessException: Cannot open file, path = "
       "'/storage/emulated/0/MyHarmonyOSDevice/Download/"
@@ -218,13 +189,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    
     final Text row =
         tester.widget<Text>(find.textContaining('PathAccessException'));
     expect(row.maxLines, 3);
     expect(row.overflow, TextOverflow.ellipsis);
 
-    
     await tester.tap(find.textContaining('PathAccessException'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -236,7 +205,6 @@ void main() {
     expect(detail.maxLines, isNull);
   });
 }
-
 
 class _AutoOpenDialog extends StatefulWidget {
   const _AutoOpenDialog();

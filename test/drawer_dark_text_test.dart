@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,18 +13,9 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
-
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -51,7 +28,6 @@ void main() {
     Get.put(ThemeController(), permanent: true);
   });
 
-  
   Future<ThemeController> pumpDark(WidgetTester tester) async {
     final ThemeController tc = Get.find<ThemeController>();
     tc.setThemeMode(2); 
@@ -68,7 +44,7 @@ void main() {
 
   Color textColorOf(WidgetTester tester, String text) {
     final Text w = tester.widget<Text>(find.text(text));
-    
+
     return w.style?.color ??
         (throw TestFailure('「$text」没有显式字色，会继承被重置的默认主题'));
   }
@@ -76,22 +52,15 @@ void main() {
   testWidgets('黑暗模式：分组标题与子项字色 = 生效字色（浅色）',
       (WidgetTester tester) async {
     final ThemeController tc = await pumpDark(tester);
-    
-    
-    
-    
+
     final Color base = tc.drawerFontColor;
     expect(base.computeLuminance(), greaterThan(0.5),
         reason: '★ 黑暗档抽屉底色是深色，生效字色必须是**浅色**');
 
-    
     for (final String t in <String>[S.groupTheme]) {
       expect(textColorOf(tester, t), base, reason: '分组标题「$t」应为 100% 字色');
     }
 
-    
-    
-    
     for (final String t in <String>[
       S.themeLight,
       S.themeDark,
@@ -110,13 +79,9 @@ void main() {
       (WidgetTester tester) async {
     final ThemeController tc = await pumpDark(tester);
 
-    
-    
     final Color? inherited = tc.darkTheme.textTheme.bodyMedium?.color;
     expect(inherited, isNotNull);
-    
-    
-    
+
     final Color base = tc.drawerFontColor;
     expect(textColorOf(tester, S.themeLight), base.withValues(alpha: 0.87),
         reason: '抽屉子项必须取自抽屉自己的字色，而不是被重置的主题默认色');
@@ -127,9 +92,6 @@ void main() {
 
   testWidgets('未修复时会退化成 M3 默认深字（反证这条护栏有效）',
       (WidgetTester tester) async {
-    
-    
-    
     final ThemeData reset = ThemeData(dividerColor: Colors.transparent);
     final Color? bad = reset.textTheme.bodyMedium?.color;
     expect(bad, isNotNull);

@@ -10,17 +10,6 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class TorrentInfoTrackersPage extends StatelessWidget {
   const TorrentInfoTrackersPage({super.key});
 
@@ -79,8 +68,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     });
   }
 
-  
-
   Widget _trackerTile(
     BuildContext context,
     TorrentController ctrl,
@@ -119,15 +106,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
         onSelected: (String v) async {
           switch (v) {
             case 'copy':
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
               await Clipboard.setData(
                 ClipboardData(text: Formatter.maskUrl(url)),
               );
@@ -155,8 +134,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       ),
     );
   }
-
-  
 
   Future<void> _editTracker(
     BuildContext context,
@@ -228,7 +205,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           ),
         ],
       ),
-      
+
     ).whenComplete(input.dispose);
     if (result == null || result.isEmpty) return;
 
@@ -245,8 +222,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       if (s.isQbittorrent) {
         if (editing) {
           await sc.qb.editTracker(t.hash, original, result);
-          
-          
+
           AppLog.instance.op('修改 Tracker：$original → ${_oneLine(result)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
@@ -259,12 +235,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           Formatter.showToast('${S.trkAddOk}${t.name}');
         }
       } else {
-        
-        
-        
-        
-        
-        
         if (t.trId == null) {
           Formatter.showToast(S.noTrId, isError: true);
           return;
@@ -297,21 +267,12 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     }
   }
 
-  
-  
-  
-  
   String _oneLine(String v) => v
       .split('\n')
       .map((String e) => e.trim())
       .where((String e) => e.isNotEmpty)
       .join(' | ');
 
-  
-  
-  
-  
-  
   Future<void> _removeTracker(
     BuildContext context,
     TorrentController ctrl,
@@ -354,7 +315,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       if (s.isQbittorrent) {
         await sc.qb.removeTracker(t.hash, url);
       } else {
-        
         final int? tid = _trackerIdOf(ctrl, url);
         if (tid == null || t.trId == null) {
           Formatter.showToast('${S.trkDelNotFound}$url', isError: true);
@@ -382,8 +342,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     return null;
   }
 }
-
-
 
 class _TrackerBarChart extends StatelessWidget {
   const _TrackerBarChart({required this.trackers});

@@ -1,22 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -58,10 +39,6 @@ ServerData qbSrv() => ServerData(
       port: 8080,
     );
 
-
-
-
-
 Dio fakeTrDio({void Function()? onCall, bool fail = false}) {
   final Dio dio = Dio(BaseOptions(baseUrl: 'http://192.168.1.9:9091'));
   dio.interceptors.add(InterceptorsWrapper(
@@ -75,7 +52,7 @@ Dio fakeTrDio({void Function()? onCall, bool fail = false}) {
         ));
         return;
       }
-      
+
       String method = '';
       final dynamic d = o.data;
       if (d is String) {
@@ -83,7 +60,6 @@ Dio fakeTrDio({void Function()? onCall, bool fail = false}) {
           final dynamic m = jsonDecode(d);
           if (m is Map) method = (m['method'] ?? '').toString();
         } catch (_) {
-          
         }
       } else if (d is Map) {
         method = (d['method'] ?? '').toString();
@@ -102,7 +78,6 @@ Dio fakeTrDio({void Function()? onCall, bool fail = false}) {
   ));
   return dio;
 }
-
 
 Torrent sampleTorrent() => const Torrent(
       hash: 'h1',
@@ -133,9 +108,6 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
   group('① 版本号（qB `/api/v2/app/version` / TR `session-get.version`）', () {
     test('★ 取一次即缓存，后续调用不再发请求', () async {
       int calls = 0;
@@ -178,7 +150,6 @@ void main() {
           ServerController(tr: TrMethod(dio: fakeTrDio(fail: true))));
       sc.servers.assignAll(<ServerData>[s]);
 
-      
       await sc.ensureVersion(s);
       expect(sc.serverVersion[s.id], isNull, reason: '失败不写缓存，下次连上还会再试');
     });
@@ -198,9 +169,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('② 服务器卡片', () {
     Future<void> pumpServerPage(WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);
@@ -216,7 +184,7 @@ void main() {
       final ServerController sc = Get.find<ServerController>();
       final ServerData s = qbSrv();
       sc.servers.assignAll(<ServerData>[s]);
-      
+
       sc.reportConnected(s.id);
       sc.serverVersion[s.id] = '4.6.2';
       sc.serverVersion.refresh();
@@ -233,8 +201,7 @@ void main() {
       final ServerData s = qbSrv();
       sc.servers.assignAll(<ServerData>[s]);
       sc.reportConnected(s.id);
-      
-      
+
       sc.cacheTorrents(s.id, <Torrent>[sampleTorrent()]);
       await tester.pump(const Duration(milliseconds: 50));
 
@@ -265,10 +232,7 @@ void main() {
       sc.servers.assignAll(<ServerData>[s]);
       sc.reportConnected(s.id);
       sc.cacheTorrents(s.id, <Torrent>[sampleTorrent()]);
-      
-      
-      
-      
+
       sc.ioJobs[s.id] = 37;
       sc.ioJobs.refresh();
       await tester.pump(const Duration(milliseconds: 50));
@@ -276,11 +240,6 @@ void main() {
       final String up = Formatter.setSpeed(1024);
       final String down = Formatter.setSpeed(2048);
 
-      
-      
-      
-      
-      
       Finder cardSpeed(String s) => find.byWidgetPredicate((Widget w) =>
           w is Text && w.data == s && w.style?.fontSize == 10);
 
@@ -304,7 +263,7 @@ void main() {
       sc.servers.assignAll(<ServerData>[s]);
       sc.reportConnected(s.id);
       sc.cacheTorrents(s.id, <Torrent>[sampleTorrent()]);
-      
+
       sc.ioJobs[s.id] = 5;
       sc.ioJobs.refresh();
       await tester.pump(const Duration(milliseconds: 50));
@@ -317,9 +276,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ 种子卡片', () {
     testWidgets('★ 上传在前、下载在后，速度之后接磁盘读写芯片',
         (WidgetTester tester) async {
@@ -345,7 +301,7 @@ void main() {
 
       expect(find.byType(DiskIoChip), findsOneWidget,
           reason: '★ 需求 4：种子卡片的磁盘读写要跟在上/下速度之后');
-      
+
       expect(
         tester.getTopLeft(find.byType(DiskIoChip)).dy,
         greaterThan(tester.getTopLeft(find.text(up)).dy),
@@ -354,9 +310,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ 磁盘读写芯片口径', () {
     testWidgets('★ 文案为「上传：X · 下载：Y」，上传取 uploaded、下载取 downloaded',
         (WidgetTester tester) async {
@@ -366,9 +319,6 @@ void main() {
         ),
       ));
 
-      
-      
-      
       final String expectText = '${S.ioUploadPrefix}'
           '${Formatter.setSize(120000000)}'
           ' · ${S.ioDownloadPrefix}${Formatter.setSize(300000000)}';

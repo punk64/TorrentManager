@@ -1,26 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -40,11 +17,6 @@ import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/data/transmission/tr_method.dart';
 import 'package:torrent_manager/pages/server_setting_page.dart';
 import 'package:torrent_manager/utils/ip_geo.dart';
-
-
-
-
-
 
 ServerData qbSrv() => ServerData(
       id: 'srv-1',
@@ -78,7 +50,6 @@ Map<String, dynamic> qbPrefs() => <String, dynamic>{
       'ip_filter_enabled': true,
       'banned_IPs': '192.168.1.77\n10.0.0.5',
     };
-
 
 class _QbFake {
   bool loggedIn = false;
@@ -156,16 +127,13 @@ class _QbFake {
   }
 }
 
-
 class _TrFake {
   final List<String> hosts = <String>[];
   final List<String> methods = <String>[];
   final List<Map<String, dynamic>> args = <Map<String, dynamic>>[];
 
-  
   Map<String, dynamic> lastSet = <String, dynamic>{};
 
-  
   final Map<String, dynamic> session = <String, dynamic>{
     'speed-limit-up': 512,
     'speed-limit-down': 1024,
@@ -197,7 +165,7 @@ class _TrFake {
     d.interceptors.add(InterceptorsWrapper(
       onRequest: (RequestOptions o, RequestInterceptorHandler h) {
         hosts.add(o.uri.host);
-        
+
         final String? sid = o.headers['X-Transmission-Session-Id'] as String?;
         if (sid == null) {
           h.resolve(Response<dynamic>(
@@ -235,13 +203,6 @@ class _TrFake {
   }
 }
 
-
-
-
-
-
-
-
 Future<void> _pump(
   WidgetTester tester, {
   required ServerData server,
@@ -261,11 +222,9 @@ Future<void> _pump(
   final ServerController sc = Get.put(ServerController());
   await tester.pump(const Duration(milliseconds: 50));
   sc.current.value = server;
-  
-  
+
   if (lanUsing) sc.lanUsing[server.id] = true;
-  
-  
+
   setup?.call(sc);
   await tester.pumpWidget(GetMaterialApp(
     home: const ServerSettingPage(),
@@ -291,8 +250,7 @@ void main() {
 
   setUp(() {
     SecurePrefs.useMemoryBackendForTest();
-    
-    
+
     IpGeo.offline = true;
   });
   setUp(() {
@@ -307,15 +265,10 @@ void main() {
     IpGeo.offline = false;
   });
 
-  
-  
-  
   testWidgets('① ★ 局域网可达时，设置页的请求全部打到局域网地址（生产接线）',
       (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
-    
-    
-    
+
     await _pump(
       tester,
       server: qbSrv(),
@@ -348,9 +301,6 @@ void main() {
         reason: '局域网可达时必须切到局域网地址（这正是设置页此前缺的一步）');
   });
 
-  
-  
-  
   testWidgets('③ qB：偏好回填 + 限速按 KB/s 显示', (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
     ServerSettingPage.debugPrefsOverride =
@@ -367,9 +317,6 @@ void main() {
     await tester.pump();
   });
 
-  
-  
-  
   testWidgets('④ TR：session-get 的值回填，KB/s 换算成字节/秒后仍显示 KB/s',
       (WidgetTester tester) async {
     final _TrFake fake = _TrFake();
@@ -379,11 +326,11 @@ void main() {
     await _expand(tester, '设置全局限速');
 
     final List<String> texts = _fieldTexts(tester);
-    
+
     expect(texts, contains('512'), reason: 'TR 的 speed-limit-up=512 KB/s');
     expect(texts, contains('1024'));
     expect(fake.methods, contains('session-get'));
-    
+
     expect(find.textContaining('没能读取这台服务器的设置'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
@@ -412,22 +359,18 @@ void main() {
     await _pump(tester, server: trSrv());
     await _expand(tester, '黑名单 / IP 过滤');
 
-    
     expect(find.text('添加'), findsNothing,
         reason: 'TR 上不能出现"添加单条"的假象');
     expect(find.text('保存黑名单'), findsNothing);
     expect(find.text('订阅地址'), findsOneWidget);
     expect(find.textContaining('当前屏蔽'), findsOneWidget);
-    
+
     expect(_fieldTexts(tester), contains('https://example.com/list.gz'));
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
 
-  
-  
-  
   testWidgets('⑦ 归属地：内网段直接出结果（IpGeo.offline=true 下也不会卡住）',
       (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
@@ -436,9 +379,6 @@ void main() {
     await _pump(tester, server: qbSrv());
     await _expand(tester, '黑名单 / IP 过滤');
 
-    
-    
-    
     expect(find.textContaining('内网 IP'), findsWidgets,
         reason: '内网地址必须本地判定，不能联网查归属地');
     expect(find.textContaining('查询归属地'), findsNothing);
@@ -447,9 +387,6 @@ void main() {
     await tester.pump();
   });
 
-  
-  
-  
   testWidgets('⑧ qB：改限速只下发 up_limit / dl_limit 两个键',
       (WidgetTester tester) async {
     final _QbFake fake = _QbFake();
@@ -458,7 +395,6 @@ void main() {
     await _pump(tester, server: qbSrv());
     await _expand(tester, '设置全局限速');
 
-    
     final Finder up = find.byType(TextField).first;
     await tester.enterText(up, '64');
     await tester.pump(const Duration(milliseconds: 200));

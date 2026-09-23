@@ -6,33 +6,11 @@ import 'package:path_provider/path_provider.dart';
 
 import 'formatter.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class FileExport {
   FileExport._();
 
-  
-  
-  
-  
   static const int maxReadBytes = 2 * 1024 * 1024;
 
-  
-  
-  
   static Future<String> writeText({
     required String fileName,
     required String content,
@@ -43,7 +21,6 @@ class FileExport {
     return f.path;
   }
 
-  
   static Future<Directory> exportDirectory() async {
     if (Platform.isAndroid) {
       final Directory? ext = await getExternalStorageDirectory();
@@ -55,14 +32,6 @@ class FileExport {
     return getApplicationDocumentsDirectory();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   static Future<PickedTextFile?> pickText({
     List<String> allowedExtensions = const <String>['json'],
   }) async {
@@ -94,17 +63,13 @@ class FileExport {
   }
 }
 
-
 class PickedTextFile {
   const PickedTextFile({required this.name, required this.content});
 
-  
   final String name;
 
-  
   final String content;
 }
-
 
 class FileExportException implements Exception {
   const FileExportException(this.message);

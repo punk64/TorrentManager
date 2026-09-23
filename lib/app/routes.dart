@@ -13,33 +13,10 @@ import '../pages/torrent_add_page.dart';
 import '../pages/torrent_info_page.dart';
 import '../pages/torrent_list_page.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Routes {
   static const servers = '/servers';
   static const torrents = '/torrents';
-  
-  
-  
-  
-  
+
   static const theme = '/theme';
   static const share = '/share';
   static const log = '/log';
@@ -51,8 +28,7 @@ class Routes {
 
 class AppPages {
   static final pages = <GetPage<dynamic>>[
-    
-    
+
     GetPage(
       name: Routes.servers,
       page: () => const AppPageTheme(
@@ -71,19 +47,14 @@ class AppPages {
         child: TorrentListPage(),
       ),
     ),
-    
-    
-    
-    
-    
-    
+
     GetPage(
       name: Routes.theme,
       page: () => const AppPageTheme(
           pageLevel: true,
         page: AppPageKey.settings,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: ThemePage(),
       ),
@@ -94,7 +65,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.settings,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: SharePage(),
       ),
@@ -105,7 +76,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.log,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: LogPage(),
       ),
@@ -116,7 +87,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.logQb,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: LogQbPage(),
       ),
@@ -127,7 +98,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.settings,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: ServerSettingPage(),
       ),
@@ -138,7 +109,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.torrentList,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: TorrentAddPage(),
       ),
@@ -149,7 +120,7 @@ class AppPages {
           pageLevel: true,
         page: AppPageKey.torrentDetail,
         applyCardBackground: true,
-        
+
         fixedScrim: AppPageBackground.fixedScrimValue,
         child: TorrentInfoPage(),
       ),

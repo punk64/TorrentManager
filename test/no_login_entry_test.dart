@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,22 +14,11 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
   setUp(() {
-    
-    
-    
     SharedPreferences.setMockInitialValues(<String, Object>{});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -45,12 +28,6 @@ void main() {
     Get.reset();
     Get.put(ThemeController(), permanent: true);
   });
-
-  
-  
-  
-  
-  
 
   Future<void> pumpPage(WidgetTester tester, Widget page) async {
     await tester.pumpWidget(GetMaterialApp(
@@ -69,7 +46,7 @@ void main() {
         reason: '抽屉不应再有登录图标');
     expect(find.byIcon(Icons.account_circle), findsNothing,
         reason: '抽屉不应再展示账号信息');
-    
+
     expect(find.text(S.accExit), findsNothing);
 
     expect(find.text(S.groupTheme), findsWidgets);
@@ -83,7 +60,6 @@ void main() {
     expect(find.textContaining('建立本地账号'), findsNothing);
     expect(find.textContaining('管理本地账号'), findsNothing);
 
-    
     expect(find.text('导入 JSON'), findsOneWidget);
   });
 }

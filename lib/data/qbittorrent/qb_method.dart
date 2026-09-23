@@ -14,86 +14,31 @@ import '../models/qb_log.dart';
 import '../models/server_data.dart';
 import '../models/torrent.dart';
 
-
-
-
 class QbMethod {
   final Dio _dio;
 
-  
   ServerData? _server;
 
-  
-  
-  
-  
-  
-  
   final Map<String, String> probedVersion = <String, String>{};
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   int _routeGen = 0;
 
-  
   int get routeGen => _routeGen;
 
-  
-  
-  
-  
   final CookieJar _jar = CookieJar();
 
-  
-  
-  
-  
   QbMethod({Dio? dio})
       : _dio = dio ?? Dio(BaseOptions(
-          
-          
-          
-          
-          
-          
-          
+
           connectTimeout: const Duration(seconds: 8),
           receiveTimeout: const Duration(seconds: 15),
           sendTimeout: const Duration(seconds: 15),
-          
-          
-          
-          
-          
+
           followRedirects: false,
           validateStatus: (int? s) => s != null && s < 500,
         )) {
     _dio.interceptors.add(CookieManager(_jar));
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (RequestOptions o, RequestInterceptorHandler h) {
         final String base = o.baseUrl;
@@ -102,12 +47,7 @@ class QbMethod {
           o.headers['Origin'] =
               base.endsWith('/') ? base.substring(0, base.length - 1) : base;
         }
-        
-        
-        
-        
-        
-        
+
         final ServerData? cur = _server;
         if (cur != null) {
           o.extra[kLogServerIdKey] = cur.id;
@@ -116,60 +56,26 @@ class QbMethod {
         h.next(o);
       },
     ));
-    
-    
+
     _dio.interceptors.add(RedirectInterceptor(dio: _dio));
-    
+
     _dio.interceptors.add(AppLogInterceptor());
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   bool _apiV5 = false;
 
-  
   String? _apiProbeServerId;
 
-  
   Future<void>? _apiProbeInFlight;
 
-  
   static int qbMajorOf(String version) {
     final String v = version.trim().replaceFirst(RegExp(r'^[vV]'), '');
     final int dot = v.indexOf('.');
     return int.tryParse(dot < 0 ? v : v.substring(0, dot)) ?? 0;
   }
 
-  
   static bool isApiV5Version(String version) => qbMajorOf(version) >= 5;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const Duration _kProbeConnect = Duration(milliseconds: 600);
   static const Duration _kProbeReceive = Duration(milliseconds: 2500);
 
@@ -178,11 +84,6 @@ class QbMethod {
         receiveTimeout: _kProbeReceive,
       );
 
-  
-  
-  
-  
-  
   Future<void> ensureApiStyle() async {
     final ServerData? s = _server;
     if (s == null || !s.isQbittorrent) return;
@@ -204,25 +105,16 @@ class QbMethod {
         '/api/v2/app/version',
         options: _probeOptions,
       );
-      
-      
+
       final String raw = (r.data?.toString() ?? '').trim();
       if (r.statusCode == 200 && raw.isNotEmpty) {
         _apiV5 = isApiV5Version(raw);
         _apiProbeServerId = s.id;
       }
     } catch (_) {
-      
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
   void _ensureWriteOk(Response<dynamic> resp) {
     final int code = resp.statusCode ?? 0;
     if (code < 400) return;
@@ -234,16 +126,6 @@ class QbMethod {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Response<dynamic>> _postOk(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -255,37 +137,13 @@ class QbMethod {
     return resp;
   }
 
-  
-  
-  
   bool _paramInBody = true;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Response<dynamic>> _postWrite(
     String path, {
     Map<String, dynamic>? params,
     Object? data,
   }) async {
-    
     if (data != null) {
       return _dio.post<dynamic>(path, data: data, queryParameters: params);
     }
@@ -294,9 +152,7 @@ class QbMethod {
           scope: _server?.logScope);
       return _dio.post<dynamic>(path);
     }
-    
-    
-    
+
     final String brief = '${_paramsBrief(params)} ｜ Referer ${_dio.options.baseUrl}';
     final bool firstAsBody = _paramInBody;
     AppLog.instance.net(
@@ -307,8 +163,7 @@ class QbMethod {
     final Response<dynamic> r1 = firstAsBody
         ? await _postForm(path, params)
         : await _dio.post<dynamic>(path, queryParameters: params);
-    
-    
+
     if (r1.statusCode != 400) return r1;
     final bool retryAsBody = !firstAsBody;
     AppLog.instance.net(
@@ -321,7 +176,6 @@ class QbMethod {
         ? await _postForm(path, params)
         : await _dio.post<dynamic>(path, queryParameters: params);
     if (r2.statusCode != 400) {
-      
       _paramInBody = retryAsBody;
       AppLog.instance.net(
         '写请求参数位置自适应：此后本服务器按'
@@ -332,7 +186,6 @@ class QbMethod {
     return r2;
   }
 
-  
   Future<Response<dynamic>> _postForm(
     String path,
     Map<String, dynamic> params,
@@ -343,12 +196,6 @@ class QbMethod {
         options: Options(contentType: Headers.formUrlEncodedContentType),
       );
 
-  
-  
-  
-  
-  
-  
   static String _paramsBrief(Map<String, dynamic> p) {
     final List<String> parts = <String>[];
     p.forEach((String k, dynamic v) {
@@ -372,65 +219,30 @@ class QbMethod {
     return parts.join(' ｜ ');
   }
 
-  
   static String _head(String s, [int n = 6]) =>
       s.length <= n ? s : s.substring(0, n);
 
-  
   static String _shortPath(String path) => path.replaceFirst('/api/v2/', '');
 
-  
-  
-  
-  
   void setServer(ServerData s) {
-    
-    
-    
-    
     if (_server?.id != s.id) {
       unawaited(_jar.deleteAll());
-      
+
       _paramInBody = true;
     }
     _server = s;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     final bool routeChanged = _dio.options.baseUrl != s.baseUrl;
     _dio.options.baseUrl = s.baseUrl;
     if (routeChanged) _routeGen++;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Map<String, dynamic> _asMap(Response<dynamic> resp, String endpoint) {
     final dynamic d = resp.data;
     if (d is Map) return Map<String, dynamic>.from(d);
     throw _notJson(resp, endpoint);
   }
 
-  
   static List<dynamic> _asList(Response<dynamic> resp, String endpoint) {
     final dynamic d = resp.data;
     if (d is List) return d;
@@ -454,69 +266,27 @@ class QbMethod {
     return 'http://$url';
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   String? lastLoginError;
 
-  
-  
-  
-  
-  
   bool lastLoginBanned = false;
 
-  
-  
-  
-  
-  
-  
   bool lastLoginMissingCreds = false;
 
-  
   void _resetLoginResult() {
     lastLoginError = null;
     lastLoginBanned = false;
     lastLoginMissingCreds = false;
   }
 
-  
   static bool _missingCreds(ServerData s) =>
       (s.username ?? '').trim().isEmpty || (s.password ?? '').isEmpty;
 
-  
   static bool _isBannedBody(String body) =>
       body.toLowerCase().contains('banned');
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<bool> updateQbServerCookie(ServerData s, {int? routeGen}) async {
     _resetLoginResult();
-    
-    
-    
-    
-    
-    
-    
-    
+
     if (_missingCreds(s)) {
       lastLoginMissingCreds = true;
       lastLoginError = '账号或密码为空，已跳过登录以避免触发服务端封禁';
@@ -525,8 +295,7 @@ class QbMethod {
       return false;
     }
     if (routeGen == null || routeGen == _routeGen) setServer(s);
-    
-    
+
     final Response<dynamic> resp = await _dio.post<dynamic>(
       '${s.baseUrl}/api/v2/auth/login',
       data: FormData.fromMap(<String, String>{
@@ -534,15 +303,9 @@ class QbMethod {
         'password': s.password ?? '',
       }),
     );
-    
-    
-    
-    
+
     final String body = (resp.data?.toString() ?? '').trim();
-    
-    
-    
-    
+
     if (_isBannedBody(body)) {
       lastLoginBanned = true;
       lastLoginError = 'IP 已被服务器封禁';
@@ -551,11 +314,7 @@ class QbMethod {
           scope: s.logScope);
       return false;
     }
-    
-    
-    
-    
-    
+
     final bool ok = resp.statusCode == 200 && (body == 'Ok.' || body.isEmpty);
     if (!ok) {
       lastLoginError = '服务器拒绝了登录（HTTP ${resp.statusCode}）';
@@ -566,16 +325,12 @@ class QbMethod {
     return ok;
   }
 
-  
-  
-  
   Future<bool> checkQbServerCookie([ServerData? s, bool retriedRoute = false]) async {
     final ServerData? target = s ?? _server;
     if (target == null) return false;
     _resetLoginResult();
     setServer(target);
 
-    
     final int gen = _routeGen;
     try {
       final Response<dynamic> resp = await _dio.get(
@@ -583,14 +338,11 @@ class QbMethod {
         options: _probeOptions,
       );
       if (resp.statusCode == 200 && resp.data is String) {
-        
-        
         final String v = (resp.data as String).trim();
         if (v.isNotEmpty) probedVersion[target.id] = v;
         return true;
       }
-      
-      
+
       if (_isBannedBody(resp.data?.toString() ?? '')) {
         lastLoginBanned = true;
         lastLoginError = 'IP 已被服务器封禁';
@@ -599,18 +351,9 @@ class QbMethod {
         return false;
       }
     } catch (_) {
-      
     }
-    
-    
+
     if (gen != _routeGen) {
-      
-      
-      
-      
-      
-      
-      
       if (retriedRoute) return false;
       final ServerData? now = _server;
       if (now == null) return false;
@@ -622,35 +365,17 @@ class QbMethod {
     return updateQbServerCookie(target, routeGen: gen);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Map<String, String>> updateQbInfo() async {
-    
-    
     final Future<String> versionF = _dio
         .get<String>('/api/v2/app/version', options: _probeOptions)
         .then((Response<String> r) => r.data ?? '');
     final Future<String> apiF = _probeText('/api/v2/app/webapiVersion');
-    
-    
+
     final String version = await versionF;
     final String apiVersion = await apiF;
     return <String, String>{'version': version, 'webapiVersion': apiVersion};
   }
 
-  
-  
-  
-  
   Future<String> _probeText(String path) async {
     try {
       final Response<String> r =
@@ -661,24 +386,8 @@ class QbMethod {
     }
   }
 
-  
-
-  
-  
-  
-  
-  
   static const int kParseInIsolateBytes = 512 * 1024;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<List<Torrent>> getTorrentList({
     String? filter,
     String? category,
@@ -696,8 +405,7 @@ class QbMethod {
       options: Options(responseType: ResponseType.plain),
     );
     final dynamic data = resp.data;
-    
-    
+
     if (data is! String) {
       final List<dynamic> list = _asList(resp, '/api/v2/torrents/info');
       return list
@@ -710,13 +418,6 @@ class QbMethod {
     return Isolate.run<List<Torrent>>(() => _decodeTorrentList(data));
   }
 
-  
-  
-  
-  
-  
-  
-  
   static List<Torrent> _decodeTorrentList(String raw) {
     if (raw.isEmpty) return <Torrent>[];
     final dynamic d = jsonDecode(raw);
@@ -727,7 +428,6 @@ class QbMethod {
     ];
   }
 
-  
   Future<Map<String, dynamic>> getMaindata({int rid = 0}) async {
     final Response<dynamic> resp = await _dio.get(
       '/api/v2/sync/maindata',
@@ -736,8 +436,6 @@ class QbMethod {
     return _asMap(resp, '/api/v2/sync/maindata');
   }
 
-  
-  
   Future<Map<String, dynamic>> updateQbMaindata({int rid = 0}) =>
       getMaindata(rid: rid);
 
@@ -749,10 +447,6 @@ class QbMethod {
     return _asMap(resp, '/api/v2/torrents/properties');
   }
 
-  
-
-  
-  
   Future<void> addTorrents({
     String? urls,
     String? filePath,
@@ -765,10 +459,7 @@ class QbMethod {
       if (savepath != null) 'savepath': savepath,
       if (category != null) 'category': category,
     };
-    
-    
-    
-    
+
     if (paused) {
       await ensureApiStyle();
       fields[_apiV5 ? 'stopped' : 'paused'] = 'true';
@@ -782,14 +473,6 @@ class QbMethod {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _pauseOrResume(String hashes, {required bool pause}) async {
     await ensureApiStyle();
     final String modern =
@@ -800,10 +483,6 @@ class QbMethod {
     final String second = _apiV5 ? legacy : modern;
     String used = first;
 
-    
-    
-    
-    
     final Map<String, dynamic> p = <String, dynamic>{'hashes': hashes};
     final Response<dynamic> r1 = await _postWrite(first, params: p);
     Response<dynamic> r = r1;
@@ -811,12 +490,9 @@ class QbMethod {
       r = await _postWrite(second, params: p);
       used = second;
       if (r.statusCode != 404 && r.statusCode != 405) {
-        
         _apiV5 = !_apiV5;
         _apiProbeServerId = _server?.id;
-        
-        
-        
+
         AppLog.instance.net(
           '暂停端点自适应：${_endpointName(first)} 不可用（${r1.statusCode}）'
           ' → 改用 ${_endpointName(second)}，此后按 qB v${_apiV5 ? '5' : '4'} 风格',
@@ -825,8 +501,7 @@ class QbMethod {
       }
     }
     _ensureWriteOk(r);
-    
-    
+
     AppLog.instance.net(
       '${pause ? '暂停' : '继续'}种子：${_endpointName(used)}'
       '（qB v${_apiV5 ? '5' : '4'} 风格）',
@@ -834,15 +509,12 @@ class QbMethod {
     );
   }
 
-  
   static String _endpointName(String path) =>
       path.replaceFirst('/api/v2/torrents/', '');
 
-  
   Future<void> pauseTorrent(String hashes) =>
       _pauseOrResume(hashes, pause: true);
 
-  
   Future<void> resumeTorrent(String hashes) =>
       _pauseOrResume(hashes, pause: false);
 
@@ -868,7 +540,6 @@ class QbMethod {
 
   Future<void> recheckTorrent(String hashes) => recheckTorrents(hashes);
 
-  
   Future<void> reannounceTorrent(String hashes) async {
     await _postOk(
       '/api/v2/torrents/reannounce',
@@ -876,7 +547,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> setName(String hash, String name) async {
     await _postOk(
       '/api/v2/torrents/rename',
@@ -884,9 +554,6 @@ class QbMethod {
     );
   }
 
-  
-
-  
   Future<void> topPrio(String hashes) async {
     await _postOk(
       '/api/v2/torrents/topPrio',
@@ -894,7 +561,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> bottomPrio(String hashes) async {
     await _postOk(
       '/api/v2/torrents/bottomPrio',
@@ -902,7 +568,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> increasePrio(String hashes) async {
     await _postOk(
       '/api/v2/torrents/increasePrio',
@@ -910,7 +575,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> decreasePrio(String hashes) async {
     await _postOk(
       '/api/v2/torrents/decreasePrio',
@@ -918,7 +582,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> filePrio(String hash, String id, int priority) async {
     await _postOk(
       '/api/v2/torrents/filePrio',
@@ -930,9 +593,6 @@ class QbMethod {
     );
   }
 
-  
-
-  
   Future<void> addTags(String hashes, String tags) async {
     await _postOk(
       '/api/v2/torrents/addTags',
@@ -940,7 +600,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> removeTags(String hashes, String tags) async {
     await _postOk(
       '/api/v2/torrents/removeTags',
@@ -948,7 +607,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> setTags(String hashes, String tags) async {
     await _postOk(
       '/api/v2/torrents/setTags',
@@ -956,7 +614,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> createTags(String tags) async {
     await _postOk(
       '/api/v2/torrents/createTags',
@@ -964,7 +621,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> deleteTags(String tags) async {
     await _postOk(
       '/api/v2/torrents/deleteTags',
@@ -972,13 +628,10 @@ class QbMethod {
     );
   }
 
-  
   Future<List<String>> getTags() async {
     final Response<dynamic> resp = await _dio.get('/api/v2/torrents/tags');
     return _asList(resp, '/api/v2/torrents/tags').cast<String>();
   }
-
-  
 
   Future<void> createCategory(String category, {String? savePath}) async {
     await _postOk(
@@ -990,7 +643,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> editCategory(String category, {String? savePath}) async {
     await _postOk(
       '/api/v2/torrents/editCategory',
@@ -1001,7 +653,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> removeCategories(String categories) async {
     await _postOk(
       '/api/v2/torrents/removeCategories',
@@ -1009,13 +660,11 @@ class QbMethod {
     );
   }
 
-  
   Future<Map<String, dynamic>> getCategories() async {
     final Response<dynamic> resp = await _dio.get('/api/v2/torrents/categories');
     return _asMap(resp, '/api/v2/torrents/categories');
   }
 
-  
   Future<void> setCategory(String hashes, String category) async {
     await _postOk(
       '/api/v2/torrents/setCategory',
@@ -1026,9 +675,6 @@ class QbMethod {
     );
   }
 
-  
-
-  
   Future<void> setShareLimits(
     String hashes, {
     double? ratioLimit,
@@ -1044,7 +690,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> setTorrentLimit(
     String hashes, {
     int? downloadLimit,
@@ -1070,16 +715,13 @@ class QbMethod {
     }
   }
 
-  
   Future<void> setServerRatio(String hashes, double ratioLimit) =>
       setShareLimits(hashes, ratioLimit: ratioLimit);
 
-  
   Future<void> toggleSpeedLimitsMode() async {
     await _postOk('/api/v2/transfer/toggleSpeedLimitsMode');
   }
 
-  
   Future<void> setServerLimit({
     int? downloadLimit,
     int? uploadLimit,
@@ -1098,9 +740,6 @@ class QbMethod {
     }
   }
 
-  
-  
-  
   Future<void> setServerAltLimit({
     int? downloadLimit,
     int? uploadLimit,
@@ -1111,9 +750,6 @@ class QbMethod {
     });
   }
 
-  
-
-  
   Future<void> setLocation(String hashes, String location) async {
     await _postOk(
       '/api/v2/torrents/setLocation',
@@ -1133,9 +769,6 @@ class QbMethod {
   Future<void> setTempPathEnabled(bool enabled) =>
       _setAppPreferences(<String, dynamic>{'temp_path_enabled': enabled});
 
-  
-
-  
   Future<void> setForceStart(String hashes, bool value) async {
     await _postOk(
       '/api/v2/torrents/setForceStart',
@@ -1146,7 +779,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> setSuperSeeding(String hashes, bool value) async {
     await _postOk(
       '/api/v2/torrents/setSuperSeeding',
@@ -1157,7 +789,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> setAutoManagement(String hashes, bool enable) async {
     await _postOk(
       '/api/v2/torrents/setAutoManagement',
@@ -1171,7 +802,6 @@ class QbMethod {
   Future<void> setAutoTmmEnabled(bool enabled) =>
       _setAppPreferences(<String, dynamic>{'auto_tmm_enabled': enabled});
 
-  
   Future<void> toggleSequentialDownload(String hashes) async {
     await _postOk(
       '/api/v2/torrents/toggleSequentialDownload',
@@ -1179,7 +809,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> toggleFirstLastPiecePrio(String hashes) async {
     await _postOk(
       '/api/v2/torrents/toggleFirstLastPiecePrio',
@@ -1208,12 +837,6 @@ class QbMethod {
           'max_uploads_per_torrent': maxUploadsPerTorrent,
       });
 
-  
-  
-  
-  
-  
-  
   Future<void> setServerSeedingLimit({
     double? maxRatio,
     int? maxSeedingTime,
@@ -1236,9 +859,6 @@ class QbMethod {
     int? maxSeedingTime,
   }) =>
       _setAppPreferences(<String, dynamic>{
-        
-        
-        
         if (queueing != null) 'queueing_enabled': queueing,
         if (maxActiveDownloads != null)
           'max_active_downloads': maxActiveDownloads,
@@ -1248,9 +868,6 @@ class QbMethod {
         if (maxSeedingTime != null) 'max_seeding_time': maxSeedingTime,
       });
 
-  
-
-  
   Future<void> addTracker(String hash, String urls) async {
     await _postOk(
       '/api/v2/torrents/addTrackers',
@@ -1258,7 +875,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> removeTracker(String hash, String urls) async {
     await _postOk(
       '/api/v2/torrents/removeTrackers',
@@ -1266,7 +882,6 @@ class QbMethod {
     );
   }
 
-  
   Future<void> editTracker(String hash, String origUrl, String newUrl) async {
     await _postOk(
       '/api/v2/torrents/editTrackers',
@@ -1303,8 +918,7 @@ class QbMethod {
     );
     final Map<String, dynamic> data =
         _asMap(resp, '/api/v2/sync/torrentPeers');
-    
-    
+
     final dynamic rawPeers = data['peers'];
     final Map<String, dynamic> peers = rawPeers is Map
         ? Map<String, dynamic>.from(rawPeers)
@@ -1314,13 +928,6 @@ class QbMethod {
         .toList();
   }
 
-  
-  
-  
-  
-  
-  
-  
   Future<void> banPeers(String peers) async {
     await _postOk(
       '/api/v2/transfer/banPeers',
@@ -1328,23 +935,6 @@ class QbMethod {
     );
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<List<QbLog>> getLog({int lastKnownId = -1, bool info = true}) async {
     final Response<dynamic> resp = await _dio.get(
       '/api/v2/log/main',
@@ -1359,7 +949,6 @@ class QbMethod {
         .toList();
   }
 
-  
   Future<List<int>> exportTorrent(String hash) async {
     final Response<List<int>> resp = await _dio.get<List<int>>(
       '/api/v2/torrents/export',
@@ -1368,8 +957,6 @@ class QbMethod {
     );
     return resp.data ?? <int>[];
   }
-
-  
 
   Future<List<Map<String, dynamic>>> getFiles(String hash) =>
       getTorrentFiles(hash);
@@ -1382,9 +969,6 @@ class QbMethod {
 
   Future<void> showBanPeers(String peers) => banPeers(peers);
 
-  
-  
-  
   Future<List<Torrent>> updateSelect(List<String> hashes) async {
     if (hashes.isEmpty) return <Torrent>[];
     final Response<dynamic> resp = await _dio.get(
@@ -1397,25 +981,11 @@ class QbMethod {
         .toList();
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Map<String, dynamic>> getPreferences() async {
     final Response<dynamic> resp = await _dio.get('/api/v2/app/preferences');
     return _asMap(resp, '/api/v2/app/preferences');
   }
 
-  
-  
-  
   Future<void> _setAppPreferences(Map<String, dynamic> prefs) async {
     await _postOk(
       '/api/v2/app/setPreferences',
@@ -1425,32 +995,14 @@ class QbMethod {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> setPreferences(Map<String, dynamic> patch) async {
     if (patch.isEmpty) return;
     await _setAppPreferences(patch);
   }
 
-  
-  
-  
-  
   Future<QbIpFilter> getIpFilter() async =>
       QbIpFilter.fromPrefs(await getPreferences());
 
-  
-  
-  
-  
-  
-  
   Future<void> setIpFilter(QbIpFilter filter, {QbIpFilter? base}) async {
     final Map<String, dynamic> patch = base == null
         ? <String, dynamic>{

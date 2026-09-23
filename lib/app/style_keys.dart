@@ -1,18 +1,6 @@
-
-
-
-
-
-
-
-
-
-
-
 library;
 
 import '../utils/i18n.dart';
-
 
 enum AppPageKey {
   drawer,
@@ -26,21 +14,15 @@ enum AppPageKey {
   logQb,
 }
 
-
 enum AppStyleSlot {
-  
   background,
 
-  
   title,
 
-  
   text;
 
-  
   String get shortName => name;
 }
-
 
 class PageStyleSpec {
   const PageStyleSpec({
@@ -52,36 +34,25 @@ class PageStyleSpec {
     this.help,
   });
 
-  
   final AppPageKey key;
 
-  
   final String title;
 
-  
   final String? backgroundLabel;
   final String? titleLabel;
   final String? textLabel;
 
-  
   final String? help;
 
-  
   String slotKey(AppStyleSlot slot) =>
       'torrentmanager.pageStyle.${key.name}.${slot.shortName}';
 
-  
   List<AppStyleSlot> get slots => <AppStyleSlot>[
         if (backgroundLabel != null) AppStyleSlot.background,
         if (titleLabel != null) AppStyleSlot.title,
         if (textLabel != null) AppStyleSlot.text,
       ];
 
-  
-  
-  
-  
-  
   String labelOf(AppStyleSlot slot) {
     switch (slot) {
       case AppStyleSlot.background:
@@ -93,15 +64,10 @@ class PageStyleSpec {
     }
   }
 
-  
   String get titleLocalized => L.t(title);
 
-  
   String? get helpLocalized => help == null ? null : L.t(help!);
 }
-
-
-
 
 const List<PageStyleSpec> kPageStyles = <PageStyleSpec>[
   PageStyleSpec(
@@ -162,13 +128,6 @@ const List<PageStyleSpec> kPageStyles = <PageStyleSpec>[
     textLabel: '文字颜色',
   ),
 ];
-
-
-
-
-
-
-
 
 PageStyleSpec specOf(AppPageKey key) => kPageStyles.firstWhere(
       (PageStyleSpec e) => e.key == key,

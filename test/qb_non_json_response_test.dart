@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -18,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/net_error.dart';
-
 
 class _TextAdapter implements HttpClientAdapter {
   _TextAdapter(this.body, {this.statusCode = 200});
@@ -74,16 +61,10 @@ void main() {
       } catch (e) {
         err = e;
       }
-      
+
       expect(err, isA<DioException>(), reason: '应当是可读的 DioException');
       expect((err! as DioException).type, DioExceptionType.badResponse);
-      
-      
-      
-      
-      
-      
-      
+
       expect(NetError.describe(err), contains('未登录或会话已失效'));
     });
 

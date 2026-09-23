@@ -14,33 +14,6 @@ import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/log_selection.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class LogQbPage extends StatefulWidget {
   const LogQbPage({super.key});
 
@@ -53,33 +26,12 @@ class _LogQbPageState extends State<LogQbPage> {
 
   final ServerController sc = Get.find<ServerController>();
 
-  
-  
-  
   final QbMethod _qb = QbMethod();
 
-  
-  
-  
-  
   final TrMethod _tr = TrMethod();
 
-  
-  
-  
   List<(String, String)> _trFacts = <(String, String)>[];
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final List<QbLog> _all = <QbLog>[];
   String? _serverId;
   DateTime? _from;
@@ -87,26 +39,13 @@ class _LogQbPageState extends State<LogQbPage> {
   bool _loading = false;
   String? _error;
 
-  
-  
-  
   int _reqSeq = 0;
 
-  
-  
-  
   bool _privacy = true;
 
-  
-  
-  
-  
-  
-  
   static const int _kMaskCacheMax = 500;
   final Map<String, String> _maskCache = <String, String>{};
 
-  
   String _display(String raw) {
     if (!_privacy) return raw;
     final String? hit = _maskCache[raw];
@@ -117,36 +56,23 @@ class _LogQbPageState extends State<LogQbPage> {
     return masked;
   }
 
-  
   bool _selecting = false;
 
-  
-  
-  
-  
-  
   final Set<int> _selected = <int>{};
 
   @override
   void initState() {
     super.initState();
-    
-    
-    
-    
-    
+
     final dynamic arg = Get.arguments;
-    
-    
+
     if (arg is ServerData) {
       _serverId = arg.id;
     }
   }
 
-  
   List<ServerData> get _servers => sc.servers.toList();
 
-  
   ServerData? get _currentServer {
     final String? id = _serverId;
     if (id == null) return null;
@@ -156,10 +82,8 @@ class _LogQbPageState extends State<LogQbPage> {
     return null;
   }
 
-  
   bool get _isTr => _currentServer?.isTransmission ?? false;
 
-  
   List<QbLog> get _visible {
     final List<QbLog> list = _all.where((QbLog l) {
       if (_from == null && _to == null) return true;
@@ -176,13 +100,6 @@ class _LogQbPageState extends State<LogQbPage> {
   String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  
-  
-  
-  
-  
-  
-  
   void _dropStale() {
     _all.clear();
     _trFacts = <(String, String)>[];
@@ -200,8 +117,7 @@ class _LogQbPageState extends State<LogQbPage> {
       }
     }
     if (target == null) return;
-    
-    
+
     final ServerData srv = target;
 
     if (!mounted) return;
@@ -209,26 +125,19 @@ class _LogQbPageState extends State<LogQbPage> {
       _loading = srv.isTransmission ? _trFacts.isEmpty : _all.isEmpty;
       _error = null;
     });
-    
+
     if (srv.isTransmission) {
       await _loadTr(srv, seq);
       return;
     }
     try {
-      
-      
-      
-      
-      
-      
-      
       final bool logged = await _qb.checkQbServerCookie(srv);
       if (!logged) {
         if (!mounted || seq != _reqSeq) return;
         setState(() {
           _error = '${S.logQbFetchFailed}登录失败，请检查账号与密码';
           _loading = false;
-          
+
           _dropStale();
         });
         return;
@@ -244,38 +153,29 @@ class _LogQbPageState extends State<LogQbPage> {
     } catch (e) {
       if (!mounted || seq != _reqSeq) return;
       setState(() {
-        
         _error = '${S.logQbFetchFailed}${NetError.describe(e)}';
         _loading = false;
-        
-        
+
         _dropStale();
       });
     }
   }
 
-  
-  
-  
-  
-  
-  
   Future<void> _loadTr(ServerData s, int seq) async {
     try {
-      
       final TrLoginResult r = await _tr.checkTrServerCookie(s);
       if (!r.ok) {
         if (!mounted || seq != _reqSeq) return;
         setState(() {
           _error = '${S.logQbFetchFailed}${r.reason ?? '连接失败'}';
           _loading = false;
-          
+
           _dropStale();
         });
         return;
       }
       final Map<String, dynamic> session = await _tr.sessionGet();
-      
+
       Map<String, dynamic> stats = const <String, dynamic>{};
       try {
         stats = await _tr.updateTrInfo();
@@ -292,13 +192,12 @@ class _LogQbPageState extends State<LogQbPage> {
       setState(() {
         _error = '${S.logQbFetchFailed}${NetError.describe(e)}';
         _loading = false;
-        
+
         _dropStale();
       });
     }
   }
 
-  
   List<(String, String)> _trFactsOf(
       Map<String, dynamic> session, Map<String, dynamic> stats) {
     final Map<String, dynamic> cum = stats['cumulative-stats'] is Map
@@ -349,7 +248,6 @@ class _LogQbPageState extends State<LogQbPage> {
         );
         if (r == null) return;
         setState(() {
-          
           _from = DateTime(r.start.year, r.start.month, r.start.day);
           _to = DateTime(r.end.year, r.end.month, r.end.day, 23, 59, 59);
         });
@@ -374,8 +272,6 @@ class _LogQbPageState extends State<LogQbPage> {
         return (S.normal, cs.outline);
     }
   }
-
-  
 
   void _enterSelection(QbLog l) => setState(() {
         _selecting = true;
@@ -414,16 +310,11 @@ class _LogQbPageState extends State<LogQbPage> {
           ..addAll(next);
       });
 
-  
   List<LogLine> _selectedLines(ColorScheme cs) => _visible
       .where((QbLog l) => _selected.contains(l.id))
       .map((QbLog l) => qbLogLine(l, _level(l.type, cs).$1, _privacy))
       .toList();
 
-  
-  
-  
-  
   List<LogLine> _exportRangeLines(ColorScheme cs) {
     final bool filtered = _from != null || _to != null;
     final List<QbLog> src = filtered ? _visible : _all;
@@ -460,8 +351,7 @@ class _LogQbPageState extends State<LogQbPage> {
   void _clearAll() {
     setState(() {
       _all.clear();
-      
-      
+
       _trFacts = <(String, String)>[];
       _maskCache.clear(); 
     });
@@ -474,7 +364,7 @@ class _LogQbPageState extends State<LogQbPage> {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final List<QbLog> visible = _visible;
     return PopScope(
-      
+
       canPop: !_selecting,
       onPopInvokedWithResult: (bool didPop, Object? _) {
         if (didPop) return;
@@ -493,7 +383,7 @@ class _LogQbPageState extends State<LogQbPage> {
                 title: const Text('服务器日志',
                     style: TextStyle(fontSize: 15)),
                 actions: <Widget>[
-                  
+
                   IconButton(
                     icon: Icon(
                       _privacy ? Icons.visibility_off : Icons.visibility,
@@ -510,8 +400,7 @@ class _LogQbPageState extends State<LogQbPage> {
                       Formatter.showToast(S.logRefreshed);
                     },
                   ),
-                  
-                  
+
                   PopupMenuButton<String>(
                     tooltip: '',
                     icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
@@ -530,8 +419,7 @@ class _LogQbPageState extends State<LogQbPage> {
                     },
                     itemBuilder: (BuildContext ctx) =>
                         <PopupMenuEntry<String>>[
-                      
-                      
+
                       if (!_isTr)
                         PopupMenuItem<String>(
                           value: 'select',
@@ -559,8 +447,7 @@ class _LogQbPageState extends State<LogQbPage> {
             : null,
         body: Column(
           children: <Widget>[
-            
-            
+
             if (!_selecting) ...<Widget>[
               _picker(cs),
               const Divider(height: 1),
@@ -578,7 +465,6 @@ class _LogQbPageState extends State<LogQbPage> {
     );
   }
 
-  
   Widget _picker(ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -594,33 +480,19 @@ class _LogQbPageState extends State<LogQbPage> {
                     style: TextStyle(fontSize: 11, color: cs.error)),
               );
             }
-            
-            
+
             final String? value =
                 list.any((ServerData s) => s.id == _serverId) ? _serverId : null;
-            
-            
-            
+
             return DropdownButtonFormField<String>(
               initialValue: value,
               isDense: true,
               isExpanded: true,
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
+
               style: TextStyle(fontSize: 13, color: cs.onSurface),
-              
+
               borderRadius: BorderRadius.circular(AppTheme.radius),
-              
+
               icon: const Padding(
                 padding: EdgeInsets.only(right: 4),
                 child: Icon(Icons.arrow_drop_down, size: 24),
@@ -636,8 +508,7 @@ class _LogQbPageState extends State<LogQbPage> {
                   .map((ServerData s) => DropdownMenuItem<String>(
                         value: s.id,
                         child: Text(
-                          
-                          
+
                           '${s.name} · ${s.isTransmission ? 'Transmission' : 'qBittorrent'}',
                           style: const TextStyle(fontSize: 13),
                           overflow: TextOverflow.ellipsis,
@@ -654,8 +525,7 @@ class _LogQbPageState extends State<LogQbPage> {
               },
             );
           }),
-          
-          
+
           if (!_isTr) ...<Widget>[
             const SizedBox(height: 6),
             Wrap(
@@ -704,15 +574,12 @@ class _LogQbPageState extends State<LogQbPage> {
       label: Text(label, style: const TextStyle(fontSize: 11)),
       selected: selected,
       onSelected: (_) => onTap(),
-      
+
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
-  
-  
-  
   Widget _trBody(ColorScheme cs) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
@@ -780,7 +647,7 @@ class _LogQbPageState extends State<LogQbPage> {
         ),
       );
     }
-    
+
     if (_isTr) return _trBody(cs);
     final List<QbLog> list = _visible;
     if (list.isEmpty) {
@@ -792,7 +659,7 @@ class _LogQbPageState extends State<LogQbPage> {
       );
     }
     return ListView.separated(
-      
+
       padding: EdgeInsets.only(
         bottom: _selecting ? LogSelectionBar.listBottomPadding : 0,
       ),
@@ -805,7 +672,7 @@ class _LogQbPageState extends State<LogQbPage> {
         return ListTile(
           dense: true,
           selected: _selecting && checked,
-          
+
           selectedTileColor: cs.primary.withValues(alpha: 0.08),
           leading: SizedBox(
             width: 20,
@@ -820,7 +687,7 @@ class _LogQbPageState extends State<LogQbPage> {
                 : Center(child: Icon(Icons.circle, size: 9, color: color)),
           ),
           title: Text(
-            
+
             _display(log.message),
             style: const TextStyle(fontSize: 11),
           ),

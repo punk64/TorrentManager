@@ -11,12 +11,6 @@ import '../../utils/app_log.dart';
 import '../../utils/formatter.dart';
 import '../../utils/net_error.dart';
 
-
-
-
-
-
-
 class TrLoginResult {
   const TrLoginResult.ok()
       : ok = true,
@@ -29,40 +23,22 @@ class TrLoginResult {
         missingCreds = false,
         routeChanged = false;
 
-  
-  
-  
-  
-  
-  
-  
   const TrLoginResult.noCreds(this.reason)
       : ok = false,
         missingCreds = true,
         routeChanged = false;
 
-  
-  
-  
-  
-  
-  
-  
   const TrLoginResult.routeSwitch(this.reason)
       : ok = false,
         missingCreds = false,
         routeChanged = true;
 
-  
   final bool ok;
 
-  
   final String? reason;
 
-  
   final bool missingCreds;
 
-  
   final bool routeChanged;
 
   @override
@@ -73,83 +49,37 @@ class TrLoginResult {
           '${routeChanged ? ' [route changed]' : ''})';
 }
 
-
-
-
-
-
-
 class TrMethod {
   final Dio _dio;
   String? _sessionId;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String? _authHeader;
 
-  
-  
-  
-  
-  
-  
   static String? _authOf(ServerData s) {
     final String u = s.username?.trim() ?? '';
     if (u.isEmpty) return null;
     return Formatter.getAuthentication(u, s.password ?? '');
   }
 
-  
   ServerData? _server;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   int _routeGen = 0;
 
-  
   int get routeGen => _routeGen;
 
-  
-  
-  
-  
   TrMethod({Dio? dio})
       : _dio = dio ?? Dio(BaseOptions(
-          
-          
+
           connectTimeout: const Duration(seconds: 8),
           receiveTimeout: const Duration(seconds: 15),
           sendTimeout: const Duration(seconds: 15),
-          
-          
-          
-          
+
           followRedirects: false,
           validateStatus: (int? s) => s != null && s < 500,
         )) {
     _dio.interceptors.add(CookieManager(CookieJar()));
     _dio.interceptors.add(RedirectInterceptor());
-    
-    
-    
-    
-    
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (RequestOptions o, RequestInterceptorHandler h) {
         final ServerData? cur = _server;
@@ -160,21 +90,13 @@ class TrMethod {
         h.next(o);
       },
     ));
-    
+
     _dio.interceptors.add(AppLogInterceptor());
   }
 
   void setServer(ServerData s) {
-    
-    
-    
-    
     if (_server?.id != s.id) _sessionId = null;
-    
-    
-    
-    
-    
+
     final bool routeChanged = _dio.options.baseUrl != s.baseUrl;
     _server = s;
     _authHeader = _authOf(s);
@@ -182,27 +104,9 @@ class TrMethod {
     if (routeChanged) _routeGen++;
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<TrLoginResult> updateTrServerCookie(ServerData s, {int? routeGen}) async {
     if (routeGen == null || routeGen == _routeGen) setServer(s);
     try {
-      
-      
-      
       await _rpc('session-get', <String, dynamic>{},
           baseUrl: s.baseUrl, authHeader: _authOf(s));
       AppLog.instance.net(
@@ -210,24 +114,16 @@ class TrMethod {
           scope: s.logScope);
       return const TrLoginResult.ok();
     } catch (e) {
-      
-      
       _sessionId = null;
-      
-      
+
       String why = NetError.describe(e);
-      
-      
-      
-      
+
       bool noCreds = false;
       if (e is DioException && _authOf(s) == null) {
         final int? code = e.response?.statusCode;
         if (code == 401 || code == 403) {
           why = '服务端要求账号密码，但本机未填写账号（HTTP $code）';
-          
-          
-          
+
           noCreds = true;
         }
       }
@@ -236,16 +132,8 @@ class TrMethod {
     }
   }
 
-  
-  
-  
-  
   void invalidateSession() => _sessionId = null;
 
-  
-  
-  
-  
   Future<TrLoginResult> checkTrServerCookie(
       [ServerData? s, bool retriedRoute = false]) async {
     final ServerData? target = s ?? _server;
@@ -253,26 +141,12 @@ class TrMethod {
       return const TrLoginResult.fail('未选择服务器');
     }
     setServer(target);
-    
+
     final int gen = _routeGen;
     try {
       await _rpc('session-get', <String, dynamic>{});
       return const TrLoginResult.ok();
     } catch (_) {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       if (gen != _routeGen) {
         if (retriedRoute) {
           return const TrLoginResult.routeSwitch('服务器地址已切换，已放弃本次重登');
@@ -293,23 +167,12 @@ class TrMethod {
 
   Future<Map<String, dynamic>> updateTrInfo() => _rpc('session-stats', <String, dynamic>{});
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<String> getVersion() async {
     final Map<String, dynamic> res =
         await _rpc('session-get', <String, dynamic>{});
     return Formatter.getString(res, 'version');
   }
 
-  
-  
   Future<Map<String, dynamic>> _rpc(
     String method,
     Map<String, dynamic> arguments, {
@@ -317,8 +180,6 @@ class TrMethod {
     int depth = 0,
     String? authHeader,
   }) async {
-    
-    
     final String? auth = authHeader ?? _authHeader;
     final Map<String, String> headers = <String, String>{
       'Content-Type': 'application/json',
@@ -334,9 +195,7 @@ class TrMethod {
         'arguments': arguments,
       }),
     );
-    
-    
-    
+
     final int? code = resp.statusCode;
     if (code != null && code >= 300 && code < 400) {
       final String? loc = resp.headers.value('location');
@@ -352,7 +211,7 @@ class TrMethod {
       if (depth >= 3) {
         throw Exception('Transmission: 重定向次数过多');
       }
-      
+
       final String nextBase =
           '${to.scheme}://${to.host}${to.hasPort ? ':${to.port}' : ''}';
       return _rpc(method, arguments,
@@ -361,14 +220,11 @@ class TrMethod {
     if (resp.statusCode == 409) {
       final String? sid = resp.headers.value('X-Transmission-Session-Id');
       if (sid != null) {
-        
-        
-        
         if (depth >= 2) {
           throw Exception(
               'Transmission: 会话握手失败（连续 ${depth + 1} 次 409）');
         }
-        
+
         AppLog.instance.net('TR 握手：收到 409，更新 session id（depth=$depth）',
             scope: _server?.logScope);
         _sessionId = sid;
@@ -377,22 +233,14 @@ class TrMethod {
       }
       throw Exception('Transmission: missing session id');
     }
-    
-    
-    
-    
+
     final int sc = resp.statusCode ?? 0;
     if (sc == 401 || sc == 403) {
-      
-      
-      
-      
-      
       final bool hadAuth = auth != null;
       final String why = hadAuth
           ? 'Transmission 登录失败：账号或密码错误（HTTP $sc）'
           : 'Transmission 登录失败：服务端要求账号密码，但本机未填写账号（HTTP $sc）';
-      
+
       AppLog.instance.net('TR 收到 $sc：已带 Basic 鉴权=$hadAuth',
           scope: _server?.logScope);
       throw DioException(
@@ -402,8 +250,7 @@ class TrMethod {
         error: why,
       );
     }
-    
-    
+
     final dynamic raw = resp.data;
     if (raw is! Map) {
       throw DioException(
@@ -425,69 +272,22 @@ class TrMethod {
   Future<void> _torrentSet(List<int> ids, Map<String, dynamic> fields) =>
       _rpc('torrent-set', <String, dynamic>{'ids': ids, ...fields});
 
-  
   Future<void> _sessionSet(Map<String, dynamic> fields) =>
       _rpc('session-set', fields);
 
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Map<String, dynamic>> sessionGet() =>
       _rpc('session-get', <String, dynamic>{});
 
-  
   Future<void> sessionSet(Map<String, dynamic> fields) => _sessionSet(fields);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> blocklistUpdate() =>
       _rpc('blocklist-update', <String, dynamic>{});
 
-  
-
-  
   Future<List<Map<String, dynamic>>> torrentGet({
     List<int>? ids,
     bool lite = false,
   }) async {
-    
-    
-    
-    
     if (lite) {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       final Map<String, dynamic> args = <String, dynamic>{
         'fields': <String>[
           'id',
@@ -498,15 +298,15 @@ class TrMethod {
           'status',
           'rateDownload',
           'rateUpload',
-          
+
           'peersSendingToUs',
           'peersGettingFromUs',
           'uploadRatio',
-          
+
           'downloadDir',
           'queuePosition',
           'labels',
-          
+
           'uploadedEver',
           'downloadedEver',
           'addedDate',
@@ -515,7 +315,7 @@ class TrMethod {
           'secondsSeeding',
           'secondsDownloading',
           'eta',
-          
+
           'comment',
           'magnetLink',
         ],
@@ -537,34 +337,23 @@ class TrMethod {
         'rateUpload',
         'peersSendingToUs',
         'peersGettingFromUs',
-        
-        
+
         'trackerStats',
         'uploadRatio',
         'downloadDir',
         'queuePosition',
         'labels',
-        
-        
-        
-        
+
         'uploadedEver',
         'downloadedEver',
         'addedDate',
         'activityDate',
         'doneDate',
         'secondsSeeding',
-        
-        
-        
+
         'secondsDownloading',
         'eta',
-        
-        
-        
-        
-        
-        
+
         'comment',
         'magnetLink',
       ],
@@ -580,8 +369,6 @@ class TrMethod {
 
   Future<List<Map<String, dynamic>>> updateTrMaindata() => torrentGet();
 
-  
-
   Future<void> addTorrents({
     String? filename,
     String? metainfo,
@@ -594,9 +381,7 @@ class TrMethod {
       if (metainfo != null) 'metainfo': metainfo,
       if (downloadDir != null) 'download-dir': downloadDir,
       if (paused) 'paused': true,
-      
-      
-      
+
       if (labels != null && labels.isNotEmpty) 'labels': labels,
     };
     await _rpc('torrent-add', args);
@@ -630,12 +415,10 @@ class TrMethod {
 
   Future<void> recheckTorrent(List<int> ids) => torrentVerify(ids);
 
-  
   Future<void> reannounceTorrent(List<int> ids) async {
     await _rpc('torrent-reannounce', <String, dynamic>{'ids': ids});
   }
 
-  
   Future<void> setName(int id, String name) async {
     await _rpc('torrent-rename-path', <String, dynamic>{
       'ids': <int>[id],
@@ -644,35 +427,22 @@ class TrMethod {
     });
   }
 
-  
-
-  
   Future<void> queueMoveTop(List<int> ids) async {
     await _rpc('queue-move-top', <String, dynamic>{'ids': ids});
   }
 
-  
   Future<void> queueMoveUp(List<int> ids) async {
     await _rpc('queue-move-up', <String, dynamic>{'ids': ids});
   }
 
-  
   Future<void> queueMoveDown(List<int> ids) async {
     await _rpc('queue-move-down', <String, dynamic>{'ids': ids});
   }
 
-  
   Future<void> queueMoveBottom(List<int> ids) async {
     await _rpc('queue-move-bottom', <String, dynamic>{'ids': ids});
   }
 
-  
-
-  
-  
-  
-  
-  
   List<Map<String, dynamic>> _flatten(List<dynamic> torrents, String key) =>
       torrents
           .map((dynamic t) => Map<String, dynamic>.from(t))
@@ -711,10 +481,6 @@ class TrMethod {
     return _flatten(list, 'trackerStats');
   }
 
-  
-  
-  
-  
   Future<Map<String, List<Map<String, dynamic>>>> getPeersAndFiles(
     List<int> ids,
   ) async {
@@ -737,31 +503,22 @@ class TrMethod {
     };
   }
 
-  
   Future<void> addTracker(List<int> ids, String tracker) =>
       _torrentSet(ids, <String, dynamic>{
         'trackerAdd': <String>[tracker],
       });
 
-  
   Future<void> removeTracker(List<int> ids, List<int> trackerIds) =>
       _torrentSet(ids, <String, dynamic>{'trackerRemove': trackerIds});
 
-  
   Future<void> editTracker(List<int> ids, int trackerId, String newTracker) =>
       _torrentSet(ids, <String, dynamic>{
         'trackerReplace': <dynamic>[trackerId, newTracker],
       });
 
-  
-
   Future<void> setTags(List<int> ids, List<String> labels) =>
       _torrentSet(ids, <String, dynamic>{'labels': labels});
 
-  
-
-  
-  
   Future<void> setShareLimits(
     List<int> ids, {
     double? seedRatioLimit,
@@ -772,7 +529,6 @@ class TrMethod {
         if (seedRatioMode != null) 'seedRatioMode': seedRatioMode,
       });
 
-  
   Future<void> setServerRatio(List<int> ids, double ratio) =>
       setShareLimits(ids, seedRatioLimit: ratio, seedRatioMode: 1);
 
@@ -808,8 +564,6 @@ class TrMethod {
         'alt-speed-enabled': enabled ?? true,
       });
 
-  
-
   Future<void> setLocation(List<int> ids, String location, {bool move = true}) async {
     await _rpc('torrent-set-location', <String, dynamic>{
       'ids': ids,
@@ -826,8 +580,6 @@ class TrMethod {
 
   Future<void> setTempPathEnabled(bool enabled) =>
       _sessionSet(<String, dynamic>{'incomplete-dir-enabled': enabled});
-
-  
 
   Future<void> setForceStart(List<int> ids, bool value) =>
       _torrentSet(ids, <String, dynamic>{'honorsSessionLimits': value});
@@ -856,11 +608,6 @@ class TrMethod {
         if (seedQueueEnabled != null) 'seed-queue-enabled': seedQueueEnabled,
       });
 
-  
-  
-  
-  
-  
   Future<void> filePrio(List<int> ids, List<int> fileIndexes, int priority) {
     final String key = switch (priority) {
       1 => 'priority-high',
@@ -870,20 +617,12 @@ class TrMethod {
     return _torrentSet(ids, <String, dynamic>{key: fileIndexes});
   }
 
-  
-  
-  
-  
-  
-  
   Future<void> setFilesWanted(
     List<int> ids,
     List<int> fileIndexes, {
     required bool wanted,
   }) =>
       _torrentSet(ids, <String, dynamic>{
-        
-        
         if (wanted) 'files-wanted': fileIndexes,
         if (!wanted) 'files-unwanted': fileIndexes,
       });

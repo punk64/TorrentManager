@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -49,15 +37,9 @@ ServerData srv(String id) => ServerData(
       password: 'pw',
     );
 
-
-
-
-
-
 class HangAdapter implements HttpClientAdapter {
   final List<String> calls = <String>[];
 
-  
   final Completer<void> gate = Completer<void>();
 
   Dio dio() => Dio(BaseOptions(
@@ -101,8 +83,6 @@ void main() {
 
   tearDown(Get.reset);
 
-  
-
   test('第 53 轮 A · 超过 5 台时淘汰最久未用的那台', () {
     final ServerController sc = ServerController(qb: QbMethod());
     for (int i = 1; i <= 5; i++) {
@@ -123,7 +103,7 @@ void main() {
     for (int i = 1; i <= 5; i++) {
       sc.cacheTorrents('s$i', <Torrent>[_t('h$i')]);
     }
-    
+
     sc.torrentsOf('s1');
 
     sc.cacheTorrents('s6', <Torrent>[_t('h6')]);
@@ -148,11 +128,9 @@ void main() {
     expect(sc.hasAnyCache('s1'), isFalse, reason: '淘汰的是别人');
   });
 
-  
-
   test('第 53 轮 B · lite 缓存只够算卡片统计，不能给列表页用', () {
     final ServerController sc = ServerController(qb: QbMethod());
-    
+
     sc.cacheTorrents('tr-1', <Torrent>[_t('h1')], lite: true);
 
     expect(sc.hasAnyCache('tr-1'), isTrue, reason: '卡片统计用得上');
@@ -162,8 +140,6 @@ void main() {
     sc.cacheTorrents('tr-1', <Torrent>[_t('h1')]);
     expect(sc.hasFullCache('tr-1'), isTrue, reason: '全量写入后升级为完整缓存');
   });
-
-  
 
   test('第 53 轮 C · 网络还挂着时，列表已用缓存渲染出来', () async {
     final HangAdapter ad = HangAdapter();
@@ -196,7 +172,7 @@ void main() {
     sc.cacheTorrents(s.id, <Torrent>[_t('h1'), _t('h2')]);
 
     final TorrentController ctrl = Get.put(TorrentController());
-    
+
     ctrl.debugSetItems(<Torrent>[_t('mine')]);
 
     unawaited(ctrl.refresh());

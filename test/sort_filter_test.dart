@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +9,6 @@ import 'package:torrent_manager/controllers/torrent_controller.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/widgets/sort_filter_panel.dart';
 import 'package:torrent_manager/data/local/secure_prefs.dart';
-
 
 Torrent mk({
   required String hash,
@@ -68,7 +52,6 @@ Torrent mk({
       magnetUri: magnetUri,
     );
 
-
 Map<String, int> counts(List<FacetEntry> list) => <String, int>{
       for (final FacetEntry e in list) e.value: e.count,
     };
@@ -79,18 +62,9 @@ List<String> hashes(TorrentController c) =>
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
-
 
   late TorrentController ctrl;
 
@@ -105,9 +79,6 @@ void main() {
     Get.put(ServerController());
     ctrl = Get.put(TorrentController());
   });
-
-  
-  
 
   group('默认态：添加时间 + 降序', () {
     test('排序维度默认「添加时间」，方向默认「降序」', () {
@@ -128,7 +99,7 @@ void main() {
     test('排序维度与方向会持久化，重建控制器后恢复', () async {
       ctrl.setSortKey(TorrentSortKey.ratio);
       ctrl.setSortDesc(false);
-      
+
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
       Get.delete<TorrentController>(force: true);
@@ -241,7 +212,7 @@ void main() {
 
     test('选中标签后分类计数实时变小（因为统计时排除了分类自身）', () {
       ctrl.toggleFacet(FilterDim.tags, '国语');
-      
+
       expect(counts(ctrl.facets(FilterDim.category)),
           <String, int>{'电影': 1, '动漫': 1});
     });
@@ -249,7 +220,7 @@ void main() {
     test('已选中项即使计数为 0 也必须保留（否则无法取消）', () {
       ctrl.toggleFacet(FilterDim.category, '动漫');
       ctrl.toggleFacet(FilterDim.tags, '日语');
-      
+
       final Map<String, int> c = counts(ctrl.facets(FilterDim.category));
       expect(c.containsKey('动漫'), isTrue);
       expect(c['动漫'], 0);
@@ -293,13 +264,13 @@ void main() {
       await tester.pump();
 
       expect(find.text('排序方式'), findsOneWidget);
-      
+
       expect(find.text('添加时间'), findsOneWidget);
       expect(find.text('做种人数'), findsOneWidget);
-      
+
       expect(find.text('升序'), findsOneWidget);
       expect(find.text('降序'), findsOneWidget);
-      
+
       for (final FilterDim d in FilterDim.values) {
         expect(find.text(d.title), findsOneWidget, reason: '缺少「${d.title}」分组');
       }

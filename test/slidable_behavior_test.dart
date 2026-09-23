@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,16 +8,11 @@ const Key kContent2 = Key('content2');
 
 const double kRowWidth = 300;
 
-
-
 const double kExtentRatio = 0.5;
 const double kExtent = kRowWidth * kExtentRatio; 
 const double kHalf = kExtent / 2; 
 
-
-
 const double kResistance = SlidableTile.defaultDragResistance; 
-
 
 Duration _clock = Duration.zero;
 
@@ -74,14 +52,6 @@ Widget _tile({
 Widget _host(Widget child) =>
     MaterialApp(home: Scaffold(body: Center(child: child)));
 
-
-
-
-
-
-
-
-
 Future<TestGesture> _press(WidgetTester tester, Key key) async {
   _clock = Duration.zero;
   final TestGesture g = await tester.createGesture();
@@ -91,7 +61,6 @@ Future<TestGesture> _press(WidgetTester tester, Key key) async {
   await tester.pump();
   return g;
 }
-
 
 Future<void> _move(
   WidgetTester tester,
@@ -106,10 +75,6 @@ Future<void> _move(
 
 double _contentDx(WidgetTester tester, [Key key = kContent]) =>
     tester.getTopLeft(find.byKey(key)).dx;
-
-
-
-
 
 double _endPaneLeft(WidgetTester tester) {
   final Iterable<double> lefts = tester
@@ -132,9 +97,6 @@ void main() {
     await _move(tester, g, -30, const Duration(milliseconds: 60));
     final double moved = _contentDx(tester);
 
-    
-    
-    
     expect(moved - base, closeTo(-30 / kResistance, 0.5));
 
     await g.up();
@@ -142,8 +104,6 @@ void main() {
   });
 
   testWidgets('滑动②：松手按阈值吸附 / 快甩按速度吸附', (WidgetTester tester) async {
-    
-    
     Future<double> fresh(Key tileKey) async {
       await tester.pumpWidget(
         _host(_tile(motion: SlidableMotionKind.scroll, tileKey: tileKey)),
@@ -151,7 +111,6 @@ void main() {
       return _contentDx(tester);
     }
 
-    
     double rest = await fresh(const ValueKey<String>('a'));
     TestGesture g = await _press(tester, kContent);
     await _move(tester, g, -15, const Duration(milliseconds: 400));
@@ -161,13 +120,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(_contentDx(tester), closeTo(rest, 0.5), reason: '未过半应回弹归位');
 
-    
     rest = await fresh(const ValueKey<String>('b'));
     g = await _press(tester, kContent);
-    
-    
-    
-    
+
     const double move = kHalf * SlidableTile.defaultDragResistance * 1.4;
     await _move(tester, g, -move, const Duration(milliseconds: 400));
     expect((_contentDx(tester) - rest).abs(), greaterThan(kHalf),
@@ -175,16 +130,10 @@ void main() {
     await g.up();
     await tester.pumpAndSettle();
     expect(_contentDx(tester), closeTo(rest - kExtent, 0.5), reason: '过半应完全展开');
-
   });
 
   testWidgets('滑动②b：甩动分支（纯函数 —— widget 测试拿不到手指速度）',
       (WidgetTester tester) async {
-    
-    
-    
-    
-    
     const double v = 1000; 
     double t(double ratio, double vx) => SlidableTile.settleTarget(
           ratio: ratio,
@@ -193,17 +142,16 @@ void main() {
           hasEnd: true,
         );
 
-    
     expect(t(0.1, -v), 1);
-    
+
     expect(t(-0.1, v), -1);
-    
+
     expect(t(0.2, 0), 0);
     expect(t(-0.2, 0), 0);
-    
+
     expect(t(0.6, 0), 1);
     expect(t(-0.6, 0), -1);
-    
+
     expect(
       SlidableTile.settleTarget(
           ratio: 0.9, vx: -v, hasStart: true, hasEnd: false),
@@ -232,12 +180,9 @@ void main() {
     final Rect row = tester.getRect(find.byType(SlidableTile));
     final Rect content = tester.getRect(find.byKey(kContent));
 
-    
-    
     expect(content.left, closeTo(row.left, 0.1));
     expect(content.right, closeTo(row.right, 0.1));
 
-    
     await tester.tapAt(Offset(row.left + 4, row.center.dy));
     await tester.pump();
     await tester.tapAt(Offset(row.right - 4, row.center.dy));
@@ -264,9 +209,6 @@ void main() {
     final double rest1 = _contentDx(tester);
     final double rest2 = _contentDx(tester, kContent2);
 
-    
-    
-    
     const double move = kHalf * SlidableTile.defaultDragResistance * 1.4;
     TestGesture g = await _press(tester, kContent);
     await _move(tester, g, -move, const Duration(milliseconds: 400));
@@ -291,7 +233,6 @@ void main() {
     final double rest = _contentDx(tester);
     const double move = kHalf * SlidableTile.defaultDragResistance * 1.4;
 
-    
     TestGesture g = await _press(tester, kContent);
     await _move(tester, g, -move, const Duration(milliseconds: 400));
     await g.up();
@@ -299,7 +240,6 @@ void main() {
     expect(_contentDx(tester), closeTo(rest - kExtent, 0.5),
         reason: '前提：右侧应已完全展开');
 
-    
     g = await _press(tester, kContent);
     await _move(tester, g, move * 2, const Duration(milliseconds: 400));
     expect(_contentDx(tester), closeTo(rest, 1.0),
@@ -308,7 +248,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(_contentDx(tester), closeTo(rest, 0.5), reason: '松手后停在居中');
 
-    
     g = await _press(tester, kContent);
     await _move(tester, g, move, const Duration(milliseconds: 400));
     await g.up();
@@ -319,13 +258,12 @@ void main() {
 
   testWidgets('滑动⑤：两种 Motion 的按钮位移方式不同', (WidgetTester tester) async {
     for (final SlidableMotionKind m in SlidableMotionKind.values) {
-      
       await tester.pumpWidget(
         _host(_tile(motion: m, tileKey: ValueKey<SlidableMotionKind>(m))),
       );
 
       final TestGesture g = await _press(tester, kContent);
-      
+
       final double contentRest = _contentDx(tester);
       final double paneRest = _endPaneLeft(tester);
 

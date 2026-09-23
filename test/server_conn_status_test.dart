@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,18 +11,9 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
-
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -61,7 +44,7 @@ void main() {
       final ServerData lan = s.connectionTarget(viaLan: true);
       expect(lan.baseUrl, 'http://192.168.1.5:8080',
           reason: '内网 IP 不可能有合法证书，局域网必须走 http');
-      
+
       expect(s.connectionTarget(viaLan: false).baseUrl,
           'https://ddns.example.com');
     });

@@ -1,25 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart' hide Response;
@@ -31,8 +9,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/utils/lan_detector.dart';
 
-
-
 ServerData qbSrv() => ServerData(
       id: 'qb-1',
       name: '家庭 NAS',
@@ -42,7 +18,6 @@ ServerData qbSrv() => ServerData(
       username: 'admin',
       password: 'adminadmin',
     );
-
 
 ServerData lanSrv() => ServerData(
       id: 'qb-1',
@@ -74,12 +49,6 @@ Map<String, dynamic> qbTorrentJson(String hash) => <String, dynamic>{
       'num_incomplete': 2,
       'save_path': '/downloads',
     };
-
-
-
-
-
-
 
 Dio fakeQbDio(
   List<String> calls, {
@@ -133,8 +102,6 @@ Dio fakeQbDio(
         return;
       }
       if (path.endsWith('/torrents/info')) {
-        
-        
         h.resolve(ok(List<Map<String, dynamic>>.generate(
           total,
           (int i) => qbTorrentJson('h$i'),
@@ -160,21 +127,17 @@ void main() {
     Get.reset();
   });
 
-  
-
   test('第 43 轮 A · 列表页与 3 秒轮询共用同一客户端实例', () {
     final ServerController sc = ServerController();
     final ServerData s = qbSrv();
     sc.servers.assignAll(<ServerData>[s]);
     sc.current.value = s;
 
-    
-    
     expect(identical(sc.qb, sc.clientForQb(s.id)), isTrue,
         reason: '★ 会话池必须统一，否则登录态互不可见');
-    
+
     expect(identical(sc.clientForQb(s.id), sc.clientForQb(s.id)), isTrue);
-    
+
     final ServerData other = ServerData(
       id: 'qb-2',
       name: '另一台',
@@ -210,8 +173,6 @@ void main() {
     expect(identical(sc.qb, first), isTrue, reason: '切回来还是原来那个');
   });
 
-  
-
   test('第 43 轮 B · 探测请求用独立短超时，不再陪业务请求等 8 秒', () async {
     final List<String> calls = <String>[];
     int? probeConnectMs;
@@ -228,15 +189,12 @@ void main() {
 
     expect(calls.any((String c) => c.contains('/app/version')), isTrue,
         reason: '前置：确实发了探测');
-    
-    
+
     expect(probeConnectMs, 600,
         reason: '★ 探测的连接超时必须是 0.6 秒'
             '（第 55 轮：原 1.5 秒实测在"打错路由"时纯属白等，与 LanDetector 同档压到 600ms）');
     expect(probeReceiveMs, 2500, reason: '★ 探测的接收超时必须是 2.5 秒');
   });
-
-  
 
   test('第 43 轮 C · 记住局域网可达 → select 起步就走局域网', () {
     LanDetector.overrideProbe = (_) async => true;
@@ -247,12 +205,9 @@ void main() {
     sc.primeLanMemory(<String, bool>{s.id: true});
     sc.select(s);
 
-    
-    
     expect(sc.lanUsing[s.id], isTrue,
         reason: '★ 有记忆时必须立刻点亮局域网，不等探测回来');
 
-    
     final ServerController fresh = ServerController();
     fresh.servers.assignAll(<ServerData>[s]);
     fresh.select(s);
@@ -276,15 +231,6 @@ void main() {
         reason: '★ IP 没变就一个请求都不该发（此前每 5 秒比一次，抖动即误报）');
   });
 
-  
-
-  
-  
-  
-  
-  
-  
-
   test('★ 取消首屏分页 · 只发一笔全量，不带 limit', () async {
     final List<String> calls = <String>[];
     String? stageWhenListFetched;
@@ -293,24 +239,17 @@ void main() {
     ));
     final TorrentController ctrl = Get.put(TorrentController());
     final ServerData s = qbSrv();
-    
-    
-    
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 100));
     sc.servers.assignAll(<ServerData>[s]);
-    
-    
+
     sc.select(s);
-    
-    
-    
+
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
     await ctrl.refresh();
     stageWhenListFetched = sc.stageTextOf(s.id);
 
-    
     final List<String> infos = calls
         .where((String c) => c.contains('/torrents/info'))
         .toList(growable: false);
@@ -321,7 +260,7 @@ void main() {
         reason: '★ 不再分页 ⇒ 请求里不该出现 limit 参数');
     expect(ctrl.items.length, 45, reason: '一次性拿回全量');
     expect(ctrl.isLoading.value, isFalse, reason: '刷新结束不该还挂着转圈');
-    
+
     expect(stageWhenListFetched, isNull,
         reason: '★ 拉取完成后必须清掉阶段标记');
   });
@@ -357,8 +296,6 @@ void main() {
     expect(calls.any((String c) => c.contains('limit=')), isFalse,
         reason: '★ 任何一轮都不该再出现 limit 参数');
   });
-
-  
 
   test('第 43 轮 E · 连接进度分级：握手 → 拉列表', () {
     final ServerController sc = ServerController();

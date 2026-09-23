@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,7 +5,6 @@ import 'package:torrent_manager/app/theme.dart';
 import 'package:torrent_manager/controllers/torrent_controller.dart';
 import 'package:torrent_manager/utils/formatter.dart';
 import 'package:torrent_manager/utils/strings.dart';
-
 
 FileNode? _find(List<FileNode> nodes, String path) {
   for (final FileNode n in nodes) {
@@ -28,9 +18,6 @@ FileNode? _find(List<FileNode> nodes, String path) {
 void main() {
   group('P1 · 服务端字段类型容错（TR / qB 通用）', () {
     test('★ 文件树的 size / progress 收到浮点或字符串不再抛异常', () {
-      
-      
-      
       final List<FileNode> tree = buildFileTree(<Map<String, dynamic>>[
         <String, dynamic>{'name': 'd/a.bin', 'size': 1024.0, 'progress': '0.5'},
         <String, dynamic>{
@@ -46,7 +33,7 @@ void main() {
           reason: '字符串 `"0.5"` 应被容错转成 double');
       expect(_find(tree, 'd/sub/b.bin')?.size, 2048,
           reason: '字符串 `"2048"` 应被容错转成 int');
-      
+
       final List<FileNode> tree2 = buildFileTree(<Map<String, dynamic>>[
         <String, dynamic>{'name': 'x.bin', 'size': 'abc', 'progress': null},
       ]);
@@ -82,9 +69,8 @@ void main() {
         'name': '老主题',
         'themeMode': 1,
         'seed': 0xFF6750A4,
-        
+
         'componentOpacity': 0.74,
-        
       });
       expect(t, isNotNull);
       expect(t!.componentOpacity, closeTo(0.26, 1e-9),
@@ -119,7 +105,7 @@ void main() {
       final CustomTheme? back = CustomTheme.fromJson(j);
       expect(back!.componentOpacity, closeTo(0.26, 1e-9),
           reason: '新数据不应被再次取补');
-      
+
       expect(CustomTheme.fromJson(back.toJson())!.componentOpacity,
           closeTo(0.26, 1e-9));
     });
@@ -127,8 +113,6 @@ void main() {
 
   group('P3 · 清理项行为不变', () {
     test('★ setLastActivity：无活动时间恒返回「添加后从未活跃」', () {
-      
-      
       expect(Formatter.setLastActivity(null), S.activeNever);
       expect(Formatter.setLastActivity(0), S.activeNever);
       expect(Formatter.setLastActivity(-1), S.activeNever);

@@ -2,39 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class IoChip extends StatelessWidget {
   const IoChip({super.key, required this.jobs});
 
-  
   final int jobs;
 
-  
-  
-  
-  
   static const Color colorIdle = Color(0xFF4CAF50);
   static const Color colorBusy = Color(0xFFFF9800);
   static const Color colorJam = Color(0xFFE91E63);

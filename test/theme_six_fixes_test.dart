@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +14,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    
     SecurePrefs.useMemoryBackendForTest();
   });
 
@@ -43,7 +27,6 @@ void main() {
     Get.reset();
   });
 
-  
   ThemeController newTc() => Get.put(ThemeController());
 
   group('第 5 条：统一参数模板 + 玻璃参数化', () {
@@ -86,7 +69,6 @@ void main() {
       expect(tc.glassEnabled, isFalse);
       expect(tc.glassAlpha, isNull, reason: '浅色套 → 玻璃关闭');
 
-      
       tc.setGlassEnabled(true);
       expect(tc.glassAlpha, greaterThan(0));
       tc.setGlassEnabled(false);
@@ -151,7 +133,6 @@ void main() {
       expect(tc.globalBgImagePath.value, isNull);
       expect(tc.globalBgDecorationImage, isNull);
 
-      
       tc.setGlobalBgEnabled(true);
       tc.applyBuiltinMode(1);
       expect(tc.globalBgEnabled.value, isFalse);
@@ -209,7 +190,7 @@ void main() {
         (WidgetTester tester) async {
       final ThemeController tc = newTc();
       await tester.pumpWidget(const GetMaterialApp(home: AppPageBackground()));
-      
+
       for (int i = 0; i < 6; i++) {
         await tester.pump();
       }
@@ -219,8 +200,7 @@ void main() {
       tc.setGlobalBgImage('assets/images/drawer_menu_default.webp');
       tc.setGlobalBgEnabled(true);
       await tester.pump();
-      
-      
+
       expect(find.byKey(AppPageBackground.scrimKey), findsNothing,
           reason: '有卡片底板的页面不该再压整页蒙层');
     });
@@ -266,14 +246,12 @@ void main() {
   });
 
   group('第 7 条：无卡片底板的页面 → 底衬固定 0.62', () {
-    
     double scrimAlpha(WidgetTester tester) {
       final Finder f = find.byKey(AppPageBackground.scrimKey);
       if (f.evaluate().isEmpty) return -1;
       return tester.widget<ColoredBox>(f).color.a;
     }
 
-    
     Future<void> withBgImage(WidgetTester tester, ThemeController tc) async {
       tc.setGlobalBgImage('assets/images/drawer_menu_default.webp');
       tc.setGlobalBgEnabled(true);
@@ -288,7 +266,7 @@ void main() {
           fixedScrim: AppPageBackground.fixedScrimValue,
         ),
       ));
-      
+
       for (int i = 0; i < 6; i++) {
         await tester.pump();
       }
@@ -324,9 +302,6 @@ void main() {
       }
       await withBgImage(tester, tc);
 
-      
-      
-      
       for (final double v in <double>[0.3, 0.0, 0.9]) {
         tc.setComponentOpacity(v);
         await tester.pump();
@@ -346,8 +321,6 @@ void main() {
         Routes.torrentInfo: true,
         Routes.servers: false,
         Routes.torrents: false,
-        
-        
       };
       for (final MapEntry<String, bool> e in expectFixed.entries) {
         final GetPage<dynamic> g = AppPages.pages

@@ -4,19 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class FilteredImage extends StatelessWidget {
   const FilteredImage({
     super.key,
@@ -32,27 +19,20 @@ class FilteredImage extends StatelessWidget {
 
   final ImageProvider<Object> image;
 
-  
   final double brightness;
 
-  
   final double fade;
 
-  
   final double blur;
 
   final BoxFit fit;
   final double? width;
   final double? height;
 
-  
-  
-  
   final ImageProvider<Object>? fallback;
 
   @override
   Widget build(BuildContext context) {
-    
     final Color? tint = brightness == 0
         ? null
         : (brightness > 0 ? Colors.white : Colors.black)
@@ -74,7 +54,7 @@ class FilteredImage extends StatelessWidget {
                 height: height,
               ),
     );
-    
+
     if (fade > 0) {
       img = ColorFiltered(
         colorFilter: AppTheme.saturationFilter(1.0 - fade),

@@ -13,12 +13,6 @@ import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import 'server_controller.dart';
 
-
-
-
-
-
-
 enum TorrentSortKey {
   size, 
   ratio, 
@@ -68,8 +62,6 @@ extension TorrentSortKeyExt on TorrentSortKey {
   }
 }
 
-
-
 enum TorrentFilter { all, downloading, seeding, completed, paused, active }
 
 extension TorrentFilterExt on TorrentFilter {
@@ -90,7 +82,6 @@ extension TorrentFilterExt on TorrentFilter {
     }
   }
 
-  
   String? get qbValue {
     switch (this) {
       case TorrentFilter.all:
@@ -114,11 +105,7 @@ extension TorrentFilterExt on TorrentFilter {
       case TorrentFilter.all:
         return true;
       case TorrentFilter.downloading:
-        
-        
-        
-        
-        
+
         if (s.contains('paus') || s.contains('stop')) return false;
         return s.contains('download') || s.contains('dl') || s.contains('meta');
       case TorrentFilter.seeding:
@@ -133,11 +120,6 @@ extension TorrentFilterExt on TorrentFilter {
   }
 }
 
-
-
-
-
-
 enum FilterDim {
   category, 
   tags, 
@@ -146,7 +128,6 @@ enum FilterDim {
 }
 
 extension FilterDimExt on FilterDim {
-  
   String get title {
     switch (this) {
       case FilterDim.category:
@@ -161,7 +142,6 @@ extension FilterDimExt on FilterDim {
   }
 }
 
-
 class FacetEntry {
   const FacetEntry(this.value, this.count);
 
@@ -169,53 +149,21 @@ class FacetEntry {
   final int count;
 }
 
-
 class DeletePlan {
   const DeletePlan({required this.deleteFiles, required this.subs});
 
-  
   final bool deleteFiles;
 
-  
-  
-  
-  
-  
   final List<Torrent> subs;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class DeleteBatch {
   const DeleteBatch(this.items, {required this.deleteFiles});
 
-  
   final List<Torrent> items;
 
-  
   final bool deleteFiles;
 }
-
-
-
-
-
-
-
-
-
 
 class TorrentController extends GetxController {
   final items = <Torrent>[].obs;
@@ -224,74 +172,35 @@ class TorrentController extends GetxController {
 
   final ServerController serverCtrl = Get.find<ServerController>();
 
-  
   final sortKey = TorrentSortKey.addedOn.obs;
 
-  
-  
-  
-  
-  
   final sortDesc = true.obs;
 
-  
   final filter = TorrentFilter.all.obs;
   final keyword = ''.obs;
-
-  
-  
-  
-  
-  
-  
 
   final selCategories = <String>[].obs;
   final selTags = <String>[].obs;
   final selPaths = <String>[].obs;
   final selSites = <String>[].obs;
 
-  
   final selected = <String>{}.obs;
 
-  
   final current = Rxn<Torrent>();
   final files = <Map<String, dynamic>>[].obs;
   final peers = <Map<String, dynamic>>[].obs;
   final trackers = <Map<String, dynamic>>[].obs;
   final detailLoading = false.obs;
 
-  
-  
-  
-  
-  
   final dlSamples = <double>[].obs;
   final ulSamples = <double>[].obs;
 
-  
-  
-  
-
   static const int kSampleCap = 60;
 
-  
   final detailSyncedAt = Rxn<DateTime>();
 
-  
-  
-  
-  
-  
-  
   final lastActionOk = Rxn<bool>();
 
-  
-  
-  
-  
-  
-  
-  
   int get _rid => serverCtrl.ridOf(serverCtrl.current.value?.id ?? '');
 
   set _rid(int v) {
@@ -299,36 +208,14 @@ class TorrentController extends GetxController {
     if (id != null) serverCtrl.setRid(id, v);
   }
 
-  
-
-  
-  
-  
-  
-  
   String? _ridServerId;
 
-  
-  
-  
-  
-  
   bool _autoInFlight = false;
 
-  
   String? _autoServerId;
 
-  
-  
-  
-  
-  
   bool _listVisible = false;
 
-  
-  
-  
-  
   void setListVisible(bool v) {
     if (_listVisible == v) return;
     _listVisible = v;
@@ -344,50 +231,20 @@ class TorrentController extends GetxController {
     super.onInit();
     _loadSort(); 
     loadSiteMasked(); 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     _currentWorker?.dispose();
     _currentWorker = ever<ServerData?>(serverCtrl.current, (ServerData? s) {
       if (s == null) return;
       if (_listVisible) refreshAuto();
     });
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
     _itemsWorker?.dispose();
     _itemsWorker =
         ever<List<Torrent>>(items, (List<Torrent> _) => _dataVersion++);
   }
 
-  
   Worker? _currentWorker;
 
-  
   Worker? _itemsWorker;
 
   @override
@@ -401,52 +258,19 @@ class TorrentController extends GetxController {
 
   bool get isSelecting => selected.isNotEmpty;
 
-  
-  
-  
-  
-  
-  
   List<Torrent>? _visibleCache;
   String? _visibleToken;
 
-  
-  
-  
-  
-  
-  
-  
   int _dataVersion = 0;
 
-  
-  
-  
-  
   void _setItems(List<Torrent> v) {
     items.value = v;
     _dataVersion++;
   }
 
-  
-  
-  
-  
   @visibleForTesting
   void debugSetItems(List<Torrent> v) => _setItems(v);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   String _visibleTokenOf() {
     final StringBuffer b = StringBuffer()
       ..write(_dataVersion)
@@ -471,13 +295,6 @@ class TorrentController extends GetxController {
     return b.toString();
   }
 
-  
-  
-  
-  
-  
-  
-  
   List<Torrent> get visibleItems {
     final String t = _visibleTokenOf();
     if (_visibleToken == t && _visibleCache != null) {
@@ -491,14 +308,8 @@ class TorrentController extends GetxController {
   List<Torrent> _filtered({FilterDim? skip}) =>
       items.where((Torrent t) => _matches(t, skip: skip)).toList();
 
-  
   List<Torrent> get sortedItems => _sorted(List<Torrent>.of(items));
 
-  
-
-  
-  
-  
   RxList<String> selection(FilterDim d) {
     switch (d) {
       case FilterDim.category:
@@ -512,10 +323,6 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
   List<String> facetValues(Torrent t, FilterDim d) {
     switch (d) {
       case FilterDim.category:
@@ -529,14 +336,6 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   bool _matches(Torrent t, {FilterDim? skip, String? kwLower}) {
     if (!filter.value.matches(t)) return false;
     final String kw = kwLower ?? keyword.value.trim().toLowerCase();
@@ -545,27 +344,13 @@ class TorrentController extends GetxController {
       if (d == skip) continue;
       final List<String> sel = selection(d);
       if (sel.isEmpty) continue; 
-      
+
       if (!facetValues(t, d).any(sel.contains)) return false;
     }
     return true;
   }
 
-  
-  
-  
-  
   List<FacetEntry> facets(FilterDim d) {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     final String token = _facetTokenOf();
     if (token != _facetToken) {
       _facetToken = token;
@@ -582,8 +367,7 @@ class TorrentController extends GetxController {
         count[v] = (count[v] ?? 0) + 1;
       }
     }
-    
-    
+
     for (final String v in selection(d)) {
       count.putIfAbsent(v, () => 0);
     }
@@ -598,11 +382,6 @@ class TorrentController extends GetxController {
     return out;
   }
 
-  
-  
-  
-  
-  
   String? _facetToken;
   final Map<FilterDim, List<FacetEntry>> _facetCache =
       <FilterDim, List<FacetEntry>>{};
@@ -630,13 +409,11 @@ class TorrentController extends GetxController {
     return b.toString();
   }
 
-  
   void toggleFacet(FilterDim d, String value) {
     final RxList<String> sel = selection(d);
     if (!sel.remove(value)) sel.add(value);
   }
 
-  
   void clearFacets() {
     selCategories.clear();
     selTags.clear();
@@ -644,23 +421,16 @@ class TorrentController extends GetxController {
     selSites.clear();
   }
 
-  
-  
-  
-  
-  
   void clearFacet(FilterDim d) {
     selection(d).clear();
   }
 
-  
   bool get hasFacets =>
       selCategories.isNotEmpty ||
       selTags.isNotEmpty ||
       selPaths.isNotEmpty ||
       selSites.isNotEmpty;
 
-  
   bool hasFacet(FilterDim d) => selection(d).isNotEmpty;
 
   List<Torrent> _sorted(List<Torrent> list) {
@@ -672,9 +442,7 @@ class TorrentController extends GetxController {
         case TorrentSortKey.ratio:
           return a.ratio.compareTo(b.ratio);
         case TorrentSortKey.seeds:
-          
-          
-          
+
           return a.numComplete.compareTo(b.numComplete);
         case TorrentSortKey.dlSpeed:
           return a.dlSpeed.compareTo(b.dlSpeed);
@@ -702,44 +470,23 @@ class TorrentController extends GetxController {
     list.sort((Torrent a, Torrent b) {
       final int r = cmp(sortKey.value, a, b) * dir;
       if (r != 0) return r;
-      
-      
-      
+
       final int byTime = b.addedOn.compareTo(a.addedOn);
       return byTime != 0 ? byTime : a.hash.compareTo(b.hash);
     });
     return list;
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
   @override
   Future<void> refresh() async {
     final s = serverCtrl.current.value;
     if (s == null) {
-      
       isLoading.value = false;
       return;
     }
-    
-    
-    
-    
+
     if (_refreshInFlight && _inFlightServerId == s.id) return;
 
-    
-    
-    
-    
-    
     serverCtrl.resumeServer(s.id);
     final ConnErrorKind? cfgBad = ServerController.configProblemOf(s);
     if (cfgBad != null) {
@@ -754,22 +501,9 @@ class TorrentController extends GetxController {
     _refreshInFlight = true;
     _inFlightServerId = targetId;
     _inFlightSeq = seq;
-    
+
     final Stopwatch sw = Stopwatch()..start();
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     if (items.isEmpty && serverCtrl.hasFullCache(targetId)) {
       final List<Torrent> cached = serverCtrl.torrentsOf(targetId);
       if (cached.isNotEmpty) {
@@ -781,26 +515,10 @@ class TorrentController extends GetxController {
         );
       }
     }
-    
-    
-    
-    
-    
-    
+
     final Future<void>? lanProbe = serverCtrl.lanProbeOf(targetId);
     if (lanProbe != null) await lanProbe;
     try {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       if (serverCtrl.connStatus[s.id] != ConnStatus.ok) {
         serverCtrl.reportConnecting(s.id);
       }
@@ -812,18 +530,10 @@ class TorrentController extends GetxController {
         scope: s.logScope,
       );
       if (s.isQbittorrent) {
-        
-        
-        
         final bool logged = await serverCtrl.guardSession<bool>(
             s.id, () => serverCtrl.qb.checkQbServerCookie());
         if (_isStale(targetId, seq)) return;
-        
-        
-        
-        
-        
-        
+
         if (!logged &&
             (serverCtrl.qb.lastLoginMissingCreds ||
                 serverCtrl.qb.lastLoginBanned)) {
@@ -835,38 +545,19 @@ class TorrentController extends GetxController {
               s.id, ServerController.qbKindOf(serverCtrl.qb), why);
           return;
         }
-        
-        
-        
-        
-        
-        
-        
+
         serverCtrl.reportStage(s.id, ConnStage.loading);
         List<Torrent> list;
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         try {
           list = await serverCtrl.qb.getTorrentList();
         } catch (e) {
           if (_isStale(targetId, seq)) rethrow;
-          
+
           final bool relogged = await serverCtrl.guardSession<bool>(
               s.id, () => serverCtrl.qb.checkQbServerCookie(s));
           if (_isStale(targetId, seq)) rethrow;
           if (!relogged) {
-            
             if (serverCtrl.qb.lastLoginBanned) {
               error.value = S.srvIpBanned;
               serverCtrl.reportFailureKind(
@@ -882,21 +573,7 @@ class TorrentController extends GetxController {
         if (_isStale(targetId, seq)) return;
         _setItems(list);
         _syncCurrentFromItems();
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         try {
           final Map<String, dynamic> md =
               await serverCtrl.qb.updateQbMaindata();
@@ -905,23 +582,16 @@ class TorrentController extends GetxController {
           if (ss != null) serverCtrl.updateServerState(ss);
           _rid = Formatter.getInt(md, 'rid', def: 0);
         } catch (_) {
-          
           _rid = 0;
         }
       } else {
-        
-        
-        
-        
-        
         final TrLoginResult r = await serverCtrl.guardSession<TrLoginResult>(
             s.id, () => serverCtrl.tr.checkTrServerCookie());
         if (_isStale(targetId, seq)) return;
         if (!r.ok) {
           final String why = r.reason ?? '登录失败';
           error.value = why;
-          
-          
+
           if (r.missingCreds) {
             serverCtrl.reportFailureKind(
                 s.id, ConnErrorKind.missingConfig, S.srvCredsMissing);
@@ -935,11 +605,11 @@ class TorrentController extends GetxController {
         _setItems(fromTr(raw));
         _syncCurrentFromItems();
       }
-      
+
       serverCtrl.cacheTorrents(s.id, items.toList());
-      
+
       _ridServerId = s.id;
-      
+
       AppLog.instance.view(
         '种子列表[${s.name}] 全量 ${items.length} 条已就绪'
         ' ｜ 用时 ${ServerController.secs(sw.elapsed)}',
@@ -947,56 +617,38 @@ class TorrentController extends GetxController {
         scope: s.logScope,
       );
       serverCtrl.reportConnected(s.id);
-      
-      
-      
+
       unawaited(serverCtrl.ensureVersion(s));
     } catch (e) {
       if (_isStale(targetId, seq)) return;
       error.value = e.toString();
       serverCtrl.reportFailure(s.id, e);
     } finally {
-      
       if (seq == _reqSeq) isLoading.value = false;
-      
+
       if (_inFlightSeq == seq) _refreshInFlight = false;
     }
   }
 
-  
   int _reqSeq = 0;
 
-  
-  
-  
-  
   bool _refreshInFlight = false;
   String? _inFlightServerId;
   int _inFlightSeq = 0;
 
-  
   bool _isStale(String targetServerId, int seq) {
     if (seq != _reqSeq) return true;
     return serverCtrl.current.value?.id != targetServerId;
   }
 
-  
-  
-  
-  
-  
-  
-  
   void resetForServerSwitch({bool loading = true}) {
-    
     _reqSeq++;
-    
-    
+
     _ridServerId = null;
     _rid = 0;
-    
+
     serverCtrl.resetServerState();
-    
+
     _setItems(<Torrent>[]);
     selected.clear();
     clearFacets();
@@ -1009,43 +661,21 @@ class TorrentController extends GetxController {
     isLoading.value = loading;
   }
 
-  
-  
-  
-  
-  
-  
-  
   bool _scrollPaused = false;
 
   bool get scrollPaused => _scrollPaused;
 
-  
   void setScrollPaused(bool v) {
     _scrollPaused = v;
   }
 
-  
-  
-  
-  
-  
   Future<void> refreshAuto() async {
-    
-    
     if (_scrollPaused) return;
     final s = serverCtrl.current.value;
     if (s == null) return;
-    
-    
-    
-    
-    
-    
-    
-    
+
     if (serverCtrl.shouldSkipRefresh(s.id)) return;
-    
+
     if (_autoInFlight && _autoServerId == s.id) return;
     _autoInFlight = true;
     _autoServerId = s.id;
@@ -1060,48 +690,29 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   static Map<String, dynamic>? _asStringKeyMap(dynamic v) =>
       v is Map ? Map<String, dynamic>.from(v) : null;
 
   Future<void> refreshIncremental() async {
-    
-    
     if (isLoading.value || detailLoading.value) return;
     final s = serverCtrl.current.value;
     if (s == null || !s.isQbittorrent) {
       await refresh();
       return;
     }
-    
-    
+
     final String targetId = s.id;
-    
-    
-    
-    
+
     final int seq = _reqSeq;
-    
-    
+
     final Stopwatch sw = Stopwatch()..start();
     try {
       final Map<String, dynamic> md =
           await serverCtrl.qb.updateQbMaindata(rid: _rid);
       if (_reqSeq != seq || serverCtrl.current.value?.id != targetId) return;
-      
-      
-      
-      
-      
+
       _rid = Formatter.getInt(md, 'rid', def: _rid);
-      
+
       final Map<String, dynamic>? ss = _asStringKeyMap(md['server_state']);
       if (ss != null) serverCtrl.updateServerState(ss);
       final Map<String, dynamic>? delta = _asStringKeyMap(md['torrents']);
@@ -1109,21 +720,9 @@ class TorrentController extends GetxController {
         final Map<String, Torrent> byHash = <String, Torrent>{
           for (final Torrent t in items) t.hash: t,
         };
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         final List<String> incomplete = <String>[];
         delta.forEach((String hash, dynamic v) {
-          
-          
-          
           try {
             final Map<String, dynamic> m =
                 _asStringKeyMap(v) ?? <String, dynamic>{};
@@ -1132,9 +731,7 @@ class TorrentController extends GetxController {
               byHash[hash] = prev.updateQbData(m);
               return;
             }
-            
-            
-            
+
             final String? n = m['name']?.toString();
             if (n == null || n.isEmpty) {
               incomplete.add(hash);
@@ -1149,60 +746,41 @@ class TorrentController extends GetxController {
           }
         });
         if (incomplete.isNotEmpty) {
-          
           await refresh();
           return;
         }
-        
-        
-        
+
         final dynamic rawRemoved = md['torrents_removed'];
         for (final dynamic h
             in rawRemoved is List ? rawRemoved : const <dynamic>[]) {
           byHash.remove(h.toString());
         }
-        
+
         if (_reqSeq != seq) return;
         _setItems(byHash.values.toList());
         _syncCurrentFromItems();
         serverCtrl.cacheTorrents(s.id, items.toList());
-        
+
         AppLog.instance.view(
           '种子列表[${s.name}] 增量已应用：${items.length} 条'
           ' ｜ 用时 ${ServerController.secs(sw.elapsed)}',
           key: '列表:${s.id}:delta',
           scope: s.logScope,
         );
-        
-        
-        
+
         error.value = null;
       }
-      
+
       serverCtrl.reportConnected(s.id);
-      
-      
-      
+
       unawaited(serverCtrl.ensureVersion(s));
     } catch (e) {
-      
-      
       if (_reqSeq != seq || serverCtrl.current.value?.id != targetId) return;
       error.value = e.toString();
       serverCtrl.reportFailure(s.id, e);
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static List<Torrent> mergeQbMaindata(
     List<Torrent> base,
     Map<String, dynamic> md, {
@@ -1214,7 +792,6 @@ class TorrentController extends GetxController {
     final Map<String, dynamic>? delta = _asStringKeyMap(md['torrents']);
     if (delta != null) {
       delta.forEach((String hash, dynamic v) {
-        
         try {
           final Map<String, dynamic> m =
               _asStringKeyMap(v) ?? <String, dynamic>{};
@@ -1223,13 +800,12 @@ class TorrentController extends GetxController {
             byHash[hash] = prev.updateQbData(m);
             return;
           }
-          
+
           final String name = m['name']?.toString() ?? '';
           if (name.isEmpty) return;
           byHash[hash] =
               Torrent.fromJson(<String, dynamic>{'hash': hash, ...m});
         } catch (_) {
-          
         }
       });
     }
@@ -1240,27 +816,10 @@ class TorrentController extends GetxController {
     return byHash.values.toList();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static List<Torrent> fromTr(List<Map<String, dynamic>> list,
       {LogScope? scope}) {
     final List<Torrent> out = <Torrent>[];
     for (final Map<String, dynamic> m in list) {
-      
-      
-      
       try {
         final int sending = Formatter.getInt(m, 'peersSendingToUs');
         final int getting = Formatter.getInt(m, 'peersGettingFromUs');
@@ -1281,20 +840,12 @@ class TorrentController extends GetxController {
           activePeers: sending + getting,
           ratio: Formatter.getDouble(m, 'uploadRatio'),
           savePath: m['downloadDir']?.toString(),
-          
-          
-          
-          
-          
-          
+
           contentPath: _trContentPath(m),
-          
-          
+
           comment: m['comment']?.toString(),
           magnetUri: m['magnetLink']?.toString(),
-          
-          
-          
+
           tags: _trLabels(m),
           uploaded: Formatter.getInt(m, 'uploadedEver'),
           downloaded: Formatter.getInt(m, 'downloadedEver'),
@@ -1302,15 +853,12 @@ class TorrentController extends GetxController {
           lastActivity: Formatter.getInt(m, 'activityDate'),
           completionOn: Formatter.getInt(m, 'doneDate'),
           seedingTime: Formatter.getInt(m, 'secondsSeeding'),
-          
-          
-          
+
           timeActive: Formatter.getInt(m, 'secondsDownloading') +
               Formatter.getInt(m, 'secondsSeeding'),
           eta: Formatter.getInt(m, 'eta', def: 8640000),
           trackerCount: (m['trackerStats'] as List<dynamic>?)?.length ?? 0,
-          
-          
+
           trId: m['id'] is num ? (m['id'] as num).toInt() : null,
         ));
       } catch (e) {
@@ -1322,16 +870,6 @@ class TorrentController extends GetxController {
     return out;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String? _trContentPath(Map<String, dynamic> m) {
     final String dir = m['downloadDir']?.toString().trim() ?? '';
     final String name = m['name']?.toString().trim() ?? '';
@@ -1340,10 +878,6 @@ class TorrentController extends GetxController {
     return '$dir$sep$name';
   }
 
-  
-  
-  
-  
   static String? _trLabels(Map<String, dynamic> m) {
     final dynamic labels = m['labels'];
     if (labels is List) {
@@ -1360,15 +894,6 @@ class TorrentController extends GetxController {
     return null;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String _trState(dynamic st) {
     switch (st) {
       case 0:
@@ -1388,12 +913,6 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-
-  
-  
-  
-  
   int get totalDlSpeed {
     final ServerData? s = serverCtrl.current.value;
     if (s != null && s.isQbittorrent) {
@@ -1402,7 +921,6 @@ class TorrentController extends GetxController {
     return items.fold<int>(0, (int a, Torrent t) => a + t.dlSpeed);
   }
 
-  
   int get totalUpSpeed {
     final ServerData? s = serverCtrl.current.value;
     if (s != null && s.isQbittorrent) {
@@ -1410,8 +928,6 @@ class TorrentController extends GetxController {
     }
     return items.fold<int>(0, (int a, Torrent t) => a + t.upSpeed);
   }
-
-  
 
   void setFilter(TorrentFilter f) => filter.value = f;
   void setKeyword(String kw) => keyword.value = kw;
@@ -1422,14 +938,11 @@ class TorrentController extends GetxController {
     AppLog.instance.op('排序：${key.name} · ${sortDesc.value ? '降序' : '升序'}');
   }
 
-  
   void setSortDesc(bool desc) {
     sortDesc.value = desc;
     _saveSort();
     AppLog.instance.op('排序方向：${desc ? '降序' : '升序'}');
   }
-
-  
 
   static const String _kSortKey = 'sort.key';
   static const String _kSortDesc = 'sort.desc';
@@ -1439,7 +952,6 @@ class TorrentController extends GetxController {
     Formatter.saveGlobalData(_kSortDesc, sortDesc.value);
   }
 
-  
   Future<void> _loadSort() async {
     final Object? k = await Formatter.getGlobalData(_kSortKey);
     if (k is String) {
@@ -1450,16 +962,6 @@ class TorrentController extends GetxController {
     sortDesc.value = await Formatter.getGlobalBool(_kSortDesc, def: true);
   }
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
   final siteMasked = true.obs;
 
   static const String _kSiteMasked = 'set.siteMasked';
@@ -1471,11 +973,8 @@ class TorrentController extends GetxController {
   }
 
   Future<void> loadSiteMasked() async {
-    
     siteMasked.value = await Formatter.getGlobalBool(_kSiteMasked, def: true);
   }
-
-  
 
   void toggleSelect(String hash) {
     if (selected.contains(hash)) {
@@ -1491,7 +990,6 @@ class TorrentController extends GetxController {
 
   void clearSelection() => selected.clear();
 
-  
   List<int> get _selectedTrIds => items
       .where((Torrent t) => selected.contains(t.hash) && t.trId != null)
       .map((Torrent t) => t.trId!)
@@ -1499,21 +997,6 @@ class TorrentController extends GetxController {
 
   String get _selectedHashes => selected.join('|');
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   List<int> _trIdsOrThrow() {
     final List<int> ids = _selectedTrIds;
     if (ids.isEmpty) {
@@ -1523,22 +1006,15 @@ class TorrentController extends GetxController {
     return ids;
   }
 
-  
-  
-  
-  
   Future<void> _runOnSelected(
     Future<void> Function() action, {
     List<Torrent>? rollback,
   }) async {
     if (selected.isEmpty) return;
     lastActionOk.value = null;
-    
-    
-    
+
     final String? serverIdAtStart = serverCtrl.current.value?.id;
-    
-    
+
     final LogScope? scopeAtStart = serverCtrl.current.value?.logScope;
     try {
       isLoading.value = true;
@@ -1551,19 +1027,11 @@ class TorrentController extends GetxController {
         await refresh();
       }
     } catch (e) {
-      
-      
-      
-      
       error.value = NetError.describe(e);
       lastActionOk.value = false;
-      
-      
+
       if (rollback != null) _rollbackOptimistic(rollback, serverIdAtStart);
-      
-      
-      
-      
+
       AppLog.instance.op(
         '操作失败：${_selectedNames()}'
         ' ｜ 服务器 ${serverCtrl.current.value?.name ?? '-'}'
@@ -1576,20 +1044,7 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void _rollbackOptimistic(List<Torrent> snapshot, String? serverIdAtStart) {
-    
     if (serverCtrl.current.value?.id != serverIdAtStart) return;
     final Map<String, Torrent> before = <String, Torrent>{
       for (final Torrent t in snapshot) t.hash: t,
@@ -1606,7 +1061,7 @@ class TorrentController extends GetxController {
       }
     }
     if (changed) _setItems(next);
-    
+
     final Torrent? cur = current.value;
     if (cur != null) {
       final Torrent? oldCur = before[cur.hash];
@@ -1614,47 +1069,21 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
   Future<void> _recheckAfterWrite() async {
     final String? serverId = serverCtrl.current.value?.id;
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (serverCtrl.current.value?.id != serverId) return;
-    
-    
-    
-    
-    
-    
+
     for (int i = 0; i < 6 && detailLoading.value; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 500));
       if (serverCtrl.current.value?.id != serverId) return;
     }
     try {
-      
-      
       await refreshIncremental();
     } catch (_) {
-      
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void _applyOptimistic(Set<String> hashes, {required bool paused}) {
     if (hashes.isEmpty) return;
     final bool isQb = serverCtrl.current.value?.isQbittorrent ?? true;
@@ -1668,7 +1097,7 @@ class TorrentController extends GetxController {
       changed = true;
       next.add(t.updateQbData(<String, dynamic>{
         'state': _optimisticState(t, paused: paused, isQb: isQb),
-        
+
         if (paused) 'dlspeed': 0,
         'upspeed': 0,
       }));
@@ -1685,12 +1114,6 @@ class TorrentController extends GetxController {
     }
   }
 
-  
-  
-  
-  
-  
-  
   static String _optimisticState(
     Torrent t, {
     required bool paused,
@@ -1704,12 +1127,6 @@ class TorrentController extends GetxController {
     return t.isCompleted ? 'uploading' : 'downloading';
   }
 
-  
-  
-  
-  
-  
-  
   String _selectedNames([int limit = 3, int nameLen = 20]) {
     final List<String> names = items
         .where((Torrent t) => selected.contains(t.hash))
@@ -1722,34 +1139,26 @@ class TorrentController extends GetxController {
     return '${names.take(limit).join('、')} 等 ${names.length} 个';
   }
 
-  
-  
-  
-  
   Future<void> pauseSelected() {
     final List<Torrent> before = List<Torrent>.of(items);
     _applyOptimistic(Set<String>.of(selected), paused: true);
     return _runOnSelected(() async {
       final s = serverCtrl.current.value;
       if (s == null) return;
-      
-      
+
       final int n = selected.length;
       if (s.isQbittorrent) {
         await serverCtrl.qb.pauseTorrent(_selectedHashes);
       } else {
-        
         await serverCtrl.tr.torrentStop(_trIdsOrThrow());
       }
-      
-      
+
       AppLog.instance.op('暂停 $n 个种子：${_selectedNames()}'
           '（服务器：${s.name} · ${s.isQbittorrent ? 'qB' : 'TR'}）',
           scope: s.logScope);
     }, rollback: before);
   }
 
-  
   Future<void> resumeSelected() {
     final List<Torrent> before = List<Torrent>.of(items);
     _applyOptimistic(Set<String>.of(selected), paused: false);
@@ -1760,7 +1169,6 @@ class TorrentController extends GetxController {
       if (s.isQbittorrent) {
         await serverCtrl.qb.resumeTorrent(_selectedHashes);
       } else {
-        
         await serverCtrl.tr.torrentStart(_trIdsOrThrow());
       }
       AppLog.instance.op('恢复 $n 个种子：${_selectedNames()}'
@@ -1769,21 +1177,6 @@ class TorrentController extends GetxController {
     }, rollback: before);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> deleteSelected({
     bool deleteFiles = false,
     bool deleteSub = false,
@@ -1804,11 +1197,6 @@ class TorrentController extends GetxController {
           noSubDeleteFiles: noSubDeleteFiles,
         );
 
-        
-        
-        
-        
-        
         final List<DeleteBatch> batches =
             planBatches(chosen: chosen, plan: plan);
 
@@ -1832,14 +1220,7 @@ class TorrentController extends GetxController {
                 skipped++;
               }
             }
-            
-            
-            
-            
-            
-            
-            
-            
+
             if (ids.isEmpty) {
               if (i == 0) {
                 throw StateError('没有可删除的 Transmission 任务 ID'
@@ -1863,21 +1244,6 @@ class TorrentController extends GetxController {
             scope: s.logScope);
       });
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static DeletePlan planDelete({
     required List<Torrent> all,
     required List<Torrent> chosen,
@@ -1888,37 +1254,9 @@ class TorrentController extends GetxController {
     final Set<String> chosenHashes =
         chosen.map((Torrent t) => t.hash).toSet();
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     final bool needSubs = deleteSub || noSubDeleteFiles;
     final List<Torrent> subsFound = <Torrent>[];
     if (needSubs) {
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       final Set<String> keys = <String>{
         for (final Torrent m in chosen)
           if (m.size > 0 && _dirKey(m.savePath ?? '').isNotEmpty)
@@ -1933,35 +1271,13 @@ class TorrentController extends GetxController {
       }
     }
     return DeletePlan(
-      
-      
+
       deleteFiles: deleteFiles || (noSubDeleteFiles && subsFound.isEmpty),
-      
-      
+
       subs: deleteSub ? subsFound : const <Torrent>[],
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static List<DeleteBatch> planBatches({
     required List<Torrent> chosen,
     required DeletePlan plan,
@@ -1971,45 +1287,15 @@ class TorrentController extends GetxController {
         if (plan.subs.isNotEmpty) DeleteBatch(plan.subs, deleteFiles: false),
       ];
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static bool isCrossSeed(Torrent a, Torrent b) {
     if (a.hash == b.hash) return false;
-    
-    
-    
-    
-    
-    
+
     if (a.size <= 0 || a.size != b.size) return false;
     return _sameSaveDir(a.savePath ?? '', b.savePath ?? '');
   }
 
-  
-  
-  
-  
-  
-  
-  
   static final RegExp _trailingSlashes = RegExp(r'/+$');
 
-  
-  
-  
   static String _dirKey(String s) =>
       s.trim().replaceAll('\\', '/').replaceAll(_trailingSlashes, '');
 
@@ -2025,23 +1311,15 @@ class TorrentController extends GetxController {
         if (s.isQbittorrent) {
           await serverCtrl.qb.recheckTorrents(_selectedHashes);
         } else {
-          
           await serverCtrl.tr.torrentVerify(_trIdsOrThrow());
         }
         AppLog.instance.op('强制校验 $n 个种子', scope: s.logScope);
       });
 
-  
-  
-  
-  
-  
-  
   Future<void> queueMoveSelected(String where) => _runOnSelected(() async {
         final s = serverCtrl.current.value;
         if (s == null || !s.isTransmission) return;
-        
-        
+
         final List<int> ids = _trIdsOrThrow();
         switch (where) {
           case 'top':
@@ -2061,44 +1339,29 @@ class TorrentController extends GetxController {
             scope: s.logScope);
       });
 
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   void openDetail(Torrent t) {
     current.value = t;
     files.clear();
     peers.clear();
     trackers.clear();
-    
+
     dlSamples.clear();
     ulSamples.clear();
     detailSyncedAt.value = null;
     error.value = null;
     detailLoading.value = true;
-    
+
     unawaited(loadDetailData());
   }
 
-  
   int _detailSeq = 0;
 
-  
   bool _detailStale(String serverId, String hash, int seq) {
     if (seq != _detailSeq) return true;
     if (serverCtrl.current.value?.id != serverId) return true;
     return current.value?.hash != hash;
   }
 
-  
   Torrent? _findInItems(String hash) {
     for (final Torrent t in items) {
       if (t.hash == hash) return t;
@@ -2106,14 +1369,6 @@ class TorrentController extends GetxController {
     return null;
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
   void _syncCurrentFromItems() {
     final Torrent? cur = current.value;
     if (cur == null) return;
@@ -2121,9 +1376,6 @@ class TorrentController extends GetxController {
     if (fresh != null && !identical(fresh, cur)) current.value = fresh;
   }
 
-  
-  
-  
   void _pushSample(Torrent t) {
     dlSamples.add(t.dlSpeed.toDouble());
     ulSamples.add(t.upSpeed.toDouble());
@@ -2136,16 +1388,6 @@ class TorrentController extends GetxController {
     detailSyncedAt.value = DateTime.now();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<Torrent?> fetchOne(Torrent t) async {
     final ServerData? s = serverCtrl.current.value;
     if (s == null) return null;
@@ -2153,7 +1395,7 @@ class TorrentController extends GetxController {
       final List<Torrent> got =
           await serverCtrl.qb.updateSelect(<String>[t.hash]);
       if (got.isEmpty) return null;
-      
+
       return got.first.copyWithTrId(t.trId);
     }
     if (t.trId == null) return null;
@@ -2174,13 +1416,11 @@ class TorrentController extends GetxController {
     final String targetId = s.id;
     final String targetHash = t.hash;
     final int seq = ++_detailSeq;
-    
-    
+
     final Stopwatch sw = Stopwatch()..start();
     try {
       detailLoading.value = true;
-      
-      
+
       List<Map<String, dynamic>> f = const <Map<String, dynamic>>[];
       List<Map<String, dynamic>> p = const <Map<String, dynamic>>[];
       List<Map<String, dynamic>> tk = const <Map<String, dynamic>>[];
@@ -2198,9 +1438,7 @@ class TorrentController extends GetxController {
       files.value = f;
       peers.value = p;
       trackers.value = tk;
-      
-      
-      
+
       Torrent? fresh;
       try {
         fresh = await fetchOne(t);
@@ -2225,7 +1463,6 @@ class TorrentController extends GetxController {
       if (_detailStale(targetId, targetHash, seq)) return;
       error.value = e.toString();
     } finally {
-      
       if (seq == _detailSeq) detailLoading.value = false;
     }
   }
@@ -2244,8 +1481,6 @@ class FileNode {
 
   bool get isFile => children.isEmpty;
 }
-
-
 
 List<FileNode> buildFileTree(List<Map<String, dynamic>> rawFiles) {
   final FileNode root = FileNode('', '');
@@ -2270,8 +1505,7 @@ List<FileNode> buildFileTree(List<Map<String, dynamic>> rawFiles) {
       }
       cur = next;
     }
-    
-    
+
     cur.size = Formatter.getInt(f, 'size', def: cur.size);
     cur.progress = Formatter.getDouble(f, 'progress', def: cur.progress);
   }

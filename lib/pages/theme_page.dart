@@ -14,20 +14,6 @@ import '../widgets/color_picker.dart';
 import '../widgets/page_preview.dart';
 import '../widgets/theme_preview.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ThemePage extends StatefulWidget {
   const ThemePage({super.key});
 
@@ -38,18 +24,12 @@ class ThemePage extends StatefulWidget {
 class _ThemePageState extends State<ThemePage> {
   ThemeController get _tc => Get.find<ThemeController>();
 
-  
-  
   @override
   void initState() {
     super.initState();
     _tc.beginThemeEditing();
   }
 
-  
-  
-  
-  
   @override
   void dispose() {
     _tc.cancelThemeEditing();
@@ -63,7 +43,7 @@ class _ThemePageState extends State<ThemePage> {
       appBar: AppBar(
         title: Text(S.themeCustom),
         actions: <Widget>[
-          
+
           TextButton.icon(
             onPressed: () => _saveDialog(context, tc),
             icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
@@ -81,12 +61,6 @@ class _ThemePageState extends State<ThemePage> {
           const SizedBox(width: 6),
           TextButton(
             onPressed: () {
-              
-              
-              
-              
-              
-              
               tc.restoreFactoryDefaults();
               _toast(S.restoreDefaults);
             },
@@ -98,11 +72,7 @@ class _ThemePageState extends State<ThemePage> {
         () => ListView(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
           children: <Widget>[
-            
-            
-            
-            
-            
+
             ExpansionTile(
         clipBehavior: Clip.antiAlias,
               dense: true,
@@ -129,17 +99,12 @@ class _ThemePageState extends State<ThemePage> {
                   onChanged: tc.setSeed,
                 ),
                 const SizedBox(height: 8),
-                
+
                 const PagePreview(page: AppPageKey.serverList),
                 const SizedBox(height: 8),
               ],
             ),
 
-            
-            
-            
-            
-            
             ExpansionTile(
         clipBehavior: Clip.antiAlias,
               dense: true,
@@ -195,7 +160,7 @@ class _ThemePageState extends State<ThemePage> {
                     style: const TextStyle(fontSize: 10),
                   ),
                 ),
-                
+
                 const Padding(
                   padding: EdgeInsets.fromLTRB(0, 0, 0, 8),
                   child: PagePreview(page: AppPageKey.serverList),
@@ -205,18 +170,6 @@ class _ThemePageState extends State<ThemePage> {
 
             const Divider(height: 20),
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             SwitchListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
@@ -234,20 +187,6 @@ class _ThemePageState extends State<ThemePage> {
               child: Text(S.themeOpacityHelp, style: const TextStyle(fontSize: 10)),
             ),
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             const SizedBox(height: 8),
             ThemePreview(
                 theme: tc.previewTheme,
@@ -255,29 +194,14 @@ class _ThemePageState extends State<ThemePage> {
 
             const SizedBox(height: 8),
 
-            
-            
-            
-            
             _actionTile(Icons.menu_open, S.themePickMenuImage,
                 () => _pick(context, tc)),
-            
-            
-            
-            
-            
-            
-            
-            
+
             const Padding(
               padding: EdgeInsets.fromLTRB(0, 6, 0, 2),
               child: PagePreview(page: AppPageKey.drawer),
             ),
-            
-            
-            
-            
-            
+
             if (tc.menuImagePath.value != null &&
                 tc.menuImagePath.value != ThemeController.defaultMenuImage)
               Padding(
@@ -289,11 +213,7 @@ class _ThemePageState extends State<ThemePage> {
                   style: const TextStyle(fontSize: 10),
                 ),
               ),
-            
-            
-            
-            
-            
+
             _valueSlider(context, L.t('亮度'), tc.menuBgBrightness.value, -1, 1,
                 tc.setMenuBgBrightness,
                 (double v) => '${(v * 100).round()}%'),
@@ -304,24 +224,8 @@ class _ThemePageState extends State<ThemePage> {
 
             const Divider(height: 20),
 
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             const SizedBox(height: 12),
 
-            
-            
-            
-            
-            
             Text(
               L.t('全局背景图片'),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -341,8 +245,7 @@ class _ThemePageState extends State<ThemePage> {
               value: tc.globalBgEnabled.value,
               onChanged: tc.setGlobalBgEnabled,
             ),
-            
-            
+
             _actionTile(Icons.image, L.t('选择全局背景图'),
                 () => _pickGlobalBg(context, tc),
                 enabled: tc.globalBgEnabled.value),
@@ -360,37 +263,27 @@ class _ThemePageState extends State<ThemePage> {
                 tc.setGlobalBgBrightness,
                 (double v) => '${(v * 100).round()}%',
                 enabled: tc.globalBgEnabled.value),
-            
+
             _valueSlider(context, L.t('去色'), tc.globalBgFade.value, 0, 1,
                 tc.setGlobalBgFade, (double v) => '${(v * 100).round()}%',
                 enabled: tc.globalBgEnabled.value),
             _valueSlider(context, L.t('模糊'), tc.globalBgBlur.value, 0, 20,
                 tc.setGlobalBgBlur, (double v) => v.toStringAsFixed(1),
                 enabled: tc.globalBgEnabled.value),
-            
-            
+
             if (tc.globalBgEnabled.value)
               Padding(
                 padding: const EdgeInsets.fromLTRB(0, 6, 0, 2),
                 child: PagePreview(
                   page: AppPageKey.serverList,
                   backgroundImage: tc.globalBgDecorationImage?.image,
-                  
-                  
+
                   useDefaultBackgroundIfEmpty: true,
                 ),
               ),
-            
-            
-            
-            
 
             const SizedBox(height: 12),
 
-            
-            
-            
-            
             Text(
               L.t('分页面配色'),
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -403,28 +296,12 @@ class _ThemePageState extends State<ThemePage> {
             for (final PageStyleSpec spec in kPageStyles)
               _pageStyleTile(context, tc, spec),
 
-            
-            
-            
           ],
         ),
       ),
     );
   }
 
-  
-
-  
-  
-
-  
-  
-  
-
-  
-  
-  
-  
   Widget _actionTile(IconData icon, String title, VoidCallback onTap,
       {bool enabled = true}) {
     return ListTile(
@@ -437,15 +314,6 @@ class _ThemePageState extends State<ThemePage> {
     );
   }
 
-  
-  
-
-  
-
-  
-  
-  
-  
   Future<void> _pick(BuildContext context, ThemeController tc) async {
     try {
       final FilePickerResult? r = await FilePicker.platform.pickFiles(
@@ -457,10 +325,7 @@ class _ThemePageState extends State<ThemePage> {
         return;
       }
       tc.setMenuImage(path);
-      
-      
-      
-      
+
       final String name = path.split(RegExp(r'[/\\]')).last;
       _toast('${L.t('已保存：')}$name');
     } catch (e) {
@@ -468,10 +333,6 @@ class _ThemePageState extends State<ThemePage> {
     }
   }
 
-  
-  
-  
-  
   Widget _valueSlider(
     BuildContext context,
     String label,
@@ -482,9 +343,6 @@ class _ThemePageState extends State<ThemePage> {
     String Function(double) format, {
     bool enabled = true,
   }) {
-    
-    
-    
     final Color? dim = enabled ? null : Theme.of(context).disabledColor;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -517,21 +375,6 @@ class _ThemePageState extends State<ThemePage> {
     );
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   Future<void> _saveDialog(BuildContext context, ThemeController tc) async {
     final List<CustomTheme> targets = tc.overwriteCandidates;
     CustomTheme? target = tc.defaultOverwriteTarget;
@@ -565,12 +408,7 @@ class _ThemePageState extends State<ThemePage> {
                 DropdownButton<CustomTheme>(
                   value: target,
                   isExpanded: true,
-                  
-                  
-                  
-                  
-                  
-                  
+
                   style: TextStyle(
                       fontSize: 13, color: Theme.of(ctx).colorScheme.onSurface),
                   items: <DropdownMenuItem<CustomTheme>>[
@@ -587,8 +425,7 @@ class _ThemePageState extends State<ThemePage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    
-                    
+
                     editingSaved
                         ? '「${target!.name}」'
                             '${L.t('是正在编辑的主题。点「覆盖更新」把改动写回它，或点「保存为新主题」另存一份。')}'
@@ -605,7 +442,7 @@ class _ThemePageState extends State<ThemePage> {
               child: Text(L.t('取消')),
             ),
             if (target != null)
-              
+
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop('update'),
                 child: Text('${L.t('覆盖更新')}「${target!.name}」',
@@ -624,13 +461,11 @@ class _ThemePageState extends State<ThemePage> {
       ctrl.dispose();
       return;
     }
-    
+
     final String name = ctrl.text.trim().isEmpty
         ? (target?.name ?? _defaultThemeName(tc))
         : ctrl.text.trim();
     if (action == 'update' && target != null) {
-      
-      
       await tc.overwriteThemeEditing(target!.id, name: name);
       _toast('${L.t('已更新')}「$name」');
     } else {
@@ -639,7 +474,7 @@ class _ThemePageState extends State<ThemePage> {
     }
     ctrl.dispose();
     if (!context.mounted) return;
-    
+
     Navigator.of(context).pop();
   }
 
@@ -670,7 +505,7 @@ class _ThemePageState extends State<ThemePage> {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(spec.helpLocalized!, style: const TextStyle(fontSize: 10)),
           ),
-        
+
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 2, 0, 6),
           child: PagePreview(page: spec.key),
@@ -681,7 +516,6 @@ class _ThemePageState extends State<ThemePage> {
     );
   }
 
-  
   Widget _slotRow(
     BuildContext context,
     ThemeController tc,
@@ -724,7 +558,6 @@ class _ThemePageState extends State<ThemePage> {
     );
   }
 
-  
   Future<void> _pickSlotColor(
     BuildContext context,
     ThemeController tc,
@@ -760,7 +593,6 @@ class _ThemePageState extends State<ThemePage> {
     );
   }
 
-  
   Future<void> _pickGlobalBg(BuildContext context, ThemeController tc) async {
     try {
       final FilePickerResult? r = await FilePicker.platform.pickFiles(
@@ -778,7 +610,6 @@ class _ThemePageState extends State<ThemePage> {
     }
   }
 
-  
   void _toast(String msg) => AppToast.show(msg);
 
   static String _hex(Color c) =>

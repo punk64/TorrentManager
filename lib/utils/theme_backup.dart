@@ -3,19 +3,6 @@ import 'dart:convert';
 import '../app/theme.dart';
 import 'strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class ThemePack {
   ThemePack({
     required this.themes,
@@ -23,13 +10,10 @@ class ThemePack {
     DateTime? exportedAt,
   }) : exportedAt = exportedAt ?? DateTime.now();
 
-  
   static const String appId = 'TorrentManager';
 
-  
   static const String formatId = 'torrentmanager-theme-pack';
 
-  
   static const int currentVersion = 1;
 
   final List<CustomTheme> themes;
@@ -47,17 +31,14 @@ class ThemePack {
         'themes': themes.map((CustomTheme t) => t.toJson()).toList(),
       };
 
-  
   String encode() => const JsonEncoder.withIndent('  ').convert(toJson());
 
-  
   String suggestedFileName() =>
       'torrentmanager-theme-${_ymd(exportedAt)}.json';
 
   static String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
-
 
 class ThemePackResult {
   const ThemePackResult._({
@@ -73,21 +54,16 @@ class ThemePackResult {
   const ThemePackResult.fail(String error, {String? hint})
       : this._(error: error, hint: hint);
 
-  
   final ThemePack? pack;
 
-  
   final String? error;
 
-  
   final String? hint;
 
-  
   final List<String> skipped;
 
   bool get ok => pack != null;
 }
-
 
 class ThemeImportOutcome {
   const ThemeImportOutcome({
@@ -96,35 +72,19 @@ class ThemeImportOutcome {
     this.first,
   });
 
-  
   final int added;
 
-  
   final int replaced;
 
-  
-  
   final CustomTheme? first;
 
-  
   int get total => added + replaced;
 }
-
-
-
-
-
-
-
-
-
 
 class ThemeBackup {
   ThemeBackup._();
 
-  
   static ThemePackResult parse(String raw) {
-    
     final Object? decoded;
     try {
       decoded = jsonDecode(raw);
@@ -142,7 +102,6 @@ class ThemeBackup {
     }
     final Map<String, dynamic> j = decoded.cast<String, dynamic>();
 
-    
     if (j['app'] != ThemePack.appId || j['format'] != ThemePack.formatId) {
       return ThemePackResult.fail(
         S.themeImportBadSource,
@@ -150,7 +109,6 @@ class ThemeBackup {
       );
     }
 
-    
     final Object? v = j['version'];
     final int fileVersion = v is num ? v.toInt() : 0;
     if (fileVersion > ThemePack.currentVersion) {
@@ -160,7 +118,6 @@ class ThemeBackup {
       );
     }
 
-    
     final Object? rawThemes = j['themes'];
     if (rawThemes is! List || rawThemes.isEmpty) {
       return ThemePackResult.fail(
@@ -169,7 +126,6 @@ class ThemeBackup {
       );
     }
 
-    
     final List<CustomTheme> ok = <CustomTheme>[];
     final List<String> skipped = <String>[];
     for (int i = 0; i < rawThemes.length; i++) {
@@ -187,7 +143,6 @@ class ThemeBackup {
       ok.add(t);
     }
 
-    
     if (ok.isEmpty) {
       return ThemePackResult.fail(
         S.themeImportAllBad(rawThemes.length),
@@ -207,10 +162,6 @@ class ThemeBackup {
     );
   }
 
-  
-  
-  
-  
   static String _missing(Map<String, dynamic> m) {
     final List<String> miss = <String>[
       if (m['id'] is! String) 'id',

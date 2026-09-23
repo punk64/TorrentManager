@@ -12,17 +12,6 @@ import '../utils/formatter.dart';
 import '../utils/ip_geo.dart';
 import '../utils/strings.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class TorrentInfoPeersPage extends StatefulWidget {
   const TorrentInfoPeersPage({super.key});
 
@@ -31,10 +20,6 @@ class TorrentInfoPeersPage extends StatefulWidget {
 }
 
 enum PeerSort { progress, dlSpeed, upSpeed, ip }
-
-
-
-
 
 class _Geo {
   const _Geo.loading()
@@ -53,11 +38,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
   PeerSort _sort = PeerSort.dlSpeed;
   bool _asc = false;
 
-  
-  
-  
-  
-  
   final Map<String, Rx<_Geo>> _geo = <String, Rx<_Geo>>{};
 
   int _num(dynamic v) => (v as num?)?.toInt() ?? 0;
@@ -88,33 +68,16 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     return list;
   }
 
-  
-  
-  
-  
-  
-  
   static const PageStorageKey<String> _listKey =
       PageStorageKey<String>('torrent_info_peers_list');
 
-  
-  
-  
-
-  
-  
-  
-  
-  
   static const int _geoLimit = 400;
 
-  
   Rx<_Geo> _geoOf(String ip) {
     final Rx<_Geo>? exist = _geo[ip];
     if (exist != null) return exist;
     if (_geo.length >= _geoLimit) _pruneGeo();
 
-    
     if (!Formatter.ipNeedsLookup(ip)) {
       final Rx<_Geo> g = _Geo.value(Formatter.getIpInfo(ip)).obs;
       _geo[ip] = g;
@@ -126,10 +89,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     return g;
   }
 
-  
-  
-  
-  
   void _pruneGeo() {
     final Set<String> live = <String>{};
     for (final Map<String, dynamic> p in ctrl.peers) {
@@ -137,25 +96,16 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       if (ip.isNotEmpty) live.add(ip);
     }
     _geo.removeWhere((String k, Rx<_Geo> _) => !live.contains(k));
-    
-    
+
     if (_geo.length >= _geoLimit) _geo.clear();
   }
 
-  
-  
-  
-  
   Future<void> _fetchGeo(String ip) async {
     final String? text = await IpGeo.instance.lookup(ip);
     if (!mounted) return;
     _geo[ip]?.value = _Geo.value(text ?? S.unknown);
   }
 
-  
-  
-  
-  
   String _totalText(Map<String, dynamic> p) {
     final num up = (p['uploaded'] as num?) ?? 0;
     final num dl = (p['downloaded'] as num?) ?? 0;
@@ -163,17 +113,12 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
         ' · ${S.ioDownloadPrefix}${Formatter.setSizeCompact(dl)}';
   }
 
-  
-  
-  
-
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     Formatter.showToast(S.peerCopied(text));
   }
 
-  
   Future<void> _ban(String target) async {
     if (sc.current.value?.isQbittorrent != true) {
       Formatter.showToast('仅 qBittorrent 支持封禁 Peer', isError: true);
@@ -211,9 +156,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     if (ok != true) return;
     try {
       await sc.qb.showBanPeers(target);
-      
-      
-      
+
       AppLog.instance.op('封禁 Peer：$target'
           '（${ctrl.current.value?.name ?? '-'} · ${sc.current.value?.name ?? '-'}）',
           scope: sc.current.value?.logScope);
@@ -228,31 +171,10 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Column(
       children: <Widget>[
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         Padding(
           padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
           child: Wrap(
@@ -282,8 +204,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                     _asc ? Icons.arrow_upward : Icons.arrow_downward,
                     size: 14,
                   ),
-                  
-                  
+
                   label: Text(_dirLabel, style: const TextStyle(fontSize: 11)),
                   visualDensity: VisualDensity.compact,
                   onPressed: () => setState(() => _asc = !_asc),
@@ -292,25 +213,16 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
             ],
           ),
         ),
-        
-        
-        
-        
-        
-        
-        
-        
+
         Expanded(
           child: Obx(() {
             final List<Map<String, dynamic>> peers = _sorted;
             if (peers.isEmpty) {
-              
-              
               return const Center(
                 child: Text('暂无 Peer 数据', style: TextStyle(fontSize: 12)),
               );
             }
-            
+
             return ListView.separated(
               key: _listKey,
               itemCount: peers.length,
@@ -328,14 +240,14 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                 final bool isQb = sc.current.value?.isQbittorrent == true;
                 final String target =
                     port.isEmpty || port == '0' ? ip : '$ip:$port';
-                
+
                 final _Geo g = _geoOf(ip).value;
 
                 return ListTile(
                   key: ValueKey<String>('peer_$ip'),
                   dense: true,
                   leading: const Icon(Icons.devices, size: AppTheme.iconSize),
-                  
+
                   title: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
@@ -345,8 +257,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                           runSpacing: 2,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: <Widget>[
-                            
-                            
+
                             Text(ip, style: const TextStyle(fontSize: 12)),
                             _verBadge(cs, ip.contains(':') ? 'IPv6' : 'IPv4'),
                           ],
@@ -361,7 +272,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        
+
                         Row(
                           children: <Widget>[
                             Flexible(
@@ -398,7 +309,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                           ],
                         ),
                         const SizedBox(height: 1),
-                        
+
                         Row(
                           children: <Widget>[
                             Flexible(
@@ -439,7 +350,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     );
   }
 
-  
   Widget _verBadge(ColorScheme cs, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -454,7 +364,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     );
   }
 
-  
   Widget _actions(ColorScheme cs, String ip, String target, bool isQb) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -482,7 +391,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     );
   }
 
-  
   Widget _miniButton({
     required IconData icon,
     required String tooltip,
@@ -516,7 +424,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     }
   }
 
-  
   String _sortTip(PeerSort s) {
     switch (s) {
       case PeerSort.progress:
@@ -530,11 +437,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     }
   }
 
-  
-  
-  
-  
-  
   String get _dirLabel {
     switch (_sort) {
       case PeerSort.dlSpeed:

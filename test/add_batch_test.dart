@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/utils/add_batch.dart';
@@ -49,8 +42,7 @@ void main() {
       final AddBatchResult r = AddBatchResult();
       expect(r.isEmpty, isTrue);
       expect(r.total, 0);
-      
-      
+
       expect(r.allOk, isTrue);
     });
 

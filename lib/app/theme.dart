@@ -1,51 +1,16 @@
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 class AppTheme {
   AppTheme._();
 
-  
-  
-  
   static const Color darkBackground = Color(0xFF1E1E1E);
   static const Color darkSurface = Color(0xFF282828);
   static const Color darkSurfaceVariant = Color(0xFF464646);
 
-  
-  
-  
-  
-  
   static const Color lightScaffold = Color(0xFFFFFFFF);
   static const Color darkScaffold = Color(0xFF000000);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const Color darkDrawer = Color(0xFF1B1B1F);
 
   static const Color chartBlue = Color(0xFFAABEFF);
@@ -58,76 +23,34 @@ class AppTheme {
 
   static const double iconSize = 20;
 
-  
-  
-  
-  
   static const double radius = 10;
 
-  
   static const double radiusSmall = 6;
 
-  
   static const double radiusBar = 2;
 
-  
   static const double radiusTiny = 3;
 
-  
   static const double radiusSheet = 20;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
   static const double cardLuminanceShift = 0.04;
 
-  
   static const double cardBorderOpacity = 0.16;
 
-  
   static const double cardBorderWidth = 0.5;
 
-  
-  
-  
-  
   static const double sectionTintShift = 0.03;
 
-  
   static Color cardBorder(ColorScheme scheme) =>
       scheme.outlineVariant.withValues(alpha: cardBorderOpacity);
 
-  
   static double lightnessOf(Color c) => HSLColor.fromColor(c).lightness;
 
-  
   static Color shiftLightness(Color c, double delta) {
     final HSLColor hsl = HSLColor.fromColor(c);
     return hsl.withLightness((hsl.lightness + delta).clamp(0.0, 1.0)).toColor();
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Color cardSurfaceFrom(Color background, Brightness brightness) {
     final bool isDark = brightness == Brightness.dark;
     final Color shifted = shiftLightness(
@@ -138,23 +61,17 @@ class AppTheme {
     return lightnessOf(darkSurface) > lightnessOf(shifted) ? darkSurface : shifted;
   }
 
-  
-  
-  
-  
   static const int maxLenName = 64;
   static const int maxLenHost = 128;
   static const int maxLenPort = 5;
   static const int maxLenPath = 256;
   static const int maxLenUrl = 2000;
   static const int maxLenUrls = 8192;
-  
+
   static const int maxLenJson = 100000;
-  
+
   static const int maxLenGeneral = 64;
 
-  
-  
   static Widget? noCounter(
     BuildContext context, {
     required int currentLength,
@@ -163,13 +80,6 @@ class AppTheme {
   }) =>
       null;
 
-  
-  
-  
-  
-  
-  
-  
   static ColorFilter saturationFilter(double s) {
     final double v = s.clamp(0.0, 1.0);
     const double r = 0.2126, g = 0.7152, b = 0.0722;
@@ -193,65 +103,16 @@ class AppTheme {
     Color(0xFF464646), 
   ];
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static Color contrastOn(Color background) =>
       background.computeLuminance() > 0.179
           ? const Color(0xFF1A1A1A)
           : const Color(0xFFE6E6E6);
 
-  
-  
-  
-  
-  
-  
-  
   static Color defaultFontColor(Brightness brightness) =>
       brightness == Brightness.dark
           ? const Color(0xFFE6E6E6)
           : const Color(0xFF1A1A1A);
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static ThemeData of(
     Color seed,
     Brightness brightness, {
@@ -265,97 +126,51 @@ class AppTheme {
       brightness: brightness,
     );
     final bool isDark = brightness == Brightness.dark;
-    
-    
+
     final Color text = fontColor ?? defaultFontColor(brightness);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     final bool glass = glassAlpha != null;
     final Color glassSurface = (isDark ? darkSurface : lightScaffold)
         .withValues(alpha: (glassAlpha ?? 1.0).clamp(0.0, 1.0));
-    
-    
-    
-    
+
     final Color pageBase =
         background ?? (isDark ? darkScaffold : lightScaffold);
-    
-    
+
     final Color cardBase =
         glass ? glassSurface : cardSurfaceFrom(pageBase, brightness);
-    
-    
+
     final double dir = isDark ? cardLuminanceShift : -cardLuminanceShift;
     Color step(double ratio) =>
         glass ? cardBase : shiftLightness(cardBase, dir * ratio);
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
     final Color barBase = glass ? cardBase : shiftLightness(pageBase, dir);
     final Color sheetBase = cardBase;
     final ThemeData base = ThemeData(
       useMaterial3: true,
       colorScheme: scheme.copyWith(
         surface: cardBase,
-        
+
         surfaceContainerLowest: step(0.0),
-        
+
         surfaceContainerLow: cardBase,
         surfaceContainer: step(0.35),
         surfaceContainerHigh: step(0.7),
         surfaceContainerHighest: step(1.1),
-        
-        
-        
+
         surfaceTint: glass ? Colors.transparent : scheme.surfaceTint,
       ),
-      
-      
+
       scaffoldBackgroundColor: transparentScaffold ? Colors.transparent : pageBase,
-      
-      
-      
-      
+
       appBarTheme: AppBarThemeData(
         backgroundColor: barBase,
         foregroundColor: text,
         iconTheme: IconThemeData(color: text),
         actionsIconTheme: IconThemeData(color: text),
       ),
-      
-      
-      
-      
-      
+
       drawerTheme: DrawerThemeData(backgroundColor: pageBase),
-      
-      
-      
-      
-      
+
       dialogTheme: DialogThemeData(backgroundColor: sheetBase),
       bottomSheetTheme:
           BottomSheetThemeData(backgroundColor: sheetBase),
@@ -367,19 +182,13 @@ class AppTheme {
       ),
       visualDensity: VisualDensity.compact,
       splashFactory: InkRipple.splashFactory,
-      
-      
-      
-      
-      
+
       cardTheme: CardThemeData(
-        
-        
+
         color: cardBase,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          
-          
+
           side: BorderSide(
             color: cardBorder(scheme),
             width: cardBorderWidth,
@@ -387,12 +196,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
-      
-      
-      
-      
-      
+
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -404,10 +208,7 @@ class AppTheme {
         },
       ),
     );
-    
-    
-    
-    
+
     return base.copyWith(
       textTheme: base.textTheme.apply(
         bodyColor: text,
@@ -431,15 +232,8 @@ class AppTheme {
         cs.tertiary,
       ];
 
-  
   static String alphaLabel(double v) => '${(v * 100).round()}%';
 }
-
-
-
-
-
-
 
 class ThemePreset {
   const ThemePreset({
@@ -466,44 +260,14 @@ class ThemePreset {
   final Color gradient1;
   final Color gradient2;
 
-  
-  
-  
-  
-  
-  
-  
   final String? bgImage;
 
-  
-  
   final bool wallpaper;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   final bool glass;
 
-  
-  
-  
-  
-  
-  
-  
   final bool builtin;
 
-  
-  
-  
-  
   BoxDecoration get preview => bgImage == null
       ? BoxDecoration(
           gradient: LinearGradient(
@@ -518,7 +282,7 @@ class ThemePreset {
           image: DecorationImage(
             image: AssetImage(bgImage!),
             fit: BoxFit.cover,
-            
+
             colorFilter: const ColorFilter.mode(
               Color(0x14FFFFFF),
               BlendMode.srcOver,
@@ -526,16 +290,6 @@ class ThemePreset {
           ),
         );
 }
-
-
-
-
-
-
-
-
-
-
 
 class CustomTheme {
   const CustomTheme({
@@ -555,12 +309,10 @@ class CustomTheme {
   final String id;
   final String name;
 
-  
   final int themeMode;
 
   final Color seed;
 
-  
   final Color? fontColor;
 
   final int bgMode;
@@ -568,21 +320,10 @@ class CustomTheme {
   final Color gradient2;
   final String? bgImage;
 
-  
   final double componentOpacity;
 
-  
   final Map<String, int> pageColors;
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static const int opacitySemantics = 2;
 
   CustomTheme copyWith({String? name, double? componentOpacity}) => CustomTheme(
@@ -599,15 +340,6 @@ class CustomTheme {
         pageColors: pageColors,
       );
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   CustomTheme withIdentity({required String id, required String name}) =>
       CustomTheme(
         id: id,
@@ -634,32 +366,25 @@ class CustomTheme {
         'gradient2': gradient2.toARGB32(),
         'bgImage': bgImage,
         'componentOpacity': componentOpacity,
-        
+
         'opacitySemantics': opacitySemantics,
         'pageColors': pageColors,
       };
 
-  
-  
-  
-  
   static bool needsOpacityMigration(Map<String, dynamic> j) {
     final Object? v = j['opacitySemantics'];
     final int sem = v is num ? v.toInt() : 1;
     return sem < opacitySemantics;
   }
 
-  
   static double _readOpacity(Map<String, dynamic> j) {
     final Object? v = j['componentOpacity'];
     final double raw = v is num ? v.toDouble() : 0.0;
     if (!needsOpacityMigration(j)) return raw.clamp(0.0, 1.0);
-    
+
     return (1.0 - raw).clamp(0.0, 1.0);
   }
 
-  
-  
   static CustomTheme? fromJson(Map<String, dynamic> j) {
     final Object? id = j['id'];
     final Object? name = j['name'];
@@ -679,7 +404,7 @@ class CustomTheme {
       gradient1: Color(g1 is int ? g1 : seed),
       gradient2: Color(g2 is int ? g2 : seed),
       bgImage: j['bgImage'] is String ? j['bgImage'] as String : null,
-      
+
       componentOpacity: _readOpacity(j),
       pageColors: <String, int>{
         if (colors is Map)
@@ -690,7 +415,6 @@ class CustomTheme {
     );
   }
 
-  
   BoxDecoration get swatch => BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -702,31 +426,8 @@ class CustomTheme {
       );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const List<ThemePreset> presets = <ThemePreset>[
-  
+
   ThemePreset(
     id: 'snow_plum',
     name: '粉樱',
@@ -737,7 +438,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient1: Color(0xFFFCE4EE),
     gradient2: Color(0xFFF5B9CE),
   ),
-  
+
   ThemePreset(
     id: 'green_bamboo',
     name: '青筠',
@@ -748,7 +449,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient1: Color(0xFFE4F3E8),
     gradient2: Color(0xFFB7DEC2),
   ),
-  
+
   ThemePreset(
     id: 'blue_sky',
     name: '晴空',
@@ -759,7 +460,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient1: Color(0xFFE2EFFB),
     gradient2: Color(0xFFAECFF0),
   ),
-  
+
   ThemePreset(
     id: 'orange_warm',
     name: '暖橙',
@@ -770,7 +471,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient1: Color(0xFFFDEEDC),
     gradient2: Color(0xFFF7C79B),
   ),
-  
+
   ThemePreset(
     id: 'purple_mood',
     name: '紫霞',
@@ -781,7 +482,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient1: Color(0xFFF0E7FA),
     gradient2: Color(0xFFD2BBEC),
   ),
-  
+
   ThemePreset(
     id: 'dark_sky',
     name: '云青',
@@ -793,28 +494,6 @@ const List<ThemePreset> presets = <ThemePreset>[
     gradient2: Color(0xFFBFD2D8),
   ),
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-
-  
-  
-  
-  
-  
   ThemePreset(
     id: 'wp_shell',
     name: '零 · 幽魂',
@@ -828,7 +507,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     wallpaper: true,
     glass: true,
   ),
-  
+
   ThemePreset(
     id: 'wp_violet',
     name: '壹 · 紫焰',
@@ -842,7 +521,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     wallpaper: true,
     glass: true,
   ),
-  
+
   ThemePreset(
     id: 'wp_rain',
     name: '贰 · 雨夜',
@@ -856,7 +535,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     wallpaper: true,
     glass: true,
   ),
-  
+
   ThemePreset(
     id: 'wp_amber',
     name: '叁 · 金辉',
@@ -870,7 +549,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     wallpaper: true,
     glass: true,
   ),
-  
+
   ThemePreset(
     id: 'wp_teal',
     name: '肆 · 青灯',
@@ -884,7 +563,7 @@ const List<ThemePreset> presets = <ThemePreset>[
     wallpaper: true,
     glass: true,
   ),
-  
+
   ThemePreset(
     id: 'wp_crimson',
     name: '伍 · 绯霓',
@@ -900,18 +579,6 @@ const List<ThemePreset> presets = <ThemePreset>[
   ),
 ];
 
-
-
-
-
-
-
-
-
-
-
-
-
 const ThemePreset builtinLight = ThemePreset(
   id: 'builtin_light',
   name: '明亮模式',
@@ -923,12 +590,6 @@ const ThemePreset builtinLight = ThemePreset(
   gradient2: Color(0xFFF0F2F5),
   builtin: true,
 );
-
-
-
-
-
-
 
 const ThemePreset builtinDark = ThemePreset(
   id: 'builtin_dark',
@@ -942,10 +603,8 @@ const ThemePreset builtinDark = ThemePreset(
   builtin: true,
 );
 
-
 List<ThemePreset> get lightPresets =>
     presets.where((ThemePreset p) => !p.wallpaper).toList(growable: false);
-
 
 List<ThemePreset> get wallpaperPresets =>
     presets.where((ThemePreset p) => p.wallpaper).toList(growable: false);

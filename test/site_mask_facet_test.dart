@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -20,18 +11,9 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  
-  
-  
-  
   setUp(() {
-    
-    
-    
-    
     SecurePrefs.useMemoryBackendForTest();
   });
-
 
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -106,7 +88,7 @@ void main() {
           '正在下载 movie.mp4');
       expect(Formatter.maskLogText('写入 /downloads/data.log 失败'),
           '写入 /downloads/data.log 失败');
-      
+
       expect(Formatter.maskLogText('video.1080p'), 'video.1080p');
     });
 
@@ -116,7 +98,6 @@ void main() {
     });
 
     test('性能：长日志行不出现明显的指数级耗时（线性扫描 + 预编译正则）', () {
-      
       final String line =
           List<String>.generate(200, (int i) => 'host$i.example.com:8080 ')
               .join();
@@ -125,14 +106,13 @@ void main() {
       sw.stop();
       expect(out.contains('example.com'), isFalse, reason: '域名主体应被打码');
       expect(out.contains('***'), isTrue);
-      
+
       expect(sw.elapsedMilliseconds, lessThan(500),
           reason: '2000 字符 / 200 个域名应远快于 500ms，实测 ${sw.elapsedMilliseconds}ms');
     });
   });
 
   group('站点打码开关（2026-09-19 从 SettingsController 搬到 TorrentController）', () {
-    
     TorrentController makeTc() {
       Get.put(ServerController());
       return Get.put(TorrentController());
@@ -143,15 +123,12 @@ void main() {
       expect(tc.siteMasked.value, isTrue,
           reason: '★ 用户要求「所有隐私开关默认打开」：默认就不显示真实站点名');
 
-      
       await tc.loadSiteMasked();
       expect(tc.siteMasked.value, isTrue, reason: '★ 缺省值同样必须打码');
 
-      
       tc.setSiteMasked(false);
       expect(tc.siteMasked.value, isFalse);
 
-      
       Get.reset();
       final TorrentController tc2 = makeTc();
       await tc2.loadSiteMasked();
@@ -160,8 +137,6 @@ void main() {
   });
 
   group('单维度清除筛选', () {
-    
-    
     TorrentController makeCtrl() {
       Get.put(ServerController());
       return Get.put(TorrentController());

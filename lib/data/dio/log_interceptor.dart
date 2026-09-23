@@ -4,17 +4,6 @@ import '../../utils/app_log.dart';
 import '../../utils/formatter.dart';
 import '../../utils/net_error.dart';
 
-
-
-
-
-
-
-
-
-
-
-
 class AppLogInterceptor extends Interceptor {
   @override
   void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
@@ -22,24 +11,14 @@ class AppLogInterceptor extends Interceptor {
     handler.next(response);
   }
 
-  
-  
-  
-  
   static void recordResponse(Response<dynamic> response) {
     final RequestOptions o = response.requestOptions;
     final int code = response.statusCode ?? 0;
     final String target = '${o.method} ${_short(o.uri.toString())}';
-    
-    
+
     final LogScope? scope = _scopeOf(o);
 
     if (code >= 400) {
-      
-      
-      
-      
-      
       AppLog.instance.net(
         '$target → HTTP $code${bodyBrief(response.data)}',
         level: 'ERROR',
@@ -50,15 +29,6 @@ class AppLogInterceptor extends Interceptor {
     }
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static LogScope? _scopeOf(RequestOptions o) {
     final Object? id = o.extra[kLogServerIdKey];
     if (id is! String || id.isEmpty) return null;
@@ -66,15 +36,6 @@ class AppLogInterceptor extends Interceptor {
     return LogScope(id, name is String && name.isNotEmpty ? name : id);
   }
 
-  
-  
-  
-  
-  
-  
-  
-  
-  
   static String bodyBrief(Object? data, [int max = 120]) {
     if (data == null) return '';
     final String raw =
@@ -84,15 +45,9 @@ class AppLogInterceptor extends Interceptor {
     return ' ｜ ${s.length <= max ? s : '${s.substring(0, max)}…'}';
   }
 
-  
-  
-  
-  
-  
   static String _scrub(String s) {
     String out = Formatter.maskLogText(s);
-    
-    
+
     final int b = out.toLowerCase().indexOf('basic ');
     if (b >= 0) {
       final int start = b + 6;
@@ -104,12 +59,11 @@ class AppLogInterceptor extends Interceptor {
         out = '${out.substring(0, start)}***${out.substring(end)}';
       }
     }
-    
+
     final int scheme = out.indexOf('://');
     if (scheme > 0) {
       final int at = out.indexOf('@', scheme + 3);
-      
-      
+
       final int slash = out.indexOf('/', scheme + 3);
       if (at > 0 && (slash < 0 || at < slash)) {
         out = '${out.substring(0, scheme + 3)}***:***@${out.substring(at + 1)}';
@@ -127,16 +81,14 @@ class AppLogInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  
   static void recordError(DioException err) {
     final RequestOptions o = err.requestOptions;
     final String target = '${o.method} ${_short(o.uri.toString())}';
-    
+
     AppLog.instance.net('$target → ${NetError.describe(err)}',
         level: 'ERROR', scope: _scopeOf(o));
   }
 
-  
   static String _short(String uri) {
     final int q = uri.indexOf('?');
     final String s = q < 0 ? uri : uri.substring(0, q);

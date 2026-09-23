@@ -1,27 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -34,10 +10,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/prefs/server_prefs.dart';
 import 'package:torrent_manager/data/transmission/tr_method.dart';
 import 'package:torrent_manager/utils/formatter.dart';
-
-
-
-
 
 Dio _fakeTrDio(List<Map<String, dynamic>> argSets) {
   final Dio dio = Dio(BaseOptions(
@@ -57,7 +29,6 @@ Dio _fakeTrDio(List<Map<String, dynamic>> argSets) {
           final Object? a = m['arguments'];
           if (a is Map) argSets.add(Map<String, dynamic>.from(a));
         } catch (_) {
-          
         }
       }
       h.resolve(Response<dynamic>(
@@ -72,7 +43,6 @@ Dio _fakeTrDio(List<Map<String, dynamic>> argSets) {
   ));
   return dio;
 }
-
 
 Map<String, dynamic> _trRaw({
   String? dir = '/downloads',
@@ -99,10 +69,6 @@ void main() {
   });
 
   tearDown(() => Get.reset());
-
-  
-  
-  
 
   group('第 58 轮 G · P3-2 TR 的 contentPath / timeActive 映射', () {
     test('G1 ★ fromTr 用 `downloadDir` + `name` 拼出内容路径', () {
@@ -148,10 +114,6 @@ void main() {
     });
   });
 
-  
-  
-  
-
   group('第 58 轮 H · P3-3 队列开关 / P3-1 暂停文案', () {
     test('H1 ★ TR 的「启用队列限制」要同时下发 download / seed 两个开关', () async {
       final List<Map<String, dynamic>> argSets = <Map<String, dynamic>>[];
@@ -175,7 +137,7 @@ void main() {
       expect(Formatter.setStatus('stopped'), '已暂停',
           reason: '★ 此前映射到「未工作」/ Idle，而 qB 显示「暂停下载」—— '
               '同一件事两种说法，用户会以为 TR 那边是另一种状态');
-      
+
       expect(Formatter.setStatus('pausedDL'), '暂停下载');
       expect(Formatter.setStatus('pausedUP'), '暂停上传');
     });

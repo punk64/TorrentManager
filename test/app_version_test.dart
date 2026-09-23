@@ -1,20 +1,9 @@
-
-
-
-
-
-
-
-
-
-
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/app/app_version.dart';
 import 'package:torrent_manager/utils/strings.dart';
-
 
 File _pubspec() {
   final File here = File('pubspec.yaml');
@@ -49,7 +38,7 @@ void main() {
     test('面向用户的版本号文案统一为「当前版本：Vx.x.x」', () {
       expect(S.versionPrefix, '当前版本：V');
       expect(S.appVersionText(), '当前版本：V$kAppVersion');
-      
+
       expect(S.appVersionText(), S.appVersionText(kAppVersion));
       expect(S.appVersionText('9.9.9'), '当前版本：V9.9.9');
     });

@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -24,7 +14,6 @@ import 'package:torrent_manager/data/local/secure_prefs.dart';
 import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/utils/crypto_box.dart';
 import 'package:torrent_manager/utils/formatter.dart';
-
 
 class _ScriptedAdapter implements HttpClientAdapter {
   _ScriptedAdapter(this.script);
@@ -47,10 +36,6 @@ class _ScriptedAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-
-
-
-
 Dio _dioWithRedirect(HttpClientAdapter adapter) {
   final Dio dio = Dio(BaseOptions(
     baseUrl: 'http://nas.local:8080',
@@ -66,8 +51,6 @@ ResponseBody _redirect(String location) => ResponseBody.fromString(
       '',
       302,
       headers: <String, List<String>>{
-        
-        
         'location': <String>[location],
       },
     );
@@ -79,11 +62,6 @@ ServerData _srv() => ServerData(
       host: '192.168.1.5',
       port: 8080,
     );
-
-
-
-
-
 
 Future<ServerController> _newServerController() async {
   final ServerController sc = Get.put(ServerController());
@@ -105,9 +83,6 @@ void main() {
     Get.reset();
   });
 
-  
-  
-  
   group('① 隐私开关默认打开（隐藏站点 / 地址 / 端口 / 日志 IP）', () {
     test('★ 新建服务器即默认隐藏地址与端口，卡片上不再是真实内容', () {
       final ServerData s = _srv();
@@ -146,9 +121,7 @@ void main() {
         hidePort: false,
       );
       final Map<String, dynamic> j = off.toJson();
-      
-      
-      
+
       expect(j.containsKey('hideAddress'), isTrue,
           reason: '★ `hideAddress` 必须**总是**落盘');
       expect(j.containsKey('hidePort'), isTrue, reason: '★ `hidePort` 同上');
@@ -156,25 +129,21 @@ void main() {
       final ServerData back = ServerData.fromJson(j);
       expect(back.hideAddress, isFalse);
       expect(back.hidePort, isFalse);
-      
+
       expect(back.displayAddress.contains('192.168.1.5'), isTrue);
     });
 
     test('★ 站点打码默认开启（含落盘缺省值）', () async {
-      
       Get.put(ServerController());
       final TorrentController tc = Get.put(TorrentController());
       expect(tc.siteMasked.value, isTrue, reason: '★ 默认不显示真实站点名');
-      
+
       await tc.loadSiteMasked();
       expect(tc.siteMasked.value, isTrue,
           reason: '★ 缺省值必须也是「打码」——否则老用户升级后等于没开');
     });
   });
 
-  
-  
-  
   group('② 备份恢复拒绝明文回落（防伪造备份注入）', () {
     test('★ 备份文件是明文 JSON 时必须拒绝，绝不能当配置导入', () async {
       final Directory dir =
@@ -183,7 +152,7 @@ void main() {
 
       final ServerController sc = await _newServerController();
       sc.backupDir.value = dir.path;
-      
+
       await File(sc.backupFilePath!).writeAsString(
         '[{"id":"evil","name":"evil","type":"qbittorrent",'
         '"host":"evil.example","port":8080}]',
@@ -209,7 +178,7 @@ void main() {
       sc.servers.assignAll(<ServerData>[_srv()]);
 
       await sc.saveBackup();
-      
+
       sc.servers.clear();
       final int added = await sc.restoreBackup();
       expect(added, 1);
@@ -217,9 +186,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ qB 重定向：跨主机一律拒绝', () {
     test('★ 判定规则：同主机放行（换端口 / http→https），跨主机与降级拒绝', () {
       final Uri from = Uri.parse('http://nas.local:8080/api/v2/app/version');
@@ -278,9 +244,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('④ tracker 复制到剪贴板时 passkey 已打码', () {
     test('★ passkey 不得出现在复制内容里，主机仍可辨识', () {
       const String url =

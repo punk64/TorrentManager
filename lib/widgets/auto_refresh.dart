@@ -2,26 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-
-
 const Duration kPollInterval = Duration(seconds: 3);
-
-
-
-
 
 final RouteObserver<ModalRoute<dynamic>> autoRefreshRouteObserver =
     RouteObserver<ModalRoute<dynamic>>();
-
-
-
-
-
-
-
-
-
-
 
 class AutoRefresh extends StatefulWidget {
   const AutoRefresh({
@@ -33,17 +17,12 @@ class AutoRefresh extends StatefulWidget {
     this.child,
   });
 
-  
   final Future<void> Function() onTick;
 
   final Duration interval;
 
-  
   final bool enabled;
 
-  
-  
-  
   final bool immediate;
 
   final Widget? child;
@@ -56,7 +35,6 @@ class _AutoRefreshState extends State<AutoRefresh>
     with WidgetsBindingObserver, RouteAware {
   Timer? _timer;
 
-  
   bool _inFlight = false;
 
   ModalRoute<dynamic>? _route;
@@ -66,12 +44,7 @@ class _AutoRefreshState extends State<AutoRefresh>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _restart();
-    
-    
-    
-    
-    
-    
+
     if (widget.immediate && widget.enabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _tick(force: true));
     }
@@ -102,11 +75,8 @@ class _AutoRefreshState extends State<AutoRefresh>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      
-      
-      
       if (!widget.enabled) return;
-      
+
       _restart();
       if (widget.immediate) _tick(force: true);
     } else {
@@ -115,14 +85,8 @@ class _AutoRefreshState extends State<AutoRefresh>
     }
   }
 
-  
   @override
   void didPopNext() {
-    
-    
-    
-    
-    
     if (!widget.enabled) return;
     if (widget.immediate) _tick(force: true);
   }
@@ -130,7 +94,7 @@ class _AutoRefreshState extends State<AutoRefresh>
   @override
   void dispose() {
     _timer?.cancel();
-    
+
     if (_route != null) autoRefreshRouteObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -143,10 +107,9 @@ class _AutoRefreshState extends State<AutoRefresh>
     _timer = Timer.periodic(widget.interval, (_) => _tick());
   }
 
-  
   Future<void> _tick({bool force = false}) async {
     if (!mounted || _inFlight) return;
-    
+
     if (!force) {
       final ModalRoute<dynamic>? route = ModalRoute.of(context);
       if (route != null && !route.isCurrent) return;
@@ -155,7 +118,6 @@ class _AutoRefreshState extends State<AutoRefresh>
     try {
       await widget.onTick();
     } catch (_) {
-      
     } finally {
       _inFlight = false;
     }

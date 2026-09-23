@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
 
-
-
-
-
-
 class ColorPicker extends StatefulWidget {
   const ColorPicker({
     super.key,
@@ -68,7 +63,7 @@ class _ColorPickerState extends State<ColorPicker> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        
+
         Container(
           height: 44,
           width: double.infinity,

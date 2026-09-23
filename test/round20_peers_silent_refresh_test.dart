@@ -1,18 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,10 +8,6 @@ import 'package:torrent_manager/app/bindings.dart';
 import 'package:torrent_manager/controllers/torrent_controller.dart';
 import 'package:torrent_manager/data/local/secure_prefs.dart';
 import 'package:torrent_manager/pages/torrent_info_peers_page.dart';
-
-
-
-
 
 Map<String, dynamic> peer(String ip, int dl, int up) => <String, dynamic>{
       'ip': ip,
@@ -66,23 +47,17 @@ void main() {
     await tester.pump();
   }
 
-  
-  
   ScrollableState verticalList(WidgetTester tester) =>
       tester
           .stateList<ScrollableState>(find.byType(Scrollable))
           .firstWhere((ScrollableState s) => s.position.axis == Axis.vertical);
 
-  
-  
-  
   group('① 无刷新动画 / 无加载态', () {
     testWidgets('★ 即使 detailLoading 为真、且列表为空，也不出现转圈',
         (WidgetTester tester) async {
       await pumpPeers(tester);
       final TorrentController ctrl = Get.find<TorrentController>();
 
-      
       ctrl.detailLoading.value = true;
       ctrl.peers.assignAll(manyPeers(3));
       await tester.pump();
@@ -101,7 +76,6 @@ void main() {
       ctrl.peers.assignAll(manyPeers(3));
       await tester.pump();
 
-      
       ctrl.detailLoading.value = true;
       await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsNothing,
@@ -116,9 +90,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('② 数据变化不重置滚动位置', () {
     testWidgets('★ 轮询写入新 peers 后，滚动 offset 原地保留',
         (WidgetTester tester) async {
@@ -129,12 +100,11 @@ void main() {
 
       final ScrollableState list = verticalList(tester);
       final double before = list.position.pixels;
-      
+
       list.position.jumpTo(180);
       await tester.pump();
       expect(list.position.pixels, 180);
 
-      
       final List<Map<String, dynamic>> next = manyPeers(40);
       next[0]['dl_speed'] = 999999; 
       ctrl.peers.assignAll(next);
@@ -147,9 +117,6 @@ void main() {
     });
   });
 
-  
-  
-  
   group('③ 没有可用 Peer 链接', () {
     testWidgets('★ 保持现有空状态，且不执行任何刷新动画',
         (WidgetTester tester) async {
@@ -165,7 +132,6 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing,
           reason: '★ 需求 1：该种子没有 Peer 时**同样不执行刷新动画**');
 
-      
       ctrl.detailLoading.value = false;
       await tester.pump();
       expect(find.text('暂无 Peer 数据'), findsOneWidget);
