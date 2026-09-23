@@ -142,3 +142,14 @@ Release 包使用 `android/app/torrentmanager-release.jks` —— **文件名在
 ## 六、许可证
 
 以 **MIT License** 发布，全文见 [LICENSE](LICENSE)。
+
+### 第三方资源与商标
+
+`assets/images/qbittorrent.png` 与 `assets/images/transmission.png` 分别是
+[qBittorrent](https://www.qbittorrent.org/) 与
+[Transmission](https://transmissionbt.com/) 项目的官方标识，
+**版权归各自项目所有，不适用本仓库的 MIT 许可**；此处仅用于在界面上标识所连接的
+服务器类型。
+
+qBittorrent 与 Transmission 均为各自权利人的名称与商标。本项目与二者**无隶属、赞助
+或背书关系**，是独立开发的第三方远程管理客户端，仅通过二者公开的 RPC 接口通信。
