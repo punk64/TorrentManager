@@ -207,8 +207,10 @@ class _LogQbPageState extends State<LogQbPage> {
     return <(String, String)>[
       ('Transmission 版本', version.isEmpty ? '—' : version),
       ('RPC 版本', Formatter.getString(session, 'rpc-version', def: '—')),
+      // ⚠️ 2026-09-24：这里取的是 `activeTorrentCount`（**活动**种子数，
+      // 含做种中的），原来标成「下载中」会让人以为有几千个正在下载。
       ('种子总数', '${Formatter.getInt(stats, 'torrentCount')}'),
-      ('下载中', '${Formatter.getInt(stats, 'activeTorrentCount')}'),
+      ('活动种子', '${Formatter.getInt(stats, 'activeTorrentCount')}'),
       ('当前下行', Formatter.setSpeed(Formatter.getInt(stats, 'downloadSpeed'))),
       ('当前上行', Formatter.setSpeed(Formatter.getInt(stats, 'uploadSpeed'))),
       ('累计下载', Formatter.setSize(Formatter.getInt(cum, 'downloadedBytes'))),

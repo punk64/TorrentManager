@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../app/theme.dart';
 import '../controllers/torrent_controller.dart';
+import '../utils/strings.dart';
 import 'bottom_panel.dart';
 
 Future<void> showSortFilterPanel([BuildContext? context]) =>
@@ -58,6 +59,8 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
 
   bool _sortOpen = true;
 
+  bool _statusOpen = true;
+
   final Set<FilterDim> _open = <FilterDim>{};
 
   _PanelMetrics _m = const _PanelMetrics(64);
@@ -79,6 +82,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             ),
             children: <Widget>[
               _sortSection(),
+              _statusSection(),
               for (final FilterDim d in FilterDim.values)
                 _facetSection(d, center: d != FilterDim.path),
               const SizedBox(height: 4),
@@ -157,6 +161,115 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: rows,
+    );
+  }
+
+  /// 状态筛选（D1 两级）：主状态**按钮网格** + 选中后的细分 chip 行。
+  /// 顶部横条已按 D2 收敛 ⇒ 这里是选状态的唯一入口。
+  ///
+  /// ★ 2026-09-24 用户整改：主状态原来是**下拉菜单**（展开才知道有哪几种），
+  ///   现改为与「排序方式」同形态的 **4 列按钮网格 —— 单选**（点即生效）。
+  Widget _statusSection() {
+    return _card(
+      title: S.filterStatusTitle,
+      open: _statusOpen,
+      onToggle: () => setState(() => _statusOpen = !_statusOpen),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _statusGrid(),
+          const SizedBox(height: 10),
+          _subStateChips(),
+          if (ctrl.hasStatusFilter) ...<Widget>[
+            const SizedBox(height: 2),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: ctrl.clearStatus,
+                icon: const Icon(Icons.filter_alt_off, size: 16),
+                label: Text(
+                  S.filterStatusClear,
+                  style: TextStyle(fontSize: _m.fontSize),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// 主状态按钮网格（4 列等宽、**单选**）—— 与「排序方式」同形态。
+  ///
+  /// ★ 单选由 `ctrl.setFilter` 保证（枚举值天然互斥），点即生效、无需确认。
+  Widget _statusGrid() {
+    const int cols = _PanelMetrics.cols;
+    const double spacing = _PanelMetrics.gap;
+    const List<TorrentFilter> keys = TorrentFilter.values;
+    final List<Widget> rows = <Widget>[];
+    for (int i = 0; i < keys.length; i += cols) {
+      final List<TorrentFilter> row =
+          keys.skip(i).take(cols).toList(growable: false);
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: spacing),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              for (int j = 0; j < row.length; j++) ...<Widget>[
+                if (j > 0) const SizedBox(width: spacing),
+                SizedBox(
+                  width: _m.btnWidth,
+                  child: _btn(
+                    text: row[j].label,
+                    selected: ctrl.filter.value == row[j],
+                    onTap: () => ctrl.setFilter(row[j]),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+  }
+
+  Widget _subStateChips() {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final List<String> opts = ctrl.subStateOptions();
+    if (opts.isEmpty) {
+      return Text(
+        S.filterSubNone,
+        style: TextStyle(fontSize: _m.fontSize - 1, color: cs.outline),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          S.filterStatusSub,
+          style: TextStyle(fontSize: _m.fontSize, color: cs.outline),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final String v in opts)
+              _btn(
+                text: TorrentController.subStateLabel(v),
+                selected: ctrl.subStates.contains(v),
+                onTap: () => ctrl.toggleSubState(v),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          S.filterSubHint,
+          style: TextStyle(fontSize: _m.fontSize - 1, color: cs.outline),
+        ),
+      ],
     );
   }
 

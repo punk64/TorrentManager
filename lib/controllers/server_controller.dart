@@ -61,6 +61,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   Future<Directory> Function()? backupFallbackDirProvider;
 
+  /// 测试专用：替换身份校验用的临时 TR 实例（默认 `TrMethod()`，
+  /// 测试里注入一个用拦截器直接返回 `config-dir` 的假实例，免得真发请求）。
+  @visibleForTesting
+  TrMethod Function()? trProbeFactory;
+
   ServerController({QbMethod? qb, TrMethod? tr})
       : _qbInjected = qb,
         _trInjected = tr;
@@ -299,6 +304,14 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   final serverVersion = <String, String>{}.obs;
 
+  /// ★ 第 67 轮新增：**接口版本**（qB = `app/webapiVersion`，如 `2.11.4`；
+  /// TR = `session-get` 的 `rpc-version`，如 `18`）。
+  ///
+  /// 为什么另存一份：同一份 qB 应用版本 5.x 之间的 WebAPI 差异无法用主版本区分
+  /// （`torrents/setTags` 要 WebAPI 2.11.4 = qB 5.1），
+  /// 详见 `ServerCapabilities`。取不到时留空 ⇒ 走「乐观 + 404 自适应」兜底。
+  final serverApiVersion = <String, String>{}.obs;
+
   final Set<String> _versionInFlight = <String>{};
 
   final ioJobs = <String, int>{}.obs;
@@ -313,15 +326,28 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     if (cached.isNotEmpty) return;
     if (!_versionInFlight.add(s.id)) return;
     try {
-      final String raw = s.isQbittorrent
-          ? (await qb.updateQbInfo())['version'] ?? ''
-          : await tr.getVersion();
+      String api = '';
+      final String raw;
+      if (s.isQbittorrent) {
+        final Map<String, String> info = await qb.updateQbInfo();
+        raw = info['version'] ?? '';
+        api = (info['webapiVersion'] ?? '').trim();
+      } else {
+        raw = await tr.getVersion();
+      }
       final String v = raw.trim();
       if (v.isEmpty) return;
       serverVersion[s.id] = v;
+      if (api.isNotEmpty) {
+        serverApiVersion[s.id] = api;
+        serverApiVersion.refresh();
+      }
 
       serverVersion.refresh();
-      AppLog.instance.net('${s.name} 版本号：$v', scope: s.logScope);
+      AppLog.instance.net(
+          api.isEmpty ? '${s.name} 版本号：$v' : '${s.name} 版本：$v（WebAPI $api）',
+          scope: s.logScope,
+      );
     } catch (e) {
       AppLog.instance.net('取版本号失败（不影响连接）：${NetError.describe(e)}',
           scope: s.logScope);
@@ -700,13 +726,24 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       String raw =
           s.isQbittorrent ? (qbClient?.probedVersion[s.id] ?? '') : '';
       if (raw.isEmpty) {
-        raw = s.isQbittorrent
-            ? (await qbClient!.updateQbInfo())['version'] ?? ''
-            : await trClient!.getVersion();
+      raw = s.isQbittorrent
+          ? (await qbClient!.updateQbInfo())['version'] ?? ''
+          : await trClient!.getVersion();
       }
       final String v = raw.trim();
       if (v.isEmpty) return;
       serverVersion[s.id] = v;
+      if (s.isQbittorrent) {
+        // 接口版本优先读登录探测的缓存，取不到才补一次请求（不重复打网络）。
+        String api = qbClient?.probedApiVersion[s.id] ?? '';
+        if (api.trim().isEmpty) {
+          api = (await qbClient!.updateQbInfo())['webapiVersion'] ?? '';
+        }
+        if (api.trim().isNotEmpty) {
+          serverApiVersion[s.id] = api.trim();
+          serverApiVersion.refresh();
+        }
+      }
       serverVersion.refresh();
     } catch (e) {
       AppLog.instance.net('取版本号失败（不影响连接）：${NetError.describe(e)}',
@@ -985,6 +1022,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     connError.remove(id);
 
     serverVersion.remove(id);
+    serverApiVersion.remove(id);
 
     ioJobs.remove(id);
 
@@ -1014,6 +1052,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     connStatus.refresh();
     connError.refresh();
     serverVersion.refresh();
+    serverApiVersion.refresh();
     ioJobs.refresh();
     manualRefreshing.refresh();
     suspendKind.refresh();
@@ -1134,17 +1173,38 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    lanUsing[s.id] = onLan;
+    // ★ 保险①：TCP 连通 ≠ 对端是同一台机。TR 用 `config-dir` 做身份校验，
+    //   局域网地址其实是另一台 TR 时（内网 IP/端口撞车、端口转发带偏），
+    //   判为不可信并继续走公网 —— 否则后面所有数据都来自错误的那台。
+    final bool useLan =
+        onLan && s.isTransmission ? await _trLanIsSameInstance(s) : onLan;
 
-    _lanMemory[s.id] = onLan;
+    if (gen != _lanProbeGenOf[s.id]) {
+      AppLog.instance.view(
+        '局域网探测[${s.name}] 结果已被更新的探测取代（本次结论作废）'
+        ' ｜ 用时 ${secs(sw.elapsed)}',
+        key: '局域网:${s.id}:superseded',
+        scope: s.logScope,
+      );
+      return;
+    }
+
+    lanUsing[s.id] = useLan;
+
+    _lanMemory[s.id] = useLan;
 
     _lanMemoryGen[s.id] = _netEpoch;
     lanUsing.refresh();
 
     final ServerData? cur = current.value;
     if (cur == null || cur.id != s.id) {
+      final String why = useLan
+          ? '可达 → 该台此后走局域网'
+          : (onLan
+              ? '端口可达但身份校验未通过 → 该台此后走公网'
+              : '不可达 → 该台此后走公网');
       AppLog.instance.view(
-        '局域网探测[${s.name}] ${onLan ? '可达 → 该台此后走局域网' : '不可达 → 该台此后走公网'}'
+        '局域网探测[${s.name}] $why'
         '（非当前服务器，仅记录结论） ｜ 用时 ${secs(sw.elapsed)}',
         key: '局域网:${s.id}:result',
         scope: s.logScope,
@@ -1152,13 +1212,20 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    final ServerData target = onLan ? cur.connectionTarget(viaLan: true) : cur;
+    final ServerData target = useLan ? cur.connectionTarget(viaLan: true) : cur;
     if (cur.isQbittorrent) {
       qb.setServer(target);
     } else if (cur.isTransmission) {
       tr.setServer(target);
     }
-    if (onLan) {
+    if (onLan && !useLan) {
+      AppLog.instance.view(
+        '局域网探测[${cur.name}] 端口可达，但身份校验未通过（不是同一台 Transmission）'
+        ' → 仍走公网 ｜ 用时 ${secs(sw.elapsed)}',
+        key: '局域网:${s.id}:result',
+        scope: cur.logScope,
+      );
+    } else if (useLan) {
       AppLog.instance.net('局域网可达，已切换至局域网连接：${cur.name} (${target.baseUrl})',
           scope: cur.logScope);
       AppLog.instance.view(
@@ -1177,6 +1244,63 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         scope: cur.logScope,
       );
     }
+  }
+
+  /// 校验「局域网地址」后面是不是**同一台** Transmission。
+  ///
+  /// 背景（2026-09-24 第 66 轮，用户实测）：一台 TR 的卡片显示「种子 35 个」，
+  /// 而服务器日志页显示 5661 —— 局域网地址其实指向了**另一台 TR**
+  /// （两台版本相同，内网 IP/端口撞车或被端口转发带偏）。
+  /// 根因是 [LanDetector] 只做 TCP 连通性探测：**端口通就判"可达"，
+  /// 认不出对端是谁**，于是后面所有请求都被送去了那台只有 35 个种子的机器。
+  ///
+  /// `session-get` 返回的 `config-dir` 是**实例级唯一**的（该 TR 的配置目录），
+  /// 于是公网取一次、局域网取一次，不同 ⇒ 不是同一台 ⇒ 弃用局域网走公网。
+  ///
+  /// ⚠️ 任一方取不到 / 报错时**按"是同一台"处理**（保持旧行为），避免误伤。
+  /// ⚠️ 用**临时实例**探测：避免污染 per-id 实例当前的 session id。
+  Future<bool> _trLanIsSameInstance(ServerData s) async {
+    final TrMethod probe = trProbeFactory?.call() ?? TrMethod();
+    try {
+      final String? wan =
+          await _trConfigDir(probe, s.connectionTarget(viaLan: false).baseUrl);
+      final String? lan =
+          await _trConfigDir(probe, s.connectionTarget(viaLan: true).baseUrl);
+
+      if (wan == null || lan == null) {
+        AppLog.instance.net(
+            '局域网身份校验跳过：未能取到 config-dir'
+            '（公网 ${wan ?? '-'} / 局域网 ${lan ?? '-'}）',
+            level: 'WARN',
+            scope: s.logScope);
+        return true;
+      }
+      if (wan == lan) {
+        AppLog.instance.net('局域网身份校验通过（config-dir 一致：$lan）',
+            scope: s.logScope);
+        return true;
+      }
+
+      AppLog.instance.net(
+          '局域网地址指向的 Transmission 与公网不是同一台：'
+          'config-dir 局域网=$lan ≠ 公网=$wan ⇒ 放弃走局域网，改用公网',
+          level: 'ERROR',
+          scope: s.logScope);
+      return false;
+    } catch (e) {
+      AppLog.instance.net(
+          '局域网身份校验失败（按同一台处理）：${Formatter.safeErr(e)}',
+          level: 'WARN',
+          scope: s.logScope);
+      return true;
+    }
+  }
+
+  /// 取指定地址上那台 TR 的 `config-dir`；取不到返回 null。
+  Future<String?> _trConfigDir(TrMethod c, String baseUrl) async {
+    final Map<String, dynamic> m = await c.sessionGet(baseUrl: baseUrl);
+    final String v = Formatter.getString(m, 'config-dir');
+    return v.isEmpty ? null : v;
   }
 
   QbMethod? get qbActive => current.value?.isQbittorrent == true ? qb : null;

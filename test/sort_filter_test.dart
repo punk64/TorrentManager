@@ -253,7 +253,8 @@ void main() {
   });
 
   group('面板渲染（防「Obx 读不到 Rx → 整块空白」回归）', () {
-    testWidgets('面板能渲染出排序维度 / 方向按钮 / 四个折叠区标题', (WidgetTester tester) async {
+    testWidgets('面板能渲染出排序维度 / 方向按钮 / 五个折叠区标题（含状态区）',
+        (WidgetTester tester) async {
       ctrl.items.assignAll(<Torrent>[
         mk(hash: 'a', category: '电影', tags: '国语', savePath: '/m'),
       ]);
@@ -271,7 +272,13 @@ void main() {
       expect(find.text('升序'), findsOneWidget);
       expect(find.text('降序'), findsOneWidget);
 
+      // 第 67 轮第二期新增的「状态筛选」区（D1 两级状态入口）。
+      await tester.scrollUntilVisible(find.text('状态筛选'), 200.0);
+      expect(find.text('状态筛选'), findsOneWidget, reason: '缺少「状态筛选」分组');
+
+      // 加了状态区后总高度变长 ⇒ 后面的分组要滚动到才可见（ListView 懒加载）。
       for (final FilterDim d in FilterDim.values) {
+        await tester.scrollUntilVisible(find.text(d.title), 200.0);
         expect(find.text(d.title), findsOneWidget, reason: '缺少「${d.title}」分组');
       }
     });
@@ -289,12 +296,18 @@ void main() {
 
       expect(find.text('电影 (1)'), findsNothing, reason: '默认收起，不应有内容');
 
+      // ★ 2026-09-24 起「主状态」由下拉改成 3 行按钮网格，面板变高 ⇒ 「分类」
+      //   可能已在视口之外，点之前先滚到可见（否则 tap 打空）。
+      await tester.ensureVisible(find.text('分类'));
+      await tester.pump();
       await tester.tap(find.text('分类'));
       await tester.pump();
 
       expect(find.text('电影 (1)'), findsOneWidget);
       expect(find.text('未分类 (1)'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('电影 (1)'));
+      await tester.pump();
       await tester.tap(find.text('电影 (1)'));
       await tester.pump();
       expect(ctrl.selection(FilterDim.category), contains('电影'));

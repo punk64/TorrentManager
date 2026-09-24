@@ -259,6 +259,14 @@ class Formatter {
       return S.stPausedDl;
     }
 
+    // ★ forcedDL/forcedUP/stalledDL/stalledUP 必须插在通用 dl/up 判断**之前**：
+    // 它们本身就含 'dl' / 'up'，放后面会被通用分支吃掉、退化成「下载中/做种中」，
+    // 于是出现「筛选里选了强制下载、卡片却显示下载中」的自相矛盾。
+    if (s.contains('forceddl')) return S.stForcedDl;
+    if (s.contains('forcedup')) return S.stForcedUp;
+    if (s.contains('stalleddl')) return S.stStalledDl;
+    if (s.contains('stalledup')) return S.stStalledUp;
+
     if (s.contains('queued')) return S.stQueued;
 
     if (s == 'stopped') return S.stPaused;
@@ -667,6 +675,73 @@ class Formatter {
     }
   }
 
+  /// 常见「两级后缀」：只取最后两段会得到 `example.com.cn` 里的 `com.cn`，
+  /// 站点归类就没意义了 ⇒ 这些后缀要多带一级。
+  static const Set<String> _twoLevelSuffixes = <String>{
+    'co.uk', 'org.uk', 'me.uk', 'ac.uk', 'gov.uk',
+    'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'ac.cn',
+    'com.hk', 'net.hk', 'org.hk', 'edu.hk', 'gov.hk',
+    'com.tw', 'net.tw', 'org.tw', 'edu.tw',
+    'co.jp', 'or.jp', 'ne.jp', 'ac.jp', 'go.jp',
+    'co.kr', 'or.kr', 'ne.kr',
+    'com.au', 'net.au', 'org.au', 'edu.au',
+    'com.br', 'net.br', 'org.br',
+    'com.sg', 'net.sg', 'org.sg',
+    'com.mx', 'com.ar', 'com.tr', 'com.pl', 'com.ua', 'com.vn',
+  };
+
+  /// 把完整 host（或 URL）裁成「主域名.根域名」，用于站点归类与去重。
+  ///
+  /// 例：`tracker.example.com` → `example.com`；`a.b.example.co.uk` → `example.co.uk`；
+  /// punycode（`xn--`）会经 [decodeIdn] 还原成可读域名。
+  /// 输入不是有效 host（空串 / 纯 IP 之外的杂串）时原样返回小写结果。
+  static String registrableDomain(String? raw) {
+    if (raw == null) return '';
+    String s = raw.trim().toLowerCase();
+    if (s.isEmpty) return '';
+
+    final int scheme = s.indexOf('://');
+    if (scheme >= 0) s = s.substring(scheme + 3);
+
+    for (final String sep in <String>['/', '?', '#']) {
+      final int i = s.indexOf(sep);
+      if (i >= 0) s = s.substring(0, i);
+    }
+
+    final int at = s.lastIndexOf('@');
+    if (at >= 0) s = s.substring(at + 1);
+
+    // 去端口：IPv6 字面量 `[::1]:51413` 不能按冒号切，要先找 `]`。
+    if (s.startsWith('[')) {
+      final int close = s.indexOf(']');
+      if (close >= 0) s = s.substring(0, close + 1);
+    } else {
+      final int colon = s.indexOf(':');
+      if (colon >= 0) s = s.substring(0, colon);
+    }
+
+    final String host = decodeIdn(s);
+    final List<String> parts =
+        host.split('.').where((String e) => e.isNotEmpty).toList();
+    if (parts.length < 2) return host;
+    // 纯 IPv4（4 段全数字）没有「主域名」概念 ⇒ 原样返回。
+    if (parts.length == 4 && parts.every(_isDigits)) return host;
+
+    final String last2 = '${parts[parts.length - 2]}.${parts[parts.length - 1]}';
+    final int take = _twoLevelSuffixes.contains(last2) ? 3 : 2;
+    if (parts.length <= take) return parts.join('.');
+    return parts.sublist(parts.length - take).join('.');
+  }
+
+  static bool _isDigits(String s) {
+    if (s.isEmpty) return false;
+    for (int i = 0; i < s.length; i++) {
+      final int c = s.codeUnitAt(i);
+      if (c < 48 || c > 57) return false;
+    }
+    return true;
+  }
+
   static String _percentDecode(String s) {
     if (!s.contains('%')) return s;
     try {
@@ -874,13 +949,36 @@ class Formatter {
           title: Text('${S.delete}（${S.torrentCount(count)}）'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              // ★ D8：删本地文件是**不可逆**的，不能和另外两个开关长得一模一样。
+              //   勾上就整块变红 + 顶出红字说明，让人在点「确认执行」前一定看见。
+              if (delFiles)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    S.deleteFilesWarn(count),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               CheckboxListTile(
                 value: delFiles,
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                title: Text(S.setDelTorrentWithFiles,
-                    style: const TextStyle(fontSize: 12)),
+                activeColor: Colors.red,
+                title: Text(
+                  S.setDelTorrentWithFiles,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: delFiles ? Colors.red : null,
+                    fontWeight: delFiles ? FontWeight.w600 : null,
+                  ),
+                ),
                 onChanged: (bool? v) => setState(() => delFiles = v ?? false),
               ),
               CheckboxListTile(
@@ -914,6 +1012,10 @@ class Formatter {
                   noSubDeleteFiles: noSubDel,
                 ),
               ),
+              // 勾了删文件 ⇒ 确认按钮也转红（配上上方红字，双保险）。
+              style: delFiles
+                  ? TextButton.styleFrom(foregroundColor: Colors.red)
+                  : null,
               child: Text(S.confirmExecute),
             ),
           ],

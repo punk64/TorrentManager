@@ -1,4 +1,4 @@
-const String kAppVersion = '0.2.11';
+const String kAppVersion = '0.3.1';
 
 const String kUpdateCheckUrl =
     'https://api.github.com/repos/punk64/TorrentManager/releases/latest';

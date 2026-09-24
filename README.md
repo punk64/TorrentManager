@@ -11,6 +11,14 @@
 
 ---
 
+## ✨ 界面预览
+
+| 服务器列表 | 种子列表 | 种子详情 |
+| :---: | :---: | :---: |
+| ![服务器列表](docs/screenshots/server_list.png) | ![种子列表](docs/screenshots/torrent_list.png) | ![种子详情](docs/screenshots/torrent_detail.png) |
+
+---
+
 ## 一、开发环境
 
 | 项 | 要求 | 依据 |

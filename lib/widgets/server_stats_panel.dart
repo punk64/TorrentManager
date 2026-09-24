@@ -7,6 +7,9 @@ import '../data/models/torrent.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
 
+/// 环形图内缩量（绘制与「中心数值限宽」共用，二者口径必须一致）
+const double _kDonutInset = 4;
+
 /// 服务器列表顶部的「总计数据卡」。
 ///
 /// 布局：左侧环形图（种子状态分布 + 总数），右侧 4 行 × 2 列数据
@@ -56,145 +59,123 @@ class ServerStatsPanel extends StatelessWidget {
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppTheme.radius),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          // ① 环形：种子状态分布，中心显示总数
-          SizedBox(
-            width: kDonutSize,
-            height: kDonutSize,
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                CustomPaint(
-                  key: const Key('stats-status-donut'),
-                  size: const Size(kDonutSize, kDonutSize),
-                  painter: _DonutPainter(
-                    segments: <(Color, int)>[
-                      (p.seeding, counts.seeding),
-                      (p.downloading, counts.downloading),
-                      (p.paused, counts.paused),
-                      (p.checking, counts.checking),
-                      (p.error, counts.error),
-                      (p.other, counts.other),
-                    ],
-                    track: cs.outlineVariant.withValues(alpha: 0.35),
-                    stroke: _kDonutStroke,
-                  ),
+          // ① 环形图 + ② 右侧 3 行 × 2 列数据
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              // 环形：种子状态分布，中心显示总数
+              SizedBox(
+                width: kDonutSize,
+                height: kDonutSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    CustomPaint(
+                      key: const Key('stats-status-donut'),
+                      size: const Size(kDonutSize, kDonutSize),
+                      painter: _DonutPainter(
+                        segments: <(Color, int)>[
+                          (p.seeding, counts.seeding),
+                          (p.downloading, counts.downloading),
+                          (p.paused, counts.paused),
+                          (p.checking, counts.checking),
+                          (p.error, counts.error),
+                          (p.other, counts.other),
+                        ],
+                        track: cs.outlineVariant.withValues(alpha: 0.35),
+                        stroke: _kDonutStroke,
+                      ),
+                    ),
+                    _centerValue(cs),
+                  ],
                 ),
-                Column(
+              ),
+              const SizedBox(width: 8),
+              // ② 右侧 4 行 × 2 列
+              Expanded(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      '${counts.total}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1.05,
-                      ),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _cell(context, Icons.hub, '${totals.peers}',
+                              S.statsLabelPeers, peersColor),
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: _cell(
+                              context,
+                              Icons.download,
+                              Formatter.setSize(totals.downloadedBytes),
+                              S.statsLabelTotalDl,
+                              dlColor),
+                        ),
+                      ],
                     ),
-                    Text(
-                      S.statsLabelTorrents,
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: cs.onSurfaceVariant,
-                        height: 1.1,
-                      ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _cell(
+                              context,
+                              Icons.upload,
+                              Formatter.setSize(totals.uploadedBytes),
+                              S.statsLabelTotalUl,
+                              upColor),
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: _cell(
+                              context,
+                              Icons.circle,
+                              '$serversOnline/$serversTotal',
+                              S.chartLabelServersOnline,
+                              p.online,
+                              dot: true),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _speed(
+                              context,
+                              S.downArrow,
+                              Formatter.setSpeed(dlSpeed < 0 ? 0 : dlSpeed),
+                              S.chartLabelDownload,
+                              dlColor),
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: _speed(
+                              context,
+                              S.upArrow,
+                              Formatter.setSpeed(upSpeed < 0 ? 0 : upSpeed),
+                              S.chartLabelUpload,
+                              upColor),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          // ② 右侧 4 行 × 2 列
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _cell(context, Icons.hub, '${totals.peers}',
-                          S.statsLabelPeers, peersColor),
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: _cell(
-                          context,
-                          Icons.download,
-                          Formatter.setSize(totals.downloadedBytes),
-                          S.statsLabelTotalDl,
-                          dlColor),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _cell(
-                          context,
-                          Icons.upload,
-                          Formatter.setSize(totals.uploadedBytes),
-                          S.statsLabelTotalUl,
-                          upColor),
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: _cell(context, Icons.circle,
-                          '$serversOnline/$serversTotal',
-                          S.chartLabelServersOnline, p.online,
-                          dot: true),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _speed(
-                          context,
-                          S.downArrow,
-                          Formatter.setSpeed(dlSpeed < 0 ? 0 : dlSpeed),
-                          S.chartLabelDownload,
-                          dlColor),
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: _speed(
-                          context,
-                          S.upArrow,
-                          Formatter.setSpeed(upSpeed < 0 ? 0 : upSpeed),
-                          S.chartLabelUpload,
-                          upColor),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _legendGroup(context, <(Color, int, String)>[
-                        (p.seeding, counts.seeding, S.stSeeding),
-                        (p.downloading, counts.downloading,
-                            S.chartLabelDownload),
-                        (p.paused, counts.paused, S.stPaused),
-                      ]),
-                    ),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: _legendGroup(context, <(Color, int, String)>[
-                        (p.checking, counts.checking, S.chartLabelVerifying),
-                        (p.error, counts.error, S.error),
-                        (p.other, counts.other, S.stUnknownState),
-                      ]),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 3),
+          // ③ 状态图例：整卡底部独立一行（六个状态平铺，字号 8 / 同状态色）
+          _legendRow(context, <(Color, int, String)>[
+            (p.seeding, counts.seeding, S.stSeeding),
+            (p.downloading, counts.downloading, S.chartLabelDownload),
+            (p.paused, counts.paused, S.stPaused),
+            (p.checking, counts.checking, S.chartLabelVerifying),
+            (p.error, counts.error, S.error),
+            (p.other, counts.other, S.stUnknownState),
+          ]),
         ],
       ),
     );
@@ -280,16 +261,50 @@ class ServerStatsPanel extends StatelessWidget {
     );
   }
 
-  /// 状态图例组（每组 3 项），文字与色点同色。
-  Widget _legendGroup(BuildContext context, List<(Color, int, String)> items) {
+  /// 环形中心数值：居中 + 限宽（内圈直径 − 2）+ FittedBox 兜底，
+  /// 字号按字符长度自适应；**总数不缩写**（位数极多时由缩放兜底，保证不压到圆环）。
+  Widget _centerValue(ColorScheme cs) {
+    final String text = '${counts.total}';
+    return SizedBox(
+      width: kDonutSize - 2 * (_kDonutInset + _kDonutStroke) - 2,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: _centerFontSize(text),
+                fontWeight: FontWeight.w700,
+                height: 1.05,
+                color: cs.onSurface,
+              ),
+            ),
+            Text(
+              S.statsLabelTorrents,
+              style: TextStyle(
+                fontSize: 8,
+                color: cs.onSurfaceVariant,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 单行状态图例：整卡底部平铺，字号 8 / 与色点同色；
+  /// 整行 FittedBox 保证窄屏等比缩放、不出现省略号。
+  Widget _legendRow(BuildContext context, List<(Color, int, String)> items) {
     return FittedBox(
       fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           for (int i = 0; i < items.length; i++) ...<Widget>[
-            if (i > 0) const SizedBox(width: 6),
+            if (i > 0) const SizedBox(width: 7),
             Container(
               width: 5,
               height: 5,
@@ -341,7 +356,7 @@ class _DonutPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double r = math.min(size.width, size.height) / 2 - 4;
+    final double r = math.min(size.width, size.height) / 2 - _kDonutInset;
     final Offset c = Offset(size.width / 2, size.height / 2);
 
     canvas.drawCircle(
@@ -379,6 +394,20 @@ class _DonutPainter extends CustomPainter {
   @override
   bool shouldRepaint(_DonutPainter old) =>
       old.segments != segments || old.stroke != stroke;
+}
+
+/// 按字符长度分档选字号：位数越多字越小，配合限宽保证不压到圆环。
+double _centerFontSize(String s) {
+  switch (s.length) {
+    case <= 2:
+      return 16;
+    case 3:
+      return 13.5;
+    case 4:
+      return 11.5;
+    default:
+      return 10;
+  }
 }
 
 Color _adaptColor(Color base, Brightness b) {

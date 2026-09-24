@@ -100,6 +100,20 @@ void main() {
 
       for (final ScrollableState s
           in tester.stateList<ScrollableState>(find.byType(Scrollable))) {
+        // ★ 第 67 轮：概览页新增了可编辑输入框（限速/分享率等），
+        //   单行 TextField 自身带一个**横向** Scrollable（长文本左右滚），
+        //   那是输入行为，不是"条目列表横滑" ⇒ 排除在断言之外。
+        bool insideField = false;
+        tester.element(find.byWidget(s.widget)).visitAncestorElements(
+          (Element e) {
+            if (e.widget is TextField) {
+              insideField = true;
+              return false;
+            }
+            return true;
+          },
+        );
+        if (insideField) continue;
         expect(s.position.axis, Axis.vertical,
             reason: '★ 概览页不得出现横向滑动条目列表');
       }

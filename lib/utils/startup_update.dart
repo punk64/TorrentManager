@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../app/app_version.dart';
+import '../widgets/update_dialog.dart';
 import 'app_log.dart';
-import 'formatter.dart';
-import 'strings.dart';
+import 'app_update.dart';
 import 'update_check.dart';
 
 class StartupUpdatePrompt {
@@ -28,47 +27,31 @@ class StartupUpdatePrompt {
     if (_done) return pendingNotifier.value;
     _done = true;
 
-    final UpdateCheckResult r = await UpdateChecker(fetcher: fetcher).check();
+    // ★ 严格口径：拿本机 ABI 去匹配 Release 里的安装包，对不上就不算"有更新"。
+    final String? abi = await UpdateInstaller.deviceAbi();
+    final UpdateCheckResult r =
+        await UpdateChecker(fetcher: fetcher, deviceAbi: abi).check();
+
     if (r.hasUpdate) {
-      AppLog.instance
-          .net('启动检查更新：发现新版本 V${r.latest}（本地 V$kAppVersion）');
+      AppLog.instance.net('启动检查更新：发现新版本 V${r.latest}'
+          '（本地 V$kAppVersion，安装包 ${r.apk?.name ?? '-'}）');
       pendingNotifier.value = r;
     } else if (r.status == UpdateCheckStatus.failed) {
       AppLog.instance.net('启动检查更新失败（按已是最新处理）：${r.reason}',
           level: 'WARN');
+    } else if (r.reason != null) {
+      AppLog.instance.net('启动检查更新：远端 V${r.latest} —— ${r.reason}');
     }
     return r;
   }
 
+  /// 展示启动检查挂起的那个更新提醒。
+  ///
+  /// 没有挂起结果（已是最新 / 检查失败 / 还没跑过）就什么都不做 ——
+  /// 「手动检查更新」请走 [UpdateDialog.open]，它会自己发一次请求。
   static Future<void> showDetails(BuildContext context) async {
     final UpdateCheckResult? r = pendingNotifier.value;
-    final String? latest = r?.latest;
-    if (!context.mounted || latest == null || latest.isEmpty) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text(S.hasUpdate),
-        content: SingleChildScrollView(
-          child: Text(S.startupUpdateBody(latest),
-              style: const TextStyle(fontSize: 12, height: 1.5)),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () async {
-              await Clipboard.setData(const ClipboardData(text: kReleasesUrl));
-              if (ctx.mounted) {
-                Formatter.showToast(S.copyUrlHint);
-              }
-            },
-            child: Text(S.copyReleaseLink),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(S.ok),
-          ),
-        ],
-      ),
-    );
+    if (!context.mounted || r == null) return;
+    await UpdateDialog.open(context, initial: r);
   }
 }

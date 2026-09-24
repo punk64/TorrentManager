@@ -213,13 +213,15 @@ void main() {
       final UpdateChecker c = UpdateChecker(
         fetcher: (String u) async {
           called = true;
-          return '9.9.9';
+          // 口径 A（严格）：版本号更大还不够，得有能装的安装包才算"有更新"。
+          return '{"tag_name":"v9.9.9","assets":[{"name":"TorrentManager-V9.9.9'
+              '-arm64-v8a.apk","browser_download_url":"https://e/a.apk"}]}';
         },
       );
       final UpdateCheckResult r =
           await c.check(url: 'https://example.com/latest.json', local: '0.1.0');
       expect(called, isTrue);
-      expect(r.hasUpdate, isTrue);
+      expect(r.hasUpdate, isTrue, reason: 'https 且带安装包 → 正常判定为有更新');
     });
   });
 }

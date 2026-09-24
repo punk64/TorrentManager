@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 2026-09-24（V0.2.12 自更新）：FileProvider 只暴露**应用缓存目录**。
+         Dart 侧下载 APK 用的是 path_provider 的 getTemporaryDirectory()
+         （= Context.getCacheDir()），所以这里对应 <cache-path>。
+         ⚠️ 不要把根目录或 external-path 放进来 —— 那是把整个存储共享出去，
+            本功能只需要一个文件。 -->
+    <cache-path name="update_apk" path="." />
+</paths>

@@ -95,9 +95,52 @@ class S {
   /// 环形图中心「种子」小标签
   static String get statsLabelTorrents => L.t('种子');
 
+  // ↓ 第 67 轮第二期新增：状态筛选（主状态 label / 细分态 label / 面板文案）
+  static String get filterAll => L.pick('全部', 'All');
+  static String get filterDownloading => L.pick('下载中', 'Downloading');
+  static String get filterSeeding => L.pick('做种中', 'Seeding');
+  static String get filterCompleted => L.pick('已完成', 'Completed');
+  static String get filterPaused => L.pick('暂停', 'Paused');
+  static String get filterQueued => L.pick('排队', 'Queued');
+  static String get filterChecking => L.pick('校验中', 'Checking');
+  static String get filterError => L.pick('错误', 'Errored');
+  static String get filterActive => L.pick('活跃', 'Active');
+
+  static String get filterStatusTitle => L.pick('状态筛选', 'Status');
+  static String get filterStatusMain => L.pick('主状态', 'Main status');
+  static String get filterStatusSub => L.pick('细分状态', 'Sub-status');
+  static String get filterSubHint =>
+      L.pick('不选 = 该状态全部细分；可多选', 'Unselected = all; multi-select');
+  static String get filterSubNone =>
+      L.pick('该状态没有细分（按进度/速度判断）', 'No sub-status (by progress/speed)');
+  static String get filterStatusPrefix => L.pick('状态: ', 'Status: ');
+  static String get filterStatusClear => L.pick('清除状态', 'Clear status');
+
+  static String get stDownloading => L.pick('下载中', 'Downloading');
+  static String get stUploading => L.pick('上传中', 'Uploading');
+  static String get stCheckingDl => L.pick('校验中(下载)', 'Checking (dl)');
+  static String get stCheckingUp => L.pick('校验中(做种)', 'Checking (up)');
+  static String get stError => L.pick('错误', 'Error');
+  static String get stQueuedDl => L.pick('排队下载', 'Queued DL');
+  static String get stQueuedUp => L.pick('排队做种', 'Queued UP');
+
+  static String get stTrStopped => L.pick('已停止', 'Stopped');
+  static String get stTrCheckWait => L.pick('校验等待', 'Waiting to check');
+  static String get stTrChecking => L.pick('校验中', 'Checking');
+  static String get stTrQueueDl => L.pick('排队下载', 'Queued for DL');
+  static String get stTrDownloading => L.pick('下载中', 'Downloading');
+  static String get stTrQueueUp => L.pick('排队做种', 'Queued for seeding');
+  static String get stTrSeeding => L.pick('做种中', 'Seeding');
+  static String get stTrIsolated => L.pick('孤立(无tracker)', 'Isolated');
+
   static String get stSeeding => L.t('做种');
   static String get stPausedUp => L.t('暂停上传');
   static String get stPausedDl => L.t('暂停下载');
+  static String get stForcedDl => L.pick('强制下载', 'Forced download');
+  static String get stForcedUp => L.pick('强制做种', 'Forced seeding');
+  static String get stStalledDl => L.pick('下载停滞', 'Stalled download');
+  static String get stStalledUp => L.pick('做种停滞', 'Stalled seeding');
+
   static String get stMetaDl => L.t('下载元数据');
   static String get stQueued => L.t('等待状态');
   static String get stCheckingResume => L.t('检查恢复数据');
@@ -125,16 +168,20 @@ class S {
 
   static String get setNoLimitZero => L.t('设置0为不限速');
   static String get setNoLimitMinusOneShort => L.t('设置为-1代表不限制');
-  static String get setRatioHelp => L.t('设置为-1表示无限制, -2表示使用全局限制\n设置分享比率为0等同于不做种\n任何一个限制达到标准即停止做种');
+  static String get setRatioHelp =>
+      L.t('设置为-1表示无限制, -2表示使用全局限制\n设置分享比率为0等同于不做种\n任何一个限制达到标准即停止做种');
   static String get setSwitchToEnable => L.t('开启右侧开关后启用限制\n不开启则无限制');
   static String get setQueueSwitchHelp => L.t('开启"启用队列限制"后生效\n不开启则无限制');
   static String get setTempPathHelp => L.t('开启"启用临时路径"后生效');
   static String get setAltLimitHelp => L.t('开启"启用备用限速"后生效');
   static String get setPickFromBelow => L.t('可在下方已有路径中选取后自动填入');
-  static String get setPickFromBelowNoAutoTmm => L.t('可在下方已有路径中选取后自动填入，选取需关闭自动种子管理');
+  static String get setPickFromBelowNoAutoTmm =>
+      L.t('可在下方已有路径中选取后自动填入，选取需关闭自动种子管理');
   static String get setPickFromBelowPlain => L.t('可在下方路径中选取后自动填入');
-  static String get setCategoryHelp => L.t('选择分类后点击更改\n若不选择任何分类,直接执行\'更改\'则为清除分类\n自动种子管理开启时，更改分类会移动文件到分类对应目录');
-  static String get setCategoryAutoTmmHelp => L.t('种子如果开启了自动种子管理\n更改分类路径会移动文件到分类对应目录\n删除分类时，如果该分类下有种子，则会被移动到默认目录');
+  static String get setCategoryHelp =>
+      L.t('选择分类后点击更改\n若不选择任何分类,直接执行\'更改\'则为清除分类\n自动种子管理开启时，更改分类会移动文件到分类对应目录');
+  static String get setCategoryAutoTmmHelp =>
+      L.t('种子如果开启了自动种子管理\n更改分类路径会移动文件到分类对应目录\n删除分类时，如果该分类下有种子，则会被移动到默认目录');
   static String get setTagDeleteHelp => L.t('选中后可删除标签，可多选\n');
   static String get setCategoryEditHelp => L.t('长按可编辑分类\n选中后可删除分类，可多选');
   static String get setAddNewLineHelp => L.t('添加多个时请换行');
@@ -152,6 +199,16 @@ class S {
 
   static String get actResume => L.t('继续');
   static String get actPause => L.t('暂停');
+
+  /// 种子列表多选栏（图标 + 文字按钮）用；自带英文，不进英文映射表
+  static String get actStart => L.pick('开始', 'Start');
+
+  static String get actMultiSelect => L.pick('多选', 'Select');
+
+  static String get actSortFilter => L.pick('排序筛选', 'Sort & filter');
+
+  static String deleteTapAgain(int n) =>
+      L.pick('再点确认删除 $n 项', 'Tap again to delete $n');
   static String get setUnfinishedExtQb => L.t('未完成文件添加扩展名.!qB');
   static String get setUnfinishedExtPart => L.t('未完成文件添加扩展名.part');
 
@@ -182,8 +239,7 @@ class S {
 
   static String get themeFontColor => L.t('字体颜色');
   static String get themeFontColorAuto => L.t('跟随主题');
-  static String get themeFontColorHelp => L.t(
-      '「跟随主题」时字色随明暗自动切换：明亮模式近黑，黑暗模式近白。'
+  static String get themeFontColorHelp => L.t('「跟随主题」时字色随明暗自动切换：明亮模式近黑，黑暗模式近白。'
       '自定义后会固定使用该颜色，不再随明暗变化。');
 
   static String get themePresets => L.t('精选主题');
@@ -200,9 +256,9 @@ class S {
       '开启后卡片与面板变为半透明玻璃，背景图从卡片下透出。');
 
   static String get themeOpacity => L.t('透明度');
-  static String get themeOpacityHelp => L.t(
-      '统一调整卡片、面板、搜索框等带底衬组件的透明度：0% 为完全不透明（完全遮住背景图），'
-      '100% 为完全透明（背景图完全透出）。主题页、日志页等正文直接铺在背景图上的页面有固定底衬，不受此项影响。');
+  static String get themeOpacityHelp =>
+      L.t('统一调整卡片、面板、搜索框等带底衬组件的透明度：0% 为完全不透明（完全遮住背景图），'
+          '100% 为完全透明（背景图完全透出）。主题页、日志页等正文直接铺在背景图上的页面有固定底衬，不受此项影响。');
 
   static String get accLocalNote => L.t('账号仅用于本机身份标识与本地备份归属，不发起任何网络请求。');
   static String get accSignedInPrefix => L.t('已登录账号: ');
@@ -212,7 +268,8 @@ class S {
 
   static String get accLogin => L.t('登陆账号');
 
-  static String get accLogoutConfirm => L.t('退出账号后仅清除本机账号标识，服务器配置与备份不受影响。确定要退出吗？');
+  static String get accLogoutConfirm =>
+      L.t('退出账号后仅清除本机账号标识，服务器配置与备份不受影响。确定要退出吗？');
 
   static String get copyUrlHint => L.t('链接已复制到剪贴板');
 
@@ -255,11 +312,11 @@ class S {
   static String get srvConnFail => L.t('无法连接到服务器，请检查服务器设置！');
   static String get srvConnTimeout => L.t('连接超时, 请检查网络或服务器');
 
-  static String get srvIpBanned => L.t(
-      'IP 已被服务器封禁（连续登录失败次数过多）。请到服务端解除封禁，或更换出口 IP 后再试。');
+  static String get srvIpBanned =>
+      L.t('IP 已被服务器封禁（连续登录失败次数过多）。请到服务端解除封禁，或更换出口 IP 后再试。');
 
-  static String get srvCredsMissing => L.t(
-      '未填写账号或密码，已跳过登录以避免触发服务端封禁。请点「编辑」补全后重试。');
+  static String get srvCredsMissing =>
+      L.t('未填写账号或密码，已跳过登录以避免触发服务端封禁。请点「编辑」补全后重试。');
 
   static String get srvConfigIncomplete =>
       L.t('服务器配置不完整（地址或端口为空），已暂停自动重试。请点「编辑」补全。');
@@ -270,8 +327,8 @@ class S {
 
   static String get srvRetryOne => L.t('重试这台服务器');
 
-  static String srvRetryExhausted(int n) =>
-      L.pick('已连续失败 $n 次，自动重试已挂起。', 'Failed $n times in a row; auto-retry paused.');
+  static String srvRetryExhausted(int n) => L.pick(
+      '已连续失败 $n 次，自动重试已挂起。', 'Failed $n times in a row; auto-retry paused.');
 
   static String get srvPassKeepHint => L.t('留空则保持原密码');
 
@@ -283,7 +340,8 @@ class S {
   static String get ioUploadPrefix => L.t('上传：');
   static String get ioDownloadPrefix => L.t('下载：');
 
-  static String get srvAddrInvalid => L.t('地址不对：请填主机名或完整 URL（例：192.168.1.5 或 https://ddns.example.com），不要只填 https');
+  static String get srvAddrInvalid => L.t(
+      '地址不对：请填主机名或完整 URL（例：192.168.1.5 或 https://ddns.example.com），不要只填 https');
   static String get srvSelectToAddTorrent => L.t('选择服务器以添加种子');
   static String get srvTimeout => L.t('连接超时, 请检查网络或服务器');
   static String get srvRefreshedAll => L.t('已重新刷新全部服务器');
@@ -304,13 +362,17 @@ class S {
   static String get qbSetQueueing => L.t('更改 队列限制 成功: ');
   static String get qbSetQueueingFail => L.t('setServerQueueing 更改 队列限制 失败: ');
   static String get qbSetPreallocate => L.t('更改 为文件预分配磁盘空间 成功: ');
-  static String get qbSetPreallocateFail => L.t('setPreallocateAll 更改 为文件预分配磁盘空间 失败: ');
+  static String get qbSetPreallocateFail =>
+      L.t('setPreallocateAll 更改 为文件预分配磁盘空间 失败: ');
   static String get qbSetAutoTmm => L.t('更改 启用自动种子管理 成功: ');
-  static String get qbSetAutoTmmFail => L.t('setAutoTmmEnabled 更改 启用自动种子管理 失败: ');
+  static String get qbSetAutoTmmFail =>
+      L.t('setAutoTmmEnabled 更改 启用自动种子管理 失败: ');
   static String get qbSetIncompleteQb => L.t('更改 未完成文件添加扩展名".!qB" 成功: ');
-  static String get qbSetIncompleteQbFail => L.t('setIncompleteFilesExt 更改 未完成文件添加扩展名".!qB" 失败: ');
+  static String get qbSetIncompleteQbFail =>
+      L.t('setIncompleteFilesExt 更改 未完成文件添加扩展名".!qB" 失败: ');
   static String get qbSetIncompletePart => L.t('更改 未完成文件添加扩展名".part" 成功: ');
-  static String get qbSetIncompletePartFail => L.t('setIncompleteFilesExt 更改 未完成文件添加扩展名".part" 失败: ');
+  static String get qbSetIncompletePartFail =>
+      L.t('setIncompleteFilesExt 更改 未完成文件添加扩展名".part" 失败: ');
 
   static String get tAdded => L.t('添加种子成功: ');
   static String get tAddFailed => L.t('添加种子失败');
@@ -334,8 +396,10 @@ class S {
   static String get tAddBatchFailList => L.t('以下条目添加失败');
 
   static String get trkAddAllHelp => L.t('执行后将新Tracker添加到所有已选种子');
-  static String get trkDeleteHelp => L.t('执行后遍历已选种子的Tracker, 查询输入的原Tracker是否存在,\n若存在则执行删除操作, 不存在则跳过');
-  static String get trkReplaceHelp => L.t('执行后遍历已选种子的Tracker, 查询输入的原Tracker是否存在,\n若存在则执行替换操作, 不存在则跳过');
+  static String get trkDeleteHelp =>
+      L.t('执行后遍历已选种子的Tracker, 查询输入的原Tracker是否存在,\n若存在则执行删除操作, 不存在则跳过');
+  static String get trkReplaceHelp =>
+      L.t('执行后遍历已选种子的Tracker, 查询输入的原Tracker是否存在,\n若存在则执行替换操作, 不存在则跳过');
   static String get trkAddTitle => L.t('添加Tracker(');
   static String get trkEditTitle => L.t('修改Tracker(');
   static String get trkDeleteTitle => L.t('删除Tracker(');
@@ -351,11 +415,9 @@ class S {
   static String get trkDelOk => L.t('删除tracker成功, 名称:');
   static String get trkAddOk => L.t('添加tracker成功, 名称:');
 
-  static String get trkEditNotFound =>
-      L.t('修改tracker失败, 未找到原tracker, 名称:');
+  static String get trkEditNotFound => L.t('修改tracker失败, 未找到原tracker, 名称:');
 
-  static String get noTrId =>
-      L.t('该种子缺少 Transmission 任务 ID，无法执行此操作');
+  static String get noTrId => L.t('该种子缺少 Transmission 任务 ID，无法执行此操作');
 
   static String get noServer => L.t('未选择服务器');
 
@@ -365,13 +427,11 @@ class S {
 
   static String get bkPortableExport => L.t('导出便携备份到…');
   static String get bkPortableImport => L.t('导入便携备份');
-  static String get bkPortableHint => L.t(
-      '便携备份含服务器密码，用你设置的口令加密，可在任意设备导入；'
+  static String get bkPortableHint => L.t('便携备份含服务器密码，用你设置的口令加密，可在任意设备导入；'
       '下方的明文 JSON 不含密码，只适合本机留档。');
   static String get bkPortableExportTitle => L.t('设置便携备份口令');
   static String get bkPortableImportTitle => L.t('输入便携备份口令');
-  static String get bkPortableExportBody => L.t(
-      '这份备份含服务器地址与密码。口令用于加密文件，请牢记 —— '
+  static String get bkPortableExportBody => L.t('这份备份含服务器地址与密码。口令用于加密文件，请牢记 —— '
       '口令丢失后文件将无法解开（本应用不保存口令，也无法找回）。');
   static String get bkPortableImportBody => L.t('输入导出这台设备时设置的口令。');
   static String get bkPortablePassphrase => L.t('口令');
@@ -384,14 +444,13 @@ class S {
 
   static String get bkPortableWrongPass => L.t('口令不正确，或文件已被修改/损坏');
 
-  static String get bkPortableNotPortable => L.t(
-      '这不是便携备份文件。便携备份请用「导出便携备份到…」生成（文件内含 portable 标识）。');
+  static String get bkPortableNotPortable =>
+      L.t('这不是便携备份文件。便携备份请用「导出便携备份到…」生成（文件内含 portable 标识）。');
 
-  static String get bkJsonImportNote => L.t(
-      '粘贴从其他设备导出的 JSON。⚠️ 该格式不含密码：同 id 的服务器保留本机已有密码，'
-      '新增的服务器需要导入后手动补填密码。要连密码一起迁移请用「便携备份」。');
-  static String get bkJsonExportNote =>
-      L.t('已复制到剪贴板（含服务器地址与用户名，不含密码）');
+  static String get bkJsonImportNote =>
+      L.t('粘贴从其他设备导出的 JSON。⚠️ 该格式不含密码：同 id 的服务器保留本机已有密码，'
+          '新增的服务器需要导入后手动补填密码。要连密码一起迁移请用「便携备份」。');
+  static String get bkJsonExportNote => L.t('已复制到剪贴板（含服务器地址与用户名，不含密码）');
 
   static String get btExportTorrent => L.t('导出种子');
   static String get btExportOk => L.t('导出种子成功!');
@@ -421,27 +480,30 @@ class S {
   static String get themeExportFailedPrefix => L.t('导出主题失败：');
   static String get themeImportCancelled => L.t('已取消导入');
 
-  static String get themeImportBadSource => L.t('导入失败：这不是 TorrentManager 主题配置文件');
-  static String get themeImportBadSourceHint => L.t('请确认选中的是本应用导出的 .json 文件（内含 "torrentmanager-theme-pack" 标识）。');
+  static String get themeImportBadSource =>
+      L.t('导入失败：这不是 TorrentManager 主题配置文件');
+  static String get themeImportBadSourceHint =>
+      L.t('请确认选中的是本应用导出的 .json 文件（内含 "torrentmanager-theme-pack" 标识）。');
   static String themeImportTooNew(int file, int app) => L.pick(
       '导入失败：文件来自更新的版本（文件 v$file > 应用 v$app）',
       'Import failed: the file comes from a newer version (file v$file > app v$app)');
-  static String get themeImportTooNewHint => L.t('请先升级到最新版 TorrentManager，再导入这个文件。');
+  static String get themeImportTooNewHint =>
+      L.t('请先升级到最新版 TorrentManager，再导入这个文件。');
   static String get themeImportEmpty => L.t('导入失败：文件里没有任何主题');
-  static String get themeImportEmptyHint => L.t('文件结构正确，但 themes 列表为空 —— 可能导出时还没有保存任何自定义主题。');
+  static String get themeImportEmptyHint =>
+      L.t('文件结构正确，但 themes 列表为空 —— 可能导出时还没有保存任何自定义主题。');
   static String themeImportItemSkipped(int i, String reason) => L.pick(
       '第 $i 套主题格式不正确，已跳过（$reason）',
       'Theme #$i has an invalid format and was skipped ($reason)');
-  static String themeImportAllBad(int n) => L.pick(
-      '导入失败：$n 套主题均无法解析',
+  static String themeImportAllBad(int n) => L.pick('导入失败：$n 套主题均无法解析',
       'Import failed: none of the $n themes could be parsed');
-  static String get themeImportAllBadHint => L.t('逐条解析都失败了。文件可能被其它程序改写过，可尝试重新导出一份。');
+  static String get themeImportAllBadHint =>
+      L.t('逐条解析都失败了。文件可能被其它程序改写过，可尝试重新导出一份。');
   static String get themeImportReadFailed => L.t('读取文件失败');
   static String themeImportOk(int n) =>
       L.pick('已导入 $n 套主题', 'Imported $n themes');
   static String themeImportPartial(int ok, int skipped) => L.pick(
-      '已导入 $ok 套主题，跳过 $skipped 套',
-      'Imported $ok themes, skipped $skipped');
+      '已导入 $ok 套主题，跳过 $skipped 套', 'Imported $ok themes, skipped $skipped');
 
   static String get themeImportKeepBoth => L.t('保留两者');
   static String get themeImportOverwrite => L.t('覆盖');
@@ -455,15 +517,12 @@ class S {
   static String get logSelectAll => L.t('全选');
   static String get logInvert => L.t('反选');
   static String get logClear => L.t('清空日志');
-  static String logSelectedCount(int n) =>
-      L.pick('已选择 $n 条', '$n selected');
+  static String logSelectedCount(int n) => L.pick('已选择 $n 条', '$n selected');
   static String logCopyCount(int n) => L.pick('复制 $n 条', 'Copy $n');
   static String get logExportSelected => L.t('导出所选');
   static String get logExportAll => L.t('导出全部');
-  static String logCopied(int n) =>
-      L.pick('已复制 $n 条日志', 'Copied $n log lines');
-  static String logExportOk(int n) =>
-      L.pick('已导出 $n 条 → ', 'Exported $n → ');
+  static String logCopied(int n) => L.pick('已复制 $n 条日志', 'Copied $n log lines');
+  static String logExportOk(int n) => L.pick('已导出 $n 条 → ', 'Exported $n → ');
 
   static String logExportPrivacyOff(int n) => L.pick(
       '已导出 $n 条（隐私模式已关闭，文件含真实地址）',
@@ -476,8 +535,7 @@ class S {
 
   static String get logFilterTitle => L.pick('按服务器筛选', 'Filter by server');
 
-  static String get logFilterHideSystem =>
-      L.pick('隐藏系统日志', 'Hide system logs');
+  static String get logFilterHideSystem => L.pick('隐藏系统日志', 'Hide system logs');
 
   static String get logFilterHideSystemHint => L.pick(
       '应用启动 / 复制 / 点击卡片 / 设备启动等与服务器无关的日志',
@@ -508,10 +566,10 @@ class S {
   static String get logFilterNoServer =>
       L.pick('暂无可筛选的服务器', 'No servers to filter');
 
-  static String get logExportFiltered =>
-      L.pick('导出筛选结果', 'Export filtered');
+  static String get logExportFiltered => L.pick('导出筛选结果', 'Export filtered');
 
-  static String get netTooManyRedirects => L.t('RedirectInterceptor: 超过最大重定向次数');
+  static String get netTooManyRedirects =>
+      L.t('RedirectInterceptor: 超过最大重定向次数');
   static String get noFileSelected => L.t('未选择文件');
   static String get pleaseSelectFile => L.t('请选择文件');
 
@@ -524,6 +582,49 @@ class S {
   static String get noUpdate => L.t('已是最新版本');
 
   static String get checkingUpdate => L.t('正在检查更新…');
+
+  // ↓↓↓ 更新弹窗（V0.2.12 起：可看发布页、可直接下载安装）↓↓↓
+  static String updateFoundTitle(String v) =>
+      L.pick('发现新版本 V$v', 'New version V$v found');
+
+  static String get updateNotes => L.pick('更新说明', 'Release notes');
+
+  static String get updateLater => L.pick('稍后', 'Later');
+
+  static String get updateNow => L.pick('立即更新', 'Update now');
+
+  static String get updateDownloading =>
+      L.pick('正在下载更新…', 'Downloading update…');
+
+  static String get updateDownloadHint =>
+      L.pick('下载到应用缓存，完成后校验 SHA-1', 'Saved to app cache, SHA-1 verified');
+
+  static String get updateInstalling =>
+      L.pick('正在唤起安装…', 'Opening installer…');
+
+  static String get updateInstallingHint =>
+      L.pick('接下来由系统安装器接管', 'System installer takes over now');
+
+  static String get updateDownloadFailed =>
+      L.pick('下载失败', 'Download failed');
+
+  static String get updateBrowserDownload =>
+      L.pick('浏览器下载', 'Download in browser');
+
+  static String get updateNeedPermission => L.pick(
+      '请先在系统设置里允许「安装未知应用」后再重试',
+      'Allow "Install unknown apps" in system settings, then retry');
+
+  static String get updateNoNative => L.pick(
+      '当前平台不支持直接安装，已改为打开发布页',
+      'Direct install unsupported here; opened the release page');
+
+  static String get updateUrlCopied =>
+      L.pick('无法打开浏览器，地址已复制', 'Cannot open browser; link copied');
+
+  static String updateNoInstallerBody(String v) =>
+      L.pick('已是最新版本（远端 V$v 没有可用的安装包）',
+          'Up to date (remote V$v has no installable package)');
   static String get peerBanOk => L.t('禁用Peers成功,IP:');
   static String get peerBanFail => L.t('禁用Peers失败');
 
@@ -533,16 +634,15 @@ class S {
 
   static String get peerCopyIpPort => L.t('复制 IP:端口');
 
-  static String peerCopied(String ip) =>
-      L.pick('已复制：$ip', 'Copied: $ip');
+  static String peerCopied(String ip) => L.pick('已复制：$ip', 'Copied: $ip');
 
   static String peerBanConfirm(String target) =>
       L.pick('确定要封禁 $target 吗？', 'Ban $target?');
 
   static String get peerBanNoDuration => L.pick(
-        'qBittorrent 的封禁接口不支持时长：封禁后立即生效，需到服务端手动解除。',
-        'qBittorrent has no ban-duration option: the ban takes effect '
-            'immediately and must be lifted manually on the server.');
+      'qBittorrent 的封禁接口不支持时长：封禁后立即生效，需到服务端手动解除。',
+      'qBittorrent has no ban-duration option: the ban takes effect '
+          'immediately and must be lifted manually on the server.');
 
   static String get privacyTitle => L.t('隐私政策');
   static String get termsTitle => L.t('用户协议');
@@ -551,32 +651,32 @@ class S {
 
   static String get openSourceTitle => L.t('开源说明');
 
-  static String get openSourceBody => L.t(
-      'TorrentManager 是自由开源软件，以 MIT License 发布。\n'
-      '\n'
-      '一、源码与发布\n'
-      '项目主页：$kProjectUrl\n'
-      '发布页（预编译 APK）：$kReleasesUrl\n'
-      '\n'
-      '二、许可条款（摘要）\n'
-      '你可以自由使用、复制、修改、合并、出版发行、散布、再许可和/或销售'
-      '本软件的副本，只需在所有副本中包含上述版权声明和本许可声明。软件'
-      '按"现状"提供，不包含任何明示或默示的担保，作者不对任何索赔、损害'
-      '或其他责任负责。全文见仓库根目录的 LICENSE 文件。\n'
-      '\n'
-      '三、第三方组件\n'
-      '本应用构建于 Flutter / Dart 与以下开源项目之上：GetX（状态管理与'
-      '路由）、Dio 与 dio_cookie_manager / cookie_jar（HTTP 客户端与'
-      'Cookie）、pointycastle（AES-GCM 加密）、flutter_secure_storage 与'
-      'shared_preferences / path_provider（本机存储）、file_picker（文件'
-      '选择）、fl_chart（图表）、intl（数字与日期格式化）。它们各自按其'
-      '原许可证授权，完整清单见仓库的 pubspec.yaml 与 pubspec.lock。\n'
-      '\n'
-      '四、第三方标识与商标\n'
-      'assets 中的 qbittorrent / transmission 标识版权归各自项目所有，'
-      '不适用本仓库的 MIT 许可，仅用于在界面上标识所连接的服务器类型。'
-      '本项目与 qBittorrent、Transmission 无隶属、赞助或背书关系，是独立'
-      '开发的第三方客户端，仅通过二者公开的 RPC 接口通信。');
+  static String get openSourceBody =>
+      L.t('TorrentManager 是自由开源软件，以 MIT License 发布。\n'
+          '\n'
+          '一、源码与发布\n'
+          '项目主页：$kProjectUrl\n'
+          '发布页（预编译 APK）：$kReleasesUrl\n'
+          '\n'
+          '二、许可条款（摘要）\n'
+          '你可以自由使用、复制、修改、合并、出版发行、散布、再许可和/或销售'
+          '本软件的副本，只需在所有副本中包含上述版权声明和本许可声明。软件'
+          '按"现状"提供，不包含任何明示或默示的担保，作者不对任何索赔、损害'
+          '或其他责任负责。全文见仓库根目录的 LICENSE 文件。\n'
+          '\n'
+          '三、第三方组件\n'
+          '本应用构建于 Flutter / Dart 与以下开源项目之上：GetX（状态管理与'
+          '路由）、Dio 与 dio_cookie_manager / cookie_jar（HTTP 客户端与'
+          'Cookie）、pointycastle（AES-GCM 加密）、flutter_secure_storage 与'
+          'shared_preferences / path_provider（本机存储）、file_picker（文件'
+          '选择）、fl_chart（图表）、intl（数字与日期格式化）。它们各自按其'
+          '原许可证授权，完整清单见仓库的 pubspec.yaml 与 pubspec.lock。\n'
+          '\n'
+          '四、第三方标识与商标\n'
+          'assets 中的 qbittorrent / transmission 标识版权归各自项目所有，'
+          '不适用本仓库的 MIT 许可，仅用于在界面上标识所连接的服务器类型。'
+          '本项目与 qBittorrent、Transmission 无隶属、赞助或背书关系，是独立'
+          '开发的第三方客户端，仅通过二者公开的 RPC 接口通信。');
 
   static String startupUpdateBody(String latest) =>
       "${L.t('发现新版本 V')}$latest${L.pick('，当前版本 ', ', current ')}$kAppVersion\n"
@@ -585,8 +685,7 @@ class S {
 
   static String get copyReleaseLink => L.t('复制发布页地址');
 
-  static String get privacyBody => L.t(
-      '本应用是一个纯本地工具，不设服务端、不收集账号。\n'
+  static String get privacyBody => L.t('本应用是一个纯本地工具，不设服务端、不收集账号。\n'
       '\n'
       '一、存储在你设备上的数据\n'
       '服务器地址、端口、账号与密码只保存在本机；密码经加密后存储，'
@@ -619,8 +718,7 @@ class S {
       '$kProjectUrl\n'
       '所有上述行为你都可以在源码里自行核对。');
 
-  static String get termsBody => L.t(
-      '一、本应用是什么\n'
+  static String get termsBody => L.t('一、本应用是什么\n'
       'TorrentManager 是一个下载器远程管理客户端。它本身不下载、不存储、'
       '不传播任何内容，只是把你自己的 qBittorrent / Transmission 服务端'
       '界面搬到手机上。\n'
@@ -672,4 +770,128 @@ class S {
       "${L.t('已删除「')}$name${L.pick('」', '"')}";
   static String renamedToast(String name) =>
       "${L.t('已重命名为「')}$name${L.pick('」', '"')}";
+
+  // ===== 第 67 轮 · 编辑能力（第三期） =====
+
+  static String get editModify => L.pick('修改', 'Apply');
+  static String get editSaved => L.pick('已保存', ' saved');
+  static String get editMinutesUnit => L.pick('分钟', 'min');
+  static String get editUnlimited => L.pick('不限', 'Unlimited');
+  static String get editUnlimitedHint =>
+      L.pick('不限速（留空）', 'Unlimited (leave empty)');
+
+  static String get ratioModeGlobal => L.pick('跟随全局', 'Global');
+  static String get ratioModeUnlimited => L.pick('不限', 'Unlimited');
+  static String get ratioModeCustom => L.pick('单种子', 'Custom');
+
+  static String get tagInputHint => L.pick('输入标签后回车', 'Type a tag and hit Enter');
+  static String get tagAdd => L.pick('添加标签', 'Add tag');
+
+  static String get editPathTitle => L.pick('修改保存路径', 'Change save path');
+  static String get editPathMove => L.pick('同时移动文件', 'Move files too');
+  static String get editPathMoveHint =>
+      L.pick('关闭此项只改指向，文件留在原地（可能变成"文件丢失"）',
+          'Off = only repoint; files stay (may become "missing files")');
+  static String get editPathQbHint =>
+      L.pick('qBittorrent 修改路径会同时移动文件', 'qBittorrent always moves the files');
+
+  static String get editCategoryTitle => L.pick('修改分类', 'Change category');
+  static String get editCategoryNone => L.pick('未分类', 'Uncategorized');
+  static String get editCategoryNew => L.pick('或新建分类', 'Or create new');
+
+  static String get editTagsTitle => L.pick('修改标签', 'Edit tags');
+  static String get editTagsAppend => L.pick('追加（保留原有）', 'Append (keep existing)');
+  static String get editTagsAppendHint =>
+      L.pick('批量时各种子标签不同，默认追加更安全',
+          'Safer for batch: seeds usually have different tags');
+
+  /// 卡片展开区：进详情入口（D9 方案 C 之后进详情的**唯一**入口）。
+  static String get viewDetail => L.pick('查看详情', 'Open details');
+
+  /// 卡片展开区：只读信息段标题。
+  static String get editSectionInfo => L.pick('信息', 'Info');
+
+  /// 分区卡片标题（2026-09-24 用户整改：每栏目给边界感）。
+  static String get editSectionBasic => L.pick('常规', 'General');
+  static String get editSectionLimits => L.pick('限速与分享', 'Limits & sharing');
+  static String get editSectionStats => L.pick('实时状态', 'Live status');
+  static String get editSectionActions => L.pick('操作', 'Actions');
+  static String get editSectionTimes => L.pick('时间信息', 'Timing');
+  static String get editSectionLinks => L.pick('链接与标识', 'Links & IDs');
+
+  static String get editSectionSwitches => L.pick('下载策略', 'Download strategy');
+  static String get swForceStart => L.pick('强制做种', 'Force start');
+  static String get swSequential => L.pick('顺序下载', 'Sequential download');
+  static String get swFirstLast => L.pick('首尾块优先', 'First/last piece first');
+  static String get swSuperSeeding => L.pick('超级做种', 'Super seeding');
+
+  static String get fieldRemaining => L.pick('剩余量', 'Remaining');
+  static String get fieldWasted => L.pick('已损坏/浪费', 'Wasted');
+  // 注意：`fieldFreeSpace`（"剩余空间:"）在上方已存在且带冒号，是另一处的用法 ⇒ 另起名。
+  static String get fieldDiskFree => L.pick('剩余磁盘', 'Free space');
+  static String get fieldPrivate => L.pick('私有种子', 'Private');
+  static String get fieldHealth => L.pick('健康度', 'Health');
+  static String get fieldMetadata => L.pick('元数据进度', 'Metadata');
+  static String get fieldTrackerStatus => L.pick('Tracker 状态', 'Tracker status');
+  static String get fieldRatioLimit => L.pick('分享率上限', 'Ratio limit');
+  static String get fieldSeedingTimeLimit => L.pick('做种时限', 'Seeding time limit');
+  static String get fieldMagnet => L.pick('磁力链', 'Magnet');
+  static String get fieldComment => L.pick('注释', 'Comment');
+  static String get fieldErrorReason => L.pick('错误原因', 'Error');
+
+  /// 概览 Tab **两列网格**专用短标签（v3 布局定稿：半格 label 仅 50dp，
+  /// 「已损坏/浪费」「Tracker 状态」这类长文案会被省略号截掉 ⇒ 各配一版短的）。
+  static String get fieldWastedShort => L.pick('损坏/浪费', 'Wasted');
+  static String get fieldTrackerShort => L.pick('Tracker', 'Tracker');
+  static String get fieldRatioLimitShort => L.pick('分享上限', 'Ratio');
+
+  static String get trackerAllOk => L.pick('全部正常', 'All working');
+  static String trackerFailed(int n) => L.pick('$n 个异常（详见 Tracker 页）',
+      '$n failing (see Tracker tab)');
+
+  static String get yes => L.pick('是', 'Yes');
+  static String get no => L.pick('否', 'No');
+
+  static String get renameTorrent => L.pick('重命名种子', 'Rename torrent');
+  static String get renameTorrentHint =>
+      L.pick('会同时改动服务端的文件夹/文件名', 'Renames folder/file on the server too');
+
+  static String get editUnsavedHint =>
+      L.pick('有未保存的改动，直接返回会丢失', 'Unsaved changes will be lost');
+
+  static String batchEditTitle(int n) =>
+      L.pick('批量编辑 $n 个种子', 'Batch edit $n torrents');
+  static String get batchSubmit => L.pick('提交全部改动', 'Apply all');
+  static String get batchKeepUnchanged => L.pick('保持不变', 'Unchanged');
+  static String get batchNothing => L.pick('没有需要提交的改动', 'Nothing to apply');
+  static String batchDone(int ok, int fail) => L.pick(
+      '完成：成功 $ok · 失败 $fail', 'Done: $ok succeeded, $fail failed');
+  static String get batchFailList => L.pick('失败种子：', 'Failed: ');
+
+  static String get exportVersionTooOld =>
+      L.pick('当前 qBittorrent 版本不支持导出种子（需 4.5+）',
+          'Export needs qBittorrent 4.5 or newer');
+
+  // ---- 多选栏批量入口（4.2 / D8）----
+  static String get batchEdit => L.pick('批量编辑', 'Batch edit');
+  static String get fieldHash => L.pick('哈希', 'Hash');
+
+  /// 删除弹窗：勾了「同时删除本地文件」时的红字警告（不可逆）。
+  static String deleteFilesWarn(int count) => L.pick(
+      '⚠ 将连同 $count 个种子的本地文件一起删除，不可恢复！',
+      '⚠ Local files of $count torrents will also be deleted. Cannot be undone!');
+  static String get copyHash => L.pick('复制哈希', 'Copy hashes');
+  static String get copyMagnet => L.pick('复制磁力链', 'Copy magnets');
+  static String get batchExport => L.pick('批量导出', 'Export all');
+
+  /// 批量复制成功提示（哈希/磁力链共用）。
+  static String batchCopied(int n, String what) =>
+      L.pick('已复制 $n 条$what', 'Copied $n $what');
+
+  /// 一批里一个磁力链都没有（TR 侧常发生：老版本不给 magnetLink）。
+  static String get batchNoMagnet => L.pick('没有可复制的磁力链', 'No magnet links');
+  static String get batchExportNothing =>
+      L.pick('没有成功导出的种子', 'Nothing exported');
+  static String batchExportDone(int ok, int fail) =>
+      L.pick('导出完成：成功 $ok · 失败 $fail', 'Export: $ok ok, $fail failed');
 }

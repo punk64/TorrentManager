@@ -142,3 +142,13 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// ⚠️ 2026-09-24（V0.2.12 自更新）：唯一新增的原生依赖，只为拿到 FileProvider
+//    （Android 7+ 起把 APK 交给系统安装器必须走 content://，不能给 file://）。
+//    选 `core` 而不是 `core-ktx`：这里只用 FileProvider 一个类，ktx 会多带
+//    一堆 Kotlin 扩展，对体积不划算。
+//    ⚠️ 版本与 Flutter embedding 自带的 androidx.core 基本一致（AGP 会取
+//    依赖图里的更高版本），出包后请对比一下体积基线。
+dependencies {
+    implementation("androidx.core:core:1.13.1")
+}

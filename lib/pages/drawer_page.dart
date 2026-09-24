@@ -19,6 +19,7 @@ import '../utils/theme_backup.dart';
 import '../utils/update_check.dart';
 import '../utils/startup_update.dart';
 import '../widgets/filtered_image.dart';
+import '../widgets/update_dialog.dart';
 import '../utils/strings.dart';
 
 class DrawerMenu extends StatelessWidget {
@@ -829,52 +830,10 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       );
 }
 
-Future<void> compareVersions(BuildContext context) async {
-  UpdateCheckResult? result;                 
-  bool started = false;
-
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext ctx) => StatefulBuilder(
-      builder: (BuildContext ctx, StateSetter setState) {
-        if (!started) {
-          started = true;
-
-          unawaited(Future<void>.microtask(() async {
-            final UpdateCheckResult r = await UpdateChecker().check();
-            if (!ctx.mounted) return;
-            if (r.status == UpdateCheckStatus.failed) {
-              AppLog.instance.net('检查更新失败（按已是最新处理）：${r.reason}',
-                  level: 'WARN');
-            } else if (r.hasUpdate) {
-              AppLog.instance.net('发现新版本 V${r.latest}（本地 V$kAppVersion）');
-            }
-            setState(() => result = r);
-          }));
-        }
-
-        final UpdateCheckResult? r = result;
-        return AlertDialog(
-          title: Text(r != null && r.hasUpdate ? S.hasUpdate : S.aboutCheckUpdate),
-          content: Text(
-            r == null
-                ? S.checkingUpdate
-                : (r.hasUpdate
-                    ? '${S.hasUpdate}: V${r.latest}\n${S.appVersionText()}'
-                    : '${S.appVersionText()}（${S.noUpdate}）'),
-            style: const TextStyle(fontSize: 12),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(S.ok),
-            ),
-          ],
-        );
-      },
-    ),
-  );
-}
+/// 手动「检查更新」：弹窗自己发一次请求（启动自动检查的结果由
+/// [StartupUpdatePrompt.showDetails] 直接传进去，不重复请求）。
+Future<void> compareVersions(BuildContext context) =>
+    UpdateDialog.open(context);
 
 const int kPresetCollapsedCount = 2;
 

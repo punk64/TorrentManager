@@ -9,7 +9,8 @@ import '../utils/formatter.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
 
-class LogSelectionAppBar extends StatelessWidget implements PreferredSizeWidget {
+class LogSelectionAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   const LogSelectionAppBar({
     super.key,
     required this.count,
@@ -34,7 +35,8 @@ class LogSelectionAppBar extends StatelessWidget implements PreferredSizeWidget 
         tooltip: S.cancel,
         onPressed: onClose,
       ),
-      title: Text(S.logSelectedCount(count), style: const TextStyle(fontSize: 15)),
+      title:
+          Text(S.logSelectedCount(count), style: const TextStyle(fontSize: 15)),
       actions: <Widget>[
         TextButton(
           onPressed: onToggleAll,
@@ -80,7 +82,6 @@ class LogSelectionBar extends StatelessWidget {
     final bool none = count == 0;
     return Material(
       color: cs.surfaceContainerHigh,
-
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppTheme.cardBorder(cs))),
@@ -129,11 +130,11 @@ class LogSelectionBar extends StatelessWidget {
                         break;
                     }
                   },
-                  itemBuilder: (BuildContext ctx) =>
-                      <PopupMenuEntry<String>>[
+                  itemBuilder: (BuildContext ctx) => <PopupMenuEntry<String>>[
                     PopupMenuItem<String>(
                       value: 'invert',
-                      child: Text(S.logInvert, style: const TextStyle(fontSize: 13)),
+                      child: Text(S.logInvert,
+                          style: const TextStyle(fontSize: 13)),
                     ),
                     PopupMenuItem<String>(
                       value: 'all',
@@ -142,7 +143,8 @@ class LogSelectionBar extends StatelessWidget {
                     ),
                     PopupMenuItem<String>(
                       value: 'clear',
-                      child: Text(S.logClear, style: const TextStyle(fontSize: 13)),
+                      child: Text(S.logClear,
+                          style: const TextStyle(fontSize: 13)),
                     ),
                   ],
                 ),
@@ -192,19 +194,24 @@ Future<bool> exportLogLines(
     Formatter.showToast(S.logExportCancelled);
     return false;
   }
+  final String name0 = name.trim();
   try {
-    final String path = await FileExport.writeText(
-      fileName: name.trim(),
+    // 弹系统「另存为」：用户自己挑位置，文件就在他选的目录里（不再落到看不见的 Android/data）
+    final String? saved = await FileExport.saveTextAs(
+      fileName: name0,
       content: LogExport.buildText(lines),
     );
-    final String fileName = path.split(RegExp(r'[/\\]')).last;
+    if (saved == null || saved.isEmpty) {
+      Formatter.showToast(S.logExportCancelled);
+      return false;
+    }
     final int n = lines.length;
     if (masked) {
-      Formatter.showToast('${S.logExportOk(n)}$fileName');
+      Formatter.showToast('${S.logExportOk(n)}$name0');
     } else {
       Formatter.showToast(S.logExportPrivacyOff(n), isWarning: true);
     }
-    AppLog.instance.op('导出日志：$fileName（$n 条，${masked ? '已打码' : '未打码'}）');
+    AppLog.instance.op('导出日志：$name0（$n 条，${masked ? '已打码' : '未打码'}）');
     return true;
   } catch (e) {
     Formatter.showToast(
@@ -216,22 +223,31 @@ Future<bool> exportLogLines(
 }
 
 Future<String?> askExportFileName(BuildContext context, String suggested) {
-  final TextEditingController ctrl =
-      TextEditingController(text: suggested);
+  final TextEditingController ctrl = TextEditingController(text: suggested);
   return showDialog<String>(
     context: context,
     builder: (BuildContext ctx) => AlertDialog(
       title: const Text('导出日志', style: TextStyle(fontSize: 14)),
-      content: TextField(
-        controller: ctrl,
-        autofocus: true,
-        maxLength: AppTheme.maxLenGeneral,
-        buildCounter: AppTheme.noCounter,
-        style: const TextStyle(fontSize: 13),
-        decoration: InputDecoration(
-          labelText: S.logExportFileName,
-          isDense: true,
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          TextField(
+            controller: ctrl,
+            autofocus: true,
+            maxLength: AppTheme.maxLenGeneral,
+            buildCounter: AppTheme.noCounter,
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              labelText: S.logExportFileName,
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '下一步会弹出系统「另存为」，请选择保存位置（如「下载」文件夹）',
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+          ),
+        ],
       ),
       actions: <Widget>[
         TextButton(

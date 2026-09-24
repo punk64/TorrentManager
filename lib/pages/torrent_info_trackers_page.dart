@@ -209,6 +209,8 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     ).whenComplete(input.dispose);
     if (result == null || result.isEmpty) return;
 
+    // 多行输入 = 多个 tracker：先逐行校验，再拆成列表（旧接口曾把整段当一个 URL 发）。
+    final List<String> urls = <String>[];
     for (final String line in result.split('\n')) {
       final String v = line.trim();
       if (v.isEmpty) continue;
@@ -216,7 +218,9 @@ class TorrentInfoTrackersPage extends StatelessWidget {
         Formatter.showToast('${S.trkEditInvalidUrl}${t.name}', isError: true);
         return;
       }
+      urls.add(v);
     }
+    if (urls.isEmpty) return;
 
     try {
       if (s.isQbittorrent) {
@@ -239,19 +243,30 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           Formatter.showToast(S.noTrId, isError: true);
           return;
         }
+        // ★ V5：TR 4.0+ 的 trackerAdd/Remove/Replace 已废弃 ⇒ 走 `trackerList`
+        //   整份写回（读-改-写）。判据统一读能力包，**不在页面里拼版本号**。
+        final bool byList = ctrl.capabilities.trackerList;
         if (editing) {
           final int? tid = _trackerIdOf(ctrl, original);
           if (tid == null) {
             Formatter.showToast('${S.trkEditNotFound}$original', isError: true);
             return;
           }
-          await sc.tr.editTracker(<int>[t.trId!], tid, result);
-          AppLog.instance.op('修改 Tracker：$original → ${_oneLine(result)}'
+          if (byList) {
+            await sc.tr.editTrackerByIndex(t.trId!, tid, urls.first);
+          } else {
+            await sc.tr.editTracker(<int>[t.trId!], tid, urls.first);
+          }
+          AppLog.instance.op('修改 Tracker：$original → ${_oneLine(urls.first)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
           Formatter.showToast('${S.trkEditOk}${t.name}');
         } else {
-          await sc.tr.addTracker(<int>[t.trId!], result);
+          if (byList) {
+            await sc.tr.addTrackersByList(t.trId!, urls);
+          } else {
+            await sc.tr.addTrackers(<int>[t.trId!], urls);
+          }
           AppLog.instance.op('添加 Tracker：${_oneLine(result)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
@@ -320,7 +335,12 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           Formatter.showToast('${S.trkDelNotFound}$url', isError: true);
           return;
         }
-        await sc.tr.removeTracker(<int>[t.trId!], <int>[tid]);
+        // ★ V5：TR 4.0+ 走 `trackerList` 整份写回（按 trackerStats 下标删）。
+        if (ctrl.capabilities.trackerList) {
+          await sc.tr.removeTrackerByIndex(t.trId!, tid);
+        } else {
+          await sc.tr.removeTracker(<int>[t.trId!], <int>[tid]);
+        }
       }
       AppLog.instance.op('删除 Tracker：$url（${t.name} · ${s.name}）',
           scope: s.logScope);

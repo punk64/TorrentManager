@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../data/models/server_data.dart';
 import '../data/models/torrent.dart';
+import '../data/server_capabilities.dart';
 
 import '../data/transmission/tr_method.dart';
 import '../utils/app_log.dart';
@@ -62,23 +63,40 @@ extension TorrentSortKeyExt on TorrentSortKey {
   }
 }
 
-enum TorrentFilter { all, downloading, seeding, completed, paused, active }
+/// 主状态（D1 第一级）。第二级的细分态见 [TorrentController.subStates]。
+enum TorrentFilter {
+  all,
+  downloading,
+  seeding,
+  completed,
+  paused,
+  queued,
+  checking,
+  error,
+  active,
+}
 
 extension TorrentFilterExt on TorrentFilter {
   String get label {
     switch (this) {
       case TorrentFilter.all:
-        return '全部';
+        return S.filterAll;
       case TorrentFilter.downloading:
-        return '下载中';
+        return S.filterDownloading;
       case TorrentFilter.seeding:
-        return '做种';
+        return S.filterSeeding;
       case TorrentFilter.completed:
-        return '已完成';
+        return S.filterCompleted;
       case TorrentFilter.paused:
-        return '暂停';
+        return S.filterPaused;
+      case TorrentFilter.queued:
+        return S.filterQueued;
+      case TorrentFilter.checking:
+        return S.filterChecking;
+      case TorrentFilter.error:
+        return S.filterError;
       case TorrentFilter.active:
-        return '活跃';
+        return S.filterActive;
     }
   }
 
@@ -94,28 +112,174 @@ extension TorrentFilterExt on TorrentFilter {
         return 'completed';
       case TorrentFilter.paused:
         return 'paused';
+      case TorrentFilter.queued:
+        return 'queued';
+      case TorrentFilter.checking:
+        return 'checking';
+      case TorrentFilter.error:
+        return 'errored';
       case TorrentFilter.active:
         return 'active';
     }
   }
 
   bool matches(Torrent t) {
-    final String s = t.state.toLowerCase();
     switch (this) {
       case TorrentFilter.all:
         return true;
       case TorrentFilter.downloading:
-
-        if (s.contains('paus') || s.contains('stop')) return false;
-        return s.contains('download') || s.contains('dl') || s.contains('meta');
+        // ★ 改走两级状态的「主级」：pausedDL 虽然含 'dl'，主级是 paused ⇒ 不再误命中；
+        //   stalledDL / metaDL 归入「下载中」（它们是细分态）。
+        return t.statusGroup == TorrentStatusGroup.downloading;
       case TorrentFilter.seeding:
-        return s.contains('seed') || s.contains('upload');
+        // ★ 修旧 bug：pausedUP 含 'up'，旧写法 `contains('up')` 会让它**同时**
+        //   命中「做种」和「暂停」；改用主级判断后只命中「做种」。
+        return t.statusGroup == TorrentStatusGroup.seeding;
       case TorrentFilter.completed:
         return t.progress >= 1.0;
       case TorrentFilter.paused:
-        return s.contains('paus') || s.contains('stop');
+        return t.statusGroup == TorrentStatusGroup.paused;
+      case TorrentFilter.queued:
+        return t.statusGroup == TorrentStatusGroup.queued;
+      case TorrentFilter.checking:
+        return t.statusGroup == TorrentStatusGroup.checking;
+      case TorrentFilter.error:
+        return t.statusGroup == TorrentStatusGroup.error;
       case TorrentFilter.active:
         return t.dlSpeed > 0 || t.upSpeed > 0;
+    }
+  }
+}
+
+/// 细分态（D1 第二级）的取值与文案。
+///
+/// 两种服务器的细分口径不同：
+/// - qB：`rawState` 就是原始状态串（`stalledDL` / `forcedUP` / `metaDL` …）
+/// - TR：`rawState` 是 `torrent-get` 的 status 数字（`0`~`6`）
+/// ⇒ chip 列表按当前服务器类型生成，见 [TorrentController.subStateOptions]。
+abstract final class SubStates {
+  /// qB 主状态 → 该主状态下可能出现的细分态原始串。
+  static const Map<TorrentFilter, List<String>> qb = <TorrentFilter, List<String>>{
+    TorrentFilter.downloading: <String>[
+      'downloading',
+      'stalledDL',
+      'metaDL',
+      'forcedDL',
+      'forcedMetaDL', // qB 5.0 起新增
+    ],
+    TorrentFilter.seeding: <String>[
+      'uploading',
+      'seeding',
+      'stalledUP',
+      'forcedUP',
+    ],
+    // qB 5.0.0 把 pausedDL/UP 改名为 stoppedDL/UP（Web API 2.11.0）。
+    // chip 只显示新名（规范值），匹配时把旧名归一过来 ⇒ 4.x / 5.x 都能命中。
+    TorrentFilter.paused: <String>['stoppedDL', 'stoppedUP'],
+    TorrentFilter.queued: <String>['queuedDL', 'queuedUP'],
+    TorrentFilter.checking: <String>[
+      'checkingDL',
+      'checkingUP',
+      'checkingResumeData',
+    ],
+    TorrentFilter.error: <String>['error', 'missingFiles'],
+    // 已完成 / 活跃 不按状态串划分（一个看进度、一个看速度）⇒ 无细分。
+    TorrentFilter.completed: <String>[],
+    TorrentFilter.active: <String>[],
+    TorrentFilter.all: <String>[],
+  };
+
+  /// TR 主状态 → status 数字（0 停止 / 1 校验等待 / 2 校验 / 3 排队下载 /
+  /// 4 下载 / 5 排队做种 / 6 做种；7 = 孤立，TR 4.x 起才有）。
+  static const Map<TorrentFilter, List<String>> tr = <TorrentFilter, List<String>>{
+    TorrentFilter.paused: <String>['0'],
+    TorrentFilter.checking: <String>['1', '2'],
+    TorrentFilter.queued: <String>['1', '3', '5'],
+    TorrentFilter.downloading: <String>['4'],
+    TorrentFilter.seeding: <String>['5', '6'],
+    // TR 没有「错误 / 已完成 / 活跃」这类状态位（错误看 errorString）⇒ 无细分。
+    TorrentFilter.error: <String>[],
+    TorrentFilter.completed: <String>[],
+    TorrentFilter.active: <String>[],
+    TorrentFilter.all: <String>[],
+  };
+
+  /// 细分态归一名：qB 4.x 的 `pausedDL/UP` 在 5.0.0 起改名 `stoppedDL/UP`。
+  /// chip 用规范值（新名），匹配前把旧名映射过来 ⇒ 一套 chip 覆盖两个版本。
+  static String normalize(String raw) {
+    switch (raw) {
+      case 'pausedDL':
+        return 'stoppedDL';
+      case 'pausedUP':
+        return 'stoppedUP';
+      default:
+        return raw;
+    }
+  }
+
+  /// 细分态文案。TR 用数字串、qB 用英文串，两者不冲突 ⇒ 一张表够用。
+  static String labelOf(String raw) {
+    switch (raw) {
+      // ---- qB ----
+      case 'downloading':
+        return S.stDownloading;
+      case 'stalledDL':
+        return S.stStalledDl;
+      case 'metaDL':
+        return S.stMetaDl;
+      case 'forcedDL':
+        return S.stForcedDl;
+      case 'uploading':
+        return S.stUploading;
+      case 'seeding':
+        return S.stSeeding;
+      case 'stalledUP':
+        return S.stStalledUp;
+      case 'forcedUP':
+        return S.stForcedUp;
+      case 'stoppedDL':
+      case 'pausedDL':
+        return S.stPausedDl;
+      case 'stoppedUP':
+      case 'pausedUP':
+        return S.stPausedUp;
+      case 'queuedDL':
+        return S.stQueuedDl;
+      case 'queuedUP':
+        return S.stQueuedUp;
+      case 'checkingDL':
+        return S.stCheckingDl;
+      case 'checkingUP':
+        return S.stCheckingUp;
+      case 'checkingResumeData':
+        return S.stCheckingResume;
+      case 'error':
+        return S.stError;
+      case 'missingFiles':
+        return S.stMissingFiles;
+      case 'moving':
+        return S.stMoving;
+      case 'allocating':
+        return S.stAllocating;
+      // ---- TR ----
+      case '0':
+        return S.stTrStopped;
+      case '1':
+        return S.stTrCheckWait;
+      case '2':
+        return S.stTrChecking;
+      case '3':
+        return S.stTrQueueDl;
+      case '4':
+        return S.stTrDownloading;
+      case '5':
+        return S.stTrQueueUp;
+      case '6':
+        return S.stTrSeeding;
+      case '7':
+        return S.stTrIsolated;
+      default:
+        return raw.isEmpty ? S.stUnknownState : raw;
     }
   }
 }
@@ -179,6 +343,10 @@ class TorrentController extends GetxController {
   final filter = TorrentFilter.all.obs;
   final keyword = ''.obs;
 
+  /// 第二级细分态（D1）：存 [Torrent.rawState] 原始值，多选为「或」关系。
+  /// 空集 = 不限细分（只按主状态筛）。
+  final subStates = <String>[].obs;
+
   final selCategories = <String>[].obs;
   final selTags = <String>[].obs;
   final selPaths = <String>[].obs;
@@ -235,6 +403,9 @@ class TorrentController extends GetxController {
     _currentWorker?.dispose();
     _currentWorker = ever<ServerData?>(serverCtrl.current, (ServerData? s) {
       if (s == null) return;
+      // 细分态是「服务器专属口径」（TR 数字串 / qB 英文串）：换服务器后旧值
+      // 永远匹配不上 ⇒ 直接清掉，免得列表莫名空掉还查不出原因。
+      subStates.clear();
       if (_listVisible) refreshAuto();
     });
 
@@ -278,6 +449,8 @@ class TorrentController extends GetxController {
       ..write(items.length)
       ..write('|')
       ..write(filter.value.index)
+      ..write('|')
+      ..write(subStates.join('\u0002'))
       ..write('|')
       ..write(keyword.value)
       ..write('|')
@@ -338,6 +511,10 @@ class TorrentController extends GetxController {
 
   bool _matches(Torrent t, {FilterDim? skip, String? kwLower}) {
     if (!filter.value.matches(t)) return false;
+    if (subStates.isNotEmpty &&
+        !subStates.contains(SubStates.normalize(t.rawState))) {
+      return false;
+    }
     final String kw = kwLower ?? keyword.value.trim().toLowerCase();
     if (kw.isNotEmpty && !t.name.toLowerCase().contains(kw)) return false;
     for (final FilterDim d in FilterDim.values) {
@@ -398,6 +575,8 @@ class TorrentController extends GetxController {
       ..write(keyword.value)
       ..write('\u0001')
       ..write(filter.value.name)
+      ..write('\u0001')
+      ..write(subStates.join('\u0002'))
       ..write('\u0001');
     for (final FilterDim d in FilterDim.values) {
       b
@@ -859,6 +1038,33 @@ class TorrentController extends GetxController {
           eta: Formatter.getInt(m, 'eta', def: 8640000),
           trackerCount: (m['trackerStats'] as List<dynamic>?)?.length ?? 0,
 
+          amountLeft: Formatter.getInt(m, 'leftUntilDone'),
+          wasted: Formatter.getInt(m, 'corruptEver'),
+          errorMessage: _trErrorString(m),
+          metadataPercent:
+              Formatter.getDouble(m, 'metadataPercentComplete', def: -1),
+          freeSpace: Formatter.getInt(m, 'downloadDirFreeSpace', def: -1),
+          isPrivate: m['isPrivate'] is bool ? m['isPrivate'] as bool : null,
+          ratioLimit: _trRatioLimit(m),
+          seedingTimeLimit: _trIdleLimit(m),
+
+          // ↓ 第 67 轮新增
+          // 原始状态：TR 的 status 是 0~6 的数字，细分 chip 要用 ⇒ 存成字符串。
+          rawState: m['status']?.toString() ?? '',
+          // 队列位置：TR 的 queuePosition 与 qB 的 priority 是同一语义
+          // ⇒ 复用既有 priority 字段，不新增冗余列。
+          priority: Formatter.getInt(m, 'queuePosition', def: 0),
+          bandwidthPriority: Formatter.getInt(m, 'bandwidthPriority'),
+          // ★ 单位统一：模型里限速恒为 bytes/s（与 qB 一致），
+          //   TR 的 downloadLimit/uploadLimit 是 KB/s ⇒ ×1024。
+          //   写回时再 ÷1024（见 setLimitsOf）。
+          dlLimit: Formatter.getInt(m, 'downloadLimit') * 1024,
+          upLimit: Formatter.getInt(m, 'uploadLimit') * 1024,
+          dlLimited:
+              m['downloadLimited'] is bool ? m['downloadLimited'] as bool : null,
+          upLimited:
+              m['uploadLimited'] is bool ? m['uploadLimited'] as bool : null,
+          // 强制做种 / 顺序下载 / 首尾块优先 / 超级做种 TR 都没有 ⇒ 恒 null。
           trId: m['id'] is num ? (m['id'] as num).toInt() : null,
         ));
       } catch (e) {
@@ -876,6 +1082,25 @@ class TorrentController extends GetxController {
     if (dir.isEmpty || name.isEmpty) return null;
     final String sep = (dir.endsWith('/') || dir.endsWith('\\')) ? '' : '/';
     return '$dir$sep$name';
+  }
+
+  static String? _trErrorString(Map<String, dynamic> m) {
+    final String s = m['errorString']?.toString().trim() ?? '';
+    return s.isEmpty ? null : s;
+  }
+
+  static double _trRatioLimit(Map<String, dynamic> m) {
+    final int mode = Formatter.getInt(m, 'seedRatioMode', def: 0);
+    if (mode == 2) return -1;
+    if (mode != 1) return -2;
+    return Formatter.getDouble(m, 'seedRatioLimit', def: -2);
+  }
+
+  static int _trIdleLimit(Map<String, dynamic> m) {
+    final int mode = Formatter.getInt(m, 'seedIdleMode', def: 0);
+    if (mode == 2) return -1;
+    if (mode != 1) return -2;
+    return Formatter.getInt(m, 'seedIdleLimit', def: -2);
   }
 
   static String? _trLabels(Map<String, dynamic> m) {
@@ -929,7 +1154,51 @@ class TorrentController extends GetxController {
     return items.fold<int>(0, (int a, Torrent t) => a + t.upSpeed);
   }
 
-  void setFilter(TorrentFilter f) => filter.value = f;
+  void setFilter(TorrentFilter f) {
+    if (filter.value == f) return;
+    filter.value = f;
+    // 细分态依附主状态：换了主状态，旧细分一定不再适用 ⇒ 直接清空，
+    // 否则会出现「主状态下载中 + 细分 stoppedUP」这种永远筛不出东西的组合。
+    subStates.clear();
+    AppLog.instance.act('种子列表', '筛选[${f.label}]');
+  }
+
+  /// 细分态多选（或关系）；再次点击同一项取消。
+  void toggleSubState(String v) {
+    if (!subStates.remove(v)) subStates.add(v);
+    AppLog.instance.act('种子列表', '细分筛选[${subStateLabel(v)}]');
+  }
+
+  void clearSubStates() => subStates.clear();
+
+  /// 当前主状态下可选的细分态：TR 与 qB 口径完全不同 ⇒ 按服务器类型取表。
+  List<String> subStateOptions() {
+    final ServerData? s = serverCtrl.current.value;
+    final bool isTr = s != null && !s.isQbittorrent;
+    return (isTr ? SubStates.tr : SubStates.qb)[filter.value] ??
+        const <String>[];
+  }
+
+  static String subStateLabel(String raw) => SubStates.labelOf(raw);
+
+  bool get hasStatusFilter =>
+      filter.value != TorrentFilter.all || subStates.isNotEmpty;
+
+  /// 顶部横条显示的「已选状态」摘要（D2 收敛后顶部只剩这一条）。
+  String get statusSummaryText {
+    if (filter.value == TorrentFilter.all) return '';
+    final String base = filter.value.label;
+    if (subStates.isEmpty) return base;
+    final String first = subStateLabel(subStates.first);
+    return subStates.length == 1 ? '$base · $first' : '$base · $first +${subStates.length - 1}';
+  }
+
+  /// 清掉状态筛选（主状态 + 细分），不动关键词与分类/标签等分面。
+  void clearStatus() {
+    filter.value = TorrentFilter.all;
+    subStates.clear();
+  }
+
   void setKeyword(String kw) => keyword.value = kw;
 
   void setSortKey(TorrentSortKey key) {
@@ -1339,6 +1608,427 @@ class TorrentController extends GetxController {
             scope: s.logScope);
       });
 
+  // ===== 第 67 轮 · 编辑能力（数据层） =====
+  //
+  // 每个 `xxxOf(hashes, ...)` 都走 [_runEdit]：成功定点刷新、失败回滚并记日志。
+  // 单种子（传 1 个 hash）与批量（传 N 个）**同参同路径**；
+  // TR 不支持的能力静默返回（UI 已按服务器类型隐藏，见 D4）。
+
+  /// 详情深化字段（qB `properties`）的拉取时间戳：`hash → 上次拉取时刻`。
+  ///
+  /// ★ 为什么要有缓存：`loadDetailData` 每 3 秒跑一次，而浪费量这种字段
+  ///   变化极慢 ⇒ 60 秒内只拉一次，避免把列表/详情请求拖慢（清单 3.6）。
+  final Map<String, DateTime> _deepFetchedAt = <String, DateTime>{};
+
+  static const Duration kDeepCacheTtl = Duration(seconds: 60);
+
+  bool _needDeepProperties(String hash) {
+    final DateTime? at = _deepFetchedAt[hash];
+    if (at != null && DateTime.now().difference(at) < kDeepCacheTtl) {
+      return false;
+    }
+    _deepFetchedAt[hash] = DateTime.now();
+    return true;
+  }
+
+  /// V7：TR 4.0+ 的「剩余空间」缓存（下载目录 → 上次结果 + 取值时刻）。
+  ///
+  /// ★ 为什么按**路径**缓存而不是按种子：`loadDetailData` 跟着详情页高频跑，
+  ///   而同一个下载目录的剩余空间变化极慢 ⇒ 30 秒内只查一次，避免把
+  ///   `free-space` 打成变相轮询。同目录下的多个种子共用同一份结果。
+  final Map<String, _TrFsEntry> _trFreeSpaceCache = <String, _TrFsEntry>{};
+
+  static const Duration kTrFreeSpaceTtl = Duration(seconds: 30);
+
+  /// V7：取某个下载目录的剩余空间（字节）。
+  ///
+  /// 仅 TR 4.0+ 需要走这里（旧版直接读 torrent-get 的 `downloadDirFreeSpace`）。
+  /// 返回 null = 「取不到」（老版本不认该方法 / 异常）⇒ 调用方保持原值、不显示。
+  /// 查询失败时回落到上一次的旧值，避免详情页那一行忽隐忽现。
+  Future<int?> trFreeSpaceOf(String path) async {
+    final String key = path.trim();
+    if (key.isEmpty) return null;
+    final _TrFsEntry? hit = _trFreeSpaceCache[key];
+    if (hit != null && DateTime.now().difference(hit.at) < kTrFreeSpaceTtl) {
+      return hit.bytes;
+    }
+    final int? bytes = await serverCtrl.tr.freeSpace(key);
+    if (bytes == null) return hit?.bytes;
+    _trFreeSpaceCache[key] = _TrFsEntry(bytes, DateTime.now());
+    return bytes;
+  }
+
+  /// 当前服务器的能力包：UI 直接读布尔值，不要自己拼版本判断。
+  ///
+  /// 例：TR 的「顺序下载」4.1 才有 ⇒ 读 `capabilities.sequentialDownload`，
+  /// 而不是「TR 就隐藏」（D4 的一刀切已被 V6 推翻）。
+  CapabilitySet get capabilities {
+    final ServerData? s = serverCtrl.current.value;
+    if (s == null) return const CapabilitySet();
+    return ServerCapabilities.of(
+      s,
+      appVersion: serverCtrl.serverVersion[s.id],
+      apiVersion: serverCtrl.serverApiVersion[s.id],
+    );
+  }
+
+  /// 编辑草稿：`hash → 字段 → 值`。
+  ///
+  /// ★ 绝不能放 widget state：列表 ListView 会回收重建卡片，草稿会丢甚至串行。
+  /// UI 取值一律 `draftOf(hash, field) ?? t.field` ⇒ 3 秒轮询不会覆盖正在编辑的值（D6）。
+  final Map<String, Map<String, dynamic>> _drafts =
+      <String, Map<String, dynamic>>{};
+
+  /// 读草稿值；没有草稿返回 null（调用方再回落到种子当前值）。
+  dynamic draftOf(String hash, String field) => _drafts[hash]?[field];
+
+  void setDraft(String hash, String field, dynamic value) {
+    _drafts.putIfAbsent(hash, () => <String, dynamic>{})[field] = value;
+  }
+
+  /// 丢弃某个种子的草稿（用户主动收起 / 返回时调用；列表重建**不**调用）。
+  void clearDraft(String hash) => _drafts.remove(hash);
+
+  /// 只丢一个字段的草稿（某字段提交成功后调用）。
+  ///
+  /// ★ 为什么需要按字段清：卡片展开区是**逐项提交**的，提交「下载限速」时
+  ///   用户可能还改着「标签」没提交 ⇒ 整条清会把别人的草稿一起抹掉。
+  void clearDraftKey(String hash, String field) {
+    final Map<String, dynamic>? m = _drafts[hash];
+    if (m == null) return;
+    m.remove(field);
+    if (m.isEmpty) _drafts.remove(hash);
+  }
+
+  void clearAllDrafts() => _drafts.clear();
+
+  bool hasDraft(String hash) => (_drafts[hash]?.isNotEmpty) ?? false;
+
+  /// 取指定 hash 对应的 TR 任务 ID；一个都没有就抛错（不静默跳过，否则"改了没生效"极难查）。
+  List<int> _trIdsOf(List<String> hashes) {
+    final List<int> ids = <int>[];
+    for (final Torrent t in items) {
+      if (hashes.contains(t.hash) && t.trId != null) ids.add(t.trId!);
+    }
+    if (ids.isEmpty) {
+      throw StateError(
+          '所选 ${hashes.length} 个种子都没有可用的 Transmission 任务 ID');
+    }
+    return ids;
+  }
+
+  /// 编辑操作的统一外壳：与 [_runOnSelected] 的区别是**不依赖 selected**，
+  /// 因此可以服务"详情页里改单个种子"和"批量面板改 N 个种子"两种场景。
+  Future<void> _runEdit(
+    List<String> hashes,
+    Future<void> Function() action, {
+    List<Torrent>? rollback,
+  }) async {
+    if (hashes.isEmpty) return;
+    lastActionOk.value = null;
+    final String? serverIdAtStart = serverCtrl.current.value?.id;
+    final LogScope? scopeAtStart = serverCtrl.current.value?.logScope;
+    try {
+      isLoading.value = true;
+      await action();
+      lastActionOk.value = true;
+      if (rollback != null) {
+        unawaited(_recheckAfterWrite());
+      } else {
+        await refresh();
+      }
+    } catch (e) {
+      error.value = NetError.describe(e);
+      lastActionOk.value = false;
+      if (rollback != null) _rollbackOptimistic(rollback, serverIdAtStart);
+      AppLog.instance.op(
+        '编辑失败（${hashes.length} 个种子）：${NetError.describe(e)}',
+        level: 'ERROR',
+        scope: scopeAtStart,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// 分类（仅 qB；TR 无分类能力 ⇒ 直接返回）。
+  Future<void> setCategoryOf(List<String> hashes, String category) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isQbittorrent) return;
+        await serverCtrl.qb.setCategory(hashes.join('|'), category);
+        AppLog.instance.op(
+            '设置分类 → ${category.isEmpty ? '（空=未分类）' : category}'
+            '（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 标签（qB 用逗号串；TR 用 labels 数组）。
+  ///
+  /// ★ V2 多版本兼容：`torrents/setTags`（整体替换）要 **WebAPI ≥ 2.11.4** = qB 5.1；
+  ///   老版本上这个端点根本不存在，直接调会 404 ⇒ 降级为
+  ///   `addTags`（补差集）+ `removeTags`（删差集）。
+  /// ★ [append] = true 时只追加不删除（批量面板的默认行为，见清单 3.2）。
+  Future<void> setTagsOf(
+    List<String> hashes,
+    List<String> tags, {
+    bool append = false,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null) return;
+        if (s.isQbittorrent) {
+          final String api = serverCtrl.serverApiVersion[s.id] ?? '';
+          if (append) {
+            if (tags.isNotEmpty) {
+              await serverCtrl.qb.addTags(hashes.join('|'), tags.join(','));
+            }
+          } else if (ServerCapabilities.qbCanSetTags(api)) {
+            await serverCtrl.qb.setTags(hashes.join('|'), tags.join(','));
+          } else {
+            await _setTagsByDiff(hashes, tags);
+          }
+        } else {
+          await serverCtrl.tr.setTags(_trIdsOf(hashes), tags);
+        }
+        AppLog.instance.op(
+            '${append ? '追加' : '设置'}标签 → ${tags.isEmpty ? '（清空）' : tags.join(',')}'
+            '（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 老 qB（WebAPI < 2.11.4）没有 `setTags` ⇒ 用 add/remove 差集模拟"整体替换"。
+  ///
+  /// ⚠️ 必须**逐种子**提交：`addTags`/`removeTags` 虽然支持批量 hashes，
+  /// 但每个种子的现有标签不同 ⇒ 差集也不同，混在一次请求里会互相污染。
+  Future<void> _setTagsByDiff(List<String> hashes, List<String> tags) async {
+    final Set<String> want = tags.map((String e) => e.trim()).toSet()
+      ..removeWhere((String e) => e.isEmpty);
+    for (final String h in hashes) {
+      final Set<String> cur = (_findInItems(h)?.tagList ?? const <String>[])
+          .map((String e) => e.trim())
+          .toSet();
+      final Set<String> add = want.difference(cur);
+      final Set<String> del = cur.difference(want);
+      if (add.isNotEmpty) {
+        await serverCtrl.qb.addTags(h, add.join(','));
+      }
+      if (del.isNotEmpty) {
+        await serverCtrl.qb.removeTags(h, del.join(','));
+      }
+    }
+  }
+
+  /// 限速：入参统一 **KB/s**；qB 要 bytes/s（×1024），TR 本身就是 KB/s。
+  /// 传 0 = 不限速（TR 由 setTorrentLimit 自动带上 Limited:false）。
+  Future<void> setLimitsOf(
+    List<String> hashes, {
+    int? dlKb,
+    int? upKb,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null) return;
+        if (s.isQbittorrent) {
+          await serverCtrl.qb.setTorrentLimit(
+            hashes.join('|'),
+            downloadLimit: dlKb == null ? null : dlKb * 1024,
+            uploadLimit: upKb == null ? null : upKb * 1024,
+          );
+        } else {
+          await serverCtrl.tr.setTorrentLimit(
+            _trIdsOf(hashes),
+            downloadLimit: dlKb,
+            uploadLimit: upKb,
+          );
+        }
+        AppLog.instance.op(
+            '设置限速 → 下载 ${dlKb ?? '-'} KB/s · 上传 ${upKb ?? '-'} KB/s'
+            '（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 保存路径。
+  ///
+  /// ⚠️ [move] 只在 TR 生效（决定"连数据一起搬"还是"只改指向"）；
+  /// qB 的 setLocation **恒移动文件** ⇒ UI 提交前必须让用户确认。
+  Future<void> setLocationOf(
+    List<String> hashes,
+    String path, {
+    bool move = true,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null) return;
+        if (s.isQbittorrent) {
+          await serverCtrl.qb.setLocation(hashes.join('|'), path);
+        } else {
+          await serverCtrl.tr.setLocation(_trIdsOf(hashes), path, move: move);
+        }
+        AppLog.instance.op(
+            '修改保存路径 → $path（${move ? '同时移动文件' : '仅改指向'}'
+            ' · ${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 强制做种（仅 qB）。
+  ///
+  /// ⚠️ TR **没有**强制做种：旧实现把 `honorsSessionLimits`（是否遵守全局限速）
+  /// 当成强制做种，语义完全不同，故 TR 侧一律不调用。
+  Future<void> setForceStartOf(List<String> hashes, bool value) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isQbittorrent) return;
+        await serverCtrl.qb.setForceStart(hashes.join('|'), value);
+        AppLog.instance.op(
+            '${value ? '开启' : '关闭'}强制做种（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 顺序下载（仅 qB，接口是 toggle ⇒ 先比对当前值，一致就不发请求）。
+  Future<void> toggleSequentialOf(
+    List<String> hashes, {
+    required bool target,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isQbittorrent) return;
+        if (!_toggleNeeded(
+            hashes, (Torrent t) => t.sequentialDownload, target)) {
+          return;
+        }
+        await serverCtrl.qb.toggleSequentialDownload(hashes.join('|'));
+        AppLog.instance.op(
+            '${target ? '开启' : '关闭'}顺序下载（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 首尾块优先（仅 qB，同样是 toggle 接口）。
+  Future<void> toggleFirstLastPrioOf(
+    List<String> hashes, {
+    required bool target,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isQbittorrent) return;
+        if (!_toggleNeeded(
+            hashes, (Torrent t) => t.firstLastPiecePrio, target)) {
+          return;
+        }
+        await serverCtrl.qb.toggleFirstLastPiecePrio(hashes.join('|'));
+        AppLog.instance.op(
+            '${target ? '开启' : '关闭'}首尾块优先（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 判断 toggle 类开关是否真的需要发请求：只要有一个种子的当前值 ≠ 目标值就 toggle。
+  ///
+  /// ⚠️ qB 的 toggle 是"整批翻转"，批量里各种子状态不一致时无法保证全部对齐
+  /// ⇒ 第三期 UI 要提示，这里只保证"已经是目标态就不发请求"。
+  bool _toggleNeeded(
+    List<String> hashes,
+    bool? Function(Torrent t) read,
+    bool target,
+  ) {
+    for (final Torrent t in items) {
+      if (!hashes.contains(t.hash)) continue;
+      final bool? v = read(t);
+      if (v == null) continue;
+      if (v != target) return true;
+    }
+    return false;
+  }
+
+  /// 超级做种（仅 qB）。
+  Future<void> setSuperSeedingOf(List<String> hashes, bool value) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isQbittorrent) return;
+        await serverCtrl.qb.setSuperSeeding(hashes.join('|'), value);
+        AppLog.instance.op(
+            '${value ? '开启' : '关闭'}超级做种（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 分享率上限 / 做种时限。
+  ///
+  /// 统一语义：-2 = 跟随全局，-1 = 不限，>=0 = 具体值（时限单位**分钟**）。
+  Future<void> setShareLimitsOf(
+    List<String> hashes, {
+    double? ratioLimit,
+    int? seedingTimeMin,
+  }) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null) return;
+        if (s.isQbittorrent) {
+          await serverCtrl.qb.setShareLimits(
+            hashes.join('|'),
+            ratioLimit: ratioLimit,
+            seedingTimeLimit: seedingTimeMin,
+          );
+        } else {
+          final List<int> ids = _trIdsOf(hashes);
+          if (ratioLimit != null) {
+            await serverCtrl.tr.setShareLimits(
+              ids,
+              seedRatioLimit: ratioLimit < 0 ? 0 : ratioLimit,
+              // 0=跟随全局 / 1=单种子 / 2=不限
+              seedRatioMode: ratioLimit < -1.5 ? 0 : (ratioLimit < 0 ? 2 : 1),
+            );
+          }
+          if (seedingTimeMin != null) {
+            await serverCtrl.tr.setIdleLimit(
+              ids,
+              seedIdleLimit: seedingTimeMin < 0 ? 0 : seedingTimeMin,
+              seedIdleMode: seedingTimeMin < -1 ? 0 : (seedingTimeMin < 0 ? 2 : 1),
+            );
+          }
+        }
+        AppLog.instance.op(
+            '设置分享限制 → 分享率 ${ratioLimit ?? '-'} · 做种时限 '
+            '${seedingTimeMin ?? '-'} 分钟（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 队列位置（仅 TR：qB 的 priority 语义不同，不在本轮范围）。
+  Future<void> setQueuePositionOf(List<String> hashes, int position) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isTransmission) return;
+        await serverCtrl.tr.setQueuePosition(_trIdsOf(hashes), position);
+        AppLog.instance.op(
+            '设置队列位置 → $position（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 带宽优先级（仅 TR：-1 低 / 0 正常 / 1 高）。
+  Future<void> setBandwidthPriorityOf(List<String> hashes, int priority) =>
+      _runEdit(hashes, () async {
+        final s = serverCtrl.current.value;
+        if (s == null || !s.isTransmission) return;
+        await serverCtrl.tr.setBandwidthPriority(_trIdsOf(hashes), priority);
+        AppLog.instance.op(
+            '设置带宽优先级 → $priority（${hashes.length} 个种子）',
+            scope: s.logScope);
+      });
+
+  /// 重命名（单条：会动服务端文件名/目录名 ⇒ 只支持一个种子）。
+  Future<void> renameTorrent(Torrent t, String name) =>
+      _runEdit(<String>[t.hash], () async {
+        final s = serverCtrl.current.value;
+        if (s == null) return;
+        if (s.isQbittorrent) {
+          await serverCtrl.qb.setName(t.hash, name);
+        } else {
+          if (t.trId == null) {
+            throw StateError('该种子缺少 Transmission 任务 ID，无法重命名');
+          }
+          await serverCtrl.tr.setName(t.trId!, name);
+        }
+        AppLog.instance.op('重命名种子 → $name', scope: s.logScope);
+      });
+
   void openDetail(Torrent t) {
     current.value = t;
     files.clear();
@@ -1388,7 +2078,32 @@ class TorrentController extends GetxController {
     detailSyncedAt.value = DateTime.now();
   }
 
-  Future<Torrent?> fetchOne(Torrent t) async {
+  /// 拉单个种子的最新状态。
+  ///
+  /// [deep] = true 时额外合并 qB 的 `/torrents/properties`（浪费量只在那儿有）。
+  /// ★ 该接口每种子的成本是一次额外请求 ⇒ **只有详情页能开**，3 秒轮询绝不带。
+  /// 展开卡片前按需补齐「开关类」字段（清单 3.6 的展开版）。
+  ///
+  /// ★ 为什么需要：qB 的 `maindata` 不保证带 `force_start` / `seq_dl` / `f_l_piece_prio`
+  ///   / `super_seeding`（跨期注意事项第 4 条），列表里这些值是默认 false ⇒
+  ///   展开区开关会显示「关」而服务端其实是「开」，用户点一下反而把它关了。
+  /// ★ 成本：60 秒缓存（同详情的 properties），且失败静默 —— 少几个开关初值
+  ///   不至于让卡片打不开。
+  Future<void> ensureEditFields(Torrent t) async {
+    if (!_needDeepProperties('edit:${t.hash}')) return;
+    try {
+      final Torrent? fresh = await fetchOne(t);
+      if (fresh == null) return;
+      final int i = items.indexWhere((Torrent e) => e.hash == t.hash);
+      if (i < 0) return;
+      items[i] = fresh;
+      items.refresh();
+    } catch (_) {
+      // 静默：列表本身的 3 秒轮询会兜底
+    }
+  }
+
+  Future<Torrent?> fetchOne(Torrent t, {bool deep = false}) async {
     final ServerData? s = serverCtrl.current.value;
     if (s == null) return null;
     if (s.isQbittorrent) {
@@ -1396,7 +2111,8 @@ class TorrentController extends GetxController {
           await serverCtrl.qb.updateSelect(<String>[t.hash]);
       if (got.isEmpty) return null;
 
-      return got.first.copyWithTrId(t.trId);
+      final Torrent fresh = got.first.copyWithTrId(t.trId);
+      return deep ? await _mergeQbProperties(fresh) : fresh;
     }
     if (t.trId == null) return null;
     final List<Map<String, dynamic>> raw =
@@ -1404,6 +2120,22 @@ class TorrentController extends GetxController {
     final List<Torrent> got =
         fromTr(raw, scope: serverCtrl.current.value?.logScope);
     return got.isEmpty ? null : got.first;
+  }
+
+  /// 把 qB `/torrents/properties` 里的增量字段并进种子（目前只有浪费量 `total_wasted`）。
+  ///
+  /// 失败不抛：详情页只是少一项统计，不该把整页刷失败。
+  Future<Torrent> _mergeQbProperties(Torrent t) async {
+    try {
+      final Map<String, dynamic> p =
+          await serverCtrl.qb.getProperties(t.hash);
+      if (p.isEmpty) return t;
+      final int wasted = Formatter.getInt(p, 'total_wasted', def: t.wasted);
+      if (wasted == t.wasted) return t;
+      return t.updateQbData(<String, dynamic>{'total_wasted': wasted});
+    } catch (_) {
+      return t;
+    }
   }
 
   Future<void> loadDetailData() async {
@@ -1441,13 +2173,30 @@ class TorrentController extends GetxController {
 
       Torrent? fresh;
       try {
-        fresh = await fetchOne(t);
+        // ★ 清单 3.6：qB 的「已损坏/浪费量」只在 `/torrents/properties` 里，
+        //   列表请求不带 ⇒ 详情页按需拉一次 + 短缓存（绝不进 3 秒轮询）。
+        fresh = await fetchOne(t, deep: _needDeepProperties(targetHash));
       } catch (e) {
         AppLog.instance.error('详情定点刷新失败：${NetError.describe(e)}',
             scope: serverCtrl.current.value?.logScope);
       }
       if (_detailStale(targetId, targetHash, seq)) return;
       fresh ??= _findInItems(targetHash);
+      // ★ V7：TR 4.0+ 的 `downloadDirFreeSpace` 字段已废弃 ⇒ 剩余空间改按下载目录
+      //   问 `free-space`（按路径 30 秒短缓存，见 [trFreeSpaceOf]）。
+      //   旧版（<4.0）字段仍有效，这里不动它的值。
+      if (fresh != null &&
+          !s.isQbittorrent &&
+          capabilities.freeSpaceMethod &&
+          (fresh.savePath ?? '').isNotEmpty) {
+        final int? fs = await trFreeSpaceOf(fresh.savePath!);
+        if (fs != null && fs > 0) {
+          // `updateQbData` 是通用的「按 qB snake_case 增量覆盖」入口，
+          // `free_space` 是两端同名键 ⇒ TR 侧复用它补值（其余字段沿用原值）。
+          fresh = fresh.updateQbData(<String, dynamic>{'free_space': fs});
+        }
+      }
+      if (_detailStale(targetId, targetHash, seq)) return;
       if (fresh != null) {
         current.value = fresh;
         _pushSample(fresh);
@@ -1510,4 +2259,12 @@ List<FileNode> buildFileTree(List<Map<String, dynamic>> rawFiles) {
     cur.progress = Formatter.getDouble(f, 'progress', def: cur.progress);
   }
   return root.children;
+}
+
+/// V7 的剩余空间缓存条目：值 + 取值时刻（供 TTL 判定）。
+class _TrFsEntry {
+  const _TrFsEntry(this.bytes, this.at);
+
+  final int bytes;
+  final DateTime at;
 }

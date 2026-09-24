@@ -1,5 +1,17 @@
 import '../../utils/formatter.dart';
 
+/// 两级状态里的「主级」：状态下拉的 8 个主分类按它分组，
+/// 细分 chip 再按 [Torrent.rawState] 展开（两种服务器各自的细项）。
+enum TorrentStatusGroup {
+  downloading,
+  seeding,
+  paused,
+  queued,
+  checking,
+  error,
+  unknown,
+}
+
 class Torrent {
   final String hash;
   final String name;
@@ -58,6 +70,51 @@ class Torrent {
 
   final int priority;
 
+  final int amountLeft;
+
+  final int wasted;
+
+  final String? errorMessage;
+
+  final double metadataPercent;
+
+  final int freeSpace;
+
+  final bool? isPrivate;
+
+  final double ratioLimit;
+
+  final int seedingTimeLimit;
+
+  /// 服务端**原始**状态值（两级状态的「细分级」）：
+  /// Transmission 是 `status` 数字（0~6）转成的字符串，qBittorrent 是原始状态串。
+  ///
+  /// 主级看 [statusGroup]；状态下拉的细分 chip 才读它。
+  final String rawState;
+
+  /// 强制做种（qB `force_start`；TR 无此能力 ⇒ 恒 null，UI 按服务器类型隐藏）。
+  final bool? forceStart;
+
+  /// 顺序下载（qB `seq_dl`；TR 无 ⇒ null）。
+  final bool? sequentialDownload;
+
+  /// 首尾块优先（qB `f_l_piece_prio`；TR 无 ⇒ null）。
+  final bool? firstLastPiecePrio;
+
+  /// 超级做种（qB `super_seeding`；TR 无 ⇒ null）。
+  final bool? superSeeding;
+
+  /// 带宽优先级（仅 TR：-1 低 / 0 正常 / 1 高；qB 无 ⇒ 恒 0）。
+  final int bandwidthPriority;
+
+  /// 下载限速**开关**（TR `downloadLimited`）。
+  /// qB 没有这个字段，用 [dlLimitedEnabled] 按 `dlLimit > 0` 兜底。
+  final bool? dlLimited;
+
+  /// 上传限速**开关**（TR `uploadLimited`）。
+  /// qB 没有这个字段，用 [upLimitedEnabled] 按 `upLimit > 0` 兜底。
+  final bool? upLimited;
+
   final int? trId;
 
   const Torrent({
@@ -93,6 +150,22 @@ class Torrent {
     this.numIncomplete = 0,
     this.availability = 0,
     this.priority = 0,
+    this.amountLeft = 0,
+    this.wasted = 0,
+    this.errorMessage,
+    this.metadataPercent = -1,
+    this.freeSpace = -1,
+    this.isPrivate,
+    this.ratioLimit = -2,
+    this.seedingTimeLimit = -2,
+    this.rawState = '',
+    this.forceStart,
+    this.sequentialDownload,
+    this.firstLastPiecePrio,
+    this.superSeeding,
+    this.bandwidthPriority = 0,
+    this.dlLimited,
+    this.upLimited,
     this.trId,
   });
 
@@ -130,6 +203,28 @@ class Torrent {
       numIncomplete: Formatter.getInt(json, 'num_incomplete'),
       availability: Formatter.getDouble(json, 'availability'),
       priority: Formatter.getInt(json, 'priority'),
+      amountLeft: Formatter.getInt(json, 'amount_left'),
+      wasted: Formatter.getInt(json, 'total_wasted'),
+      errorMessage: Formatter.getStringOrNull(json, 'error_message'),
+      metadataPercent: Formatter.getDouble(json, 'metadata_percent', def: -1),
+      freeSpace: Formatter.getInt(json, 'free_space', def: -1),
+      isPrivate: json['is_private'] is bool ? json['is_private'] as bool : null,
+      ratioLimit: Formatter.getDouble(json, 'ratio_limit', def: -2),
+      seedingTimeLimit: Formatter.getInt(json, 'seeding_time_limit', def: -2),
+      // 优先取显式 raw_state（TR 侧由 controller 填 status 数字串）；
+      // 没有时回落 state —— qB 的 state 本身就是原始状态串。
+      rawState: Formatter.getString(
+          json, 'raw_state', def: Formatter.getString(json, 'state', def: '')),
+      forceStart: json['force_start'] is bool ? json['force_start'] as bool : null,
+      sequentialDownload:
+          json['seq_dl'] is bool ? json['seq_dl'] as bool : null,
+      firstLastPiecePrio:
+          json['f_l_piece_prio'] is bool ? json['f_l_piece_prio'] as bool : null,
+      superSeeding:
+          json['super_seeding'] is bool ? json['super_seeding'] as bool : null,
+      bandwidthPriority: Formatter.getInt(json, 'bandwidth_priority'),
+      dlLimited: json['dl_limited'] is bool ? json['dl_limited'] as bool : null,
+      upLimited: json['up_limited'] is bool ? json['up_limited'] as bool : null,
     );
   }
 
@@ -174,6 +269,31 @@ class Torrent {
       'availability':
           Formatter.getDouble(delta, 'availability', def: availability),
       'priority': Formatter.getInt(delta, 'priority', def: priority),
+      'amount_left': Formatter.getInt(delta, 'amount_left', def: amountLeft),
+      'total_wasted': Formatter.getInt(delta, 'total_wasted', def: wasted),
+      'error_message':
+          Formatter.getStringOrNull(delta, 'error_message') ?? errorMessage,
+      'metadata_percent': Formatter.getDouble(
+          delta, 'metadata_percent', def: metadataPercent),
+      'free_space': Formatter.getInt(delta, 'free_space', def: freeSpace),
+      'is_private':
+          delta['is_private'] is bool ? delta['is_private'] as bool : isPrivate,
+      'ratio_limit':
+          Formatter.getDouble(delta, 'ratio_limit', def: ratioLimit),
+      'seeding_time_limit':
+          Formatter.getInt(delta, 'seeding_time_limit', def: seedingTimeLimit),
+      // 以下四项 qB 用原始键名增量下发；缺键时回落当前值（增量 delta 不带就是没变）。
+      'force_start': delta['force_start'] is bool
+          ? delta['force_start'] as bool
+          : forceStart,
+      'seq_dl':
+          delta['seq_dl'] is bool ? delta['seq_dl'] as bool : sequentialDownload,
+      'f_l_piece_prio': delta['f_l_piece_prio'] is bool
+          ? delta['f_l_piece_prio'] as bool
+          : firstLastPiecePrio,
+      'super_seeding': delta['super_seeding'] is bool
+          ? delta['super_seeding'] as bool
+          : superSeeding,
     };
     return Torrent.fromJson(base).copyWithTrId(trId);
   }
@@ -211,6 +331,22 @@ class Torrent {
         numIncomplete: numIncomplete,
         availability: availability,
         priority: priority,
+        amountLeft: amountLeft,
+        wasted: wasted,
+        errorMessage: errorMessage,
+        metadataPercent: metadataPercent,
+        freeSpace: freeSpace,
+        isPrivate: isPrivate,
+        ratioLimit: ratioLimit,
+        seedingTimeLimit: seedingTimeLimit,
+        rawState: rawState,
+        forceStart: forceStart,
+        sequentialDownload: sequentialDownload,
+        firstLastPiecePrio: firstLastPiecePrio,
+        superSeeding: superSeeding,
+        bandwidthPriority: bandwidthPriority,
+        dlLimited: dlLimited,
+        upLimited: upLimited,
         trId: id,
       );
 
@@ -247,6 +383,22 @@ class Torrent {
         'num_incomplete': numIncomplete,
         'availability': availability,
         'priority': priority,
+        'amount_left': amountLeft,
+        'total_wasted': wasted,
+        'error_message': errorMessage,
+        'metadata_percent': metadataPercent,
+        'free_space': freeSpace,
+        'is_private': isPrivate,
+        'ratio_limit': ratioLimit,
+        'seeding_time_limit': seedingTimeLimit,
+        'raw_state': rawState,
+        'force_start': forceStart,
+        'seq_dl': sequentialDownload,
+        'f_l_piece_prio': firstLastPiecePrio,
+        'super_seeding': superSeeding,
+        'bandwidth_priority': bandwidthPriority,
+        'dl_limited': dlLimited,
+        'up_limited': upLimited,
       };
 
   String get newState => state;
@@ -319,6 +471,40 @@ class Torrent {
   }
 
   bool get isStalled => state.toLowerCase().contains('stall');
+
+  /// 两级状态的「主级」归类（D1：全部/下载中/做种中/暂停/排队/校验中/错误/已完成）。
+  ///
+  /// 判断顺序有讲究：`forcedDL` 含 `dl`、`forcedUP` 含 `up`，
+  /// 所以强制态必须在通用 dl/up 之前判；已完成按 progress 单独判（见 [isCompleted]）。
+  TorrentStatusGroup get statusGroup {
+    final String s = state.toLowerCase();
+    if (isError) return TorrentStatusGroup.error;
+    if (s.contains('check')) return TorrentStatusGroup.checking;
+    if (s.contains('paus') || s.contains('stop')) return TorrentStatusGroup.paused;
+    if (s.contains('queued')) return TorrentStatusGroup.queued;
+    // stalledDL / metaDL 都算「下载中」：它们只是**细分**态（细分 chip 读 rawState），
+    // 主下拉里不单独占一项。
+    if (s.contains('stalleddl') ||
+        s.contains('forceddl') ||
+        s.contains('download') ||
+        s.contains('dl')) {
+      return TorrentStatusGroup.downloading;
+    }
+    if (s.contains('stalledup') ||
+        s.contains('forcedup') ||
+        s.contains('seed') ||
+        s.contains('upload') ||
+        s.contains('up')) {
+      return TorrentStatusGroup.seeding;
+    }
+    return TorrentStatusGroup.unknown;
+  }
+
+  /// 下载限速是否真的生效：TR 有显式开关位，qB 没有 ⇒ 用「限速值 > 0」推断。
+  bool get dlLimitedEnabled => dlLimited ?? dlLimit > 0;
+
+  /// 上传限速是否真的生效（同 [dlLimitedEnabled]）。
+  bool get upLimitedEnabled => upLimited ?? upLimit > 0;
 
   int get transferPeers {
     if (activePeers >= 0) return activePeers;

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,47 @@ class FileExport {
   FileExport._();
 
   static const int maxReadBytes = 2 * 1024 * 1024;
+
+  /// 弹出系统「另存为」让用户**自己选保存位置**（Android 走 SAF）。
+  ///
+  /// 背景：直接写 `Android/data/…` 在 Android 11+ 起系统文件管理器看不到
+  /// （USB MTP 也不显示），用户导出后找不到文件 —— 改为自选位置即可根治。
+  /// ⚠️ 必须传 bytes：Android 上拿到的是 content:// URI，`dart:io` 写不了，
+  ///    写入由 file_picker 内部完成。
+  /// 返回：保存目标的标识（用户取消 / 不支持时为 null）。
+  static Future<String?> saveTextAs({
+    required String fileName,
+    required String content,
+    String dialogTitle = '保存日志',
+    List<String> allowedExtensions = const <String>['txt'],
+  }) async {
+    final Uint8List bytes = Uint8List.fromList(utf8.encode(content));
+    return FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: Formatter.safeFileName(fileName),
+      type: FileType.custom,
+      allowedExtensions: allowedExtensions,
+      bytes: bytes,
+    );
+  }
+
+  /// 二进制版本（`.torrent` 是二进制，`saveTextAs` 只能写文本）。
+  ///
+  /// 返回保存目标的标识（用户取消 / 平台不支持时为 null）。
+  static Future<String?> saveBytesAs({
+    required String fileName,
+    required Uint8List bytes,
+    String dialogTitle = '保存文件',
+    List<String> allowedExtensions = const <String>['torrent'],
+  }) {
+    return FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: Formatter.safeFileName(fileName),
+      type: FileType.custom,
+      allowedExtensions: allowedExtensions,
+      bytes: bytes,
+    );
+  }
 
   static Future<String> writeText({
     required String fileName,
