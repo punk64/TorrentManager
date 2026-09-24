@@ -59,6 +59,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 import time
 import zipfile
 from pathlib import Path
@@ -295,10 +296,41 @@ def run_build(env: dict, abis: list[str], debug_sign: bool) -> bool:
     log('$ ' + ' '.join(cmd[1:]))
     log('  （工作目录 %s）' % APP)
     t0 = time.time()
-    # 不要 pipe / capture：构建要跑几分钟，实时输出才能判断是"在干活"还是"卡死了"。
-    rc = subprocess.call(cmd, cwd=str(APP), env=env)
+    # ★ 不要直接用 subprocess.call：在 Android Studio 的 Terminal 里跑时，
+    #   Windows 会给 .bat 子进程另开一个 conhost 窗口，日志全落在那个窗口、
+    #   跑完几秒自动关闭，控制台里什么都看不到。改走「无窗口 + 管道转发」。
+    rc = run_captured(cmd, cwd=str(APP), env=env)
     log('构建结束，退出码 %d，耗时 %.1f 分钟' % (rc, (time.time() - t0) / 60.0))
     return rc == 0
+
+
+def run_captured(cmd: list[str], cwd: str, env: dict) -> int:
+    """跑子进程：**不弹独立控制台窗口**，输出逐行转发到本进程 stdout。
+
+    两点考虑：
+    1. `CREATE_NO_WINDOW` 让 Windows 不为子进程创建 conhost 窗口 ⇒
+       在 AS Terminal / CI 里不再弹窗、也不会「跑完几秒自己关掉」。
+    2. 仍要**实时**转发（构建要跑几分钟），所以边读边 print，
+       不能等结束后一次性输出 —— 否则看不出是「在干活」还是「卡死了」。
+    """
+    flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0
+    proc = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        encoding='utf-8',
+        errors='replace',  # gradlew 偶尔吐非 UTF-8 字节，别因此崩掉
+        bufsize=1,  # 行缓冲，保证实时
+        creationflags=flags,
+    )
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        sys.stdout.write(line)
+        sys.stdout.flush()
+    return proc.wait()
 
 
 def sha1_of(p: Path) -> str:
@@ -628,7 +660,49 @@ def run_checks(out: Path | None = None) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(
         description='一条命令出包：对齐版本号 + 构建 + 重命名 + 打包断言',
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent('''
+            常用组合（★ = 日常最常用）
+
+            ★ python release.py
+                出 pubspec 里记的那个版本，成功后版本号 +1（消耗一个版本号）。
+                产物：TorrentManager-V<x.y.z>-arm64-v8a.apk（默认只出 arm64）。
+
+              python release.py --no-bump
+                同版本重编，**不占版本号**（改完代码想重出一个同名包时用）。
+                ⚠️ 版本号没推进 ⇒ 下次不带参数出包会再出一个同名包覆盖它；
+                   想让下个版本换号，请显式用 --version。
+
+              python release.py --version 0.2.13
+                指定本次要出的版本（versionCode 仍沿用 pubspec 当前值，避免撞号），
+                成功后同样 +1。用于跳过某个号，或 --no-bump 之后手动推进。
+
+              python release.py --dry-run
+                只打印计划（版本 / 产物名 / 架构 / 输出目录 / 签名 / 镜像 / 记账文件），
+                不构建、不写任何文件。用来出包前先确认「这次会出成什么样」。
+
+              python release.py --verify-only
+                只对已有产物跑打包断言（so 压缩态 / CRC / ABI / .sha1 侧车），不构建。
+
+              python release.py --rehash
+                只给已有交付包补 / 重算同名 .sha1 侧车。
+
+              python release.py --abi armeabi-v7a --abi x86_64
+                加出其它架构（默认只有 arm64-v8a；可重复传）。
+
+              python release.py --debug-sign
+                改用调试证书签名（没配正式密钥库时用；**不能覆盖安装正式版**）。
+
+              python release.py --mirror D:\\backup
+                构建后再拷一份到指定目录（也可用环境变量 TM_MIRROR_DIR）；
+                目标不可用时只警告，不阻断出包。
+
+            说明
+            - pubspec.yaml 里存的是「下一次要出的版本」，不是上一次。
+            - 构建 / 断言失败**不消耗**版本号。
+            - 在 Android Studio 的 Terminal 里跑即可，构建输出直接打在控制台
+              （脚本已用 CREATE_NO_WINDOW 调用 Flutter，不会再弹出独立命令窗口）。
+            ''').strip())
     ap.add_argument('--dry-run', action='store_true', help='只打印计划，不构建不写文件')
     ap.add_argument('--no-bump', action='store_true', help='版本号不自增（同版本重编）')
     ap.add_argument('--version', help='指定本次要出的版本（如 0.2.10）')

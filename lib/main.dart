@@ -9,6 +9,7 @@ import 'app/page_style.dart';
 import 'app/routes.dart';
 import 'app/style_keys.dart';
 import 'controllers/locale_controller.dart';
+import 'controllers/server_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'utils/app_log.dart';
 import 'utils/net_error.dart';
@@ -35,6 +36,8 @@ void main() {
       AppLog.instance.error('未捕获异常: ${NetError.describe(error)}');
       return true;
     };
+
+    ServerController.prefsPrefetchEnabled = true;
 
     AppLog.instance.info('应用启动');
     runApp(const TorrentManagerApp());

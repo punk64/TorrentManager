@@ -10,6 +10,7 @@ import '../data/local/local_store.dart';
 import '../data/models/server_data.dart';
 import '../data/models/server_state.dart';
 import '../data/models/torrent.dart';
+import '../data/prefs/server_prefs.dart';
 import '../data/qbittorrent/qb_method.dart';
 import '../data/transmission/tr_method.dart';
 import '../utils/app_log.dart';
@@ -32,6 +33,26 @@ enum ConnStage {
         ConnStage.handshake => '正在连接服务器…',
         ConnStage.loading => '正在获取种子列表…',
       };
+}
+
+class ServerPrefsSnap {
+  const ServerPrefsSnap({
+    this.prefs = const <String, dynamic>{},
+    this.serverState = const <String, dynamic>{},
+    this.categories = const <String>[],
+    this.tags = const <String>[],
+    required this.at,
+  });
+
+  final Map<String, dynamic> prefs;
+
+  final Map<String, dynamic> serverState;
+
+  final List<String> categories;
+
+  final List<String> tags;
+
+  final DateTime at;
 }
 
 class ServerController extends GetxController with WidgetsBindingObserver {
@@ -90,6 +111,12 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   static const List<int> kBackoffSeconds = <int>[3, 6, 12, 30];
 
   static const int kMaxConsecutiveFailures = 10;
+
+  static const int kMaxServers = 50;
+
+  static bool prefsPrefetchEnabled = false;
+
+  static const Duration kPrefsCacheTtl = Duration(minutes: 5);
 
   bool isSuspended(String id) => suspendKind.containsKey(id);
 
@@ -622,6 +649,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
             ' ｜ 合计 ${secs(sw.elapsed)}',
       );
       await _fetchVersionWith(s, qbClient: c);
+      unawaited(_prefetchPrefs(s, qbServerState: ss));
     } else if (s.isTransmission) {
       final Stopwatch sw = Stopwatch()..start();
       final TrMethod c = clientForTr(s.id);
@@ -658,6 +686,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
             ' ｜ 合计 ${secs(sw.elapsed)}',
       );
       await _fetchVersionWith(s, trClient: c);
+      unawaited(_prefetchPrefs(s));
     }
   }
 
@@ -839,24 +868,81 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     isSynced.value = false;
   }
 
+  final Map<String, ServerPrefsSnap> _prefsCache = <String, ServerPrefsSnap>{};
+
+  ServerPrefsSnap? prefsSnapOf(String id) => _prefsCache[id];
+
+  void putPrefsSnap(String id, ServerPrefsSnap snap) => _prefsCache[id] = snap;
+
+  void dropPrefsSnap(String id) => _prefsCache.remove(id);
+
+  Future<void> _prefetchPrefs(ServerData s,
+      {Map<String, dynamic>? qbServerState}) async {
+    if (!prefsPrefetchEnabled) return;
+    final ServerPrefsSnap? cur = _prefsCache[s.id];
+    if (cur != null && DateTime.now().difference(cur.at) < kPrefsCacheTtl) {
+      return;
+    }
+    try {
+      final ServerPrefsApi api = createPrefsApi(
+        server: s,
+        qbClient: clientForQb(s.id),
+        trClient: clientForTr(s.id),
+        resolve: targetFor,
+      );
+      final Map<String, dynamic> prefs = await api.read();
+      List<String> cats = const <String>[];
+      List<String> tags = const <String>[];
+      final QbMethod? qb = api.qb;
+      if (qb != null) {
+        try {
+          final Map<String, dynamic> c = await qb.getCategories();
+          cats = c.keys.map((dynamic k) => k.toString()).toList();
+          tags = await qb.getTags();
+        } catch (_) {}
+      }
+      Map<String, dynamic> ss = const <String, dynamic>{};
+      if (qbServerState != null) {
+        ss = Map<String, dynamic>.from(qbServerState);
+        final dynamic v = qbServerState['use_alt_speed_limits'];
+        ss[PrefKey.altSpeedEnabled] = v is bool
+            ? v
+            : (v is num ? v != 0 : (v is String ? v == 'true' : false));
+      } else {
+        final Map<String, dynamic>? r = await api.readServerState();
+        if (r != null) ss = r;
+      }
+      _prefsCache[s.id] = ServerPrefsSnap(
+        prefs: prefs,
+        serverState: ss,
+        categories: cats,
+        tags: tags,
+        at: DateTime.now(),
+      );
+    } catch (_) {}
+  }
+
   Future<void> loadBackupInfo() async {
     backupAt.value = await LocalStore.loadBackupAt();
   }
 
-  Future<void> addServer(ServerData s) async {
+  Future<bool> addServer(ServerData s) async {
+    if (servers.length >= kMaxServers) return false;
     servers.add(s);
     await persist();
 
     AppLog.instance.op('添加服务器：${s.name}（${s.type}）', scope: s.logScope);
 
     unawaited(_refreshOneServer(s, showProgress: false));
+    return true;
   }
 
-  Future<void> updateServer(ServerData s) async {
+  Future<bool> updateServer(ServerData s) async {
     final int i = servers.indexWhere((ServerData e) => e.id == s.id);
     if (i >= 0) {
       servers[i] = s;
     } else {
+      if (servers.length >= kMaxServers) return false;
       servers.add(s);
     }
     await persist();
@@ -868,6 +954,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         scope: s.logScope);
 
     unawaited(_refreshOneServer(s, showProgress: false));
+    return true;
   }
 
   Future<void> deleteServer(String id) async {
@@ -890,6 +977,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   void _clearRuntimeOf(String id) {
     _dropCache(id);
+    dropPrefsSnap(id);
 
     lanUsing.remove(id);
     lanChecking.remove(id);
@@ -1478,6 +1566,14 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       all.addAll(torrentsOf(s.id));
     }
     return TorrentStatusCounts.of(all);
+  }
+
+  TransferTotals get transferTotals {
+    final List<Torrent> all = <Torrent>[];
+    for (final ServerData s in servers) {
+      all.addAll(torrentsOf(s.id));
+    }
+    return TransferTotals.of(all);
   }
 
   int get onlineServerCount => servers

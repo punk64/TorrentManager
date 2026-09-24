@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:torrent_manager/utils/i18n.dart';
 import 'package:torrent_manager/utils/ip_geo.dart';
 import 'package:torrent_manager/utils/ip_geo_sources.dart';
 
@@ -93,6 +94,7 @@ final Map<String, String> kHostToId = <String, String>{
 
 void main() {
   setUp(() {
+    L.code.value = '';
     IpGeo.offline = false;
     IpGeo.instance.resetStateForTest();
   });
@@ -108,37 +110,39 @@ void main() {
     expect(r, contains('Test'), reason: '★ 结果应来自假响应字段');
   });
 
-  test('★ 洗牌袋均摊：连续 20 个 IP 应分散到至少 5 个不同的源', () async {
+  test('★ 中文优先 + 洗牌均摊：中文源正常时只打中文源，且分散到多个源', () async {
     final Map<String, int> hits = <String, int>{};
-    IpGeo.instance.injectDioForTest(makeFakeDio(hits: hits));
+    final List<String> seen = <String>[];
+    IpGeo.instance.injectDioForTest(makeFakeDio(hits: hits, seenHosts: seen));
     for (int i = 0; i < 20; i++) {
       await IpGeo.instance.lookup('8.8.${i ~/ 256}.${i % 256}');
     }
+    final Set<String> zhHosts =
+        kZhGeoPool.map((IpGeoSource s) => s.host).toSet();
     final int total = hits.values.fold<int>(0, (int a, int b) => a + b);
     expect(total, 20, reason: '★ 每个未缓存的 IP 只发一次请求（成功即止）');
-    expect(hits.keys.length, greaterThanOrEqualTo(5),
-        reason: '★ 请求应分散到多个源，而不是集中打同一个');
+    expect(seen.every(zhHosts.contains), isTrue,
+        reason: '★ 中文源可用时不应触碰英文源（英文仅作兜底）');
+    expect(hits.keys.length, greaterThanOrEqualTo(3),
+        reason: '★ 请求应分散到多个中文源，而不是集中打同一个');
   });
 
-  test('★ 失败换源：全部 500 时单个 IP 最多试 3 个源，最终返回 null', () async {
+  test('★ 失败换源：全部 500 时单个 IP 最多试 8 个源（中文 4 + 英文 4），返回 null',
+      () async {
     final Map<String, int> hits = <String, int>{};
     IpGeo.instance.injectDioForTest(makeFakeDio(
       respondIp: '8.8.8.8',
       statusByHost: <String, int>{'*': 500},
       hits: hits,
     ));
-    final String? r1 = await IpGeo.instance.lookup('8.8.8.1');
-    final String? r2 = await IpGeo.instance.lookup('8.8.8.2');
-    final String? r3 = await IpGeo.instance.lookup('8.8.8.3');
-    expect(r1, isNull);
-    expect(r2, isNull);
-    expect(r3, isNull);
+    final String? r = await IpGeo.instance.lookup('8.8.8.1');
+    expect(r, isNull);
     final int total = hits.values.fold<int>(0, (int a, int b) => a + b);
-    expect(total, 9, reason: '★ 3 个 IP × 最多 3 源；失败会立刻换下一个源');
+    expect(total, 8, reason: '★ 首选池 4 源 + 备用池 4 源；失败立刻换下一个');
   });
 
   test('★ 429 冷却：被限流的源在冷却期内不再被选中，且查询仍能成功', () async {
-    const String limitedHost = 'ipwho.is';
+    const String limitedHost = 'ip9.com.cn';
     final Map<String, int> hits = <String, int>{};
     IpGeo.instance.injectDioForTest(makeFakeDio(
       statusByHost: <String, int>{limitedHost: 429},
@@ -173,7 +177,7 @@ void main() {
     expect(total, greaterThanOrEqualTo(30),
         reason: '★ 15 个 IP 的失败请求应真实发出（负缓存只对同 IP 生效）');
     expect(IpGeo.instance.cooldownUntilForTest, isNotEmpty,
-        reason: '★ 45 次失败分布到 10 个源，必有源连败 3 次进冷却');
+        reason: '★ 失败分布到中/英两池，必有源连败 3 次进冷却');
   });
 
   test('★ 回环校验：响应自报的 IP 与查询不一致时视为坏数据', () async {
@@ -185,7 +189,7 @@ void main() {
     final String? r = await IpGeo.instance.lookup('8.8.8.8');
     expect(r, isNull, reason: '★ 回环 IP 不一致 = 数据不可信，必须丢弃');
     final int total = hits.values.fold<int>(0, (int a, int b) => a + b);
-    expect(total, 3, reason: '★ 坏数据按普通失败处理：换源重试至上限');
+    expect(total, 8, reason: '★ 坏数据按普通失败处理：中文 4 + 英文 4');
   });
 
   test('★ 输出净化：污染字符（双向重写符 / 控制符 / 尖括号）不进入结果', () async {
@@ -219,7 +223,7 @@ void main() {
     final String? r = await IpGeo.instance.lookup('8.8.8.8');
     expect(r, isNull);
     final int total = hits.values.fold<int>(0, (int a, int b) => a + b);
-    expect(total, 3, reason: '★ 超大响应按失败处理并换源');
+    expect(total, 8, reason: '★ 超大响应按失败处理：中文 4 + 英文 4');
   });
 
   test('★ IPv6 查询：不支持 IPv6 的源（pconline / baidu / ipwho.is）绝不参与',
@@ -257,5 +261,41 @@ void main() {
     final int second = hits.values.fold<int>(0, (int a, int b) => a + b);
     expect(again, isNull);
     expect(second, first, reason: '★ 失败结果进永久负缓存，重复查询零请求');
+  });
+
+  test('★ T2 兜底：中文源全部失败时，同一轮内立即改用英文源', () async {
+    final Set<String> zhHosts =
+        kZhGeoPool.map((IpGeoSource s) => s.host).toSet();
+    final Map<String, int> hits = <String, int>{};
+    final List<String> seen = <String>[];
+    IpGeo.instance.injectDioForTest(makeFakeDio(
+      respondIp: '8.8.8.8',
+      statusByHost: <String, int>{for (final String h in zhHosts) h: 500},
+      hits: hits,
+      seenHosts: seen,
+    ));
+    final String? r = await IpGeo.instance.lookup('8.8.8.8');
+    expect(r, isNotNull, reason: '★ 中文源全失败 → 应回退英文源并成功');
+    expect(seen.any((String h) => !zhHosts.contains(h)), isTrue,
+        reason: '★ 必须实际命中过英文源');
+  });
+
+  test('★ 英文语言：英文池优先；英文源全失败时回退中文池', () async {
+    L.code.value = L.en;
+    addTearDown(() => L.code.value = '');
+    final Set<String> enHosts =
+        kEnGeoPool.map((IpGeoSource s) => s.host).toSet();
+    final Map<String, int> hits = <String, int>{};
+    final List<String> seen = <String>[];
+    IpGeo.instance.injectDioForTest(makeFakeDio(
+      respondIp: '8.8.8.8',
+      statusByHost: <String, int>{for (final String h in enHosts) h: 500},
+      hits: hits,
+      seenHosts: seen,
+    ));
+    final String? r = await IpGeo.instance.lookup('8.8.8.8');
+    expect(r, isNotNull, reason: '★ 英文源全失败 → 应回退中文源并成功');
+    expect(seen.any((String h) => !enHosts.contains(h)), isTrue,
+        reason: '★ 必须实际命中过中文源');
   });
 }

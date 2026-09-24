@@ -265,12 +265,6 @@ final List<IpGeoSource> kZhGeoPool = <IpGeoSource>[
   _ip9,
   _pconline,
   _baidu,
-  _ipWhoIs,
-  _ipSb,
-  _geoJs,
-  _ipLocationNet,
-  _ipWhoisApp,
-  _technikNews,
 ];
 
 final List<IpGeoSource> kEnGeoPool = <IpGeoSource>[

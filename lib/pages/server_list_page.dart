@@ -160,8 +160,12 @@ class _ServerListPageState extends State<ServerListPage> {
               topInset: kToolbarHeight + MediaQuery.of(context).padding.top,
 
               initialYRatio: DraggableFab.listPageInitialYRatio,
-              onPressed: () {
+              onPressed: () async {
                 AppLog.instance.act('服务器列表', '悬浮按钮[添加服务器]');
+                if (ctrl.servers.length >= ServerController.kMaxServers) {
+                  await showServerLimitDialog(context);
+                  return;
+                }
                 showServerDialog(context);
               },
             ),
@@ -289,6 +293,7 @@ class _ServerListPageState extends State<ServerListPage> {
           counts: ctrl.totalStatusCounts,
           serversOnline: ctrl.onlineServerCount,
           serversTotal: ctrl.servers.length,
+          totals: ctrl.transferTotals,
         ));
   }
 

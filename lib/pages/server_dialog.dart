@@ -32,6 +32,22 @@ Future<bool?> showServerDialog(
   );
 }
 
+Future<void> showServerLimitDialog(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (BuildContext ctx) => AlertDialog(
+      title: Text(S.srvLimitTitle),
+      content: Text(S.srvLimitBody),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(S.ok),
+        ),
+      ],
+    ),
+  );
+}
+
 Future<String?> showConnectionErrorDialog(
   BuildContext context, {
   String? reason,

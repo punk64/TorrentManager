@@ -406,3 +406,29 @@ class TorrentStatusCounts {
   int get total =>
       downloading + seeding + paused + checking + error + other;
 }
+
+class TransferTotals {
+  const TransferTotals({
+    this.peers = 0,
+    this.uploadedBytes = 0,
+    this.downloadedBytes = 0,
+  });
+
+  factory TransferTotals.of(Iterable<Torrent> list) {
+    int peers = 0;
+    int up = 0;
+    int dl = 0;
+    for (final Torrent t in list) {
+      peers += t.transferPeers;
+      up += t.uploaded < 0 ? 0 : t.uploaded;
+      dl += t.downloaded < 0 ? 0 : t.downloaded;
+    }
+    return TransferTotals(peers: peers, uploadedBytes: up, downloadedBytes: dl);
+  }
+
+  final int peers;
+  final int uploadedBytes;
+  final int downloadedBytes;
+
+  int get movedBytes => uploadedBytes + downloadedBytes;
+}

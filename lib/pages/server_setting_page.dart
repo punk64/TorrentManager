@@ -111,6 +111,21 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     final ServerData? s = _server;
     if (s != null) _api.attach(s);
 
+    final ServerPrefsSnap? cached = s == null ? null : ctrl.prefsSnapOf(s.id);
+    if (cached != null) {
+      _prefs = cached.prefs;
+      _ss = cached.serverState;
+      _categories
+        ..clear()
+        ..addAll(cached.categories);
+      _tags
+        ..clear()
+        ..addAll(cached.tags);
+      _prefsLoaded = true;
+      _prefsError = null;
+      _applyPreferences();
+    }
+
     unawaited(_loadPreferences());
     _loadCategoriesAndTags();
   }
@@ -158,6 +173,16 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         _prefsError = null;
         _applyPreferences();
       });
+      ctrl.putPrefsSnap(
+        _server!.id,
+        ServerPrefsSnap(
+          prefs: _prefs,
+          serverState: _ss,
+          categories: _categories,
+          tags: _tags,
+          at: DateTime.now(),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -315,6 +340,19 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ..clear()
           ..addAll(tags);
       });
+      final ServerData? srv = _server;
+      if (srv != null) {
+        ctrl.putPrefsSnap(
+          srv.id,
+          ServerPrefsSnap(
+            prefs: _prefs,
+            serverState: _ss,
+            categories: _categories,
+            tags: _tags,
+            at: DateTime.now(),
+          ),
+        );
+      }
     } catch (_) {
     }
   }

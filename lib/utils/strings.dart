@@ -88,6 +88,13 @@ class S {
   static String get chartLabelVerifying => L.t('校验');
   static String get chartLabelServersOnline => L.t('服务器在线');
 
+  static String get statsLabelPeers => L.t('当前连接');
+  static String get statsLabelTotalDl => L.t('累计下载');
+  static String get statsLabelTotalUl => L.t('累计上传');
+
+  /// 环形图中心「种子」小标签
+  static String get statsLabelTorrents => L.t('种子');
+
   static String get stSeeding => L.t('做种');
   static String get stPausedUp => L.t('暂停上传');
   static String get stPausedDl => L.t('暂停下载');
@@ -218,6 +225,9 @@ class S {
   static String get srvAdded => L.t('添加服务器成功: ');
   static String get srvEdited => L.t('修改服务器成功: ');
   static String get srvDeleted => L.t('删除服务器：');
+  static String get srvLimitTitle => L.t('已达服务器数量上限');
+  static String get srvLimitBody =>
+      L.t('出于性能与安全考虑，最多只能添加 50 台服务器。请先删除不再使用的服务器后再添加。');
   static String get srvEnterName => L.t('请输入服务器名称');
   static String get srvEnterAddress => L.t('请输入地址');
   static String get srvEnterValidNumber => L.t('请输入有效数字');

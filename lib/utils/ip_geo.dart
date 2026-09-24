@@ -29,7 +29,7 @@ class IpGeo {
 
   static const Duration cooldownRateLimit = Duration(minutes: 30);
 
-  static const int maxAttempts = 3;
+  static const int maxAttemptsPerTier = 4;
 
   static const int maxBodyChars = 32 * 1024;
 
@@ -47,8 +47,7 @@ class IpGeo {
   Dio? _dio;
 
   final math.Random _rand = math.Random();
-  final List<String> _bag = <String>[];
-  String _bagSig = '';
+  final Map<String, List<String>> _bags = <String, List<String>>{};
   final Map<String, DateTime> _lastUsed = <String, DateTime>{};
   final Map<String, int> _failStreak = <String, int>{};
   final Map<String, DateTime> _cooldownUntil = <String, DateTime>{};
@@ -85,28 +84,41 @@ class IpGeo {
     await _slot();
     try {
       final bool v6 = ip.contains(':');
-      for (int attempt = 0; attempt < maxAttempts; attempt++) {
-        final IpGeoSource? src = _pick(v6: v6);
-        if (src == null) break; 
+      final List<IpGeoSource> primary = L.isEnglish ? kEnGeoPool : kZhGeoPool;
+      final List<IpGeoSource> backup = L.isEnglish ? kZhGeoPool : kEnGeoPool;
+      final Set<String> tried = <String>{};
 
-        try {
-          final String? text = await _fetchWith(src, ip);
-          if (text != null) {
-            _failStreak.remove(src.id);
-            _put(ip, text);
-            return text;
-          }
-          _noteFailure(src.id, rateLimited: false);
-        } catch (_) {
-          _noteFailure(src.id, rateLimited: false);
-        }
-      }
-      _put(ip, null);
-      return null;
+      String? r =
+          await _attemptTier(ip, primary, L.isEnglish ? 'en' : 'zh', v6, tried);
+      r ??= await _attemptTier(
+          ip, backup, L.isEnglish ? 'zh-bk' : 'en-bk', v6, tried);
+
+      _put(ip, r);
+      return r;
     } finally {
       _release();
       _running.remove(ip);
     }
+  }
+
+  Future<String?> _attemptTier(String ip, List<IpGeoSource> pool, String sig,
+      bool v6, Set<String> tried) async {
+    for (int attempt = 0; attempt < maxAttemptsPerTier; attempt++) {
+      final IpGeoSource? src = _pickFrom(pool, sig, v6: v6, exclude: tried);
+      if (src == null) return null;
+      tried.add(src.id);
+      try {
+        final String? text = await _fetchWith(src, ip);
+        if (text != null) {
+          _failStreak.remove(src.id);
+          return text;
+        }
+        _noteFailure(src.id, rateLimited: false);
+      } catch (_) {
+        _noteFailure(src.id, rateLimited: false);
+      }
+    }
+    return null;
   }
 
   void _put(String ip, String? text) {
@@ -137,27 +149,24 @@ class IpGeo {
 
   static final DateTime _epoch = DateTime.fromMillisecondsSinceEpoch(0);
 
-  IpGeoSource? _pick({required bool v6}) {
-    final List<IpGeoSource> base = L.isEnglish ? kEnGeoPool : kZhGeoPool;
+  IpGeoSource? _pickFrom(List<IpGeoSource> base, String sig,
+      {required bool v6, Set<String> exclude = const <String>{}}) {
     List<IpGeoSource> pool = base;
     if (v6) {
       final List<IpGeoSource> v6Pool =
           base.where((IpGeoSource s) => s.ipv6).toList();
       if (v6Pool.isNotEmpty) pool = v6Pool;
     }
-    final String sig = '${L.isEnglish ? 'en' : 'zh'}|${v6 ? '6' : '4'}';
-    if (sig != _bagSig) {
-      _bagSig = sig;
-      _bag
-        ..clear()
-        ..addAll(pool.map<String>((IpGeoSource s) => s.id))
-        ..shuffle(_rand);
-    }
+    final String key = '$sig|${v6 ? '6' : '4'}';
+    final List<String> bag = _bags.putIfAbsent(
+      key,
+      () => pool.map<String>((IpGeoSource s) => s.id).toList()..shuffle(_rand),
+    );
 
     final DateTime now = DateTime.now();
-    final int n = _bag.length;
+    final int n = bag.length;
     for (int i = 0; i < n; i++) {
-      final String id = _bag.removeAt(0);
+      final String id = bag.removeAt(0);
       IpGeoSource? src;
       for (final IpGeoSource s in pool) {
         if (s.id == id) {
@@ -165,15 +174,19 @@ class IpGeo {
           break;
         }
       }
-      if (src == null) continue; 
+      if (src == null) continue;
+      if (exclude.contains(id)) {
+        bag.add(id);
+        continue;
+      }
       final DateTime? cd = _cooldownUntil[id];
       if (cd != null && now.isBefore(cd)) {
-        _bag.add(id); 
+        bag.add(id);
         continue;
       }
       final DateTime? lu = _lastUsed[id];
       if (lu != null && now.difference(lu) < minSourceInterval) {
-        _bag.add(id); 
+        bag.add(id);
         continue;
       }
       _lastUsed[id] = now;
@@ -183,6 +196,7 @@ class IpGeo {
     IpGeoSource? oldest;
     DateTime? oldestAt;
     for (final IpGeoSource s in pool) {
+      if (exclude.contains(s.id)) continue;
       final DateTime? cd = _cooldownUntil[s.id];
       if (cd != null && now.isBefore(cd)) continue;
       final DateTime? lu = _lastUsed[s.id];
@@ -347,8 +361,7 @@ class IpGeo {
     _running.clear();
     _waiters.clear();
     _active = 0;
-    _bag.clear();
-    _bagSig = '';
+    _bags.clear();
     _lastUsed.clear();
     _failStreak.clear();
     _cooldownUntil.clear();
