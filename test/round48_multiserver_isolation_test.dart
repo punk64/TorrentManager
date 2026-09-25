@@ -25,8 +25,8 @@ ServerData srvB() => ServerData(
       id: 'srv-b',
       name: 'qB 备',
       type: 'qbittorrent',
-      host: '192.168.1.5', 
-      port: 8081, 
+      host: '192.168.1.5',
+      port: 8081,
       username: 'admin',
       password: 'secret',
     );
@@ -219,7 +219,7 @@ void main() {
     final ServerData a = srvA();
     final ServerData b = srvB();
     sc.servers.assignAll(<ServerData>[a, b]);
-    sc.current.value = a; 
+    sc.current.value = a;
     sc.qbFactory = () => QbMethod(dio: fake.dio());
 
     await sc.refreshAllServers();

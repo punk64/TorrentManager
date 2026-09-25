@@ -8,8 +8,6 @@ import 'package:torrent_manager/utils/startup_update.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/utils/update_check.dart';
 
-/// 形似 GitHub `/releases/latest` 的响应；[withApk] 为 false 时模拟
-/// 「打了 tag 但没传安装包」的 Release（严格口径下不该提醒）。
 String _githubBody(String tag, {bool withApk = true}) =>
     '{"tag_name": "$tag", "name": "$tag", '
     '"html_url": "https://github.com/punk64/TorrentManager/releases/tag/$tag", '
@@ -28,7 +26,7 @@ Future<String> _boom() async => throw StateError('boom');
 void main() {
   setUp(() {
     StartupUpdatePrompt.resetForTest();
-    // 走平台通道拿 ABI 在测试里没人应答（会等满超时），直接指定。
+
     UpdateInstaller.testAbiOverride = 'arm64-v8a';
   });
 

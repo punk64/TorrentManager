@@ -10,6 +10,7 @@ import '../utils/formatter.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
 import '../widgets/log_selection.dart';
+import '../app/adaptive.dart';
 
 class LogPage extends StatefulWidget {
   const LogPage({super.key});
@@ -127,8 +128,8 @@ class _LogPageState extends State<LogPage> {
                   child: Row(
                     children: <Widget>[
                       Text(S.logFilterTitle,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
+                          style: TextStyle(
+                              fontSize: af(context, 14), fontWeight: FontWeight.w600)),
                       const Spacer(),
                       TextButton(
 
@@ -139,7 +140,7 @@ class _LogPageState extends State<LogPage> {
                                 })
                             : null,
                         child: Text(S.logFilterReset,
-                            style: const TextStyle(fontSize: 12)),
+                            style: TextStyle(fontSize: af(context, 12))),
                       ),
                     ],
                   ),
@@ -151,9 +152,9 @@ class _LogPageState extends State<LogPage> {
                   onChanged: (bool? v) => bump(() => _hideSystem = v ?? false),
                   controlAffinity: ListTileControlAffinity.leading,
                   title: Text(S.logFilterHideSystem,
-                      style: const TextStyle(fontSize: 13)),
+                      style: TextStyle(fontSize: af(context, 13))),
                   subtitle: Text(S.logFilterHideSystemHint,
-                      style: const TextStyle(fontSize: 10, height: 1.35)),
+                      style: TextStyle(fontSize: af(context, 10), height: 1.35)),
                 ),
                 const Divider(height: 1),
 
@@ -162,10 +163,10 @@ class _LogPageState extends State<LogPage> {
                   child: Row(
                     children: <Widget>[
                       Text(S.logFilterServerSection,
-                          style: TextStyle(fontSize: 10, color: cs.outline)),
+                          style: TextStyle(fontSize: af(context, 10), color: cs.outline)),
                       const Spacer(),
                       Text(S.logFilterNoneHint,
-                          style: TextStyle(fontSize: 10, color: cs.outline)),
+                          style: TextStyle(fontSize: af(context, 10), color: cs.outline)),
                     ],
                   ),
                 ),
@@ -174,7 +175,7 @@ class _LogPageState extends State<LogPage> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                     child: Text(S.logFilterNoServer,
-                        style: TextStyle(fontSize: 12, color: cs.outline)),
+                        style: TextStyle(fontSize: af(context, 12), color: cs.outline)),
                   )
                 else
 
@@ -199,13 +200,13 @@ class _LogPageState extends State<LogPage> {
                           }),
                           controlAffinity: ListTileControlAffinity.leading,
                           title: Text(o.scope.name,
-                              style: const TextStyle(fontSize: 13)),
+                              style: TextStyle(fontSize: af(context, 13))),
                           subtitle: Text(
                             <String>[
                               if (o.kind.isNotEmpty) o.kind,
                               S.logFilterCount(_countOf(o.scope.id)),
                             ].join(' · '),
-                            style: const TextStyle(fontSize: 10),
+                            style: TextStyle(fontSize: af(context, 10)),
                           ),
                         );
                       },
@@ -225,7 +226,7 @@ class _LogPageState extends State<LogPage> {
                                   ..addAll(opts
                                       .map((_SrvOption o) => o.scope.id))),
                         child: Text(S.logSelectAll,
-                            style: const TextStyle(fontSize: 12)),
+                            style: TextStyle(fontSize: af(context, 12))),
                       ),
                       TextButton(
                         onPressed: opts.isEmpty
@@ -238,13 +239,13 @@ class _LogPageState extends State<LogPage> {
                                   }
                                 }),
                         child: Text(S.logInvert,
-                            style: const TextStyle(fontSize: 12)),
+                            style: TextStyle(fontSize: af(context, 12))),
                       ),
                       const Spacer(),
                       FilledButton(
                         onPressed: () => Navigator.of(ctx).pop(),
                         child: Text(S.logFilterDone,
-                            style: const TextStyle(fontSize: 13)),
+                            style: TextStyle(fontSize: af(context, 13))),
                       ),
                     ],
                   ),
@@ -279,7 +280,7 @@ class _LogPageState extends State<LogPage> {
                   _summary(opts),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 9, color: cs.primary),
+                  style: TextStyle(fontSize: af(context, 9), color: cs.primary),
                 ),
               ),
             ],
@@ -357,7 +358,7 @@ class _LogPageState extends State<LogPage> {
             Icon(Icons.circle, size: 9, color: color),
             const SizedBox(width: 6),
             Expanded(
-              child: Text(label, style: const TextStyle(fontSize: 14)),
+              child: Text(label, style: TextStyle(fontSize: af(context, 14))),
             ),
           ],
         ),
@@ -368,12 +369,12 @@ class _LogPageState extends State<LogPage> {
             children: <Widget>[
               SelectableText(
                 _display(e.message),
-                style: const TextStyle(fontSize: 12, height: 1.5),
+                style: TextStyle(fontSize: af(context, 12), height: 1.5),
               ),
               const SizedBox(height: 10),
               Text(
                 '${e.formattedTime} · ${e.source}',
-                style: const TextStyle(fontSize: 10),
+                style: TextStyle(fontSize: af(context, 10)),
               ),
             ],
           ),
@@ -389,7 +390,7 @@ class _LogPageState extends State<LogPage> {
               if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
-            child: const Text('复制全文', style: TextStyle(fontSize: 13)),
+            child: Text('复制全文', style: TextStyle(fontSize: af(context, 13))),
           ),
         ],
       ),
@@ -399,7 +400,7 @@ class _LogPageState extends State<LogPage> {
   void _clearAll() {
     final AppLog log = AppLog.instance;
     log.clear();
-    _maskCache.clear(); 
+    _maskCache.clear();
 
     log.op('清空应用日志');
     _exitSelection();
@@ -433,7 +434,7 @@ class _LogPageState extends State<LogPage> {
                 onToggleAll: () => _toggleAll(vis),
               )
             : AppBar(
-                title: const Text('日志', style: TextStyle(fontSize: 15)),
+                title: Text('日志', style: TextStyle(fontSize: af(context, 15))),
                 actions: <Widget>[
 
                   IconButton(
@@ -489,12 +490,12 @@ class _LogPageState extends State<LogPage> {
                       PopupMenuItem<String>(
                         value: 'select',
                         child: Text(S.logSelectMode,
-                            style: const TextStyle(fontSize: 13)),
+                            style: TextStyle(fontSize: af(context, 13))),
                       ),
                       PopupMenuItem<String>(
                         value: 'clear',
                         child:
-                            Text(S.logClear, style: const TextStyle(fontSize: 13)),
+                            Text(S.logClear, style: TextStyle(fontSize: af(context, 13))),
                       ),
                     ],
                   ),
@@ -526,14 +527,14 @@ class _LogPageState extends State<LogPage> {
                   width: 22,
                   height: 22,
                 ),
-                title: const Text('服务器日志', style: TextStyle(fontSize: 12)),
+                title: Text('服务器日志', style: TextStyle(fontSize: af(context, 12))),
                 subtitle: Text(
                   sc.current.value == null
                       ? '选择一台服务器后查看它的服务器日志'
                       : sc.current.value!.isTransmission
                           ? 'Transmission 会话诊断（RPC 不提供日志接口）'
                           : 'GET /api/v2/log/main',
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: af(context, 10)),
                 ),
                 trailing:
                     const Icon(Icons.chevron_right, size: AppTheme.iconSize),
@@ -548,14 +549,14 @@ class _LogPageState extends State<LogPage> {
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 3),
               child: Row(
                 children: <Widget>[
-                  const Text('应用日志', style: TextStyle(fontSize: 11)),
+                  Text('应用日志', style: TextStyle(fontSize: af(context, 11))),
                   const SizedBox(width: 6),
                   Obx(() => Text(
 
                         _filterActive
                             ? '${_visible().length}/${log.entries.length}'
                             : '${log.entries.length}/${AppLog.maxEntries}',
-                        style: const TextStyle(fontSize: 10),
+                        style: TextStyle(fontSize: af(context, 10)),
                       )),
                   const Spacer(),
 
@@ -570,13 +571,13 @@ class _LogPageState extends State<LogPage> {
                 final List<LogEntry> rows = _visible();
 
                 if (log.entries.isEmpty) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
                       child: Text(
                         '暂无日志记录。应用内的操作提示、网络请求与异常'
                         '会自动记在这里（服务器日志见上方入口）。',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: af(context, 12)),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -592,7 +593,7 @@ class _LogPageState extends State<LogPage> {
                         children: <Widget>[
                           Text(
                             S.logFilterEmpty,
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: af(context, 12)),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
@@ -600,7 +601,7 @@ class _LogPageState extends State<LogPage> {
                             onPressed: _resetFilter,
                             child: Text(
                               S.logFilterResetAction,
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(fontSize: af(context, 12)),
                             ),
                           ),
                         ],
@@ -645,11 +646,11 @@ class _LogPageState extends State<LogPage> {
 
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11),
+                        style: TextStyle(fontSize: af(context, 11)),
                       ),
                       subtitle: Text(
                         '${e.formattedTime} · $label · ${e.source}',
-                        style: const TextStyle(fontSize: 9),
+                        style: TextStyle(fontSize: af(context, 9)),
                       ),
                       onTap: _selecting ? () => _toggle(e) : () => _showDetail(e, cs),
                       onLongPress: () => _enterSelection(e),

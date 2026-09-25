@@ -1,7 +1,5 @@
 import '../../utils/formatter.dart';
 
-/// 两级状态里的「主级」：状态下拉的 8 个主分类按它分组，
-/// 细分 chip 再按 [Torrent.rawState] 展开（两种服务器各自的细项）。
 enum TorrentStatusGroup {
   downloading,
   seeding,
@@ -86,33 +84,20 @@ class Torrent {
 
   final int seedingTimeLimit;
 
-  /// 服务端**原始**状态值（两级状态的「细分级」）：
-  /// Transmission 是 `status` 数字（0~6）转成的字符串，qBittorrent 是原始状态串。
-  ///
-  /// 主级看 [statusGroup]；状态下拉的细分 chip 才读它。
   final String rawState;
 
-  /// 强制做种（qB `force_start`；TR 无此能力 ⇒ 恒 null，UI 按服务器类型隐藏）。
   final bool? forceStart;
 
-  /// 顺序下载（qB `seq_dl`；TR 无 ⇒ null）。
   final bool? sequentialDownload;
 
-  /// 首尾块优先（qB `f_l_piece_prio`；TR 无 ⇒ null）。
   final bool? firstLastPiecePrio;
 
-  /// 超级做种（qB `super_seeding`；TR 无 ⇒ null）。
   final bool? superSeeding;
 
-  /// 带宽优先级（仅 TR：-1 低 / 0 正常 / 1 高；qB 无 ⇒ 恒 0）。
   final int bandwidthPriority;
 
-  /// 下载限速**开关**（TR `downloadLimited`）。
-  /// qB 没有这个字段，用 [dlLimitedEnabled] 按 `dlLimit > 0` 兜底。
   final bool? dlLimited;
 
-  /// 上传限速**开关**（TR `uploadLimited`）。
-  /// qB 没有这个字段，用 [upLimitedEnabled] 按 `upLimit > 0` 兜底。
   final bool? upLimited;
 
   final int? trId;
@@ -211,8 +196,7 @@ class Torrent {
       isPrivate: json['is_private'] is bool ? json['is_private'] as bool : null,
       ratioLimit: Formatter.getDouble(json, 'ratio_limit', def: -2),
       seedingTimeLimit: Formatter.getInt(json, 'seeding_time_limit', def: -2),
-      // 优先取显式 raw_state（TR 侧由 controller 填 status 数字串）；
-      // 没有时回落 state —— qB 的 state 本身就是原始状态串。
+
       rawState: Formatter.getString(
           json, 'raw_state', def: Formatter.getString(json, 'state', def: '')),
       forceStart: json['force_start'] is bool ? json['force_start'] as bool : null,
@@ -282,7 +266,7 @@ class Torrent {
           Formatter.getDouble(delta, 'ratio_limit', def: ratioLimit),
       'seeding_time_limit':
           Formatter.getInt(delta, 'seeding_time_limit', def: seedingTimeLimit),
-      // 以下四项 qB 用原始键名增量下发；缺键时回落当前值（增量 delta 不带就是没变）。
+
       'force_start': delta['force_start'] is bool
           ? delta['force_start'] as bool
           : forceStart,
@@ -472,18 +456,13 @@ class Torrent {
 
   bool get isStalled => state.toLowerCase().contains('stall');
 
-  /// 两级状态的「主级」归类（D1：全部/下载中/做种中/暂停/排队/校验中/错误/已完成）。
-  ///
-  /// 判断顺序有讲究：`forcedDL` 含 `dl`、`forcedUP` 含 `up`，
-  /// 所以强制态必须在通用 dl/up 之前判；已完成按 progress 单独判（见 [isCompleted]）。
   TorrentStatusGroup get statusGroup {
     final String s = state.toLowerCase();
     if (isError) return TorrentStatusGroup.error;
     if (s.contains('check')) return TorrentStatusGroup.checking;
     if (s.contains('paus') || s.contains('stop')) return TorrentStatusGroup.paused;
     if (s.contains('queued')) return TorrentStatusGroup.queued;
-    // stalledDL / metaDL 都算「下载中」：它们只是**细分**态（细分 chip 读 rawState），
-    // 主下拉里不单独占一项。
+
     if (s.contains('stalleddl') ||
         s.contains('forceddl') ||
         s.contains('download') ||
@@ -500,10 +479,8 @@ class Torrent {
     return TorrentStatusGroup.unknown;
   }
 
-  /// 下载限速是否真的生效：TR 有显式开关位，qB 没有 ⇒ 用「限速值 > 0」推断。
   bool get dlLimitedEnabled => dlLimited ?? dlLimit > 0;
 
-  /// 上传限速是否真的生效（同 [dlLimitedEnabled]）。
   bool get upLimitedEnabled => upLimited ?? upLimit > 0;
 
   int get transferPeers {
@@ -617,4 +594,50 @@ class TransferTotals {
   final int downloadedBytes;
 
   int get movedBytes => uploadedBytes + downloadedBytes;
+}
+
+class TotalsSnapshot {
+  const TotalsSnapshot({
+    required this.dlSpeed,
+    required this.upSpeed,
+    required this.counts,
+    required this.totals,
+    required this.serversOnline,
+    required this.serversTotal,
+    this.available = true,
+  });
+
+  factory TotalsSnapshot.empty({required int serversTotal}) => TotalsSnapshot(
+        dlSpeed: 0,
+        upSpeed: 0,
+        counts: const TorrentStatusCounts.empty(),
+        totals: const TransferTotals(),
+        serversOnline: 0,
+        serversTotal: serversTotal,
+        available: false,
+      );
+
+  final int dlSpeed;
+  final int upSpeed;
+  final TorrentStatusCounts counts;
+  final TransferTotals totals;
+  final int serversOnline;
+  final int serversTotal;
+
+  final bool available;
+
+  TotalsSnapshot copyWith({
+    int? serversOnline,
+    int? serversTotal,
+    bool? available,
+  }) =>
+      TotalsSnapshot(
+        dlSpeed: dlSpeed,
+        upSpeed: upSpeed,
+        counts: counts,
+        totals: totals,
+        serversOnline: serversOnline ?? this.serversOnline,
+        serversTotal: serversTotal ?? this.serversTotal,
+        available: available ?? this.available,
+      );
 }

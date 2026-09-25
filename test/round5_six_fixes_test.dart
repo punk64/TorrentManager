@@ -58,7 +58,7 @@ void main() {
   testWidgets('★ 明亮模式下点「自定义主题」→ 勾仍留在明亮模式上', (WidgetTester tester) async {
     final ThemeController tc = Get.put(ThemeController(), permanent: true);
     await tc.load();
-    tc.applyBuiltinMode(1); 
+    tc.applyBuiltinMode(1);
 
     await tester.pumpWidget(GetMaterialApp(
       initialBinding: AppBinding(),

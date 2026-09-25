@@ -12,10 +12,16 @@ import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 String _listPageSrc() =>
     File('lib/pages/torrent_list_page.dart').readAsStringSync();
 
-/// 取「修改」按钮（EditNumberField / EditRatioField 的提交按钮）。
 FilledButton _modifyButton(WidgetTester tester) => tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, S.editModify),
     );
+
+int _nextDecl(String src, int from) {
+  final RegExp re = RegExp(
+      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
+  final Match? m = re.firstMatch(src.substring(from + 1));
+  return m == null ? src.length : from + 1 + m.start;
+}
 
 void main() {
   tearDown(Get.reset);
@@ -29,7 +35,6 @@ void main() {
       tc.setDraft('h1', TorrentEditFields.kTags, 5);
       expect(tc.draftOf('h1', TorrentEditFields.kDlLimit), 100);
 
-      // 只提交了「下载限速」 ⇒ 只清它
       tc.clearDraftKey('h1', TorrentEditFields.kDlLimit);
       expect(tc.draftOf('h1', TorrentEditFields.kDlLimit), isNull);
       expect(tc.draftOf('h1', TorrentEditFields.kTags), 5,
@@ -45,7 +50,7 @@ void main() {
 
       tc.setDraft('h1', TorrentEditFields.kDlLimit, 1);
       tc.clearDraftKey('h1', TorrentEditFields.kDlLimit);
-      // 再清一次不该抛（幂等）
+
       tc.clearDraftKey('h1', TorrentEditFields.kDlLimit);
       expect(tc.draftOf('h1', TorrentEditFields.kDlLimit), isNull);
     });
@@ -65,8 +70,7 @@ void main() {
   group('第 67 轮第四期 · baseline：草稿回填也能提交（本轮新语义）', () {
     testWidgets('输入框是草稿值、基准是服务端值 ⇒ 按钮要亮',
         (WidgetTester tester) async {
-      // 场景：用户先输入 100（进了草稿），卡片被回收重建 ⇒ 输入框要用草稿填回来，
-      //       但「修改」是否可点必须拿**服务端值**（50）比，否则永远置灰提交不了。
+
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: EditNumberField(
@@ -131,7 +135,7 @@ void main() {
     });
 
     test('值变化回调带出当前值（卡片靠它写草稿）', () {
-      // 组件内部把 onChanged 接到了值变更路径上（源码级保证：输入/切模式都回调）。
+
       final String src =
           File('lib/widgets/torrent_edit_fields.dart').readAsStringSync();
       expect(src.contains('widget.onChanged?.call(_value)'), isTrue,
@@ -145,7 +149,7 @@ void main() {
     test('整块点击 = 展开/收起，不再直接进详情', () {
       final String src = _listPageSrc();
       expect(src.contains('void _onCardTap(Torrent t)'), isTrue);
-      // 旧写法（点卡片进详情）必须消失
+
       expect(src.contains('onTap: () => _openDetail(t)'), isFalse,
           reason: '方案 C 之后卡片点击不再是"进详情"');
       expect(src.contains('onTap: () => _onCardTap(t)'), isTrue);
@@ -162,7 +166,7 @@ void main() {
     test('展开区吞掉点击（否则点「修改」会顺手收起卡片）', () {
       final String src = _listPageSrc();
       final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, src.indexOf('// ------', i));
+      final String body = src.substring(i, _nextDecl(src, i));
       expect(body.contains('HitTestBehavior.opaque'), isTrue);
       expect(body.contains('onTap: () {}'), isTrue,
           reason: '展开区外层要空吞点击，阻断冒泡（清单 6.1 第 1 条）');
@@ -196,7 +200,7 @@ void main() {
   group('第 67 轮第四期 · 收起态布局（4.1）', () {
     test('底部区左右栏 1:1（原来是 2:1）', () {
       final String src = _listPageSrc();
-      // 底部区里 flex 2 已经不存在（左栏速度、右栏指标改等宽）
+
       expect(src.contains('flex: 2,'), isFalse,
           reason: '4.1 要求底部区从 2:1 改成 1:1');
       expect(src.contains('flex: 1,'), isTrue);
@@ -234,7 +238,7 @@ void main() {
       final String src = _listPageSrc();
       expect(src.contains('if (_selecting) _actionGrid()'), isTrue);
       expect(src.contains('Widget _actionGrid()'), isTrue);
-      // 旧的横向可滑动批量行已拆（用户要求「不可以左右滑动」）
+
       expect(src.contains('Widget _batchRow()'), isFalse);
       expect(src.contains('S.batchEdit'), isTrue);
       expect(src.contains('S.copyHash'), isTrue);
@@ -303,7 +307,7 @@ void main() {
     test('路径/分类/标签/限速×2/分享率/做种时限 全部可编辑', () {
       final String src = _listPageSrc();
       final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, src.indexOf('// ------', i));
+      final String body = src.substring(i, _nextDecl(src, i));
       expect(body.contains('_editCardPath'), isTrue);
       expect(body.contains('_editCardCategory'), isTrue);
       expect(body.contains('_editCardTags'), isTrue);
@@ -314,7 +318,7 @@ void main() {
     test('开关组按服务器能力裁剪，而不是按服务器类型一刀切', () {
       final String src = _listPageSrc();
       final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, src.indexOf('// ------', i));
+      final String body = src.substring(i, _nextDecl(src, i));
       expect(body.contains('cap.forceStart'), isTrue);
       expect(body.contains('cap.sequentialDownload'), isTrue,
           reason: 'V6：TR 4.1 支持顺序下载，不能"TR 就隐藏"');

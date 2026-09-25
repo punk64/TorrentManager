@@ -106,7 +106,7 @@ void main() {
       expect(list.position.pixels, 180);
 
       final List<Map<String, dynamic>> next = manyPeers(40);
-      next[0]['dl_speed'] = 999999; 
+      next[0]['dl_speed'] = 999999;
       ctrl.peers.assignAll(next);
       await tester.pump();
 

@@ -146,8 +146,8 @@ void main() {
     int probes = 0;
     LanDetector.overrideProbe = (_) async {
       probes++;
-      await gate.future; 
-      return false; 
+      await gate.future;
+      return false;
     };
 
     final List<String> calls = <String>[];
@@ -175,8 +175,8 @@ void main() {
     final ServerController c = ServerController();
     c.qbFactory = () => QbMethod(dio: _fakeQbDio(calls));
 
-    await c.loadLocal(); 
-    await c.refreshAllServers(); 
+    await c.loadLocal();
+    await c.refreshAllServers();
     await _pump();
 
     expect(_countOf(calls, '/sync/maindata'), 1,

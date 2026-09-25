@@ -213,7 +213,7 @@ void main() {
       final UpdateChecker c = UpdateChecker(
         fetcher: (String u) async {
           called = true;
-          // 口径 A（严格）：版本号更大还不够，得有能装的安装包才算"有更新"。
+
           return '{"tag_name":"v9.9.9","assets":[{"name":"TorrentManager-V9.9.9'
               '-arm64-v8a.apk","browser_download_url":"https://e/a.apk"}]}';
         },

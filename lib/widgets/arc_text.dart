@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../app/adaptive.dart';
 
 class ArcText extends StatelessWidget {
   const ArcText({
@@ -34,7 +35,7 @@ class ArcText extends StatelessWidget {
           radius: radius,
           style: style ??
               TextStyle(
-                fontSize: 14,
+                fontSize: af(context, 14),
                 color: Theme.of(context).colorScheme.onSurface,
               ),
           startAngle: startAngle,

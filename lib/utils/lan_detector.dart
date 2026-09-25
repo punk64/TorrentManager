@@ -13,7 +13,7 @@ class LanDetector {
   static Future<bool> Function(String host, int port)? overrideTcp;
 
   static Future<bool> isOnLan(ServerData s) async {
-    if (!s.hasLan) return false; 
+    if (!s.hasLan) return false;
     return overrideProbe != null ? overrideProbe!(s) : _realIsOnLan(s);
   }
 

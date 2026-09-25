@@ -183,7 +183,7 @@ void main() {
   test('★ 回环校验：响应自报的 IP 与查询不一致时视为坏数据', () async {
     final Map<String, int> hits = <String, int>{};
     IpGeo.instance.injectDioForTest(makeFakeDio(
-      respondIp: '9.9.9.9', 
+      respondIp: '9.9.9.9',
       hits: hits,
     ));
     final String? r = await IpGeo.instance.lookup('8.8.8.8');

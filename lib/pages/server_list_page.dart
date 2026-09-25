@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../app/adaptive.dart';
 import '../app/page_style.dart';
 import '../app/routes.dart';
 import '../app/style_keys.dart';
@@ -18,6 +19,7 @@ import '../utils/startup_update.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/draggable_fab.dart';
 import '../widgets/io_chip.dart';
+import '../widgets/metric_row.dart';
 import '../widgets/server_stats_panel.dart';
 import '../widgets/slidable_tile.dart';
 import 'drawer_page.dart';
@@ -25,7 +27,84 @@ import 'server_dialog.dart';
 
 const bool kEnableServerGroup = false;
 
-const double _kStatsBlockHeight = 82;
+const double _kHeaderLogoBox = 36;
+
+const double _kPrivacyBtnBox = 30;
+
+const double _kNameGap = 6;
+
+const double _kBadgeGap = 4;
+
+const double _kNameMinWidth = 76;
+
+class _BadgeEntry {
+  const _BadgeEntry({required this.widget, required this.width});
+
+  final Widget widget;
+  final double width;
+}
+
+double _textWidth(String text, double fontSize) {
+  final TextPainter tp = TextPainter(
+    text: TextSpan(text: text, style: TextStyle(fontSize: fontSize)),
+    textDirection: TextDirection.ltr,
+    maxLines: 1,
+  )..layout();
+  return tp.width;
+}
+
+double _chipWidth(
+  String text, {
+  double fontSize = 9,
+  double padH = 6,
+  double lead = 13,
+}) =>
+    padH * 2 + lead + _textWidth(text, fontSize) + 2;
+
+String _connBadgeLabel({
+  required ConnStatus status,
+  required bool checking,
+  required bool onLan,
+}) {
+  final bool failed = status == ConnStatus.failed;
+  final bool busy = !failed && (status == ConnStatus.connecting || checking);
+  return failed
+      ? L.t('连接失败')
+      : (busy ? L.t('连接中...') : (onLan ? L.t('局域网') : L.t('公网')));
+}
+
+Widget _badgeStrip(double maxWidth, List<_BadgeEntry> badges) {
+  if (badges.isEmpty) return const SizedBox.shrink();
+
+  final List<_BadgeEntry> keep = <_BadgeEntry>[];
+  double used = 0;
+  for (int i = badges.length - 1; i >= 0; i--) {
+    final double w = badges[i].width + (keep.isEmpty ? 0 : _kBadgeGap);
+
+    if (keep.isNotEmpty && used + w > maxWidth) break;
+    used += w;
+    keep.insert(0, badges[i]);
+  }
+  if (keep.isEmpty) return const SizedBox.shrink();
+
+  return ClipRect(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          for (int i = 0; i < keep.length; i++) ...<Widget>[
+            if (i > 0) const SizedBox(width: _kBadgeGap),
+            keep[i].widget,
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+const String _kTotalExpandedKey = 'totalStatsExpanded';
 
 class ServerListPage extends StatefulWidget {
   const ServerListPage({super.key});
@@ -38,15 +117,29 @@ class _ServerListPageState extends State<ServerListPage> {
   bool _cardOpen = false;
   bool _drawerOpen = false;
 
+  final RxBool _totalExpanded = true.obs;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    unawaited(_loadTotalExpanded());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(StartupUpdatePrompt.runOnce());
     });
+  }
+
+  Future<void> _loadTotalExpanded() async {
+    final bool v = await Formatter.getGlobalBool(_kTotalExpandedKey, def: true);
+    _totalExpanded.value = v;
+  }
+
+  void _toggleTotalExpanded() {
+    final bool next = !_totalExpanded.value;
+    _totalExpanded.value = next;
+    unawaited(Formatter.saveGlobalData(_kTotalExpandedKey, next));
   }
 
   void _onCardSlideChanged(bool open) {
@@ -94,14 +187,34 @@ class _ServerListPageState extends State<ServerListPage> {
               )),
 
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
-            onSelected: (String v) => Get.toNamed(v),
-            itemBuilder: (_) => const <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(value: Routes.log, child: Text('日志')),
+            onSelected: (String v) {
+              AppLog.instance.act('服务器列表',
+                  'AppBar[日志-${v == Routes.log ? '系统日志' : '服务器日志'}]');
+              Get.toNamed(v);
+            },
+            itemBuilder: (_) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
-                  value: Routes.logQb, child: Text('服务器日志')),
+                  value: Routes.log, child: Text(S.logSystem)),
+              PopupMenuItem<String>(
+                  value: Routes.logQb, child: Text(S.logServer)),
             ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                S.logTitle,
+
+                style: (Theme.of(context).textTheme.titleSmall ??
+                        Theme.of(context).textTheme.bodyMedium)
+                    ?.copyWith(
+                  fontSize: af(context, 14),
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).appBarTheme.foregroundColor ??
+                      Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       drawer: const AppDrawer(),
@@ -124,11 +237,11 @@ class _ServerListPageState extends State<ServerListPage> {
                 children: <Widget>[
                   Image.asset('assets/images/empty.webp', width: 96),
                   const SizedBox(height: 12),
-                  const Text('暂无服务器', style: TextStyle(fontSize: 12)),
+                  Text('暂无服务器', style: TextStyle(fontSize: af(context, 12))),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     '点击 + 添加；无需登录',
-                    style: TextStyle(fontSize: 10),
+                    style: TextStyle(fontSize: af(context, 10)),
                   ),
                 ],
               ),
@@ -190,7 +303,7 @@ class _ServerListPageState extends State<ServerListPage> {
 
         onReorderItem: ctrl.reorderServer,
 
-        proxyDecorator: _noProxyMaterial,
+        proxyDecorator: _serverDragProxy,
         itemBuilder: (BuildContext ctx, int i) {
           final ServerData s = ctrl.servers[i];
           return KeyedSubtree(
@@ -222,7 +335,7 @@ class _ServerListPageState extends State<ServerListPage> {
                 to,
               ),
 
-              proxyDecorator: _noProxyMaterial,
+              proxyDecorator: _serverDragProxy,
               itemBuilder: (BuildContext ctx, int i) {
                 final ServerData s = e.value[i];
                 return KeyedSubtree(
@@ -270,31 +383,38 @@ class _ServerListPageState extends State<ServerListPage> {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(width: 6),
-          Text(S.countLabel(count), style: const TextStyle(fontSize: 10)),
+          Text(S.countLabel(count), style: TextStyle(fontSize: af(context, 10))),
           const Spacer(),
           Text('${S.upArrow}${Formatter.setSpeed(up)}',
-              style: const TextStyle(fontSize: 10)),
+              style: TextStyle(fontSize: af(context, 10))),
           const SizedBox(width: 8),
           Text('${S.downArrow}${Formatter.setSpeed(dl)}',
-              style: const TextStyle(fontSize: 10)),
+              style: TextStyle(fontSize: af(context, 10))),
         ],
       ),
     );
   }
 
   Widget _totalSpeedPanel(BuildContext context, ServerController ctrl) {
-    return Obx(() => ServerStatsPanel(
-          dlSpeed: ctrl.totalDlSpeed,
-          upSpeed: ctrl.totalUpSpeed,
-          counts: ctrl.totalStatusCounts,
-          serversOnline: ctrl.onlineServerCount,
-          serversTotal: ctrl.servers.length,
-          totals: ctrl.transferTotals,
-        ));
+    return Obx(() {
+
+      final TotalsSnapshot v = ctrl.totalsView;
+      return ServerStatsPanel(
+        dlSpeed: v.dlSpeed,
+        upSpeed: v.upSpeed,
+        counts: v.counts,
+        serversOnline: v.serversOnline,
+        serversTotal: v.serversTotal,
+        totals: v.totals,
+        expanded: _totalExpanded.value,
+        onToggle: _toggleTotalExpanded,
+        hasData: v.available,
+      );
+    });
   }
 
   Widget _serverPanel(
@@ -370,163 +490,12 @@ class _ServerListPageState extends State<ServerListPage> {
           Get.toNamed(Routes.torrents);
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+          padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Image.asset(
-                    s.isQbittorrent
-                        ? 'assets/images/qbittorrent.png'
-                        : 'assets/images/transmission.png',
-                    width: 30,
-                    height: 30,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Flexible(
-                              child: Text(
-                                s.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-
-                          ],
-                        ),
-                        Text(
-                          '${s.type} · ${s.displayAddress}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 10),
-                        ),
-
-                        Obx(() {
-                          final ConnStatus st =
-                              ctrl.connStatus[s.id] ?? ConnStatus.idle;
-                          final bool checking = ctrl.lanChecking.contains(s.id);
-                          final bool onLan = ctrl.lanUsing[s.id] ?? false;
-
-                        final bool busy = ctrl.manualRefreshing.contains(s.id);
-                        final bool refreshing =
-                            busy || st == ConnStatus.connecting || checking;
-                        final bool showBadge =
-                            s.hasLan || st != ConnStatus.idle;
-
-                          final bool showIo = s.isQbittorrent &&
-                              ctrl.ioJobs.containsKey(s.id) &&
-                              !refreshing;
-
-                          final String verText =
-                              refreshing ? '' : ctrl.serverVersion[s.id] ?? '';
-
-                          final bool suspended = ctrl.isSuspended(s.id);
-                          final bool showRetry = suspended ||
-                              st == ConnStatus.failed;
-
-                          if (!showBadge &&
-                              verText.isEmpty &&
-                              !showIo &&
-                              !busy &&
-                              !showRetry) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 3),
-
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Wrap(
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    children: <Widget>[
-
-                                      if (busy) _refreshingChip(context),
-                                      if (showBadge)
-                                        _connBadge(
-                                          context,
-                                          status: st,
-                                          checking: checking,
-                                          onLan: onLan,
-                                          error: ctrl.connError[s.id],
-                                        ),
-                                      if (suspended) _suspendedChip(context),
-                                      if (verText.isNotEmpty)
-                                        _versionChip(
-                                            context, '${_verTag(s)} $verText'),
-                                      if (showIo)
-                                        IoChip(jobs: ctrl.ioJobs[s.id] ?? 0),
-                                    ],
-                                  ),
-                                ),
-                                if (showRetry) ...<Widget>[
-                                  const SizedBox(width: 6),
-                                  _retryButton(
-                                    context,
-                                    onPressed: () {
-                                      AppLog.instance.act(
-                                          '服务器列表', '卡片[重试]', target: raw.name);
-                                      ctrl.retryOne(raw);
-                                    },
-                                  ),
-                                ],
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-
-                  PopupMenuButton<String>(
-                    onSelected: (String v) async {
-                      if (v == 'hide') {
-                        AppLog.instance.act('服务器列表', '卡片菜单[隐藏地址]',
-                            target: raw.name,
-                            detail: raw.hideAddress ? '改为显示' : '改为隐藏');
-                        await ctrl.toggleHideAddress(raw.id);
-                      } else if (v == 'port') {
-                        AppLog.instance.act('服务器列表', '卡片菜单[隐藏端口]',
-                            target: raw.name,
-                            detail: raw.hidePort ? '改为显示' : '改为隐藏');
-
-                        await ctrl.toggleHidePort(raw.id);
-                      }
-                    },
-                    itemBuilder: (_) => <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'hide',
-                        child: Text(
-                          raw.hideAddress ? '显示服务器地址' : S.srvHideAddress,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      PopupMenuItem<String>(
-                        value: 'port',
-                        child: Text(
-                          raw.hidePort ? '显示端口' : S.srvHidePort,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              _cardHeader(context, ctrl, s, raw),
+              const SizedBox(height: 6),
 
               Obx(() {
                 final ConnStatus stNow =
@@ -546,86 +515,116 @@ class _ServerListPageState extends State<ServerListPage> {
                   return _statsRefreshingPlaceholder(context);
                 }
                 final ServerData live = raw.copyWith(torrents: liveTs);
+                final ServerSpeedLimit limit = ctrl.limitOf(s.id);
 
-                int num(String key, int Function() real) => real();
                 final ColorScheme cs = Theme.of(context).colorScheme;
+
+                final Brightness br = Theme.of(context).brightness;
+                final Color dlColor = adaptSemantic(kSemanticDownload, br);
+                final Color upColor = adaptSemantic(kSemanticUpload, br);
+                final Color actColor = adaptSemantic(kSemanticActive, br);
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _statCell(context, Icons.list_alt,
-                              num('total', () => live.totalTorrents), S.fieldCount, cs.onSurface),
+
+                    MetricRow(
+                      gap: 6,
+                      inline: true,
+                      valueSize: 13,
+                      labelSize: 8.5,
+                      minValueSize: 9,
+                      items: <MetricItem>[
+                        MetricItem(
+                          value: '${live.totalTorrents}',
+                          label: S.fieldCount,
+                          color: cs.onSurface,
                         ),
-                        Expanded(
-                          child: _statCell(
-                              context,
-                              Icons.arrow_circle_down,
-                              num('downloading', () => live.totalDownloading),
-                              S.fieldDlLoading,
-                              cs.secondary),
+                        MetricItem(
+                          value: '${live.totalDownloading}',
+                          label: S.fieldDlLoading,
+                          color: dlColor,
                         ),
-                        Expanded(
-                          child: _statCell(context, Icons.arrow_circle_up,
-                              num('seeding', () => live.totalSeeding), S.stSeeding, cs.primary),
+                        MetricItem(
+                          value: '${live.totalSeeding}',
+                          label: S.stSeeding,
+                          color: upColor,
                         ),
-                        Expanded(
-                          child: _statCell(context, Icons.upload,
-                              num('uploading', () => live.totalUploading), S.fieldUpLoading, cs.primary),
+                        MetricItem(
+                          value: '${live.totalUploading}',
+                          label: S.fieldUpLoading,
+                          color: actColor,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _statCell(context, Icons.pause,
-                              num('pausedDL', () => live.totalPausedDL), S.stPausedDl, cs.tertiary),
+                    const SizedBox(height: 6),
+
+                    MetricRow(
+                      gap: 6,
+                      inline: true,
+                      valueSize: 13,
+                      labelSize: 8.5,
+                      minValueSize: 9,
+                      items: <MetricItem>[
+                        MetricItem(
+                          value: '${live.totalPausedDL}',
+                          label: S.stPausedDl,
+                          color: cs.onSurfaceVariant,
                         ),
-                        Expanded(
-                          child: _statCell(
-                              context,
-                              Icons.pause_circle,
-                              num('pausedUP', () => live.totalPausedUP),
-                              S.stPausedUp,
-                              cs.tertiary),
+                        MetricItem(
+                          value: '${live.totalPausedUP}',
+                          label: S.stPausedUp,
+                          color: cs.onSurfaceVariant,
                         ),
-                        Expanded(
-                          child: _statCell(
-                              context,
-                              Icons.fact_check_outlined,
-                              num('checking', () => live.totalChecking),
-                              S.fieldVerifyState,
-                              cs.onSurfaceVariant),
+                        MetricItem(
+                          value: '${live.totalChecking}',
+                          label: S.fieldVerifyState,
+                          color: adaptSemantic(kSemanticPeer, br),
                         ),
-                        Expanded(
-                          child: _statCell(context, Icons.error_outline,
-                              num('error', () => live.totalError), S.error, cs.error),
+                        MetricItem(
+                          value: '${live.totalError}',
+                          label: S.error,
+                          color: adaptSemantic(kSemanticError, br),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
 
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          flex: 2,
-                          child: _speedCell(context, Icons.arrow_circle_up,
-                              num('upSpeed', () => live.totalUpSpeed), cs.primary),
-                        ),
-                        Expanded(
-                          flex: 2,
-                          child: _speedCell(context, Icons.arrow_circle_down,
-                              num('dlSpeed', () => live.totalDlSpeed), cs.secondary),
-                        ),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        color: cs.onSurface.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
 
-                        Expanded(
-                          flex: 3,
-                          child: _sizeCell(
-                              Formatter.setSize(num('size', () => live.totalSize)),
-                              cs.onSurfaceVariant),
+                    MetricRow(
+                      gap: 8,
+                      valueSize: 12,
+                      labelSize: 8.5,
+                      iconSize: 12,
+                      items: <MetricItem>[
+                        MetricItem(
+                          icon: Icons.arrow_upward_rounded,
+                          value: Formatter.setSpeed(live.totalUpSpeed),
+                          label:
+                              '${S.chartLabelUpload}${Formatter.setSpeedLimit(limit.up)}',
+                          color: upColor,
+                        ),
+                        MetricItem(
+                          icon: Icons.arrow_downward_rounded,
+                          value: Formatter.setSpeed(live.totalDlSpeed),
+                          label:
+                              '${S.chartLabelDownload}${Formatter.setSpeedLimit(limit.dl)}',
+                          color: dlColor,
+                        ),
+                        MetricItem(
+                          icon: Icons.storage_rounded,
+                          value: Formatter.setSize(live.totalSize),
+                          label: S.fieldSize,
+                          color: cs.onSurfaceVariant,
                         ),
                       ],
                     ),
@@ -637,6 +636,180 @@ class _ServerListPageState extends State<ServerListPage> {
         ),
       ),
       ),
+    );
+  }
+
+  Widget _cardHeader(
+    BuildContext context,
+    ServerController ctrl,
+    ServerData s,
+    ServerData raw,
+  ) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+
+        final double badgeMax = (c.maxWidth -
+                _kHeaderLogoBox -
+                _kPrivacyBtnBox -
+                _kNameGap -
+                _kNameMinWidth)
+            .clamp(0.0, double.infinity)
+            .toDouble();
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+              s.isQbittorrent
+                  ? 'assets/images/qbittorrent.png'
+                  : 'assets/images/transmission.png',
+              width: 28,
+              height: 28,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          s.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: af(context, 13),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Obx(() {
+                        final ConnStatus st =
+                            ctrl.connStatus[s.id] ?? ConnStatus.idle;
+                        final bool checking =
+                            ctrl.lanChecking.contains(s.id);
+                        final bool onLan = ctrl.lanUsing[s.id] ?? false;
+                        final bool busy =
+                            ctrl.manualRefreshing.contains(s.id);
+                        final bool refreshing =
+                            busy || st == ConnStatus.connecting || checking;
+                        final bool showBadge =
+                            s.hasLan || st != ConnStatus.idle;
+                        final bool suspended = ctrl.isSuspended(s.id);
+                        final bool failed = st == ConnStatus.failed;
+                        final bool showRetry = suspended || failed;
+
+                        final String verText =
+                            (refreshing || failed)
+                                ? ''
+                                : ctrl.serverVersion[s.id] ?? '';
+                        final bool showIo = !failed &&
+                            s.isQbittorrent &&
+                            ctrl.ioJobs.containsKey(s.id) &&
+                            !refreshing;
+                        final String verTag = '${_verTag(s)} $verText';
+                        final int ioJobs = ctrl.ioJobs[s.id] ?? 0;
+                        final List<_BadgeEntry> badges = <_BadgeEntry>[
+                          if (busy)
+                            _BadgeEntry(
+                              widget: _refreshingChip(context),
+                              width: _chipWidth('刷新中', lead: 13),
+                            ),
+                          if (showBadge)
+                            _BadgeEntry(
+                              widget: _connBadge(
+                                context,
+                                status: st,
+                                checking: checking,
+                                onLan: onLan,
+                                error: ctrl.connError[s.id],
+                              ),
+                              width: _chipWidth(
+                                _connBadgeLabel(
+                                  status: st,
+                                  checking: checking,
+                                  onLan: onLan,
+                                ),
+                              ),
+                            ),
+                          if (verText.isNotEmpty)
+                            _BadgeEntry(
+                              widget: _versionChip(context, verTag),
+                              width: _chipWidth(verTag, lead: 0),
+                            ),
+                          if (showIo)
+                            _BadgeEntry(
+                              widget: IoChip(jobs: ioJobs),
+                              width: _chipWidth('I/O: $ioJobs',
+                                  fontSize: af(context, 8), padH: 3, lead: 0),
+                            ),
+                          if (showRetry)
+                            _BadgeEntry(
+                              widget: _retryButton(
+                                context,
+                                onPressed: () {
+                                  AppLog.instance.act('服务器列表',
+                                      '卡片[重试]',
+                                      target: raw.name);
+                                  ctrl.retryOne(raw);
+                                },
+                              ),
+                              width: _chipWidth(S.retry,
+                                  padH: 7, lead: 14),
+                            ),
+                        ];
+                        return _badgeStrip(badgeMax, badges);
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    '${s.type} · ${s.displayAddress}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: af(context, 10)),
+                  ),
+                ],
+              ),
+            ),
+            Obx(() {
+              final ServerData cur = ctrl.servers.firstWhere(
+                (ServerData e) => e.id == raw.id,
+                orElse: () => raw,
+              );
+              final bool allHidden = cur.hideAddress && cur.hidePort;
+              return IconButton(
+                iconSize: 18,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints.tightFor(width: 30, height: 30),
+                tooltip: allHidden ? S.srvShowPrivacy : S.srvHidePrivacy,
+                icon: Icon(
+                  allHidden ? Icons.visibility_off : Icons.visibility,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                onPressed: () async {
+                  AppLog.instance.act('服务器列表', '卡片[隐私]',
+                      target: raw.name,
+                      detail: allHidden ? '显示地址与端口' : '隐藏地址与端口');
+                  await ctrl.toggleHideAddressPort(
+                    raw.id,
+                    hide: ServerController.nextPrivacyHidden(
+                      hideAddress: cur.hideAddress,
+                      hidePort: cur.hidePort,
+                    ),
+                  );
+                },
+              );
+            }),
+          ],
+        );
+      },
     );
   }
 
@@ -657,10 +830,11 @@ class _ServerListPageState extends State<ServerListPage> {
     final IconData icon = failed
         ? Icons.error_outline
         : (busy ? Icons.hourglass_top : (onLan ? Icons.wifi : Icons.public));
-    final String label = failed
-
-        ? L.t('连接失败')
-        : (busy ? L.t('连接中...') : (onLan ? L.t('局域网') : L.t('公网')));
+    final String label = _connBadgeLabel(
+      status: status,
+      checking: checking,
+      onLan: onLan,
+    );
 
     final Widget chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -679,7 +853,7 @@ class _ServerListPageState extends State<ServerListPage> {
           const SizedBox(width: 3),
           Text(
             label,
-            style: TextStyle(fontSize: 9, color: tint),
+            style: TextStyle(fontSize: af(context, 9), color: tint),
           ),
         ],
       ),
@@ -690,27 +864,6 @@ class _ServerListPageState extends State<ServerListPage> {
         : chip;
 
     return failed ? _BlinkingBadge(child: body) : body;
-  }
-
-  Widget _suspendedChip(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Icon(Icons.pause_circle_outline, size: 10, color: Colors.orange),
-          const SizedBox(width: 3),
-          Text(
-            S.srvSuspended,
-            style: const TextStyle(fontSize: 9, color: Colors.orange),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _retryButton(BuildContext context, {required VoidCallback onPressed}) {
@@ -736,85 +889,12 @@ class _ServerListPageState extends State<ServerListPage> {
               const SizedBox(width: 3),
               Text(
                 S.retry,
-                style: TextStyle(fontSize: 9, color: cs.primary),
+                style: TextStyle(fontSize: af(context, 9), color: cs.primary),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _statCell(
-    BuildContext context,
-    IconData icon,
-    int value,
-    String label,
-    Color color,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 3),
-            Text(
-              '$value',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 1),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 9,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _speedCell(
-    BuildContext context,
-    IconData icon,
-    int bytesPerSecond,
-    Color color,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 3),
-        Flexible(
-          child: Text(
-            Formatter.setSpeed(bytesPerSecond),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 10, color: color),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sizeCell(String text, Color color) {
-    return Text(
-      text,
-      textAlign: TextAlign.right,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 10, color: color),
     );
   }
 
@@ -828,7 +908,7 @@ class _ServerListPageState extends State<ServerListPage> {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 9, color: cs.onTertiaryContainer),
+        style: TextStyle(fontSize: af(context, 9), color: cs.onTertiaryContainer),
       ),
     );
   }
@@ -855,7 +935,7 @@ class _ServerListPageState extends State<ServerListPage> {
             ),
           ),
           const SizedBox(width: 4),
-          Text('刷新中', style: TextStyle(fontSize: 9, color: cs.primary)),
+          Text('刷新中', style: TextStyle(fontSize: af(context, 9), color: cs.primary)),
         ],
       ),
     );
@@ -887,108 +967,105 @@ class _ServerListPageState extends State<ServerListPage> {
     bool errorIsFinal = false,
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Color barColor = cs.onSurface.withValues(alpha: 0.08);
-    final Color barLabel = cs.onSurface.withValues(alpha: 0.14);
 
-    Widget cell({required double valueWidth}) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              width: valueWidth,
-              height: 11,
-              decoration: BoxDecoration(
-                color: barColor,
-                borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Container(
-              width: 26,
-              height: 8,
-              decoration: BoxDecoration(
-                color: barLabel,
-                borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-              ),
-            ),
-          ],
+    final double k = adaptiveScale(context);
+    final Color bar = cs.onSurface.withValues(alpha: 0.08);
+    final Color barSoft = cs.onSurface.withValues(alpha: 0.055);
+
+    Widget block(double? w, double h, {Color? c}) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: c ?? bar,
+            borderRadius: BorderRadius.circular(AppTheme.radiusBar),
+          ),
         );
 
-    return SizedBox(
+    final Widget speedBand = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        block(56 * k, 20 * k),
+        SizedBox(width: 14 * k),
+        block(84 * k, 20 * k),
+        const Spacer(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            block(14 * k, 12 * k),
+            SizedBox(height: 2 * k),
+            block(26 * k, 8 * k, c: bar),
+          ],
+        ),
+      ],
+    );
 
+    final Widget legend = Row(
+      children: <Widget>[
+        for (int i = 0; i < 6; i++)
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  width: 5 * k,
+                  height: 5 * k,
+                  decoration: BoxDecoration(
+                    color: bar,
+                    borderRadius: BorderRadius.circular(1.5 * k),
+                  ),
+                ),
+                SizedBox(width: 3 * k),
+                block((16.0 + (i % 2) * 6) * k, 11 * k, c: barSoft),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    final Widget bottom = Row(
+      children: <Widget>[
+        for (int i = 0; i < 3; i++)
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                block(11 * k, 11 * k, c: barSoft),
+                SizedBox(width: 3 * k),
+                block((34.0 - i * 7) * k, 12 * k, c: barSoft),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    return SizedBox(
       key: const Key('serverStatsPlaceholder'),
-      height: error == null ? _kStatsBlockHeight : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              for (int i = 0; i < 4; i++)
-                Expanded(child: cell(valueWidth: 22 + (i % 2) * 6.0)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: <Widget>[
-              for (int i = 0; i < 4; i++)
-                Expanded(child: cell(valueWidth: 20 + (i % 2) * 8.0)),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          Row(
-            children: <Widget>[
-              Expanded(
-                flex: 2,
-                child: Container(
-                  width: 64,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: barColor,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  width: 64,
-                  height: 11,
-                  decoration: BoxDecoration(
-                    color: barColor,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    width: 48,
-                    height: 11,
-                    decoration: BoxDecoration(
-                      color: barLabel,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
+          speedBand,
+          SizedBox(height: 9 * k),
+          block(double.infinity, 7 * k, c: barSoft),
+          SizedBox(height: 6 * k),
+          legend,
+          SizedBox(height: 8 * k),
+          block(double.infinity, 1, c: bar),
+          SizedBox(height: 7 * k),
+          bottom,
           if (error != null && error.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
+            SizedBox(height: 8 * k),
             Row(
               children: <Widget>[
-                Icon(Icons.error_outline, size: 12, color: cs.error),
-                const SizedBox(width: 4),
+                Icon(Icons.error_outline, size: 12 * k, color: cs.error),
+                SizedBox(width: 4 * k),
                 Expanded(
                   child: Text(
                     _failureLine(error, isFinal: errorIsFinal),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 9, color: cs.error),
+                    style: TextStyle(fontSize: 9 * k, color: cs.error),
                   ),
                 ),
               ],
@@ -1066,7 +1143,7 @@ class _SpinningRefreshIconState extends State<_SpinningRefreshIcon>
     } else {
       _ctrl
         ..stop()
-        ..value = 0; 
+        ..value = 0;
     }
   }
 
@@ -1095,9 +1172,21 @@ class _SpinningRefreshIconState extends State<_SpinningRefreshIcon>
   }
 }
 
-Widget _noProxyMaterial(
+Widget _serverDragProxy(
   Widget child,
   int index,
   Animation<double> animation,
 ) =>
-    child;
+    AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext _, Widget? c) => Material(
+        elevation: 8,
+        shadowColor: const Color(0x59000000),
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        child: Transform.scale(
+          scale: 1 + 0.02 * Curves.easeOut.transform(animation.value),
+          child: c,
+        ),
+      ),
+      child: child,
+    );

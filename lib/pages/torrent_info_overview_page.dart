@@ -15,6 +15,7 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../widgets/speed_sparkline.dart';
 import '../widgets/torrent_edit_fields.dart';
+import '../app/adaptive.dart';
 
 class TorrentInfoOverviewPage extends StatefulWidget {
   const TorrentInfoOverviewPage({super.key});
@@ -30,9 +31,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   bool _busy = false;
 
-  /// 编辑草稿：只有**页面级的未提交标记**放在这里（每个输入框自己的文本
-  /// 由组件 state 持有）。详情页不因滚动被回收 ⇒ 放页面 state 就够；
-  /// 列表卡片的草稿必须放 controller（那边会被回收重建）。
   final EditDraft _draft = EditDraft();
 
   void _markDirty(String key, bool dirty) {
@@ -44,12 +42,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (mounted) setState(() {});
   }
 
-  /// 异常 Tracker 计数（明细与错误原因已在 Tracker Tab，概览只给计数 + 引导）。
   int get _badTrackerCount {
     int n = 0;
     for (final Map<String, dynamic> m in _ctrl.trackers) {
       final int st = (m['status'] as num?)?.toInt() ?? -1;
-      // qB：4 = 未工作；TR：用 lastAnnounceSucceeded 判定。
+
       final bool bad = st == 4 || m['lastAnnounceSucceeded'] == false;
       if (bad) n++;
     }
@@ -68,7 +65,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       if (t == null) {
         return Center(
           child:
-              Text(S.pleaseSelectTorrent, style: const TextStyle(fontSize: 12)),
+              Text(S.pleaseSelectTorrent, style: TextStyle(fontSize: af(context, 12))),
         );
       }
       final ColorScheme cs = Theme.of(context).colorScheme;
@@ -88,8 +85,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               Expanded(
                 child: SelectableText(
                   t.name,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: TextStyle(
+                    fontSize: af(context, 13),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -105,12 +102,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ],
           ),
 
-          // ★ 种子级错误原因红条：v3 布局定稿把它归到页面**末尾的条件块**
-          //   （与元数据进度同区，见本文件 11 条顺序的最后一条）。
-
           const SizedBox(height: 6),
 
-          // ── 区①：实时状态（2026-09-24 用户整改：每栏目套分区卡片，边界感 + 可读性）──
           EditSectionCard(
             title: S.editSectionStats,
             child: Column(
@@ -123,7 +116,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                   children: <Widget>[
                     Text('最近 3 分钟',
                         style:
-                            TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                            TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant)),
                     const Spacer(),
                     _legend('下载', SpeedSparkline.kDlColor),
                     const SizedBox(width: 10),
@@ -149,7 +142,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                           ' · ${Formatter.setSize(t.newRelativeSize)}'
                           ' / ${Formatter.setSize(t.newSize)}',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: af(context, 10),
                     color: checking
                         ? Formatter.setStatusColor(t.state, cs)
                         : cs.onSurfaceVariant,
@@ -164,8 +157,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                     _statChip('做种', '${t.numComplete}', cs),
                     const SizedBox(width: 8),
                     _statChip('下载', '${t.numIncomplete}', cs),
-                    // ★ 健康度：只有 qB 返回（TR 的 availability 是 per-piece 数组，
-                    //   不是百分比 ⇒ 不能共用一套显示逻辑）。
+
                     if (_ctrl.capabilities.isQb && t.availability > 0) ...<Widget>[
                       const SizedBox(width: 8),
                       _statChip(
@@ -182,7 +174,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                         t.transferPeers,
                       ),
                       style:
-                          TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                          TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -190,8 +182,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          // ── 区②：操作（2026-09-24 用户整改：六个按钮**固定两行 × 3 列等宽**，
-          //   随屏幕自适应、**不横向滑动**；下载策略 chip 归到同一区）──
           EditSectionCard(
             title: S.editSectionActions,
             child: Column(
@@ -210,7 +200,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          // ── 区③：基本信息（只读短值 ⇒ 两列网格）──
           EditSectionCard(
             title: S.editSectionInfo,
             child: ReadonlyKvGrid(pairs: <List<String>>[
@@ -234,12 +223,12 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               <String>[S.fieldUpSpeed, Formatter.setSpeed(t.newUpspeed)],
               <String>[S.fieldDownloaded, Formatter.setSize(t.downloaded)],
               <String>[S.fieldUploaded, Formatter.setSize(t.newUploaded)],
-              // ★ v3：剩余量从进度条下方移进组①（图上它就占这一格）。
+
               <String>[
                 S.fieldRemaining,
                 t.amountLeft > 0 ? Formatter.setSize(t.amountLeft) : '—',
               ],
-              // ★ v3：损坏·浪费固定占一格（原来只在 >0 时才出现 ⇒ 网格会缺角）。
+
               <String>[
                 S.fieldWastedShort,
                 t.wasted > 0 ? Formatter.setSize(t.wasted) : '—',
@@ -247,8 +236,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ]),
           ),
 
-          // ── 区④：限速与分享（4 项**各独占一行** —— 2026-09-24 用户整改，
-          //   撤回 v3 的 2×2；文案以「下载限速 / 上传限速 / 分享率上限 / 做种时限」为准）──
           EditSectionCard(
             title: S.editSectionLimits,
             child: Column(
@@ -263,7 +250,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          // ── 区⑤：时间信息（只读短值 ⇒ 两列网格）──
           EditSectionCard(
             title: S.editSectionTimes,
             child: ReadonlyKvGrid(pairs: <List<String>>[
@@ -275,22 +261,20 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               <String>[S.fieldActiveTime, Formatter.setTime(t.newTimeActive)],
               <String>['做种时长', Formatter.setTime(t.newSeedingTime)],
               <String>['最近活动', Formatter.setLastActivity(t.newLastActivity)],
-              // ★ Tracker 数量 → 状态：异常的明细与错误原因已在 Tracker Tab，
-              //   概览只给计数 + 引导，不重复造明细。
-              //   半格 label 只有 50dp ⇒ 用短文案「Tracker」（长文案会折行）。
+
               <String>[
                 S.fieldTrackerShort,
                 _badTrackerCount > 0
                     ? S.trackerFailed(_badTrackerCount)
                     : '${S.trackerAllOk}（${t.newTrackerCount}）',
               ],
-              // 剩余磁盘空间（TR 有 `downloadDirFreeSpace`；qB 只有全局的 ⇒ 不显示）。
+
               if (!cap.isQb)
                 <String>[
                   S.fieldDiskFree,
                   t.freeSpace > 0 ? Formatter.setSize(t.freeSpace) : '—',
                 ],
-              // 私有种子标记：TR 原生有；qB 要 5.0+（V4）⇒ 按版本显示。
+
               if (cap.privateFlag)
                 <String>[
                   S.fieldPrivate,
@@ -301,14 +285,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
           const Divider(height: 18),
 
-          // ── 区⑥：常规（路径 / 内容路径 / 分类 / 标签）──
           EditSectionCard(
             title: S.editSectionBasic,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                // ★ 保存路径升级为可编辑（独占一行）。
+
                 if (t.savePath != null)
                   EditActionRow(
                     label: S.fieldPath,
@@ -316,14 +299,14 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                     onTap: _busy ? null : () => _editPath(t),
                   ),
                 if (t.contentPath != null) _kv('内容路径', t.contentPath!),
-                // ★ 分类：仅 qB（TR 无分类 ⇒ 整行隐藏，D4）。
+
                 if (cap.category)
                   EditActionRow(
                     label: S.fieldCategory,
                     value: t.categoryName,
                     onTap: _busy ? null : () => _editCategory(t),
                   ),
-                // ★ 标签：chip 编辑器。
+
                 EditActionRow(
                   label: S.fieldTags,
                   value: t.tags == null || t.tags!.isEmpty
@@ -335,8 +318,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          // ── 区⑦：链接与标识 —— 站点名称 / 哈希**各独占一行、各带复制按钮**
-          //   （2026-09-24 用户整改）；磁力链 / 注释同区。──
           EditSectionCard(
             title: S.editSectionLinks,
             child: Column(
@@ -354,7 +335,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
 
-          // ★ v3 定稿：组③末尾补「导出种子」（与 AppBar 同口径按能力显隐）。
           if (_ctrl.capabilities.exportTorrent) ...<Widget>[
             const SizedBox(height: 8),
             Align(
@@ -362,19 +342,17 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.download, size: AppTheme.iconSize),
                 label:
-                    Text(S.btExportTorrent, style: const TextStyle(fontSize: 11)),
+                    Text(S.btExportTorrent, style: TextStyle(fontSize: af(context, 11))),
                 onPressed: _busy ? null : () => _exportTorrent(t),
               ),
             ),
           ],
 
-          // ── 条件块（v3 第 11 条）：只在需要时出现，平时不占位 ──
-          // ① 种子级错误原因红条（仅 error / missingFiles）
           if (t.isError) ...<Widget>[
             const SizedBox(height: 10),
             _errorBanner(t, cs),
           ],
-          // ② 元数据进度（仅磁力链且元数据未完成）
+
           if (_metaIncomplete(t)) ...<Widget>[
             const SizedBox(height: 10),
             _metadataBar(t),
@@ -386,7 +364,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(
                 S.editUnsavedHint,
-                style: const TextStyle(fontSize: 10, color: Colors.deepOrange),
+                style: TextStyle(fontSize: af(context, 10), color: Colors.deepOrange),
               ),
             ),
           ],
@@ -425,7 +403,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                 Text(
                   checking ? _kChecking : Formatter.setStatus(t.state),
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: af(context, 14),
                     fontWeight: FontWeight.w700,
                     color: st,
                   ),
@@ -433,7 +411,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                 const SizedBox(height: 2),
                 Text(
                   _syncHint(),
-                  style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant),
+                  style: TextStyle(fontSize: af(context, 9), color: cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -444,8 +422,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             children: <Widget>[
               Text(
                 '▼ ${Formatter.setSpeed(t.newDownSpeed)}',
-                style: const TextStyle(
-                  fontSize: 11,
+                style: TextStyle(
+                  fontSize: af(context, 11),
                   fontWeight: FontWeight.w600,
                   color: _dlBlue,
                 ),
@@ -453,8 +431,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               const SizedBox(height: 2),
               Text(
                 '▲ ${Formatter.setSpeed(t.newUpspeed)}',
-                style: const TextStyle(
-                  fontSize: 11,
+                style: TextStyle(
+                  fontSize: af(context, 11),
                   fontWeight: FontWeight.w600,
                   color: _ulGreen,
                 ),
@@ -483,7 +461,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             color: c,
           ),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 9, color: c)),
+          Text(label, style: TextStyle(fontSize: af(context, 9), color: c)),
         ],
       );
 
@@ -497,18 +475,15 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(label,
-                style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant)),
+                style: TextStyle(fontSize: af(context, 9), color: cs.onSurfaceVariant)),
             const SizedBox(width: 5),
             Text(value,
-                style: const TextStyle(
-                    fontSize: 10, fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontSize: af(context, 10), fontWeight: FontWeight.w600)),
           ],
         ),
       );
 
-  /// ★ v3 的两列网格判据与排布已抽成**共享组件**（`EditLayout.gridOkOf` /
-  ///   `ReadonlyKvGrid`，见 `torrent_edit_fields.dart`）—— 概览 Tab 与卡片展开区
-  ///   共用同一份实现，别再在本页另写一套（第 67 轮 v3 只落了概览、展开区漏做的教训）。
   Widget _kv(String k, String v) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -517,20 +492,16 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         children: <Widget>[
           SizedBox(
             width: 88,
-            child: Text(k, style: const TextStyle(fontSize: 11)),
+            child: Text(k, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
-            child: SelectableText(v, style: const TextStyle(fontSize: 11)),
+            child: SelectableText(v, style: TextStyle(fontSize: af(context, 11))),
           ),
         ],
       ),
     );
   }
 
-  /// 带「复制」按钮的只读行（站点 / 哈希 / 磁力链 / 注释这类长值）。
-  ///
-  /// [maxLines] 给超长值封顶（哈希 40 字符、磁力链几百字符）—— 不封顶会把
-  /// 页面撑得很长；复制按钮拿到的仍是**完整原值**。
   Widget _kvCopy(String k, String v, {bool mask = false, int? maxLines}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -539,13 +510,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         children: <Widget>[
           SizedBox(
             width: 88,
-            child: Text(k, style: const TextStyle(fontSize: 11)),
+            child: Text(k, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
             child: SelectableText(
               v,
               maxLines: maxLines,
-              style: const TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: af(context, 11)),
             ),
           ),
           SizedBox(
@@ -555,7 +526,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               icon: const Icon(Icons.copy, size: 14),
               tooltip: S.nameCopied,
               onPressed: () async {
-                // ★ 磁力链里可能带 passkey ⇒ 与 trackers 页口径一致，脱敏后再复制。
+
                 final String text = mask ? Formatter.maskUrl(v) : v;
                 await Clipboard.setData(ClipboardData(text: text));
                 Formatter.showToast(S.nameCopied);
@@ -567,10 +538,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  /// 种子级错误原因红条（仅 error / missingFiles 状态显示）。
-  ///
-  /// 值来自 TR `errorString`、qB `state`；两者都可能为空 ⇒ 空时给兜底文案，
-  /// 别显示一条空的红条。
   Widget _errorBanner(Torrent t, ColorScheme cs) {
     final String reason = (t.errorMessage ?? '').trim();
     return Container(
@@ -589,7 +556,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           Expanded(
             child: Text(
               reason.isEmpty ? '${S.fieldErrorReason}：${t.state}' : reason,
-              style: TextStyle(fontSize: 11, color: cs.error),
+              style: TextStyle(fontSize: af(context, 11), color: cs.error),
             ),
           ),
         ],
@@ -597,10 +564,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  /// 元数据下载进度（仅磁力链且元数据未完成时显示）。
-  ///
-  /// TR 有 `metadataPercentComplete`；qB 没有 ⇒ 用 -1 表示"未知"，此时仍显示
-  /// 但进度条按不确定态处理（用户至少知道卡在"获取元数据"）。
   Widget _metadataBar(Torrent t) {
     final double p = t.metadataPercent;
     final bool known = p >= 0;
@@ -617,27 +580,18 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           known
               ? '${S.fieldMetadata} ${(p * 100).toStringAsFixed(0)}%'
               : S.fieldMetadata,
-          style: const TextStyle(fontSize: 10),
+          style: TextStyle(fontSize: af(context, 10)),
         ),
       ],
     );
   }
 
-  /// 元数据是否仍在下载中（v3 条件块②的显示条件）。
-  ///
-  /// 原来是 `_remainingRow` 里的内联判断；v3 把元数据进度挪进末尾条件块后单独成函数。
   bool _metaIncomplete(Torrent t) =>
       !t.isCompleted &&
       t.metadataPercent >= 0 &&
       t.metadataPercent < 1 &&
       (t.magnetUri ?? '').isNotEmpty;
 
-  /// 操作按钮：**固定两行 × 3 列等宽**（2026-09-24 用户整改）。
-  ///
-  /// ★ 原实现是 `Wrap` —— 折行位置随字数与屏幕而变（3/2/1 行），位置不固定；
-  ///   现固定两行、每格 `Expanded` 等宽 ⇒ 随屏幕自适应、**永不横向滑动**。
-  ///   行 1 = 运行控制：继续 / 暂停 / 重新校验
-  ///   行 2 = 其它：重新汇报 / 重命名 / 删除（危险项放行末）
   Widget _actionGrid(
     Torrent t, {
     required bool running,
@@ -657,7 +611,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             label: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11)),
+                style: TextStyle(fontSize: af(context, 11))),
             onPressed: onTap,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -680,7 +634,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             label: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: color)),
+                style: TextStyle(fontSize: af(context, 11), color: color)),
             onPressed: onTap,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -757,7 +711,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  /// 下载限速（模型统一存 bytes/s ⇒ 显示/提交都按 KB/s 换算）。
   Widget _dlLimitField(Torrent t, {bool compact = false}) => EditNumberField(
         label: S.fieldDlLimit,
         initial: t.newDlLimit ~/ 1024,
@@ -772,7 +725,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
       );
 
-  /// 上传限速（同上）。
   Widget _upLimitField(Torrent t, {bool compact = false}) => EditNumberField(
         label: S.fieldUpLimit,
         initial: t.newUpLimit ~/ 1024,
@@ -787,10 +739,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
       );
 
-  /// 分享率上限（-2 跟随全局 / -1 不限 / ≥0 具体值）。
-  ///
-  /// ★ 2026-09-24 用户整改：4 项改回独占一行 ⇒ label 有 88dp，
-  ///   恢复**完整文案**「分享率上限」（用户口径「文本以这个为准」）。
   Widget _ratioLimitField(Torrent t, {bool compact = false}) => EditRatioField(
         label: S.fieldRatioLimit,
         initial: t.ratioLimit,
@@ -804,7 +752,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
       );
 
-  /// 做种时限（分钟；≤0 ⇒ 提交 -1 = 不限）。
   Widget _seedTimeField(Torrent t, {bool compact = false}) => EditNumberField(
         label: S.fieldSeedingTimeLimit,
         initial: t.seedingTimeLimit < 0 ? 0 : t.seedingTimeLimit,
@@ -823,7 +770,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
       );
 
-  /// 导出当前种子（v3 组③末尾的入口；与 AppBar 的导出同口径、同落盘方式）。
   Future<void> _exportTorrent(Torrent t) async {
     if (_busy) return;
     final ServerController sc = _serverCtrl;
@@ -838,14 +784,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         Formatter.showToast(S.btExportFail, isError: true);
         return;
       }
-      // ★ 走系统「另存为」让用户自己选位置：直接写 app 私有目录在
-      //   Android 11+ 的文件管理器里看不到。
+
       final String? saved = await FileExport.saveBytesAs(
         fileName: '${t.name}.torrent',
         bytes: Uint8List.fromList(bytes),
         dialogTitle: S.btExportTorrent,
       );
-      if (saved == null) return; // 用户取消
+      if (saved == null) return;
       Formatter.showToast('${S.btExportOk} $saved');
     } catch (e) {
       Formatter.showToast(
@@ -855,11 +800,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     }
   }
 
-  /// 开关组（v3 定稿：**同一行 4 个 chip**；用 `Wrap` ⇒ 窄屏自动折行，不会溢出）。
-  ///
-  /// ★ 「顺序下载」按**版本**显示（TR 4.1 才有 ⇒ V6），不是按服务器类型一刀切。
-  /// ★ 强制做种 / 超级做种只有 qB 有（TR 的 `honorsSessionLimits` 语义完全不同）。
-  /// ★ 不支持的项**直接隐藏**（D4：不给点了才报错的控件）。
   Widget _switchGroup(Torrent t) {
     final CapabilitySet cap = _ctrl.capabilities;
     final List<Widget> chips = <Widget>[
@@ -909,16 +849,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(S.editSectionSwitches,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600)),
         const SizedBox(height: 5),
         Wrap(spacing: 6, runSpacing: 6, children: chips),
       ],
     );
   }
 
-  /// 统一的编辑提交外壳：成功 toast + 延迟 400ms 再拉一次定点刷新。
-  ///
-  /// ★ 延迟刷新是必需的：qB 常常"返回成功但状态还没变"，只信返回值会显示旧值。
   Future<bool> _apply(
     Torrent t,
     String what,
@@ -953,7 +890,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: t.savePath ?? '',
-      // TR 的 set-location 可选 move；qB 恒移动 ⇒ 弹窗里只给说明。
+
       askMove: !isQb,
     );
     if (r == null) return;

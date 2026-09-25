@@ -9,10 +9,10 @@ const Key kContent2 = Key('content2');
 const double kRowWidth = 300;
 
 const double kExtentRatio = 0.5;
-const double kExtent = kRowWidth * kExtentRatio; 
-const double kHalf = kExtent / 2; 
+const double kExtent = kRowWidth * kExtentRatio;
+const double kHalf = kExtent / 2;
 
-const double kResistance = SlidableTile.defaultDragResistance; 
+const double kResistance = SlidableTile.defaultDragResistance;
 
 Duration _clock = Duration.zero;
 
@@ -93,7 +93,7 @@ void main() {
     await tester.pumpWidget(_host(_tile(motion: SlidableMotionKind.scroll)));
 
     final TestGesture g = await _press(tester, kContent);
-    final double base = _contentDx(tester); 
+    final double base = _contentDx(tester);
     await _move(tester, g, -30, const Duration(milliseconds: 60));
     final double moved = _contentDx(tester);
 
@@ -134,7 +134,7 @@ void main() {
 
   testWidgets('滑动②b：甩动分支（纯函数 —— widget 测试拿不到手指速度）',
       (WidgetTester tester) async {
-    const double v = 1000; 
+    const double v = 1000;
     double t(double ratio, double vx) => SlidableTile.settleTarget(
           ratio: ratio,
           vx: vx,

@@ -147,7 +147,7 @@ class QbPrefsApi extends ServerPrefsApi {
     if (patch.isEmpty) return;
     final Map<String, dynamic> prefs = <String, dynamic>{};
     for (final MapEntry<String, dynamic> e in patch.entries) {
-      if (e.value == null) continue; 
+      if (e.value == null) continue;
       if (e.key == PrefKey.altSpeedEnabled) {
         final Map<String, dynamic>? st = await readServerState();
         final bool? cur = _asBool(st?[PrefKey.altSpeedEnabled]);
@@ -169,7 +169,7 @@ class QbPrefsApi extends ServerPrefsApi {
   }
 
   @override
-  bool supports(String key) => true; 
+  bool supports(String key) => true;
 
   static const List<String> _knownKeys = <String>[
     PrefKey.upLimit,
@@ -252,7 +252,7 @@ class TrPrefsApi extends ServerPrefsApi {
   String? get lastError => _lastError;
 
   @override
-  bool get lastBanned => false; 
+  bool get lastBanned => false;
 
   @override
   bool get lastMissingCreds => _lastMissing;

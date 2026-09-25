@@ -104,7 +104,7 @@ void main() {
         'version': 1,
         'themes': <dynamic>[
           _theme('c1', '甲').toJson(),
-          <String, dynamic>{'id': 'c2', 'name': '乙'}, 
+          <String, dynamic>{'id': 'c2', 'name': '乙'},
         ],
       });
       final ThemePackResult r = ThemeBackup.parse(text);

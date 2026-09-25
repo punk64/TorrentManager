@@ -272,11 +272,9 @@ void main() {
       expect(find.text('升序'), findsOneWidget);
       expect(find.text('降序'), findsOneWidget);
 
-      // 第 67 轮第二期新增的「状态筛选」区（D1 两级状态入口）。
       await tester.scrollUntilVisible(find.text('状态筛选'), 200.0);
       expect(find.text('状态筛选'), findsOneWidget, reason: '缺少「状态筛选」分组');
 
-      // 加了状态区后总高度变长 ⇒ 后面的分组要滚动到才可见（ListView 懒加载）。
       for (final FilterDim d in FilterDim.values) {
         await tester.scrollUntilVisible(find.text(d.title), 200.0);
         expect(find.text(d.title), findsOneWidget, reason: '缺少「${d.title}」分组');
@@ -296,8 +294,6 @@ void main() {
 
       expect(find.text('电影 (1)'), findsNothing, reason: '默认收起，不应有内容');
 
-      // ★ 2026-09-24 起「主状态」由下拉改成 3 行按钮网格，面板变高 ⇒ 「分类」
-      //   可能已在视口之外，点之前先滚到可见（否则 tap 打空）。
       await tester.ensureVisible(find.text('分类'));
       await tester.pump();
       await tester.tap(find.text('分类'));

@@ -13,6 +13,7 @@ import '../widgets/app_toast.dart';
 import '../widgets/color_picker.dart';
 import '../widgets/page_preview.dart';
 import '../widgets/theme_preview.dart';
+import '../app/adaptive.dart';
 
 class ThemePage extends StatefulWidget {
   const ThemePage({super.key});
@@ -48,7 +49,7 @@ class _ThemePageState extends State<ThemePage> {
             onPressed: () => _saveDialog(context, tc),
             icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
             label: Text(L.t('保存'),
-                style: const TextStyle(fontSize: 12, color: Colors.white)),
+                style: TextStyle(fontSize: af(context, 12), color: Colors.white)),
             style: TextButton.styleFrom(
               backgroundColor: const Color(0xFF2F80ED),
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -64,7 +65,7 @@ class _ThemePageState extends State<ThemePage> {
               tc.restoreFactoryDefaults();
               _toast(S.restoreDefaults);
             },
-            child: Text(S.restoreDefaults, style: const TextStyle(fontSize: 12)),
+            child: Text(S.restoreDefaults, style: TextStyle(fontSize: af(context, 12))),
           ),
         ],
       ),
@@ -78,7 +79,7 @@ class _ThemePageState extends State<ThemePage> {
               dense: true,
               tilePadding: EdgeInsets.zero,
               leading: const Icon(Icons.palette, size: AppTheme.iconSize),
-              title: Text(S.themeCustom, style: const TextStyle(fontSize: 12)),
+              title: Text(S.themeCustom, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
                   Container(
@@ -90,7 +91,7 @@ class _ThemePageState extends State<ThemePage> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(_hex(tc.seed.value), style: const TextStyle(fontSize: 10)),
+                  Text(_hex(tc.seed.value), style: TextStyle(fontSize: af(context, 10))),
                 ],
               ),
               children: <Widget>[
@@ -110,7 +111,7 @@ class _ThemePageState extends State<ThemePage> {
               dense: true,
               tilePadding: EdgeInsets.zero,
               leading: const Icon(Icons.text_fields, size: AppTheme.iconSize),
-              title: Text(S.themeFontColor, style: const TextStyle(fontSize: 12)),
+              title: Text(S.themeFontColor, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
                   Container(
@@ -130,7 +131,7 @@ class _ThemePageState extends State<ThemePage> {
                     tc.isFontColorCustom
                         ? _hex(tc.fontColor.value!)
                         : '${S.themeFontColorAuto}（${_hex(tc.effectiveFontColor)}）',
-                    style: const TextStyle(fontSize: 10),
+                    style: TextStyle(fontSize: af(context, 10)),
                   ),
                 ],
               ),
@@ -146,7 +147,7 @@ class _ThemePageState extends State<ThemePage> {
                     icon: const Icon(Icons.auto_awesome,
                         size: AppTheme.iconSize),
                     label: Text(S.themeFontColorAuto,
-                        style: const TextStyle(fontSize: 12)),
+                        style: TextStyle(fontSize: af(context, 12))),
                     onPressed: () {
                       tc.setFontColor(null);
                       _toast(S.themeFontColorAuto);
@@ -157,7 +158,7 @@ class _ThemePageState extends State<ThemePage> {
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                   child: Text(
                     S.themeFontColorHelp,
-                    style: const TextStyle(fontSize: 10),
+                    style: TextStyle(fontSize: af(context, 10)),
                   ),
                 ),
 
@@ -173,9 +174,9 @@ class _ThemePageState extends State<ThemePage> {
             SwitchListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              title: Text(S.themeGlass, style: const TextStyle(fontSize: 12)),
+              title: Text(S.themeGlass, style: TextStyle(fontSize: af(context, 12))),
               subtitle:
-                  Text(S.themeGlassHelp, style: const TextStyle(fontSize: 10)),
+                  Text(S.themeGlassHelp, style: TextStyle(fontSize: af(context, 10))),
               value: tc.glassEnabled,
               onChanged: tc.setGlassEnabled,
             ),
@@ -184,7 +185,7 @@ class _ThemePageState extends State<ThemePage> {
                 (double v) => '${(v * 100).round()}%'),
             Padding(
               padding: const EdgeInsets.only(left: 4, right: 4, top: 2),
-              child: Text(S.themeOpacityHelp, style: const TextStyle(fontSize: 10)),
+              child: Text(S.themeOpacityHelp, style: TextStyle(fontSize: af(context, 10))),
             ),
 
             const SizedBox(height: 8),
@@ -210,7 +211,7 @@ class _ThemePageState extends State<ThemePage> {
                   '${S.fieldPath}${tc.menuImagePath.value}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: af(context, 10)),
                 ),
               ),
 
@@ -228,19 +229,19 @@ class _ThemePageState extends State<ThemePage> {
 
             Text(
               L.t('全局背景图片'),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: af(context, 13), fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             SwitchListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               title: Text(L.t('启用（作用于所有页面）'),
-                  style: const TextStyle(fontSize: 12)),
+                  style: TextStyle(fontSize: af(context, 12))),
               subtitle: Text(
                 tc.globalBgEnabled.value
                     ? L.t('已启用：下面的图片与三档参数立即生效')
                     : L.t('未启用：下方选项已禁用，打开开关后才能调整'),
-                style: const TextStyle(fontSize: 10),
+                style: TextStyle(fontSize: af(context, 10)),
               ),
               value: tc.globalBgEnabled.value,
               onChanged: tc.setGlobalBgEnabled,
@@ -256,7 +257,7 @@ class _ThemePageState extends State<ThemePage> {
                   '${S.fieldPath}${tc.globalBgImagePath.value}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: af(context, 10)),
                 ),
               ),
             _valueSlider(context, L.t('亮度'), tc.globalBgBrightness.value, -1, 1,
@@ -286,12 +287,12 @@ class _ThemePageState extends State<ThemePage> {
 
             Text(
               L.t('分页面配色'),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: af(context, 13), fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 2),
             Text(
               L.t('未设置的分区跟随主题；设置后只影响对应页面。'),
-              style: const TextStyle(fontSize: 10),
+              style: TextStyle(fontSize: af(context, 10)),
             ),
             for (final PageStyleSpec spec in kPageStyles)
               _pageStyleTile(context, tc, spec),
@@ -309,7 +310,7 @@ class _ThemePageState extends State<ThemePage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       enabled: enabled,
       leading: Icon(icon, size: AppTheme.iconSize),
-      title: Text(title, style: const TextStyle(fontSize: 12)),
+      title: Text(title, style: TextStyle(fontSize: af(context, 12))),
       onTap: enabled ? onTap : null,
     );
   }
@@ -351,7 +352,7 @@ class _ThemePageState extends State<ThemePage> {
           SizedBox(
             width: 84,
             child: Text(label,
-                style: TextStyle(fontSize: 11, color: dim)),
+                style: TextStyle(fontSize: af(context, 11), color: dim)),
           ),
           Expanded(
             child: Slider(
@@ -367,7 +368,7 @@ class _ThemePageState extends State<ThemePage> {
             child: Text(
               format(value),
               textAlign: TextAlign.end,
-              style: TextStyle(fontSize: 10, color: dim),
+              style: TextStyle(fontSize: af(context, 10), color: dim),
             ),
           ),
         ],
@@ -388,7 +389,7 @@ class _ThemePageState extends State<ThemePage> {
       builder: (BuildContext ctx) => StatefulBuilder(
         builder: (BuildContext ctx, StateSetter setLocal) => AlertDialog(
           title: Text(L.t(editingSaved ? '保存修改' : '保存自定义主题'),
-              style: const TextStyle(fontSize: 14)),
+              style: TextStyle(fontSize: af(context, 14))),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,17 +401,17 @@ class _ThemePageState extends State<ThemePage> {
                   labelText: L.t('主题名称'),
                   hintText: L.t('例如：我的暗夜紫'),
                 ),
-                style: const TextStyle(fontSize: 13),
+                style: TextStyle(fontSize: af(context, 13)),
               ),
               if (targets.length > 1) ...<Widget>[
                 const SizedBox(height: 12),
-                Text(L.t('覆盖目标'), style: const TextStyle(fontSize: 11)),
+                Text(L.t('覆盖目标'), style: TextStyle(fontSize: af(context, 11))),
                 DropdownButton<CustomTheme>(
                   value: target,
                   isExpanded: true,
 
                   style: TextStyle(
-                      fontSize: 13, color: Theme.of(ctx).colorScheme.onSurface),
+                      fontSize: af(context, 13), color: Theme.of(ctx).colorScheme.onSurface),
                   items: <DropdownMenuItem<CustomTheme>>[
                     for (final CustomTheme t in targets)
                       DropdownMenuItem<CustomTheme>(
@@ -431,7 +432,7 @@ class _ThemePageState extends State<ThemePage> {
                             '${L.t('是正在编辑的主题。点「覆盖更新」把改动写回它，或点「保存为新主题」另存一份。')}'
                         : '「${target!.name}」'
                             '${L.t('已存在。点「覆盖更新」会用当前配置替换它的全部内容（不可撤销），或点「保存为新主题」另存一份。')}',
-                    style: const TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: af(context, 11)),
                   ),
                 ),
             ],
@@ -446,7 +447,7 @@ class _ThemePageState extends State<ThemePage> {
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop('update'),
                 child: Text('${L.t('覆盖更新')}「${target!.name}」',
-                    style: const TextStyle(fontSize: 12)),
+                    style: TextStyle(fontSize: af(context, 12))),
               ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop('new'),
@@ -494,16 +495,16 @@ class _ThemePageState extends State<ThemePage> {
       dense: true,
       tilePadding: EdgeInsets.zero,
       leading: Icon(pageIconOf(spec.key), size: AppTheme.iconSize),
-      title: Text(spec.titleLocalized, style: const TextStyle(fontSize: 12)),
+      title: Text(spec.titleLocalized, style: TextStyle(fontSize: af(context, 12))),
       subtitle: Text(
         custom == 0 ? S.themeFontColorAuto : L.pick('已自定义 $custom 项', 'Customized: $custom'),
-        style: const TextStyle(fontSize: 10),
+        style: TextStyle(fontSize: af(context, 10)),
       ),
       children: <Widget>[
         if (spec.help != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(spec.helpLocalized!, style: const TextStyle(fontSize: 10)),
+            child: Text(spec.helpLocalized!, style: TextStyle(fontSize: af(context, 10))),
           ),
 
         Padding(
@@ -542,16 +543,16 @@ class _ThemePageState extends State<ThemePage> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(spec.labelOf(slot),
-                style: const TextStyle(fontSize: 11)),
+                style: TextStyle(fontSize: af(context, 11))),
           ),
           TextButton(
             onPressed: () => _pickSlotColor(context, tc, spec, slot),
-            child: Text(L.t('选择'), style: const TextStyle(fontSize: 11)),
+            child: Text(L.t('选择'), style: TextStyle(fontSize: af(context, 11))),
           ),
           if (c != null)
             TextButton(
               onPressed: () => tc.setPageColor(spec.key, slot, null),
-              child: Text(L.t('跟随主题'), style: const TextStyle(fontSize: 11)),
+              child: Text(L.t('跟随主题'), style: TextStyle(fontSize: af(context, 11))),
             ),
         ],
       ),
@@ -569,7 +570,7 @@ class _ThemePageState extends State<ThemePage> {
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text('${spec.titleLocalized} · ${spec.labelOf(slot)}',
-            style: const TextStyle(fontSize: 13)),
+            style: TextStyle(fontSize: af(context, 13))),
         content: SingleChildScrollView(
           child: ColorPicker(
             color: temp,

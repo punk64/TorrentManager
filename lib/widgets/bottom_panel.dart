@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../app/theme.dart';
 import '../controllers/theme_controller.dart';
+import '../app/adaptive.dart';
 
 class BottomPanel {
   BottomPanel._();
@@ -61,8 +62,8 @@ class BottomPanel {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: TextStyle(
+                        fontSize: af(context, 15),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -9,6 +9,7 @@ import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class TorrentInfoTrackersPage extends StatelessWidget {
   const TorrentInfoTrackersPage({super.key});
@@ -30,11 +31,11 @@ class TorrentInfoTrackersPage extends StatelessWidget {
             children: <Widget>[
               Image.asset('assets/images/empty.webp', width: 80),
               const SizedBox(height: 10),
-              Text(S.trkNone, style: const TextStyle(fontSize: 12)),
+              Text(S.trkNone, style: TextStyle(fontSize: af(context, 12))),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 icon: const Icon(Icons.add, size: AppTheme.iconSize),
-                label: Text(S.trkAddTitle, style: const TextStyle(fontSize: 12)),
+                label: Text(S.trkAddTitle, style: TextStyle(fontSize: af(context, 12))),
                 onPressed: () => _editTracker(context, ctrl, sc, null),
               ),
             ],
@@ -59,7 +60,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add, size: AppTheme.iconSize),
-              label: Text(S.trkAddTitle, style: const TextStyle(fontSize: 12)),
+              label: Text(S.trkAddTitle, style: TextStyle(fontSize: af(context, 12))),
               onPressed: () => _editTracker(context, ctrl, sc, null),
             ),
           ),
@@ -91,7 +92,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
         url,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 11),
+        style: TextStyle(fontSize: af(context, 11)),
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 2),
@@ -99,7 +100,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           '${S.fieldSiteName} $host · '
           '${S.fieldSeeders} $seeds · ${S.fieldLeechers} $leechs'
           '${status.isEmpty ? '' : ' · $status'}',
-          style: const TextStyle(fontSize: 10),
+          style: TextStyle(fontSize: af(context, 10)),
         ),
       ),
       trailing: PopupMenuButton<String>(
@@ -123,13 +124,13 @@ class TorrentInfoTrackersPage extends StatelessWidget {
         itemBuilder: (_) => <PopupMenuEntry<String>>[
           PopupMenuItem<String>(
               value: 'copy',
-              child: Text(S.trkCopied, style: const TextStyle(fontSize: 12))),
+              child: Text(S.trkCopied, style: TextStyle(fontSize: af(context, 12)))),
           PopupMenuItem<String>(
               value: 'edit',
-              child: Text(S.trkEditTitle, style: const TextStyle(fontSize: 12))),
+              child: Text(S.trkEditTitle, style: TextStyle(fontSize: af(context, 12)))),
           PopupMenuItem<String>(
               value: 'remove',
-              child: Text(S.trkDeleteTitle, style: const TextStyle(fontSize: 12))),
+              child: Text(S.trkDeleteTitle, style: TextStyle(fontSize: af(context, 12)))),
         ],
       ),
     );
@@ -155,7 +156,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           editing
               ? '${S.trkEditTitle}${t.name}）'
               : '${S.trkAddTitle}${t.name}）',
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: af(context, 14)),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -163,7 +164,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           children: <Widget>[
             Text(
               editing ? S.trkReplaceHelp : S.trkAddAllHelp,
-              style: const TextStyle(fontSize: 10, height: 1.4),
+              style: TextStyle(fontSize: af(context, 10), height: 1.4),
             ),
             const SizedBox(height: 8),
             if (editing)
@@ -171,7 +172,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   original,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: af(context, 10)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -181,14 +182,14 @@ class TorrentInfoTrackersPage extends StatelessWidget {
               maxLength: AppTheme.maxLenUrl,
               buildCounter: AppTheme.noCounter,
               maxLines: 3,
-              style: const TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: af(context, 11)),
               decoration: InputDecoration(
                 labelText: 'Tracker URL',
-                labelStyle: const TextStyle(fontSize: 11),
+                labelStyle: TextStyle(fontSize: af(context, 11)),
                 hintText: 'udp://tracker.example.com:6969/announce',
-                hintStyle: const TextStyle(fontSize: 11),
+                hintStyle: TextStyle(fontSize: af(context, 11)),
                 helperText: S.setAddNewLineHelp,
-                helperStyle: const TextStyle(fontSize: 9),
+                helperStyle: TextStyle(fontSize: af(context, 9)),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -209,7 +210,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     ).whenComplete(input.dispose);
     if (result == null || result.isEmpty) return;
 
-    // 多行输入 = 多个 tracker：先逐行校验，再拆成列表（旧接口曾把整段当一个 URL 发）。
     final List<String> urls = <String>[];
     for (final String line in result.split('\n')) {
       final String v = line.trim();
@@ -243,8 +243,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           Formatter.showToast(S.noTrId, isError: true);
           return;
         }
-        // ★ V5：TR 4.0+ 的 trackerAdd/Remove/Replace 已废弃 ⇒ 走 `trackerList`
-        //   整份写回（读-改-写）。判据统一读能力包，**不在页面里拼版本号**。
+
         final bool byList = ctrl.capabilities.trackerList;
         if (editing) {
           final int? tid = _trackerIdOf(ctrl, original);
@@ -302,14 +301,14 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text('${S.trkDeleteTitle}${t.name}）',
-            style: const TextStyle(fontSize: 14)),
+            style: TextStyle(fontSize: af(context, 14))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(S.trkDeleteHelp, style: const TextStyle(fontSize: 11)),
+            Text(S.trkDeleteHelp, style: TextStyle(fontSize: af(context, 11))),
             const SizedBox(height: 8),
-            Text(url, style: const TextStyle(fontSize: 10)),
+            Text(url, style: TextStyle(fontSize: af(context, 10))),
           ],
         ),
         actions: <Widget>[
@@ -335,7 +334,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           Formatter.showToast('${S.trkDelNotFound}$url', isError: true);
           return;
         }
-        // ★ V5：TR 4.0+ 走 `trackerList` 整份写回（按 trackerStats 下标删）。
+
         if (ctrl.capabilities.trackerList) {
           await sc.tr.removeTrackerByIndex(t.trId!, tid);
         } else {

@@ -14,6 +14,7 @@ import 'torrent_info_files_page.dart';
 import 'torrent_info_overview_page.dart';
 import 'torrent_info_peers_page.dart';
 import 'torrent_info_trackers_page.dart';
+import '../app/adaptive.dart';
 
 class TorrentInfoPage extends StatelessWidget {
   const TorrentInfoPage({super.key});
@@ -26,11 +27,9 @@ class TorrentInfoPage extends StatelessWidget {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('种子详情', style: TextStyle(fontSize: 15)),
+          title: Text('种子详情', style: TextStyle(fontSize: af(context, 15))),
           actions: <Widget>[
-            // ★ 导出按钮按**能力**显隐：
-            //   TR 根本没有导出接口（D4 ⇒ 隐藏，不给点了才报错的按钮）；
-            //   qB 要 4.5+（WebAPI 2.8.14）才有 `torrents/export`（V3 ⇒ 按版本隐藏）。
+
             Obx(() {
               if (!ctrl.capabilities.exportTorrent) {
                 return const SizedBox.shrink();
@@ -56,14 +55,13 @@ class TorrentInfoPage extends StatelessWidget {
                       Formatter.showToast(S.btExportFail, isError: true);
                       return;
                     }
-                    // ★ 走系统「另存为」让用户自己选位置：
-                    //   直接写 app 私有目录在 Android 11+ 的文件管理器里看不到。
+
                     final String? saved = await FileExport.saveBytesAs(
                       fileName: '${t.name}.torrent',
                       bytes: Uint8List.fromList(bytes),
                       dialogTitle: S.btExportTorrent,
                     );
-                    if (saved == null) return; // 用户取消
+                    if (saved == null) return;
                     Formatter.showToast('${S.btExportOk} $saved');
                   } catch (e) {
                     Formatter.showToast(
@@ -78,8 +76,8 @@ class TorrentInfoPage extends StatelessWidget {
               onPressed: ctrl.loadDetailData,
             ),
           ],
-          bottom: const TabBar(
-            labelStyle: TextStyle(fontSize: 12),
+          bottom: TabBar(
+            labelStyle: TextStyle(fontSize: af(context, 12)),
 
             tabs: <Widget>[
               Tab(text: '概览', height: 38),

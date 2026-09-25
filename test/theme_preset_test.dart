@@ -231,7 +231,7 @@ void main() {
 
     test('套用后再 load 能恢复 preset id 与各参数', () async {
       final ThemeController tc = makeTc();
-      tc.applyPreset(presets[2]); 
+      tc.applyPreset(presets[2]);
 
       final ThemeController tc2 = ThemeController();
       await tc2.load();
@@ -246,7 +246,7 @@ void main() {
 
     test('改主色 → 不再算这套预设（抽屉勾选要消失）', () {
       final ThemeController tc = makeTc();
-      tc.applyPreset(presets[1]); 
+      tc.applyPreset(presets[1]);
       expect(tc.currentPreset.value, 'green_bamboo');
 
       tc.setSeed(const Color(0xFF009688));
@@ -273,7 +273,7 @@ void main() {
 
     test('改字色不算脱钩（预设允许叠加自定义字色）', () {
       final ThemeController tc = makeTc();
-      tc.applyPreset(presets[2]); 
+      tc.applyPreset(presets[2]);
       tc.setFontColor(const Color(0xFF00FF00));
       expect(tc.currentPreset.value, 'blue_sky');
     });
@@ -291,10 +291,10 @@ void main() {
 
     test('点「自定义主题」→ 勾选从三档移到自定义主题', () {
       final ThemeController tc = makeTc();
-      tc.applyBuiltinMode(2); 
+      tc.applyBuiltinMode(2);
       expect(tc.isBuiltinMode(2), isTrue);
 
-      tc.markCustomTheme(); 
+      tc.markCustomTheme();
       expect(tc.useCustom.value, isTrue);
       expect(tc.isCustomSelected, isTrue);
       expect(tc.isBuiltinMode(2), isFalse,

@@ -8,6 +8,7 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/i18n.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class TorrentInfoFilesPage extends StatefulWidget {
   const TorrentInfoFilesPage({super.key});
@@ -50,8 +51,8 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         return const Center(child: CircularProgressIndicator());
       }
       if (ctrl.files.isEmpty) {
-        return const Center(
-          child: Text('暂无文件', style: TextStyle(fontSize: 12)),
+        return Center(
+          child: Text('暂无文件', style: TextStyle(fontSize: af(context, 12))),
         );
       }
       final List<FileNode> tree = ctrl.fileTree;
@@ -81,7 +82,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
           children: <Widget>[
             Text(
               S.countLabel(_selected.length),
-              style: const TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: af(context, 11)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -95,15 +96,15 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: ActionChip(
                             label: Text(p.label,
-                                style: const TextStyle(fontSize: 10)),
+                                style: TextStyle(fontSize: af(context, 10))),
                             visualDensity: VisualDensity.compact,
                             onPressed: () => _applyPrio(p),
                           ),
                         ),
                     ActionChip(
                       avatar: const Icon(Icons.clear_all, size: 14),
-                      label: const Text('取消选择',
-                          style: TextStyle(fontSize: 10)),
+                      label: Text('取消选择',
+                          style: TextStyle(fontSize: af(context, 10))),
                       visualDensity: VisualDensity.compact,
                       onPressed: () => setState(_selected.clear),
                     ),
@@ -203,7 +204,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         n.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 11),
+        style: TextStyle(fontSize: af(context, 11)),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +217,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
           const SizedBox(height: 2),
           Text(
             '${Formatter.setSize(n.size)} · ${Formatter.setProgress(n.progress)}',
-            style: const TextStyle(fontSize: 9),
+            style: TextStyle(fontSize: af(context, 9)),
           ),
         ],
       ),
@@ -255,7 +256,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         n.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 11),
+        style: TextStyle(fontSize: af(context, 11)),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +271,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
             '${agg.$1 == 0 ? '' : Formatter.setSize(agg.$1)} · '
             '${Formatter.setProgress(agg.$2)} · '
             '${n.children.length} 项',
-            style: const TextStyle(fontSize: 9),
+            style: TextStyle(fontSize: af(context, 9)),
           ),
         ],
       ),

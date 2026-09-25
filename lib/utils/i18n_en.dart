@@ -616,4 +616,9 @@ const Map<String, String> kEnStrings = <String, String>{
   '累计下载': 'Total downloaded',
   '累计上传': 'Total uploaded',
   '种子': 'torrents',
+  '系统日志': 'System logs',
+  '隐藏地址与端口': 'Hide address and port',
+  '显示地址与端口': 'Show address and port',
+  '服务器': 'Servers',
+  '限制': 'Limit',
 };

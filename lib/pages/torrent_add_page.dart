@@ -12,6 +12,7 @@ import '../utils/add_batch.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class TorrentAddPage extends StatefulWidget {
   const TorrentAddPage({super.key});
@@ -220,22 +221,22 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('添加种子', style: TextStyle(fontSize: 15)),
+        title: Text('添加种子', style: TextStyle(fontSize: af(context, 15))),
       ),
       body: ListView(
         padding: const EdgeInsets.all(14),
         children: <Widget>[
           SegmentedButton<_AddMode>(
-            segments: const <ButtonSegment<_AddMode>>[
+            segments: <ButtonSegment<_AddMode>>[
               ButtonSegment<_AddMode>(
                 value: _AddMode.url,
                 icon: Icon(Icons.add_link, size: AppTheme.iconSize),
-                label: Text('种子链接', style: TextStyle(fontSize: 11)),
+                label: Text('种子链接', style: TextStyle(fontSize: af(context, 11))),
               ),
               ButtonSegment<_AddMode>(
                 value: _AddMode.file,
                 icon: Icon(Icons.upload_file, size: AppTheme.iconSize),
-                label: Text('种子文件', style: TextStyle(fontSize: 11)),
+                label: Text('种子文件', style: TextStyle(fontSize: af(context, 11))),
               ),
             ],
             selected: <_AddMode>{_mode},
@@ -252,13 +253,13 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               maxLength: AppTheme.maxLenUrls,
               buildCounter: AppTheme.noCounter,
               maxLines: 6,
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: af(context, 12)),
               decoration: InputDecoration(
                 labelText: '磁力链接 / 种子链接',
-                labelStyle: const TextStyle(fontSize: 12),
+                labelStyle: TextStyle(fontSize: af(context, 12)),
                 hintText: 'magnet:?xt=urn:btih:...',
                 helperText: S.setAddNewLineHelp,
-                helperStyle: const TextStyle(fontSize: 10),
+                helperStyle: TextStyle(fontSize: af(context, 10)),
                 border: const OutlineInputBorder(),
                 isDense: true,
               ),
@@ -271,13 +272,13 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   children: <Widget>[
                     OutlinedButton.icon(
                       icon: const Icon(Icons.folder, size: AppTheme.iconSize),
-                      label: const Text('选择种子文件（可多选）',
-                          style: TextStyle(fontSize: 12)),
+                      label: Text('选择种子文件（可多选）',
+                          style: TextStyle(fontSize: af(context, 12))),
                       onPressed: _busy ? null : _pick,
                     ),
                     const SizedBox(width: 10),
                     Text('已选 ${_files.length} 个',
-                        style: const TextStyle(fontSize: 11)),
+                        style: TextStyle(fontSize: af(context, 11))),
                   ],
                 ),
                 if (_files.isNotEmpty) ...<Widget>[
@@ -298,12 +299,12 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   controller: _savepath,
                   maxLength: AppTheme.maxLenPath,
                   buildCounter: AppTheme.noCounter,
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: af(context, 12)),
                   decoration: InputDecoration(
                     labelText: isQb ? '保存路径（可选）' : '下载目录（可选）',
-                    labelStyle: const TextStyle(fontSize: 12),
+                    labelStyle: TextStyle(fontSize: af(context, 12)),
                     helperText: S.setPickFromBelowPlain,
-                    helperStyle: const TextStyle(fontSize: 10),
+                    helperStyle: TextStyle(fontSize: af(context, 10)),
                     border: const OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -314,12 +315,12 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   controller: _category,
                   maxLength: AppTheme.maxLenName,
                   buildCounter: AppTheme.noCounter,
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: af(context, 12)),
                   decoration: InputDecoration(
                     labelText: isQb ? '分类（可选）' : S.addLabelOptional,
-                    labelStyle: const TextStyle(fontSize: 12),
+                    labelStyle: TextStyle(fontSize: af(context, 12)),
                     helperText: isQb ? S.setCategoryHelp : S.addLabelHelp,
-                    helperStyle: const TextStyle(fontSize: 10),
+                    helperStyle: TextStyle(fontSize: af(context, 10)),
                     border: const OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -333,7 +334,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                       ? null
                       : (bool v) => setState(() => _paused = v),
                   title: Text(S.addPauseAfterAdd,
-                      style: const TextStyle(fontSize: 12)),
+                      style: TextStyle(fontSize: af(context, 12))),
                 ),
               ],
             );
@@ -355,7 +356,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                 : const Icon(Icons.add, size: AppTheme.iconSize),
             label: Text(
                 _busy ? '${S.fieldUpdating} $_done/$_total' : '添加',
-                style: const TextStyle(fontSize: 13)),
+                style: TextStyle(fontSize: af(context, 13))),
             onPressed: _busy ? null : _submit,
           ),
         ],
@@ -380,7 +381,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
             Expanded(
               child: Text(
                 f.name,
-                style: const TextStyle(fontSize: 11),
+                style: TextStyle(fontSize: af(context, 11)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -418,7 +419,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               Expanded(
                 child: Text(
                   '${S.tAddBatchFailList}（${r.failed.length}）',
-                  style: TextStyle(fontSize: 11, color: err),
+                  style: TextStyle(fontSize: af(context, 11), color: err),
                 ),
               ),
             ],
@@ -429,7 +430,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 '· ${shortLabel(f.label)} —— ${f.reason}',
-                style: TextStyle(fontSize: 10, color: err),
+                style: TextStyle(fontSize: af(context, 10), color: err),
               ),
             ),
         ],

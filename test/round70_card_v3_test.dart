@@ -5,12 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 
-/// 第 70 轮：卡片展开区**对齐 v3**（2026-09-24 22:1x 用户报障后补做）。
-///
-/// 背景：v3（10.5 定稿）此前只落到**概览 Tab**，展开区仍是旧排布（4 个整行 Switch +
-/// 单列只读信息），与展开区自己的定稿图 `round67-展开区新方案-内联编辑-浅色.png`
-/// （开关同一行 chip + 只读两列）也不符。本轮把 v3 的排布**抽成共享组件**
-/// （`EditLayout` / `ReadonlyKvGrid`），概览 Tab 与展开区共用同一份实现。
 String _listPageSrc() =>
     File('lib/pages/torrent_list_page.dart').readAsStringSync();
 String _fieldSrc() =>
@@ -18,16 +12,22 @@ String _fieldSrc() =>
 String _overviewSrc() =>
     File('lib/pages/torrent_info_overview_page.dart').readAsStringSync();
 
+int _nextDecl(String src, int from) {
+  final RegExp re = RegExp(
+      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
+  final Match? m = re.firstMatch(src.substring(from + 1));
+  return m == null ? src.length : from + 1 + m.start;
+}
+
 void main() {
   group('第 70 轮 · 展开区对齐 v3（源码结构）', () {
     final String src = _listPageSrc();
     final String ef = _fieldSrc();
     final String ov = _overviewSrc();
 
-    /// 取 `_detail()` 全文（到下一个注释分隔线为止）。
     String detailBody() {
       final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      return src.substring(i, src.indexOf('// ------', i));
+      return src.substring(i, _nextDecl(src, i));
     }
 
     test('展开区开关 = 同一行 chip（EditSwitchChip + Wrap），旧整行 Switch 已拆', () {
@@ -53,22 +53,22 @@ void main() {
       expect(body.contains('upField(),'), isTrue);
       expect(body.contains('ratioField(),'), isTrue);
       expect(body.contains('seedTimeField(),'), isTrue);
-      // 撤回 2×2
+
       expect(body.contains('dlField(compact: true)'), isFalse);
       expect(body.contains('EditLayout.gridOkOf(context)'), isFalse,
           reason: '不再 2×2 ⇒ 展开区无需紧凑判据（网格判据下沉到共享组件内部）');
-      // 每栏目有边界感：常规 / 限速与分享 / 下载策略 / 信息 = 4 个分区卡片
+
       expect('EditSectionCard('.allMatches(body).length, 4,
           reason: '展开区 4 个板块各套一张分区卡片');
     });
 
     test('★ 与概览 Tab 共用同一套组件（不再各写一套排布）', () {
-      // 只读两列网格 + 分区卡片：两处共用同一份实现
+
       expect(ov.contains('ReadonlyKvGrid(pairs:'), isTrue);
       expect(src.contains('ReadonlyKvGrid('), isTrue);
       expect(ov.contains('EditSectionCard('), isTrue);
       expect(src.contains('EditSectionCard('), isTrue);
-      // 展开区不该再自己造两列网格（这会回到"两处各一套、改一处漏一处"的老路）
+
       expect(src.contains('Widget _kvGrid('), isFalse);
       expect(src.contains('Widget _kvHalf('), isFalse);
     });

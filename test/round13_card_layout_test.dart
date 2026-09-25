@@ -207,24 +207,33 @@ void main() {
 
       const List<String> row1 = <String>['种子数量', '下载中', '做种', '上传中'];
       const List<String> row2 = <String>['暂停下载', '暂停上传', '校验状态', '错误'];
+
+      Finder label(String l) => find.descendant(
+            of: find.byType(Card),
+            matching: find.byWidgetPredicate((Widget w) =>
+                w is Text &&
+                (w.data?.startsWith(l) ??
+                    (w.textSpan?.toPlainText().startsWith(l) ?? false))),
+          );
+
       for (final String l in <String>[...row1, ...row2]) {
-        expect(find.text(l), findsOneWidget, reason: '统计网格缺少「$l」');
+        expect(label(l), findsWidgets, reason: '统计网格缺少「$l」');
       }
 
-      final double y1 = tester.getTopLeft(find.text(row1.first)).dy;
+      final double y1 = tester.getTopLeft(label(row1.first).first).dy;
       for (final String l in row1.skip(1)) {
-        expect(tester.getTopLeft(find.text(l)).dy, y1,
+        expect(tester.getTopLeft(label(l).first).dy, y1,
             reason: '★ 第一行「$l」没有与同行对齐（说明又退回了 Wrap 流式排列）');
       }
-      final double y2 = tester.getTopLeft(find.text(row2.first)).dy;
+      final double y2 = tester.getTopLeft(label(row2.first).first).dy;
       for (final String l in row2.skip(1)) {
-        expect(tester.getTopLeft(find.text(l)).dy, y2,
+        expect(tester.getTopLeft(label(l).first).dy, y2,
             reason: '★ 第二行「$l」没有与同行对齐');
       }
       expect(y2, greaterThan(y1), reason: '第二行应在第一行下方');
     });
 
-    testWidgets('★ 速度行：上传在下载左边，且接一枚磁盘 I/O 芯片',
+    testWidgets('★ 速度行已并入总计卡速度带（第 75 轮）：卡片只留磁盘 I/O 芯片',
         (WidgetTester tester) async {
       await pumpServerPage(tester);
       final ServerController sc = Get.find<ServerController>();
@@ -243,11 +252,8 @@ void main() {
       Finder cardSpeed(String s) => find.byWidgetPredicate((Widget w) =>
           w is Text && w.data == s && w.style?.fontSize == 10);
 
-      expect(cardSpeed(up), findsOneWidget, reason: '卡片速度行应渲染上传速度');
-      expect(cardSpeed(down), findsOneWidget, reason: '卡片速度行应渲染下载速度');
-      expect(tester.getTopLeft(cardSpeed(up)).dx,
-          lessThan(tester.getTopLeft(cardSpeed(down)).dx),
-          reason: '★ 需求 3：上传速度必须排在下载速度**之前**');
+      expect(cardSpeed(up), findsNothing, reason: '卡片速度行应已移除');
+      expect(cardSpeed(down), findsNothing, reason: '卡片速度行应已移除');
 
       expect(find.byType(IoChip), findsOneWidget,
           reason: '★ 需求 4：qBittorrent 服务器卡片要有磁盘 I/O 数');

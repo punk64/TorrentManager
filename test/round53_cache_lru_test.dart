@@ -195,7 +195,7 @@ void main() {
     unawaited(ctrl.refresh());
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    ctrl.items.removeAt(0); 
+    ctrl.items.removeAt(0);
 
     expect(sc.torrentsOf(s.id).length, 3,
         reason: '★ 列表与缓存必须是两份 —— 否则列表页的删除会直接改到卡片的数据源');

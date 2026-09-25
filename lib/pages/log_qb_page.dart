@@ -13,6 +13,7 @@ import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/log_selection.dart';
+import '../app/adaptive.dart';
 
 class LogQbPage extends StatefulWidget {
   const LogQbPage({super.key});
@@ -207,8 +208,7 @@ class _LogQbPageState extends State<LogQbPage> {
     return <(String, String)>[
       ('Transmission 版本', version.isEmpty ? '—' : version),
       ('RPC 版本', Formatter.getString(session, 'rpc-version', def: '—')),
-      // ⚠️ 2026-09-24：这里取的是 `activeTorrentCount`（**活动**种子数，
-      // 含做种中的），原来标成「下载中」会让人以为有几千个正在下载。
+
       ('种子总数', '${Formatter.getInt(stats, 'torrentCount')}'),
       ('活动种子', '${Formatter.getInt(stats, 'activeTorrentCount')}'),
       ('当前下行', Formatter.setSpeed(Formatter.getInt(stats, 'downloadSpeed'))),
@@ -254,7 +254,7 @@ class _LogQbPageState extends State<LogQbPage> {
           _to = DateTime(r.end.year, r.end.month, r.end.day, 23, 59, 59);
         });
         return;
-      default: 
+      default:
         setState(() {
           _from = null;
           _to = null;
@@ -355,7 +355,7 @@ class _LogQbPageState extends State<LogQbPage> {
       _all.clear();
 
       _trFacts = <(String, String)>[];
-      _maskCache.clear(); 
+      _maskCache.clear();
     });
     _exitSelection();
     if (_isTr) _load();
@@ -382,8 +382,8 @@ class _LogQbPageState extends State<LogQbPage> {
                 onToggleAll: _toggleAll,
               )
             : AppBar(
-                title: const Text('服务器日志',
-                    style: TextStyle(fontSize: 15)),
+                title: Text('服务器日志',
+                    style: TextStyle(fontSize: af(context, 15))),
                 actions: <Widget>[
 
                   IconButton(
@@ -426,12 +426,12 @@ class _LogQbPageState extends State<LogQbPage> {
                         PopupMenuItem<String>(
                           value: 'select',
                           child: Text(S.logSelectMode,
-                              style: const TextStyle(fontSize: 13)),
+                              style: TextStyle(fontSize: af(context, 13))),
                         ),
                       PopupMenuItem<String>(
                         value: 'clear',
                         child:
-                            Text(S.logClear, style: const TextStyle(fontSize: 13)),
+                            Text(S.logClear, style: TextStyle(fontSize: af(context, 13))),
                       ),
                     ],
                   ),
@@ -479,7 +479,7 @@ class _LogQbPageState extends State<LogQbPage> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(S.logNoServer,
-                    style: TextStyle(fontSize: 11, color: cs.error)),
+                    style: TextStyle(fontSize: af(context, 11), color: cs.error)),
               );
             }
 
@@ -491,7 +491,7 @@ class _LogQbPageState extends State<LogQbPage> {
               isDense: true,
               isExpanded: true,
 
-              style: TextStyle(fontSize: 13, color: cs.onSurface),
+              style: TextStyle(fontSize: af(context, 13), color: cs.onSurface),
 
               borderRadius: BorderRadius.circular(AppTheme.radius),
 
@@ -512,7 +512,7 @@ class _LogQbPageState extends State<LogQbPage> {
                         child: Text(
 
                           '${s.name} · ${s.isTransmission ? 'Transmission' : 'qBittorrent'}',
-                          style: const TextStyle(fontSize: 13),
+                          style: TextStyle(fontSize: af(context, 13)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ))
@@ -545,7 +545,7 @@ class _LogQbPageState extends State<LogQbPage> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   '${S.logRangeHint}：${_fmt(_from!)} ~ ${_fmt(_to ?? DateTime.now())}',
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(fontSize: af(context, 10)),
                 ),
               ),
           ],
@@ -573,7 +573,7 @@ class _LogQbPageState extends State<LogQbPage> {
 
   Widget _chip(String label, bool selected, VoidCallback onTap, ColorScheme cs) {
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontSize: 11)),
+      label: Text(label, style: TextStyle(fontSize: af(context, 11))),
       selected: selected,
       onSelected: (_) => onTap(),
 
@@ -597,12 +597,12 @@ class _LogQbPageState extends State<LogQbPage> {
             children: <Widget>[
               Icon(Icons.info_outline, size: 15, color: cs.primary),
               const SizedBox(width: 6),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Transmission 的 RPC 不提供服务器日志接口（服务端日志只能去读 '
                   'daemon 的日志文件）。这里显示的是它当前能查到的会话诊断信息，'
                   '每 10 秒随页面刷新。',
-                  style: TextStyle(fontSize: 11, height: 1.4),
+                  style: TextStyle(fontSize: af(context, 11), height: 1.4),
                 ),
               ),
             ],
@@ -611,10 +611,10 @@ class _LogQbPageState extends State<LogQbPage> {
         const SizedBox(height: 6),
         ..._trFacts.map(((String, String) f) => ListTile(
               dense: true,
-              title: Text(f.$1, style: const TextStyle(fontSize: 11)),
+              title: Text(f.$1, style: TextStyle(fontSize: af(context, 11))),
               subtitle: Text(
                 f.$2.isEmpty ? '—' : f.$2,
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: af(context, 12)),
               ),
             )),
       ],
@@ -629,7 +629,7 @@ class _LogQbPageState extends State<LogQbPage> {
           child: Text(
             '${S.logPickServer}\n${S.logPickServerHint}',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: af(context, 12)),
           ),
         ),
       );
@@ -644,7 +644,7 @@ class _LogQbPageState extends State<LogQbPage> {
           child: Text(
             _error!,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: af(context, 12)),
           ),
         ),
       );
@@ -656,7 +656,7 @@ class _LogQbPageState extends State<LogQbPage> {
       return Center(
         child: Text(
           _all.isEmpty ? S.noTraffic : S.logRangeEmpty,
-          style: const TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: af(context, 12)),
         ),
       );
     }
@@ -691,11 +691,11 @@ class _LogQbPageState extends State<LogQbPage> {
           title: Text(
 
             _display(log.message),
-            style: const TextStyle(fontSize: 11),
+            style: TextStyle(fontSize: af(context, 11)),
           ),
           subtitle: Text(
             '${Formatter.setDate(log.timestamp)} · $label',
-            style: const TextStyle(fontSize: 9),
+            style: TextStyle(fontSize: af(context, 9)),
           ),
           onTap: _selecting ? () => _toggle(log.id) : null,
           onLongPress: () => _enterSelection(log),

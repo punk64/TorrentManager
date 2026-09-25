@@ -116,12 +116,12 @@ class ThemeController extends GetxController {
 
   Color? get effectiveBackgroundColor {
     switch (_bgMode.value) {
-      case 1: 
+      case 1:
         return Color.lerp(_gradient1.value, _gradient2.value, 0.5) ??
             _gradient1.value;
-      case 2: 
+      case 2:
         return null;
-      default: 
+      default:
         return _brightness == Brightness.dark
             ? AppTheme.darkScaffold
             : AppTheme.lightScaffold;
@@ -299,7 +299,7 @@ class ThemeController extends GetxController {
       if (legacy is num) {
         t = legacy.toDouble();
         if (!legacyMigrated) {
-          t = 1.0 - t; 
+          t = 1.0 - t;
         } else if (t >= 1.0) {
           t = 0.0;
         }
@@ -391,7 +391,7 @@ class ThemeController extends GetxController {
     try {
       useCustom.value = true;
       Formatter.saveGlobalData(_kUseCustom, true);
-      clearPreset(); 
+      clearPreset();
 
       setThemeMode(1);
 
@@ -923,7 +923,7 @@ class ThemeController extends GetxController {
   }
 
   void applySpec(ThemePreset p) {
-    _applyingPreset = true; 
+    _applyingPreset = true;
     try {
       if (p.builtin) {
         clearPreset();

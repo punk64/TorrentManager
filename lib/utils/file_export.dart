@@ -12,13 +12,6 @@ class FileExport {
 
   static const int maxReadBytes = 2 * 1024 * 1024;
 
-  /// 弹出系统「另存为」让用户**自己选保存位置**（Android 走 SAF）。
-  ///
-  /// 背景：直接写 `Android/data/…` 在 Android 11+ 起系统文件管理器看不到
-  /// （USB MTP 也不显示），用户导出后找不到文件 —— 改为自选位置即可根治。
-  /// ⚠️ 必须传 bytes：Android 上拿到的是 content:// URI，`dart:io` 写不了，
-  ///    写入由 file_picker 内部完成。
-  /// 返回：保存目标的标识（用户取消 / 不支持时为 null）。
   static Future<String?> saveTextAs({
     required String fileName,
     required String content,
@@ -35,9 +28,6 @@ class FileExport {
     );
   }
 
-  /// 二进制版本（`.torrent` 是二进制，`saveTextAs` 只能写文本）。
-  ///
-  /// 返回保存目标的标识（用户取消 / 平台不支持时为 null）。
   static Future<String?> saveBytesAs({
     required String fileName,
     required Uint8List bytes,

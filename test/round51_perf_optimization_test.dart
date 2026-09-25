@@ -403,7 +403,7 @@ void main() {
       expect(tc.keyword.value, '');
 
       await tester.enterText(find.byType(TextField), '电');
-      await tester.pump(); 
+      await tester.pump();
       expect(tc.keyword.value, '',
           reason: '★ 每敲一个字符就全量过滤一遍 = 搜索框打字一卡一卡');
 

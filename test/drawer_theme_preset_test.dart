@@ -75,7 +75,7 @@ void main() {
     await pumpDrawer(tester);
     final ThemeController tc = Get.find<ThemeController>();
 
-    final Finder green = find.text(presets[1].name); 
+    final Finder green = find.text(presets[1].name);
     await tester.ensureVisible(green);
     await tester.pumpAndSettle();
     await tester.tap(green);
@@ -114,7 +114,7 @@ void main() {
     final ThemeController tc = Get.find<ThemeController>();
 
     tc.applyPreset(presets.first);
-    tc.setThemeMode(2); 
+    tc.setThemeMode(2);
     await tester.pump();
 
     await tester.tap(find.text(S.restoreDefaults));

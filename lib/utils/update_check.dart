@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import '../app/app_version.dart';
 import 'formatter.dart';
 
-/// Release 里一个可下载的安装包资产，外加它的 `.sha1` 侧车地址。
 class UpdateAsset {
   const UpdateAsset({
     required this.name,
@@ -14,20 +13,15 @@ class UpdateAsset {
     this.sha1Url,
   });
 
-  /// 资产文件名，例如 `TorrentManager-V0.2.12-arm64-v8a.apk`。
   final String name;
 
-  /// `browser_download_url` 直链（GitHub 会 302 到 CDN）。
   final String url;
 
-  /// 字节数；接口没给就是 0（界面上不显示大小）。
   final int size;
 
-  /// 同名 `.sha1` 侧车的直链；Release 里没有就是 null ⇒ 跳过完整性校验。
   final String? sha1Url;
 }
 
-/// 从一次响应里解析出的 Release 摘要（不含"有没有更新"的判断）。
 class ReleaseInfo {
   const ReleaseInfo({
     required this.version,
@@ -38,10 +32,8 @@ class ReleaseInfo {
 
   final String version;
 
-  /// Release 页面地址（`html_url`），给用户点开看详情用。
   final String? url;
 
-  /// Release 说明正文（`body`）。
   final String? notes;
 
   final List<UpdateAsset> assets;
@@ -60,11 +52,6 @@ class UpdateChecker {
 
   final Duration timeout;
 
-  /// 本机主 ABI（如 `arm64-v8a`）。
-  ///
-  /// ⚠️ 非空时**只认名字里带它的安装包**：ABI 对不上装了也跑不起来，
-  /// 所以这种情况按"没有可用更新"处理，不提示。null 表示不做 ABI 匹配
-  /// （非 Android 平台或拿不到 ABI 时），退化为取第一个安装包。
   final String? deviceAbi;
 
   Future<UpdateCheckResult> check({
@@ -99,8 +86,6 @@ class UpdateChecker {
           releaseUrl: info.url, notes: info.notes);
     }
 
-    // ★ 严格口径：版本号更大还不够 —— 必须有能装在本机上的安装包才算"有更新"。
-    //   只有源码 zip / 空 assets / ABI 对不上，都不提示（避免"有新版却装不了"）。
     final UpdateAsset? apk = pickInstaller(info.assets, deviceAbi);
     if (apk == null) {
       return UpdateCheckResult.noInstaller(info.version,
@@ -115,7 +100,6 @@ class UpdateChecker {
     );
   }
 
-  /// 从响应体里解析出一份 Release 摘要；解析不出版本号返回 null。
   static ReleaseInfo? parseRelease(Object? body) {
     if (body == null) return null;
     final String s = body.toString().trim();
@@ -139,7 +123,7 @@ class UpdateChecker {
         notes = _firstString(decoded, _kNotesKeys);
         assets = parseAssets(decoded['assets']);
       } else {
-        // 畸形 JSON：交给下面的正则兜底抠版本号（保持旧行为）。
+
         raw = s;
       }
     }
@@ -155,7 +139,6 @@ class UpdateChecker {
     );
   }
 
-  /// 解析 `assets` 数组：只保留 `.apk`，并把同名 `.sha1` 侧车挂到它身上。
   static List<UpdateAsset> parseAssets(Object? raw) {
     if (raw is! List || raw.isEmpty) return const <UpdateAsset>[];
 
@@ -196,7 +179,6 @@ class UpdateChecker {
         .toList(growable: false);
   }
 
-  /// 挑出本机装得上的那个安装包；挑不出就 null。
   static UpdateAsset? pickInstaller(List<UpdateAsset> assets, String? abi) {
     if (assets.isEmpty) return null;
     if (abi == null || abi.isEmpty) return assets.first;
@@ -297,18 +279,14 @@ class UpdateCheckResult {
 
   final String? reason;
 
-  /// Release 页面地址，供"用浏览器打开"。
   final String? releaseUrl;
 
-  /// 选定要下载的安装包；只有 `hasUpdate` 时才非空。
   final UpdateAsset? apk;
 
-  /// Release 说明正文。
   final String? notes;
 
   bool get hasUpdate => status == UpdateCheckStatus.hasUpdate;
 
-  /// 有没有拿到可下载的安装包。
   bool get hasInstaller => apk != null;
 
   static const UpdateCheckResult disabled =
@@ -322,7 +300,6 @@ class UpdateCheckResult {
       UpdateCheckResult._(UpdateCheckStatus.noUpdate,
           latest: latest, releaseUrl: releaseUrl, notes: notes);
 
-  /// 版本确实更新，但 Release 里没有本机装得上的安装包 ⇒ 不提示"有更新"。
   static UpdateCheckResult noInstaller(String latest,
           {String? releaseUrl, String? notes}) =>
       UpdateCheckResult._(UpdateCheckStatus.noUpdate,

@@ -121,7 +121,7 @@ void main() {
 
       AppToast.show('底部提示');
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 260)); 
+      await tester.pump(const Duration(milliseconds: 260));
 
       final Finder toast = find.text('底部提示');
       expect(toast, findsOneWidget, reason: '★ 提示必须渲染出来');

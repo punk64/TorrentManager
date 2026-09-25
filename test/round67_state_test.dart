@@ -9,7 +9,6 @@ import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/utils/formatter.dart';
 import 'package:torrent_manager/utils/strings.dart';
 
-/// 只填必填字段的测试用种子（状态是唯一变量）。
 Torrent tOf(String state, {double progress = 0.5}) => Torrent(
       hash: 'h1',
       name: 'n1',
@@ -48,7 +47,7 @@ void main() {
     });
 
     test('细分级 rawState：qB 回落 state、TR 保留数字串', () {
-      // qB：没有显式 raw_state 时，原始串就是 state 本身。
+
       final Torrent qb = Torrent.fromJson(<String, dynamic>{
         'hash': 'h',
         'name': 'n',
@@ -196,7 +195,7 @@ void main() {
         expect(block.contains("'$f'"), isTrue,
             reason: '字段 $f 必须在共享清单里（漏了就"列表没值、详情有值"）');
       }
-      // 只检查 torrentGet 自身（其它 torrent-files/peers 方法有自己的小清单，属正常）
+
       final int g = src.indexOf('Future<List<Map<String, dynamic>>> torrentGet(');
       final String fn = src.substring(
           g, src.indexOf('Future<List<Map<String, dynamic>>> updateSelect(', g));
@@ -228,12 +227,10 @@ void main() {
       expect(tc.draftOf('h1', 'dlLimit'), 1024);
       expect(tc.hasDraft('h1'), isTrue);
 
-      // 同一种子的多个字段互不覆盖
       tc.setDraft('h1', 'tags', 'a,b');
       expect(tc.draftOf('h1', 'dlLimit'), 1024);
       expect(tc.draftOf('h1', 'tags'), 'a,b');
 
-      // 不同种子互不串台
       tc.setDraft('h2', 'dlLimit', 2048);
       expect(tc.draftOf('h2', 'dlLimit'), 2048);
       expect(tc.draftOf('h1', 'dlLimit'), 1024);
@@ -266,7 +263,7 @@ void main() {
     });
 
     test('punycode 还原、IPv4 与空值原样返回', () {
-      // 主域是 xn--fiqs8s（=中国），后缀 com ⇒ 裁完是「中国.com」
+
       expect(Formatter.registrableDomain('tracker.xn--fiqs8s.com'), '中国.com');
       expect(Formatter.registrableDomain('xn--fiqs8s.xn--fiqs8s'), '中国.中国');
       expect(Formatter.registrableDomain('1.2.3.4'), '1.2.3.4');

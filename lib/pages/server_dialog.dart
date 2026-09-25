@@ -14,6 +14,7 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 @visibleForTesting
 QbMethod Function() qbProbeFactory = QbMethod.new;
@@ -57,21 +58,21 @@ Future<String?> showConnectionErrorDialog(
   return showDialog<String?>(
     context: context,
     builder: (BuildContext ctx) => AlertDialog(
-      title: Text(S.error, style: const TextStyle(fontSize: 15)),
+      title: Text(S.error, style: TextStyle(fontSize: af(context, 15))),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(S.srvConnFail, style: const TextStyle(fontSize: 12)),
+            Text(S.srvConnFail, style: TextStyle(fontSize: af(context, 12))),
             if (reason != null && reason.isNotEmpty) ...<Widget>[
               const SizedBox(height: 10),
-              Text('原因：$reason', style: const TextStyle(fontSize: 12)),
+              Text('原因：$reason', style: TextStyle(fontSize: af(context, 12))),
             ],
             if (address != null && address.isNotEmpty) ...<Widget>[
               const SizedBox(height: 4),
               SelectableText('地址：$address',
-                  style: const TextStyle(fontSize: 12)),
+                  style: TextStyle(fontSize: af(context, 12))),
             ],
             if (raw != null && raw.isNotEmpty)
               Theme(
@@ -83,11 +84,11 @@ Future<String?> showConnectionErrorDialog(
         clipBehavior: Clip.antiAlias,
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: const EdgeInsets.only(bottom: 4),
-                  title: const Text('详情', style: TextStyle(fontSize: 12)),
+                  title: Text('详情', style: TextStyle(fontSize: af(context, 12))),
                   children: <Widget>[
                     SelectableText(
                       raw,
-                      style: const TextStyle(fontSize: 10),
+                      style: TextStyle(fontSize: af(context, 10)),
                     ),
                   ],
                 ),
@@ -173,9 +174,9 @@ Future<bool> confirmDeleteServer(BuildContext context, ServerData s) async {
   final bool? yes = await showDialog<bool>(
     context: context,
     builder: (BuildContext ctx) => AlertDialog(
-      title: Text(S.srvConfirmDeleteTitle, style: const TextStyle(fontSize: 15)),
+      title: Text(S.srvConfirmDeleteTitle, style: TextStyle(fontSize: af(context, 15))),
       content: Text('${S.srvConfirmDeleteBody}\n\n${s.name}',
-          style: const TextStyle(fontSize: 12)),
+          style: TextStyle(fontSize: af(context, 12))),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -293,7 +294,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: af(context, 13),
                 color: selected ? cs.primary : cs.onSurface,
               ),
             ),
@@ -318,7 +319,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       },
       child: AlertDialog(
         title: Text(_isEdit ? S.srvEditing : S.srvAdd,
-            style: const TextStyle(fontSize: 15)),
+            style: TextStyle(fontSize: af(context, 15))),
       content: SizedBox(
         width: 340,
         child: AutofillGroup(
@@ -333,7 +334,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _name,
                     maxLength: AppTheme.maxLenName,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     decoration: InputDecoration(
                       labelText: '名称',
                       hintText: S.srvEnterName,
@@ -351,7 +352,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     isExpanded: true,
 
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: af(context, 13),
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
 
@@ -399,7 +400,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _host,
                     maxLength: AppTheme.maxLenHost,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     keyboardType: TextInputType.url,
                     decoration: InputDecoration(
                       labelText: '公网地址',
@@ -422,7 +423,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _port,
                     maxLength: AppTheme.maxLenPort,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '公网端口',
@@ -442,7 +443,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _lanHost,
                     maxLength: AppTheme.maxLenHost,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     keyboardType: TextInputType.url,
                     decoration: const InputDecoration(
                       labelText: '局域网地址',
@@ -456,7 +457,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _lanPort,
                     maxLength: AppTheme.maxLenPort,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: '局域网端口',
@@ -466,7 +467,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     ),
                     validator: (String? v) {
                       final String t = (v ?? '').trim();
-                      if (t.isEmpty) return null; 
+                      if (t.isEmpty) return null;
                       final int? p = int.tryParse(t);
                       if (p == null || p <= 0 || p > 65535) {
                         return S.srvEnterValidNumber;
@@ -479,7 +480,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _user,
                     maxLength: AppTheme.maxLenName,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
                     autofillHints: const <String>[AutofillHints.username],
                     decoration: const InputDecoration(
                       labelText: '账号',
@@ -495,7 +496,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     controller: _pass,
                     maxLength: AppTheme.maxLenName,
                     buildCounter: AppTheme.noCounter,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: af(context, 13)),
 
                     obscureText: _obscurePassword,
                     autofillHints: const <String>[AutofillHints.password],
@@ -505,7 +506,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       contentPadding: _fieldPadding,
 
                       hintText: _isEdit ? S.srvPassKeepHint : null,
-                      hintStyle: const TextStyle(fontSize: 12),
+                      hintStyle: TextStyle(fontSize: af(context, 12)),
 
                       suffixIcon: Semantics(
                         label: _obscurePassword
@@ -540,7 +541,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     children: <Widget>[
                       Expanded(
                         child: Text(S.srvHideDomain,
-                            style: const TextStyle(fontSize: 13)),
+                            style: TextStyle(fontSize: af(context, 13))),
                       ),
                       CupertinoSwitch(
                         value: _hideDomain,
@@ -552,7 +553,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     children: <Widget>[
                       Expanded(
                         child: Text(S.srvHidePort,
-                            style: const TextStyle(fontSize: 13)),
+                            style: TextStyle(fontSize: af(context, 13))),
                       ),
                       CupertinoSwitch(
                         value: _hidePort,
@@ -561,7 +562,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     ],
                   ),
                   if (_saving)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(top: 8),
                       child: Row(
                         children: <Widget>[
@@ -571,7 +572,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: 8),
-                          Text('正在连接服务器…', style: TextStyle(fontSize: 11)),
+                          Text('正在连接服务器…', style: TextStyle(fontSize: af(context, 11))),
                         ],
                       ),
                     ),

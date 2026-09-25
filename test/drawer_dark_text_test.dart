@@ -30,7 +30,7 @@ void main() {
 
   Future<ThemeController> pumpDark(WidgetTester tester) async {
     final ThemeController tc = Get.find<ThemeController>();
-    tc.setThemeMode(2); 
+    tc.setThemeMode(2);
     await tester.pumpWidget(GetMaterialApp(
       home: const DrawerPage(),
       initialBinding: AppBinding(),

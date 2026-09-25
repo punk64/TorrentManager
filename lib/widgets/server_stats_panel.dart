@@ -1,20 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
+import '../app/adaptive.dart';
 import '../app/theme.dart';
 import '../data/models/torrent.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
+import 'metric_row.dart';
 
-/// 环形图内缩量（绘制与「中心数值限宽」共用，二者口径必须一致）
-const double _kDonutInset = 4;
-
-/// 服务器列表顶部的「总计数据卡」。
-///
-/// 布局：左侧环形图（种子状态分布 + 总数），右侧 4 行 × 2 列数据
-/// （连接 / 累计下载 / 累计上传 / 在线 / 上下行速度 / 状态图例）。
-/// 目标是**竖向占高最小**：整卡约 91px（旧三段式约 208px）。
 class ServerStatsPanel extends StatelessWidget {
   const ServerStatsPanel({
     super.key,
@@ -24,6 +16,9 @@ class ServerStatsPanel extends StatelessWidget {
     required this.serversOnline,
     required this.serversTotal,
     required this.totals,
+    this.expanded = true,
+    this.onToggle,
+    this.hasData = true,
   });
 
   final int dlSpeed;
@@ -38,391 +33,284 @@ class ServerStatsPanel extends StatelessWidget {
 
   final TransferTotals totals;
 
-  /// 环形图边长（同时决定整卡高度）
-  static const double kDonutSize = 62;
+  final bool expanded;
 
-  static const double _kDonutStroke = 7;
+  final VoidCallback? onToggle;
+
+  final bool hasData;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final Brightness b = Theme.of(context).brightness;
-    final _Palette p = _Palette.of(b, cs);
-    final Color dlColor = _adaptColor(_kDlBase, b);
-    final Color upColor = _adaptColor(_kUlBase, b);
-    final Color peersColor = _adaptColor(_kPeersBase, b);
+    final _Palette p = _Palette.of(b);
+    final Color dlColor = adaptSemantic(kSemanticDownload, b);
+    final Color upColor = adaptSemantic(kSemanticUpload, b);
+    final Color peersColor = adaptSemantic(kSemanticPeer, b);
+
+    final double k = adaptiveScale(context);
+
+    final Widget body = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _speedBand(context, dlColor, upColor, peersColor, cs, k),
+        if (expanded) ...<Widget>[
+          SizedBox(height: 9 * k),
+          _ratioBar(context, p, k),
+          SizedBox(height: 6 * k),
+          _legend(context, p, k),
+          SizedBox(height: 8 * k),
+          _divider(cs),
+          SizedBox(height: 7 * k),
+
+          MetricRow(
+            gap: 10 * k,
+            inline: true,
+            valueSize: 11 * k,
+            labelSize: 8.5 * k,
+            minValueSize: 8 * k,
+            iconSize: 11 * k,
+            items: <MetricItem>[
+              MetricItem(
+                icon: Icons.download_rounded,
+                value: hasData ? Formatter.setSize(totals.downloadedBytes) : '--',
+                label: S.statsLabelTotalDl,
+                color: dlColor,
+                flex: 3,
+              ),
+              MetricItem(
+                icon: Icons.upload_rounded,
+                value: hasData ? Formatter.setSize(totals.uploadedBytes) : '--',
+                label: S.statsLabelTotalUl,
+                color: upColor,
+                flex: 3,
+              ),
+              MetricItem(
+                icon: Icons.dns_rounded,
+                value: '$serversOnline/$serversTotal',
+                label: S.chartLabelServersOnline,
+                color: cs.onSurface,
+                flex: 2,
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+      margin: afEdgeInsets(context, left: 12, top: 8, right: 12, bottom: 4),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppTheme.radius),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          // ① 环形图 + ② 右侧 3 行 × 2 列数据
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              // 环形：种子状态分布，中心显示总数
-              SizedBox(
-                width: kDonutSize,
-                height: kDonutSize,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    CustomPaint(
-                      key: const Key('stats-status-donut'),
-                      size: const Size(kDonutSize, kDonutSize),
-                      painter: _DonutPainter(
-                        segments: <(Color, int)>[
-                          (p.seeding, counts.seeding),
-                          (p.downloading, counts.downloading),
-                          (p.paused, counts.paused),
-                          (p.checking, counts.checking),
-                          (p.error, counts.error),
-                          (p.other, counts.other),
-                        ],
-                        track: cs.outlineVariant.withValues(alpha: 0.35),
-                        stroke: _kDonutStroke,
-                      ),
-                    ),
-                    _centerValue(cs),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // ② 右侧 4 行 × 2 列
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _cell(context, Icons.hub, '${totals.peers}',
-                              S.statsLabelPeers, peersColor),
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: _cell(
-                              context,
-                              Icons.download,
-                              Formatter.setSize(totals.downloadedBytes),
-                              S.statsLabelTotalDl,
-                              dlColor),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _cell(
-                              context,
-                              Icons.upload,
-                              Formatter.setSize(totals.uploadedBytes),
-                              S.statsLabelTotalUl,
-                              upColor),
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: _cell(
-                              context,
-                              Icons.circle,
-                              '$serversOnline/$serversTotal',
-                              S.chartLabelServersOnline,
-                              p.online,
-                              dot: true),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: _speed(
-                              context,
-                              S.downArrow,
-                              Formatter.setSpeed(dlSpeed < 0 ? 0 : dlSpeed),
-                              S.chartLabelDownload,
-                              dlColor),
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: _speed(
-                              context,
-                              S.upArrow,
-                              Formatter.setSpeed(upSpeed < 0 ? 0 : upSpeed),
-                              S.chartLabelUpload,
-                              upColor),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radius),
+          onTap: onToggle,
+          child: Padding(
+            padding: afEdgeInsets(context,
+                left: 12, top: 9, right: 12, bottom: 9),
+            child: body,
           ),
-          const SizedBox(height: 3),
-          // ③ 状态图例：整卡底部独立一行（六个状态平铺，字号 8 / 同状态色）
-          _legendRow(context, <(Color, int, String)>[
-            (p.seeding, counts.seeding, S.stSeeding),
-            (p.downloading, counts.downloading, S.chartLabelDownload),
-            (p.paused, counts.paused, S.stPaused),
-            (p.checking, counts.checking, S.chartLabelVerifying),
-            (p.error, counts.error, S.error),
-            (p.other, counts.other, S.stUnknownState),
-          ]),
-        ],
+        ),
       ),
     );
   }
 
-  /// 单行式数据单元：图标 + 数值 + 右侧标签，三者同色。
-  /// 外层 FittedBox 保证窄屏只缩放、不出现省略号。
-  Widget _cell(BuildContext context, IconData icon, String value, String label,
-      Color color,
-      {bool dot = false}) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          dot
-              ? Container(
-                  width: 7,
-                  height: 7,
-                  decoration:
-                      BoxDecoration(color: color, shape: BoxShape.circle),
-                )
-              : Icon(icon, size: 12, color: color),
-          const SizedBox(width: 3),
-          Text.rich(
-            TextSpan(
-              children: <TextSpan>[
-                TextSpan(
-                  text: value,
+  Widget _speedBand(
+    BuildContext context,
+    Color dl,
+    Color up,
+    Color peers,
+    ColorScheme cs,
+    double k,
+  ) {
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.arrow_downward_rounded, size: 16 * k, color: dl),
+                SizedBox(width: 3 * k),
+                Text(
+                  hasData ? Formatter.setSpeed(dlSpeed < 0 ? 0 : dlSpeed) : '--',
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: color,
+                    fontSize: 19 * k,
+                    fontWeight: FontWeight.w800,
+                    color: dl,
+                    height: 1.05,
                   ),
                 ),
-                const TextSpan(text: ' ', style: TextStyle(fontSize: 11.5)),
-                TextSpan(
-                  text: label,
-                  style: TextStyle(fontSize: 8, color: color),
+                SizedBox(width: 14 * k),
+                Icon(Icons.arrow_upward_rounded, size: 16 * k, color: up),
+                SizedBox(width: 3 * k),
+                Text(
+                  hasData ? Formatter.setSpeed(upSpeed < 0 ? 0 : upSpeed) : '--',
+                  style: TextStyle(
+                    fontSize: 19 * k,
+                    fontWeight: FontWeight.w800,
+                    color: up,
+                    height: 1.05,
+                  ),
                 ),
               ],
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-        ],
-      ),
-    );
-  }
-
-  /// 速度：箭头 + 数值 + 右侧标签，同色。
-  Widget _speed(BuildContext context, String arrow, String value, String label,
-      Color color) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Text.rich(
-        TextSpan(
-          children: <TextSpan>[
-            TextSpan(
-              text: '$arrow ',
-              style: TextStyle(fontSize: 10, color: color),
-            ),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-            const TextSpan(text: ' ', style: TextStyle(fontSize: 11.5)),
-            TextSpan(
-              text: label,
-              style: TextStyle(fontSize: 8, color: color),
-            ),
-          ],
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  /// 环形中心数值：居中 + 限宽（内圈直径 − 2）+ FittedBox 兜底，
-  /// 字号按字符长度自适应；**总数不缩写**（位数极多时由缩放兜底，保证不压到圆环）。
-  Widget _centerValue(ColorScheme cs) {
-    final String text = '${counts.total}';
-    return SizedBox(
-      width: kDonutSize - 2 * (_kDonutInset + _kDonutStroke) - 2,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
+        SizedBox(width: 8 * k),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(
-              text,
+              hasData ? '${totals.peers}' : '--',
               style: TextStyle(
-                fontSize: _centerFontSize(text),
-                fontWeight: FontWeight.w700,
-                height: 1.05,
-                color: cs.onSurface,
+                fontSize: 12 * k,
+                fontWeight: FontWeight.w800,
+                color: peers,
+                height: 1.1,
               ),
             ),
             Text(
-              S.statsLabelTorrents,
+              S.statsLabelPeers,
               style: TextStyle(
-                fontSize: 8,
-                color: cs.onSurfaceVariant,
-                height: 1.1,
+                fontSize: 8 * k,
+                height: 1.2,
+                color: cs.onSurfaceVariant.withValues(alpha: 0.78),
               ),
             ),
           ],
         ),
-      ),
+        if (onToggle != null) ...<Widget>[
+          SizedBox(width: 8 * k),
+          Icon(
+            expanded ? Icons.expand_less : Icons.expand_more,
+            size: 18 * k,
+            color: cs.onSurfaceVariant,
+          ),
+        ],
+      ],
     );
   }
 
-  /// 单行状态图例：整卡底部平铺，字号 8 / 与色点同色；
-  /// 整行 FittedBox 保证窄屏等比缩放、不出现省略号。
-  Widget _legendRow(BuildContext context, List<(Color, int, String)> items) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          for (int i = 0; i < items.length; i++) ...<Widget>[
-            if (i > 0) const SizedBox(width: 7),
-            Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: items[i].$1,
-                borderRadius: BorderRadius.circular(1.5),
-              ),
-            ),
-            const SizedBox(width: 3),
-            Text.rich(
-              TextSpan(
-                children: <TextSpan>[
-                  TextSpan(
-                    text: '${items[i].$2}',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: items[i].$1,
-                    ),
+  Widget _divider(ColorScheme cs) => Container(
+        height: 1,
+        decoration: BoxDecoration(
+          color: cs.onSurface.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(1),
+        ),
+      );
+
+  Widget _ratioBar(BuildContext context, _Palette p, double k) {
+    final List<int> v = <int>[
+      counts.seeding,
+      counts.downloading,
+      counts.paused,
+      counts.checking,
+      counts.error,
+      counts.other,
+    ];
+    final List<Color> c = <Color>[
+      p.seeding,
+      p.downloading,
+      p.paused,
+      p.checking,
+      p.error,
+      p.other,
+    ];
+    final int sum = v.fold<int>(0, (int a, int e) => a + e);
+    if (sum <= 0) {
+      return Container(
+        height: 7 * k,
+        decoration: BoxDecoration(
+          color: p.other.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(4 * k),
+        ),
+      );
+    }
+    return Row(
+      children: <Widget>[
+        for (int i = 0; i < v.length; i++) ...<Widget>[
+          if (v[i] > 0) ...<Widget>[
+            if (i > 0) SizedBox(width: 1.5 * k),
+            Expanded(
+              flex: v[i],
+              child: Container(
+                height: 7 * k,
+                decoration: BoxDecoration(
+                  color: c[i],
+                  borderRadius: BorderRadius.horizontal(
+                    left: i == 0 ? Radius.circular(4 * k) : Radius.zero,
+                    right: i == v.length - 1
+                        ? Radius.circular(4 * k)
+                        : Radius.zero,
                   ),
-                  const TextSpan(text: ' ', style: TextStyle(fontSize: 8)),
-                  TextSpan(
-                    text: items[i].$3,
-                    style: TextStyle(fontSize: 8, color: items[i].$1),
-                  ),
-                ],
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],
-      ),
+      ],
     );
   }
-}
 
-/// 种子状态环形图：按占比绘制彩色弧段，段间留细缝。
-class _DonutPainter extends CustomPainter {
-  const _DonutPainter({
-    required this.segments,
-    required this.track,
-    this.stroke = 7,
-  });
-
-  final List<(Color, int)> segments;
-  final Color track;
-  final double stroke;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double r = math.min(size.width, size.height) / 2 - _kDonutInset;
-    final Offset c = Offset(size.width / 2, size.height / 2);
-
-    canvas.drawCircle(
-      c,
-      r,
-      Paint()
-        ..color = track
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke,
-    );
-
-    final int total = segments.fold<int>(
-        0, (int a, (Color, int) e) => a + (e.$2 > 0 ? e.$2 : 0));
-    if (total <= 0) return;
-
-    final Rect rect = Rect.fromCircle(center: c, radius: r);
-    double start = -math.pi / 2;
-    for (final (Color, int) e in segments) {
-      if (e.$2 <= 0) continue;
-      final double sweep = 2 * math.pi * e.$2 / total;
-      canvas.drawArc(
-        rect,
-        start + 0.03,
-        math.max(sweep - 0.06, 0.01),
-        false,
-        Paint()
-          ..color = e.$1
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke,
+  Widget _legend(BuildContext context, _Palette p, double k) => MetricRow(
+        gap: 6,
+        inline: true,
+        fitRow: true,
+        fixedValueChars: 5,
+        valueSize: 10,
+        labelSize: 8,
+        items: <MetricItem>[
+          MetricItem(
+            value: hasData ? '${counts.seeding}' : '--',
+            label: S.stSeeding,
+            color: p.seeding,
+            dot: true,
+          ),
+          MetricItem(
+            value: hasData ? '${counts.downloading}' : '--',
+            label: S.chartLabelDownload,
+            color: p.downloading,
+            dot: true,
+          ),
+          MetricItem(
+            value: hasData ? '${counts.paused}' : '--',
+            label: S.stPaused,
+            color: p.paused,
+            dot: true,
+          ),
+          MetricItem(
+            value: hasData ? '${counts.checking}' : '--',
+            label: S.chartLabelVerifying,
+            color: p.checking,
+            dot: true,
+          ),
+          MetricItem(
+            value: hasData ? '${counts.error}' : '--',
+            label: S.error,
+            color: p.error,
+            dot: true,
+          ),
+          MetricItem(
+            value: hasData ? '${counts.other}' : '--',
+            label: S.stUnknownState,
+            color: p.other,
+            dot: true,
+          ),
+        ],
       );
-      start += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DonutPainter old) =>
-      old.segments != segments || old.stroke != stroke;
 }
-
-/// 按字符长度分档选字号：位数越多字越小，配合限宽保证不压到圆环。
-double _centerFontSize(String s) {
-  switch (s.length) {
-    case <= 2:
-      return 16;
-    case 3:
-      return 13.5;
-    case 4:
-      return 11.5;
-    default:
-      return 10;
-  }
-}
-
-Color _adaptColor(Color base, Brightness b) {
-  final HSLColor h = HSLColor.fromColor(base);
-  return h
-      .withLightness(b == Brightness.dark ? 0.66 : 0.42)
-      .withSaturation(h.saturation.clamp(0.35, 0.75))
-      .toColor();
-}
-
-const Color _kDlBase = Color(0xFF1A73E8);
-
-const Color _kUlBase = Color(0xFF0F9D58);
-
-const Color _kPeersBase = Color(0xFF8E24AA);
 
 class _Palette {
   const _Palette({
@@ -432,23 +320,21 @@ class _Palette {
     required this.checking,
     required this.error,
     required this.other,
-    required this.online,
   });
 
-  factory _Palette.of(Brightness b, ColorScheme cs) {
+  factory _Palette.of(Brightness b) {
     final bool dark = b == Brightness.dark;
     return _Palette(
-      seeding: _adaptColor(const Color(0xFF0F9D58), b),
-      downloading: _adaptColor(const Color(0xFF1A73E8), b),
+      seeding: adaptSemantic(kSemanticUpload, b),
+      downloading: adaptSemantic(kSemanticDownload, b),
       paused: dark
-          ? const Color(0xFF8A8F98)
-          : const Color(0xFF9AA0A6), // 中性灰，不参与 HSL 适配
-      checking: _adaptColor(const Color(0xFF8E24AA), b),
-      error: _adaptColor(const Color(0xFFD93025), b),
+          ? const Color(0xFF9BA3AD)
+          : const Color(0xFF5F6B76),
+      checking: adaptSemantic(kSemanticPeer, b),
+      error: adaptSemantic(kSemanticError, b),
       other: dark
-          ? const Color(0xFF5F6368)
-          : const Color(0xFFBDC1C6), // 比 paused 更淡一档
-      online: dark ? const Color(0xFF7DDC9B) : const Color(0xFF1E8E3E),
+          ? const Color(0xFF9AA0A6)
+          : const Color(0xFF66707A),
     );
   }
 
@@ -458,5 +344,4 @@ class _Palette {
   final Color checking;
   final Color error;
   final Color other;
-  final Color online;
 }

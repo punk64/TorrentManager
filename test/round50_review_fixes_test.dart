@@ -95,12 +95,12 @@ void main() {
 
     test('★ 查询口径 == 删除口径（N6 的核心诉求）', () {
       final List<Torrent> all = <Torrent>[
-        _t('h1', name: '[A]片', size: 500, dir: '/dl/x'), 
-        _t('h2', name: '[B]片', size: 500, dir: '/dl/x'), 
-        _t('h3', name: '[A]片', size: 900, dir: '/dl/x'), 
-        _t('h4', name: '[A]片', size: 500, dir: '/dl/y'), 
-        _t('h5', name: '[A]片', size: 500), 
-        _t('h6', name: '[A]片', size: 0, dir: '/dl/x'), 
+        _t('h1', name: '[A]片', size: 500, dir: '/dl/x'),
+        _t('h2', name: '[B]片', size: 500, dir: '/dl/x'),
+        _t('h3', name: '[A]片', size: 900, dir: '/dl/x'),
+        _t('h4', name: '[A]片', size: 500, dir: '/dl/y'),
+        _t('h5', name: '[A]片', size: 500),
+        _t('h6', name: '[A]片', size: 0, dir: '/dl/x'),
       ];
 
       for (final Torrent t in all) {

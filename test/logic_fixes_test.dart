@@ -269,10 +269,10 @@ void main() {
         state: 'seeding',
         dlSpeed: 0,
         upSpeed: 0,
-        numSeeds: 1, 
+        numSeeds: 1,
         numLeechs: 0,
         ratio: 0,
-        numComplete: 50, 
+        numComplete: 50,
       );
       const Torrent smallSwarm = Torrent(
         hash: 'b',
@@ -282,10 +282,10 @@ void main() {
         state: 'seeding',
         dlSpeed: 0,
         upSpeed: 0,
-        numSeeds: 9, 
+        numSeeds: 9,
         numLeechs: 0,
         ratio: 0,
-        numComplete: 5, 
+        numComplete: 5,
       );
 
       c.items.assignAll(<Torrent>[smallSwarm, bigSwarm]);

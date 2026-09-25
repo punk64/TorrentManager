@@ -271,7 +271,7 @@ void main() {
         await tester.pump();
       }
       await withBgImage(tester, tc);
-      tc.setComponentOpacity(0); 
+      tc.setComponentOpacity(0);
       await tester.pump();
       expect(scrimAlpha(tester), closeTo(0.62, 0.001),
           reason: '主题页 / 日志页正文裸铺在背景图上，底衬被调没就整页看不清');

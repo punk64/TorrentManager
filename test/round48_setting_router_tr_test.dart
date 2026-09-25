@@ -43,8 +43,8 @@ ServerData trSrv() => ServerData(
 
 Map<String, dynamic> qbPrefs() => <String, dynamic>{
       'save_path': '/downloads',
-      'up_limit': 1048576, 
-      'dl_limit': 2097152, 
+      'up_limit': 1048576,
+      'dl_limit': 2097152,
       'max_connec': 500,
       'queueing_enabled': true,
       'ip_filter_enabled': true,

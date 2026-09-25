@@ -21,6 +21,7 @@ import '../utils/startup_update.dart';
 import '../widgets/filtered_image.dart';
 import '../widgets/update_dialog.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key});
@@ -56,28 +57,28 @@ class DrawerMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: <Widget>[
 
-        Obx(() => _header(theme, tc)),
+        Obx(() => _header(context, theme, tc)),
 
-        _group(context, 
+        _group(context,
           title: S.groupTheme,
           leading: Icons.palette,
           initiallyExpanded: true,
           children: <Widget>[
 
-            Obx(() => _button(context, 
+            Obx(() => _button(context,
                   icon: Icons.light_mode,
                   title: S.themeLight,
                   trailingCheck: tc.isBuiltinMode(1),
                   onTap: () => tc.applyBuiltinMode(1),
                 )),
-            Obx(() => _button(context, 
+            Obx(() => _button(context,
                   icon: Icons.dark_mode,
                   title: S.themeDark,
                   trailingCheck: tc.isBuiltinMode(2),
                   onTap: () => tc.applyBuiltinMode(2),
                 )),
 
-            Obx(() => _button(context, 
+            Obx(() => _button(context,
                   icon: Icons.color_lens,
                   title: S.themeCustom,
                   subtitle: '${S.themeCurrentPrefix}${tc.themeModeName}',
@@ -135,6 +136,23 @@ class DrawerMenu extends StatelessWidget {
         ),
 
         _group(context,
+          title: S.logTitle,
+          leading: Icons.article,
+          children: <Widget>[
+            _button(context,
+              icon: Icons.article,
+              title: S.logSystem,
+              onTap: () => _push(context, '/log'),
+            ),
+            _button(context,
+              icon: Icons.assignment,
+              title: S.logServer,
+              onTap: () => _push(context, '/logQb'),
+            ),
+          ],
+        ),
+
+        _group(context,
           title: S.groupShare,
           leading: Icons.ios_share,
           children: <Widget>[
@@ -147,22 +165,22 @@ class DrawerMenu extends StatelessWidget {
           ],
         ),
 
-        _group(context, 
+        _group(context,
           title: S.aboutGroup,
           leading: Icons.contact_support,
           children: <Widget>[
-            _button(context, 
+            _button(context,
               icon: Icons.mark_as_unread,
               title: S.termsTitle,
 
               onTap: () => Formatter.showTerms(context),
             ),
-            _button(context, 
+            _button(context,
               icon: Icons.privacy_tip,
               title: S.privacyTitle,
               onTap: () => Formatter.showPrivacy(context),
             ),
-            _button(context, 
+            _button(context,
               icon: Icons.source_outlined,
               title: S.openSourceTitle,
               subtitle: kProjectUrl,
@@ -178,7 +196,7 @@ class DrawerMenu extends StatelessWidget {
           builder: (BuildContext _, UpdateCheckResult? pending, __) {
             final bool has = pending?.hasUpdate ?? false;
             final String? latest = pending?.latest;
-            return _button(context, 
+            return _button(context,
               icon: Icons.system_update_alt,
               title: has ? S.hasUpdate : S.aboutCheckUpdate,
               subtitle: has && latest != null && latest.isNotEmpty
@@ -207,7 +225,7 @@ class DrawerMenu extends StatelessWidget {
     );
   }
 
-  Widget _header(ThemeData theme, ThemeController tc) {
+  Widget _header(BuildContext context, ThemeData theme, ThemeController tc) {
     final bool customPanel =
         tc.panelColor.value != ThemeController.defaultPanelColor;
     final Color panelBase =
@@ -265,7 +283,7 @@ class DrawerMenu extends StatelessWidget {
                   Text(
                     S.appVersionText(),
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: af(context, 9),
                       color: headerText.withValues(alpha: 0.7),
                     ),
                   ),
@@ -366,7 +384,7 @@ class DrawerMenu extends StatelessWidget {
           : Text(
               subtitle,
               style: TextStyle(
-                  fontSize: 10, color: _subColor.withValues(alpha: 0.60 * dim)),
+                  fontSize: af(context, 10), color: _subColor.withValues(alpha: 0.60 * dim)),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -422,12 +440,12 @@ class DrawerMenu extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(S.langTitle, style: const TextStyle(fontSize: 14)),
+            Text(S.langTitle, style: TextStyle(fontSize: af(context, 14))),
             const SizedBox(height: 4),
             Text(
               S.langDialogBody,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: af(context, 11),
                 color: Theme.of(ctx).colorScheme.onSurfaceVariant,
               ),
             ),
@@ -461,7 +479,7 @@ class DrawerMenu extends StatelessWidget {
               : Colors.transparent,
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 13)),
+        Text(label, style: TextStyle(fontSize: af(ctx, 13))),
       ],
     );
   }
@@ -474,21 +492,21 @@ class DrawerMenu extends StatelessWidget {
     final String? action = await showDialog<String>(
       context: context,
       builder: (BuildContext ctx) => SimpleDialog(
-        title: Text(t.name, style: const TextStyle(fontSize: 14)),
+        title: Text(t.name, style: TextStyle(fontSize: af(context, 14))),
         children: <Widget>[
 
           SimpleDialogOption(
             onPressed: () => Navigator.of(ctx).pop('edit'),
-            child: Text(S.edit, style: const TextStyle(fontSize: 13)),
+            child: Text(S.edit, style: TextStyle(fontSize: af(context, 13))),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.of(ctx).pop('rename'),
-            child: Text(S.renameTitle, style: const TextStyle(fontSize: 13)),
+            child: Text(S.renameTitle, style: TextStyle(fontSize: af(context, 13))),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.of(ctx).pop('delete'),
             child: Text(S.delete,
-                style: const TextStyle(fontSize: 13, color: Colors.red)),
+                style: TextStyle(fontSize: af(context, 13), color: Colors.red)),
           ),
         ],
       ),
@@ -507,9 +525,9 @@ class DrawerMenu extends StatelessWidget {
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
           title: Text(S.deleteCustomThemeTitle,
-              style: const TextStyle(fontSize: 14)),
+              style: TextStyle(fontSize: af(context, 14))),
           content: Text(S.deleteCustomThemeBody(t.name),
-              style: const TextStyle(fontSize: 12)),
+              style: TextStyle(fontSize: af(context, 12))),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -534,11 +552,11 @@ class DrawerMenu extends StatelessWidget {
     final String? name = await showDialog<String>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(S.renameTitle, style: const TextStyle(fontSize: 14)),
+        title: Text(S.renameTitle, style: TextStyle(fontSize: af(context, 14))),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          style: const TextStyle(fontSize: 13),
+          style: TextStyle(fontSize: af(context, 13)),
           decoration: InputDecoration(labelText: S.renameField),
         ),
         actions: <Widget>[
@@ -617,7 +635,7 @@ class DrawerMenu extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(title, style: const TextStyle(fontSize: 15)),
+        title: Text(title, style: TextStyle(fontSize: af(context, 15))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,9 +643,9 @@ class DrawerMenu extends StatelessWidget {
             if (note != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(note, style: const TextStyle(fontSize: 12)),
+                child: Text(note, style: TextStyle(fontSize: af(context, 12))),
               ),
-            SelectableText(url, style: const TextStyle(fontSize: 12)),
+            SelectableText(url, style: TextStyle(fontSize: af(context, 12))),
           ],
         ),
         actions: <Widget>[
@@ -784,10 +802,10 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
   Future<String?> _askConflict(int n) => showDialog<String>(
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
-          title: const Text('主题同名', style: TextStyle(fontSize: 14)),
+          title: Text('主题同名', style: TextStyle(fontSize: af(context, 14))),
           content: Text(
             S.themeImportConflictBody(n),
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: af(context, 12)),
           ),
           actions: <Widget>[
             TextButton(
@@ -812,13 +830,13 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
           title: Text(
             reason,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: af(context, 14),
               color: Theme.of(ctx).colorScheme.error,
             ),
           ),
           content: Text(
             hint ?? S.themeImportBadSourceHint,
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: af(context, 12)),
           ),
           actions: <Widget>[
             TextButton(
@@ -830,8 +848,6 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       );
 }
 
-/// 手动「检查更新」：弹窗自己发一次请求（启动自动检查的结果由
-/// [StartupUpdatePrompt.showDetails] 直接传进去，不重复请求）。
 Future<void> compareVersions(BuildContext context) =>
     UpdateDialog.open(context);
 

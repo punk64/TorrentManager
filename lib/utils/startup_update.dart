@@ -27,7 +27,6 @@ class StartupUpdatePrompt {
     if (_done) return pendingNotifier.value;
     _done = true;
 
-    // ★ 严格口径：拿本机 ABI 去匹配 Release 里的安装包，对不上就不算"有更新"。
     final String? abi = await UpdateInstaller.deviceAbi();
     final UpdateCheckResult r =
         await UpdateChecker(fetcher: fetcher, deviceAbi: abi).check();
@@ -45,10 +44,6 @@ class StartupUpdatePrompt {
     return r;
   }
 
-  /// 展示启动检查挂起的那个更新提醒。
-  ///
-  /// 没有挂起结果（已是最新 / 检查失败 / 还没跑过）就什么都不做 ——
-  /// 「手动检查更新」请走 [UpdateDialog.open]，它会自己发一次请求。
   static Future<void> showDetails(BuildContext context) async {
     final UpdateCheckResult? r = pendingNotifier.value;
     if (!context.mounted || r == null) return;

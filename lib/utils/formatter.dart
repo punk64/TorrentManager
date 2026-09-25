@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../app/adaptive.dart';
 import '../data/local/secure_prefs.dart';
 import '../data/models/server_data.dart';
 import '../data/models/torrent.dart';
@@ -175,6 +176,18 @@ class Formatter {
 
   static String speed(int bytesPerSec) => setSpeed(bytesPerSec);
 
+  static String setSpeedLimit(int bytesPerSec) {
+    if (bytesPerSec <= 0) return '(${S.limitLabel}:∞)';
+    double v = bytesPerSec.toDouble();
+    const List<String> units = <String>['B', 'KB', 'MB', 'GB', 'TB'];
+    int i = 0;
+    while (v >= 1024 && i < units.length - 1) {
+      v /= 1024;
+      i++;
+    }
+    return '(${S.limitLabel}:${v.toStringAsFixed(1)}${units[i]}/s)';
+  }
+
   static String setTime(int seconds) {
     if (seconds <= 0) return '-';
 
@@ -259,9 +272,6 @@ class Formatter {
       return S.stPausedDl;
     }
 
-    // ★ forcedDL/forcedUP/stalledDL/stalledUP 必须插在通用 dl/up 判断**之前**：
-    // 它们本身就含 'dl' / 'up'，放后面会被通用分支吃掉、退化成「下载中/做种中」，
-    // 于是出现「筛选里选了强制下载、卡片却显示下载中」的自相矛盾。
     if (s.contains('forceddl')) return S.stForcedDl;
     if (s.contains('forcedup')) return S.stForcedUp;
     if (s.contains('stalleddl')) return S.stStalledDl;
@@ -432,7 +442,7 @@ class Formatter {
 
     final String tail = '.${seg.last}';
     final String main = seg[seg.length - 2];
-    if (main.length <= 2) return '***$tail'; 
+    if (main.length <= 2) return '***$tail';
 
     return '${main.substring(0, 1)}***$tail';
   }
@@ -675,8 +685,6 @@ class Formatter {
     }
   }
 
-  /// 常见「两级后缀」：只取最后两段会得到 `example.com.cn` 里的 `com.cn`，
-  /// 站点归类就没意义了 ⇒ 这些后缀要多带一级。
   static const Set<String> _twoLevelSuffixes = <String>{
     'co.uk', 'org.uk', 'me.uk', 'ac.uk', 'gov.uk',
     'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'ac.cn',
@@ -690,11 +698,6 @@ class Formatter {
     'com.mx', 'com.ar', 'com.tr', 'com.pl', 'com.ua', 'com.vn',
   };
 
-  /// 把完整 host（或 URL）裁成「主域名.根域名」，用于站点归类与去重。
-  ///
-  /// 例：`tracker.example.com` → `example.com`；`a.b.example.co.uk` → `example.co.uk`；
-  /// punycode（`xn--`）会经 [decodeIdn] 还原成可读域名。
-  /// 输入不是有效 host（空串 / 纯 IP 之外的杂串）时原样返回小写结果。
   static String registrableDomain(String? raw) {
     if (raw == null) return '';
     String s = raw.trim().toLowerCase();
@@ -711,7 +714,6 @@ class Formatter {
     final int at = s.lastIndexOf('@');
     if (at >= 0) s = s.substring(at + 1);
 
-    // 去端口：IPv6 字面量 `[::1]:51413` 不能按冒号切，要先找 `]`。
     if (s.startsWith('[')) {
       final int close = s.indexOf(']');
       if (close >= 0) s = s.substring(0, close + 1);
@@ -724,7 +726,7 @@ class Formatter {
     final List<String> parts =
         host.split('.').where((String e) => e.isNotEmpty).toList();
     if (parts.length < 2) return host;
-    // 纯 IPv4（4 段全数字）没有「主域名」概念 ⇒ 原样返回。
+
     if (parts.length == 4 && parts.every(_isDigits)) return host;
 
     final String last2 = '${parts[parts.length - 2]}.${parts[parts.length - 1]}';
@@ -781,7 +783,7 @@ class Formatter {
       int w = 1;
       int k = base;
       while (true) {
-        if (idx >= rest.length) return label; 
+        if (idx >= rest.length) return label;
         final int digit = _punycodeDigit(rest.codeUnitAt(idx));
         idx++;
         if (digit < 0) return label;
@@ -919,7 +921,7 @@ class Formatter {
         title: Text(title),
         content: SingleChildScrollView(
           child:
-              Text(body, style: const TextStyle(fontSize: 12, height: 1.5)),
+              Text(body, style: TextStyle(fontSize: af(ctx, 12), height: 1.5)),
         ),
         actions: <Widget>[
           TextButton(
@@ -951,15 +953,14 @@ class Formatter {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // ★ D8：删本地文件是**不可逆**的，不能和另外两个开关长得一模一样。
-              //   勾上就整块变红 + 顶出红字说明，让人在点「确认执行」前一定看见。
+
               if (delFiles)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(
                     S.deleteFilesWarn(count),
-                    style: const TextStyle(
-                      fontSize: 11,
+                    style: TextStyle(
+                      fontSize: af(ctx, 11),
                       height: 1.35,
                       color: Colors.red,
                       fontWeight: FontWeight.w600,
@@ -974,7 +975,7 @@ class Formatter {
                 title: Text(
                   S.setDelTorrentWithFiles,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: af(ctx, 12),
                     color: delFiles ? Colors.red : null,
                     fontWeight: delFiles ? FontWeight.w600 : null,
                   ),
@@ -986,7 +987,7 @@ class Formatter {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: Text(S.setDelTorrentWithSub,
-                    style: const TextStyle(fontSize: 12)),
+                    style: TextStyle(fontSize: af(ctx, 12))),
                 onChanged: (bool? v) => setState(() => delSub = v ?? false),
               ),
               CheckboxListTile(
@@ -994,7 +995,7 @@ class Formatter {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: Text(S.setDelTorrentNoSubDelFiles,
-                    style: const TextStyle(fontSize: 12)),
+                    style: TextStyle(fontSize: af(ctx, 12))),
                 onChanged: (bool? v) => setState(() => noSubDel = v ?? false),
               ),
             ],
@@ -1012,7 +1013,7 @@ class Formatter {
                   noSubDeleteFiles: noSubDel,
                 ),
               ),
-              // 勾了删文件 ⇒ 确认按钮也转红（配上上方红字，双保险）。
+
               style: delFiles
                   ? TextButton.styleFrom(foregroundColor: Colors.red)
                   : null,

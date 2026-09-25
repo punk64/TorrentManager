@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../app/adaptive.dart';
 
 class ThemePreview extends StatelessWidget {
   const ThemePreview({
@@ -21,8 +22,8 @@ class ThemePreview extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            const Text('效果预览',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            Text('效果预览',
+                style: TextStyle(fontSize: af(context, 12), fontWeight: FontWeight.w500)),
             const Spacer(),
             Text(
               transparency <= 0
@@ -30,7 +31,7 @@ class ThemePreview extends StatelessWidget {
                   : (transparency >= 1
                       ? '组件底衬：完全透明'
                       : '组件底衬：透明度 ${(transparency * 100).round()}%'),
-              style: const TextStyle(fontSize: 10),
+              style: TextStyle(fontSize: af(context, 10)),
             ),
           ],
         ),
@@ -66,7 +67,7 @@ class ThemePreview extends StatelessWidget {
                             const SizedBox(width: 6),
                             Text('示例卡片',
                                 style: TextStyle(
-                                    fontSize: 11, color: cs.onSurface)),
+                                    fontSize: af(context, 11), color: cs.onSurface)),
                             const Spacer(),
                             Switch(
                               value: true,
@@ -78,7 +79,7 @@ class ThemePreview extends StatelessWidget {
                         ),
 
                         Text('示例文本',
-                            style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant)),
+                            style: TextStyle(fontSize: af(context, 9), color: cs.onSurfaceVariant)),
                         Slider(value: 0.62, onChanged: (_) {}),
                       ],
                     ),

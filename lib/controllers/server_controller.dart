@@ -55,14 +55,51 @@ class ServerPrefsSnap {
   final DateTime at;
 }
 
+class ServerSpeedLimit {
+  const ServerSpeedLimit({this.dl = 0, this.up = 0});
+
+  factory ServerSpeedLimit.fromQbState(
+    ServerState st, {
+    Map<String, dynamic> altPrefs = const <String, dynamic>{},
+  }) {
+    int dl = st.dlRateLimit;
+    int up = st.upRateLimit;
+    if (st.useAltSpeedLimits) {
+      dl = Formatter.getInt(altPrefs, 'alt_dl_limit', def: dl);
+      up = Formatter.getInt(altPrefs, 'alt_up_limit', def: up);
+    }
+    return ServerSpeedLimit(dl: dl, up: up);
+  }
+
+  factory ServerSpeedLimit.fromTrSession(Map<String, dynamic> sess) {
+    final bool alt = sess['alt-speed-enabled'] == true;
+    int dl = 0;
+    int up = 0;
+    if (alt) {
+      dl = Formatter.getInt(sess, 'alt-speed-down') * 1024;
+      up = Formatter.getInt(sess, 'alt-speed-up') * 1024;
+    } else {
+      if (sess['speed-limit-down-enabled'] == true) {
+        dl = Formatter.getInt(sess, 'speed-limit-down') * 1024;
+      }
+      if (sess['speed-limit-up-enabled'] == true) {
+        up = Formatter.getInt(sess, 'speed-limit-up') * 1024;
+      }
+    }
+    return ServerSpeedLimit(dl: dl, up: up);
+  }
+
+  final int dl;
+
+  final int up;
+}
+
 class ServerController extends GetxController with WidgetsBindingObserver {
   final servers = <ServerData>[].obs;
   final current = Rxn<ServerData>();
 
   Future<Directory> Function()? backupFallbackDirProvider;
 
-  /// 测试专用：替换身份校验用的临时 TR 实例（默认 `TrMethod()`，
-  /// 测试里注入一个用拦截器直接返回 `config-dir` 的假实例，免得真发请求）。
   @visibleForTesting
   TrMethod Function()? trProbeFactory;
 
@@ -207,8 +244,8 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     if (kind != ConnErrorKind.unreachable && kind != ConnErrorKind.unknown) {
       return;
     }
-    if (retryAttempt[id] != null) return; 
-    if (_lanMemory[id] != true) return; 
+    if (retryAttempt[id] != null) return;
+    if (_lanMemory[id] != true) return;
     if (_lanFailReprobeInFlight.contains(id)) return;
     final int i = servers.indexWhere((ServerData s) => s.id == id);
     if (i < 0 || !servers[i].hasLan) return;
@@ -304,12 +341,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   final serverVersion = <String, String>{}.obs;
 
-  /// ★ 第 67 轮新增：**接口版本**（qB = `app/webapiVersion`，如 `2.11.4`；
-  /// TR = `session-get` 的 `rpc-version`，如 `18`）。
-  ///
-  /// 为什么另存一份：同一份 qB 应用版本 5.x 之间的 WebAPI 差异无法用主版本区分
-  /// （`torrents/setTags` 要 WebAPI 2.11.4 = qB 5.1），
-  /// 详见 `ServerCapabilities`。取不到时留空 ⇒ 走「乐观 + 404 自适应」兜底。
   final serverApiVersion = <String, String>{}.obs;
 
   final Set<String> _versionInFlight = <String>{};
@@ -358,7 +389,13 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   void reportFailure(String id, Object e) {
     final String why = NetError.describe(e);
-    _failWith(id, NetError.classify(e), why);
+    ConnErrorKind kind = NetError.classify(e);
+
+    if (!kind.isRetryable && _isNetworkReason(why)) {
+      kind = ConnErrorKind.unreachable;
+    }
+
+    _failWith(id, kind, why);
     AppLog.instance.net('连接失败：$why', scope: LogScope(id, _nameOf(id)));
     _logCardFailed(id, why);
   }
@@ -382,11 +419,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   static bool _isNetworkReason(String reason) {
     const List<String> keys = <String>[
-      '无法解析', 
-      '连接超时', 
-      '网络不可达', 
-      '连接被拒绝', 
-      '网络', 
+      '无法解析',
+      '连接超时',
+      '网络不可达',
+      '连接被拒绝',
+      '网络',
       'SocketException',
     ];
     return keys.any(reason.contains);
@@ -444,8 +481,19 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   }
 
   static ConnErrorKind qbKindOf(QbMethod c) {
+    final ConnErrorKind? net = c.lastLoginKind;
+    if (net != null && net != ConnErrorKind.none) {
+      if (net.isRetryable) return net;
+      if (_isNetworkReason(c.lastLoginError ?? '')) {
+        return ConnErrorKind.unreachable;
+      }
+      return net;
+    }
     if (c.lastLoginBanned) return ConnErrorKind.ipBanned;
     if (c.lastLoginMissingCreds) return ConnErrorKind.missingConfig;
+    if (_isNetworkReason(c.lastLoginError ?? '')) {
+      return ConnErrorKind.unreachable;
+    }
     return ConnErrorKind.authFailed;
   }
 
@@ -676,6 +724,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       await _fetchVersionWith(s, qbClient: c);
       unawaited(_prefetchPrefs(s, qbServerState: ss));
+      unawaited(collectSpeedLimits(s));
     } else if (s.isTransmission) {
       final Stopwatch sw = Stopwatch()..start();
       final TrMethod c = clientForTr(s.id);
@@ -713,6 +762,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       );
       await _fetchVersionWith(s, trClient: c);
       unawaited(_prefetchPrefs(s));
+      unawaited(collectSpeedLimits(s));
     }
   }
 
@@ -734,7 +784,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       if (v.isEmpty) return;
       serverVersion[s.id] = v;
       if (s.isQbittorrent) {
-        // 接口版本优先读登录探测的缓存，取不到才补一次请求（不重复打网络）。
+
         String api = qbClient?.probedApiVersion[s.id] ?? '';
         if (api.trim().isEmpty) {
           api = (await qbClient!.updateQbInfo())['webapiVersion'] ?? '';
@@ -795,6 +845,8 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   int _netEpoch = 0;
 
+  bool _netDown = false;
+
   final Map<String, int> _lanProbeGenOf = <String, int>{};
 
   void _startNetworkWatch() {
@@ -805,6 +857,21 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _onNetworkPoll() async {
     final bool changed = await _refreshLocalIps();
+
+    final bool offline = _lastLocalIps.isEmpty;
+    if (offline) {
+      if (!_netDown) {
+        _netDown = true;
+        _markAllOffline();
+      }
+      _ipChangePending = false;
+      return;
+    }
+    if (_netDown) {
+      _netDown = false;
+      _onNetworkBack();
+    }
+
     final ServerData? cur = current.value;
     if (cur == null || !cur.hasLan) {
       _ipChangePending = false;
@@ -814,7 +881,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     if (changed) {
       if (!_ipChangePending) {
         _ipChangePending = true;
-        return; 
+        return;
       }
     } else {
       _ipChangePending = false;
@@ -833,13 +900,35 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
     for (final ServerData s in servers) {
       if (!s.hasLan || s.id == cur.id) continue;
-      if (_lanMemoryGen[s.id] == _netEpoch) continue; 
-      if (lanProbeOf(s.id) != null) continue; 
+      if (_lanMemoryGen[s.id] == _netEpoch) continue;
+      if (lanProbeOf(s.id) != null) continue;
       lanChecking.add(s.id);
       lanChecking.refresh();
       unawaited(_startLanProbe(s));
     }
     await _detectAndApplyLan(cur);
+  }
+
+  void _markAllOffline() {
+    const String why = '网络已断开（设备当前没有可用网络）';
+    int n = 0;
+    for (final ServerData s in List<ServerData>.of(servers)) {
+      final ConnStatus st = connStatus[s.id] ?? ConnStatus.idle;
+      if (st != ConnStatus.ok && st != ConnStatus.connecting) continue;
+      reportFailureKind(s.id, ConnErrorKind.unreachable, why);
+      n++;
+    }
+    AppLog.instance.net(
+      n > 0
+          ? '检测到断网：$n 台服务器标记为连接失败（网络恢复后会自动重试）'
+          : '检测到断网（当前没有在线的服务器）',
+    );
+  }
+
+  void _onNetworkBack() {
+    AppLog.instance.net('网络已恢复：解除退避 / 挂起，立即重试全部服务器');
+    resumeAll();
+    unawaited(refreshAllServers(force: true));
   }
 
   Future<bool> _refreshLocalIps() async {
@@ -907,6 +996,13 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   final Map<String, ServerPrefsSnap> _prefsCache = <String, ServerPrefsSnap>{};
 
+  final RxMap<String, ServerSpeedLimit> speedLimits =
+      <String, ServerSpeedLimit>{}.obs;
+
+  final Map<String, DateTime> _limitAt = <String, DateTime>{};
+
+  static const Duration kLimitCacheTtl = Duration(minutes: 5);
+
   ServerPrefsSnap? prefsSnapOf(String id) => _prefsCache[id];
 
   void putPrefsSnap(String id, ServerPrefsSnap snap) => _prefsCache[id] = snap;
@@ -956,6 +1052,39 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         tags: tags,
         at: DateTime.now(),
       );
+    } catch (_) {}
+  }
+
+  ServerSpeedLimit limitOf(String id) =>
+      speedLimits[id] ?? const ServerSpeedLimit();
+
+  Future<void> collectSpeedLimits(ServerData s) async {
+    final DateTime? at = _limitAt[s.id];
+    if (at != null && DateTime.now().difference(at) < kLimitCacheTtl) return;
+    if (s.isQbittorrent) {
+      await _collectQbLimit(s);
+    } else if (s.isTransmission) {
+      await _collectTrLimit(s);
+    }
+  }
+
+  Future<void> _collectQbLimit(ServerData s) async {
+    final ServerState? st = _bgState[s.id];
+    if (st == null) return;
+    Map<String, dynamic> altPrefs = const <String, dynamic>{};
+    if (st.useAltSpeedLimits) {
+      final ServerPrefsSnap? snap = _prefsCache[s.id];
+      if (snap != null) altPrefs = snap.prefs;
+    }
+    speedLimits[s.id] = ServerSpeedLimit.fromQbState(st, altPrefs: altPrefs);
+    _limitAt[s.id] = DateTime.now();
+  }
+
+  Future<void> _collectTrLimit(ServerData s) async {
+    try {
+      final Map<String, dynamic> sess = await clientForTr(s.id).sessionGet();
+      speedLimits[s.id] = ServerSpeedLimit.fromTrSession(sess);
+      _limitAt[s.id] = DateTime.now();
     } catch (_) {}
   }
 
@@ -1173,9 +1302,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
-    // ★ 保险①：TCP 连通 ≠ 对端是同一台机。TR 用 `config-dir` 做身份校验，
-    //   局域网地址其实是另一台 TR 时（内网 IP/端口撞车、端口转发带偏），
-    //   判为不可信并继续走公网 —— 否则后面所有数据都来自错误的那台。
     final bool useLan =
         onLan && s.isTransmission ? await _trLanIsSameInstance(s) : onLan;
 
@@ -1246,19 +1372,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  /// 校验「局域网地址」后面是不是**同一台** Transmission。
-  ///
-  /// 背景（2026-09-24 第 66 轮，用户实测）：一台 TR 的卡片显示「种子 35 个」，
-  /// 而服务器日志页显示 5661 —— 局域网地址其实指向了**另一台 TR**
-  /// （两台版本相同，内网 IP/端口撞车或被端口转发带偏）。
-  /// 根因是 [LanDetector] 只做 TCP 连通性探测：**端口通就判"可达"，
-  /// 认不出对端是谁**，于是后面所有请求都被送去了那台只有 35 个种子的机器。
-  ///
-  /// `session-get` 返回的 `config-dir` 是**实例级唯一**的（该 TR 的配置目录），
-  /// 于是公网取一次、局域网取一次，不同 ⇒ 不是同一台 ⇒ 弃用局域网走公网。
-  ///
-  /// ⚠️ 任一方取不到 / 报错时**按"是同一台"处理**（保持旧行为），避免误伤。
-  /// ⚠️ 用**临时实例**探测：避免污染 per-id 实例当前的 session id。
   Future<bool> _trLanIsSameInstance(ServerData s) async {
     final TrMethod probe = trProbeFactory?.call() ?? TrMethod();
     try {
@@ -1296,7 +1409,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  /// 取指定地址上那台 TR 的 `config-dir`；取不到返回 null。
   Future<String?> _trConfigDir(TrMethod c, String baseUrl) async {
     final Map<String, dynamic> m = await c.sessionGet(baseUrl: baseUrl);
     final String v = Formatter.getString(m, 'config-dir');
@@ -1643,7 +1755,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       final bool tooManyTorrents = _cachedTotal > kCacheMaxTotalTorrents;
       if (!tooManyServers && !tooManyTorrents) break;
       final int idx = _lruOrder.indexWhere((String id) => id != keep);
-      if (idx < 0) break; 
+      if (idx < 0) break;
       final String victim = _lruOrder.removeAt(idx);
       torrentCache.remove(victim);
       _liteCacheIds.remove(victim);
@@ -1704,6 +1816,22 @@ class ServerController extends GetxController with WidgetsBindingObserver {
       .where((ServerData s) => connStatus[s.id] == ConnStatus.ok)
       .length;
 
+  TotalsSnapshot get totalsView {
+
+    final bool anyLive = servers.any((ServerData s) =>
+        (connStatus[s.id] ?? ConnStatus.idle) == ConnStatus.ok &&
+        torrentCache.containsKey(s.id));
+    if (!anyLive) return TotalsSnapshot.empty(serversTotal: servers.length);
+    return TotalsSnapshot(
+      dlSpeed: totalDlSpeed,
+      upSpeed: totalUpSpeed,
+      counts: totalStatusCounts,
+      totals: transferTotals,
+      serversOnline: onlineServerCount,
+      serversTotal: servers.length,
+    );
+  }
+
   Future<void> toggleHideAddress(String id) async {
     final int i = servers.indexWhere((ServerData e) => e.id == id);
     if (i < 0) return;
@@ -1720,5 +1848,20 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     await persist();
     AppLog.instance.op(
         '${servers[i].hidePort ? '屏蔽' : '显示'}服务器端口：${servers[i].name}');
+  }
+
+  static bool nextPrivacyHidden({
+    required bool hideAddress,
+    required bool hidePort,
+  }) =>
+      !(hideAddress && hidePort);
+
+  Future<void> toggleHideAddressPort(String id, {required bool hide}) async {
+    final int i = servers.indexWhere((ServerData e) => e.id == id);
+    if (i < 0) return;
+    servers[i] = servers[i].copyWith(hideAddress: hide, hidePort: hide);
+    await persist();
+    AppLog.instance.op(
+        '${hide ? '隐藏' : '显示'}服务器地址与端口：${servers[i].name}');
   }
 }

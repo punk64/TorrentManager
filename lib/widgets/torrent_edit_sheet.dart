@@ -10,25 +10,13 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import 'bottom_panel.dart';
 import 'torrent_edit_fields.dart';
+import '../app/adaptive.dart';
 
-/// 第 67 轮 · 批量编辑面板（清单 3.2）。
-///
-/// ★ 与详情页**共用** `torrent_edit_fields.dart` 的组件，只是草稿 key 固定用
-///   [TorrentEditSheet.kBatchKey]（批量面板没有单个 hash，不能与单项草稿混淆）。
-///
-/// ★ 三个批量特有的设计：
-///   1. **标签默认追加**（整体替换会把各不相同的标签抹成一样 ⇒ 批量事故高发）；
-///   2. **按服务器能力裁剪**：TR 隐藏分类 / 强制做种 / 超级做种；
-///      「顺序下载」按**版本**显示（TR 4.1 才有，见 V6），不再按服务器类型一刀切；
-///   3. **部分失败汇总**：逐种子串行提交，结束时给出「成功 N / 失败 M」并列失败种子名。
-///      （整批一个请求时，只要有一个失败整体就回滚，用户完全不知道哪些成功了。）
 class TorrentEditSheet {
   TorrentEditSheet._();
 
-  /// 批量编辑的草稿 key（与单项 hash 区分开）。
   static const String kBatchKey = '__batch__';
 
-  /// 打开面板；返回 true = 有改动被提交过（调用方决定是否刷新）。
   static Future<bool> show(List<String> hashes) async {
     if (hashes.isEmpty) return false;
     final bool? done = await BottomPanel.show<bool>(
@@ -122,7 +110,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: initial,
-      // TR 的 set-location 有 move 参数可选；qB 恒移动 ⇒ 不显示开关，只给说明。
+
       askMove: !isQb,
     );
     if (r == null) return;
@@ -192,13 +180,11 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
               '${failed.length > 5 ? ' …' : ''}'
               '${lastErr == null ? '' : '（$lastErr）'}';
     });
-    // 定点刷新：qB 有时返回成功但状态延迟 ⇒ 延迟一点再拉一次。
+
     await Future<void>.delayed(const Duration(milliseconds: 400));
     await _ctrl.refresh();
   }
 
-  /// 每个编辑方法内部都已吞掉异常并置 `lastActionOk=false`
-  /// ⇒ 这里把它翻成异常，好让外层 for 循环统一收集失败种子。
   void _throwIfFailed() {
     if (_ctrl.lastActionOk.value == false) {
       throw _OpError(_ctrl.error.value ?? S.execFailed);
@@ -275,9 +261,8 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
 
                   const Divider(height: 16),
                   Text(S.editSectionSwitches,
-                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-                  // ★ 批量里的开关是「待提交」，不是点即生效：
-                  //   qB 的 toggle 是整批翻转，逐个提交才能保证对齐目标值。
+                      style: TextStyle(fontSize: af(context, 11), color: cs.onSurfaceVariant)),
+
                   _batchSwitch(S.swForceStart, _forceStart, cap.forceStart,
                       (bool v) => setState(() => _forceStart = v)),
                   _batchSwitch(S.swSequential, _sequential, cap.sequentialDownload,
@@ -295,7 +280,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
             Text(
               _result!,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: af(context, 11),
                 color: _result!.contains('失败 0') ? cs.primary : cs.error,
               ),
             ),
@@ -309,7 +294,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
                       ? null
                       : () => Navigator.of(context).pop(false),
                   child: Text(S.cancel,
-                      style: const TextStyle(fontSize: 12)),
+                      style: TextStyle(fontSize: af(context, 12))),
                 ),
               ),
               const SizedBox(width: 10),
@@ -325,7 +310,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
                       : const Icon(Icons.check, size: AppTheme.iconSize),
                   label: Text(
                     _opCount == 0 ? S.batchNothing : '${S.batchSubmit}（$_opCount）',
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: af(context, 12)),
                   ),
                   onPressed: (_submitting || _opCount == 0) ? null : _submit,
                 ),
@@ -347,10 +332,10 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     return SwitchListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      title: Text(label, style: const TextStyle(fontSize: 11)),
+      title: Text(label, style: TextStyle(fontSize: af(context, 11))),
       subtitle: Text(
         value == null ? S.batchKeepUnchanged : (value ? S.yes : S.no),
-        style: const TextStyle(fontSize: 9),
+        style: TextStyle(fontSize: af(context, 9)),
       ),
       value: value ?? false,
       onChanged: _submitting ? null : onSet,
@@ -358,8 +343,6 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
   }
 }
 
-/// 批量提交中的单点失败（把 controller 的 lastActionOk=false 转成异常，
-/// 好让 for 循环的 try/catch 统一收集）。
 class _OpError implements Exception {
   _OpError(this.message);
 

@@ -19,8 +19,8 @@ Torrent _t(String hash, int size, String? dir) => Torrent(
 
 void main() {
   final Torrent main = _t('h1', 500, '/dl/show');
-  final Torrent sub = _t('h2', 500, '/dl/show/'); 
-  final Torrent other = _t('h3', 700, '/dl/show'); 
+  final Torrent sub = _t('h2', 500, '/dl/show/');
+  final Torrent other = _t('h3', 700, '/dl/show');
   final List<Torrent> all = <Torrent>[main, sub, other];
   final List<Torrent> chosen = <Torrent>[main];
 

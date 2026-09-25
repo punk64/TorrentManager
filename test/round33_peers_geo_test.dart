@@ -45,8 +45,8 @@ Map<String, dynamic> peer(String ip, {int port = 51413}) => <String, dynamic>{
       'rateToClient': 1024,
       'up_speed': 2048,
       'rateToPeer': 2048,
-      'uploaded': 3221225472, 
-      'downloaded': 107374182400, 
+      'uploaded': 3221225472,
+      'downloaded': 107374182400,
     };
 
 void main() {

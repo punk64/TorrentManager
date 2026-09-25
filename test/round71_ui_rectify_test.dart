@@ -17,17 +17,14 @@ import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/sort_filter_panel.dart';
 import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 
-/// 第 71 轮：**8 条界面整改**（2026-09-24 用户逐条下达）。
-///
-/// ① 卡片展开区/详情页**每栏目要有边界感** ⇒ 新增共享组件 `EditSectionCard`；
-/// ②/⑦ 四个限速项（下载限速 / 上传限速 / 分享率上限 / 做种时限）**改回独占一行**
-///   （撤回 2026-09-24 早先的 v3 2×2 —— 半格里输入框只剩几十 dp，边框都看不见）；
-/// ③ 筛选面板「主状态」下拉 → **按钮网格**（与「排序方式」同形态、单选）；
-/// ④ 多选栏按钮**加填充底**、改成**固定两行 × 4 列**、**不允许左右滑动**；
-/// ⑤ 详情页每栏目分区；
-/// ⑥ 详情页六个操作按钮**固定两行 × 3 列**、自适应、不横滑；
-/// ⑧ 详情页底部**站点名称 / 哈希各独占一行 + 复制按钮**。
 String _read(String p) => File(p).readAsStringSync();
+
+int _nextDecl(String src, int from) {
+  final RegExp re = RegExp(
+      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
+  final Match? m = re.firstMatch(src.substring(from + 1));
+  return m == null ? src.length : from + 1 + m.start;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -97,12 +94,12 @@ void main() {
     });
 
     test('展开区 4 个栏目各套一张分区卡片；详情页 7 个栏目同样', () {
-      // 展开区：常规 / 限速与分享 / 下载策略 / 信息
+
       final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
       final String detail =
-          listSrc.substring(a, listSrc.indexOf('// ------', a));
+          listSrc.substring(a, _nextDecl(listSrc, a));
       expect('EditSectionCard('.allMatches(detail).length, 4);
-      // 详情页：实时状态 / 操作 / 信息 / 限速与分享 / 时间信息 / 常规 / 链接与标识
+
       expect('EditSectionCard('.allMatches(ovSrc).length, 7);
     });
   });
@@ -111,7 +108,7 @@ void main() {
     test('展开区：4 个字段直排，不再传 compact、不再有 wide 判据', () {
       final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
       final String detail =
-          listSrc.substring(a, listSrc.indexOf('// ------', a));
+          listSrc.substring(a, _nextDecl(listSrc, a));
       expect(detail.contains('dlField(),'), isTrue);
       expect(detail.contains('upField(),'), isTrue);
       expect(detail.contains('ratioField(),'), isTrue);
@@ -185,7 +182,7 @@ void main() {
         expect(find.text(f.label), findsOneWidget,
             reason: '缺「${f.label}」按钮');
       }
-      // 单选：切换主状态后只剩一个选中
+
       await tester.tap(find.text(TorrentFilter.downloading.label));
       await tester.pump();
       expect(ctrl.filter.value, TorrentFilter.downloading);
@@ -201,7 +198,7 @@ void main() {
       expect(listSrc.contains('Widget _batchRow()'), isFalse);
       expect(listSrc.contains('Widget _actionRow()'), isFalse);
       final int i = listSrc.indexOf('Widget _actionGrid()');
-      final String body = listSrc.substring(i, listSrc.indexOf('/// 网格里的按钮', i));
+      final String body = listSrc.substring(i, _nextDecl(listSrc, i));
       expect(body.contains('SingleChildScrollView'), isFalse,
           reason: '用户要求：不可以左右滑动');
       expect(body.contains('scrollDirection'), isFalse);
@@ -226,8 +223,7 @@ void main() {
 
     testWidgets('渲染：进入多选后 8 个按钮排成两行 × 4 列',
         (WidgetTester tester) async {
-      // ★ 视口须放宽：顶部速度条 disk_io_chip 在测试宿主(方块字体)下窄屏会溢出，
-      //   属既有组件、非本轮改动；放宽到能容纳即可（真机正常）。
+
       tester.view.physicalSize = const Size(1000, 700);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -239,7 +235,7 @@ void main() {
         home: const TorrentListPage(),
       ));
       await tester.pump(const Duration(milliseconds: 50));
-      // ★ 顺序关键：设服务器会触发监听清空 items ⇒ 先设服务器再灌数据。
+
       Get.find<ServerController>().current.value = qb();
       await tester.pump(const Duration(milliseconds: 200));
       final TorrentController ctrl = Get.find<TorrentController>();
@@ -272,11 +268,11 @@ void main() {
     test('`_actionGrid` 就是两个 Row（不再用 Wrap）', () {
       expect(ovSrc.contains('Widget _actionGrid('), isTrue);
       final int i = ovSrc.indexOf('Widget _actionGrid(');
-      final String body = ovSrc.substring(i, ovSrc.indexOf('/// 开关组', i));
+      final String body = ovSrc.substring(i, _nextDecl(ovSrc, i));
       expect(body.contains('Wrap('), isFalse,
           reason: 'Wrap 的折行位置随字数/屏幕变，位置不固定');
       expect('Row('.allMatches(body).length, 2, reason: '固定两行');
-      // 每行 3 格：3 个 primary/secondary + 2 个 gap
+
       expect(body.contains('Expanded('), isTrue);
       expect(ovSrc.contains('final bool wide'), isFalse);
     });
@@ -305,10 +301,10 @@ void main() {
           isTrue);
       expect(ovSrc.contains('_kvCopy(S.fieldHash, t.hash, maxLines: 2)'),
           isTrue);
-      // 旧的「站点 + 哈希」两列网格已拆
+
       expect(ovSrc.contains('<String>[S.fieldSiteName, site]'), isFalse);
       expect(ovSrc.contains("<String>['哈希', t.hash]"), isFalse);
-      // _kvCopy 支持 maxLines（超长值封顶，复制拿完整值）
+
       expect(ovSrc.contains('Widget _kvCopy(String k, String v'), isTrue);
       expect(ovSrc.contains('int? maxLines'), isTrue);
     });
@@ -324,7 +320,6 @@ void main() {
       expect(yHash, greaterThan(ySite),
           reason: '哈希在站点名称**下一行**（用户要求各独占一行）');
 
-      // 复制按钮：标题 1 + 站点 1 + 哈希 1 + 磁力链 1 + 注释 1 ⇒ ≥5
       expect(find.byIcon(Icons.copy), findsAtLeastNWidgets(5));
     });
   });

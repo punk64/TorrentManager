@@ -385,7 +385,7 @@ void main() {
       await tester.pump();
 
       calls.clear();
-      await swipe(tester, -600); 
+      await swipe(tester, -600);
       await tester.tap(find.descendant(
         of: find.byType(SlidableTile),
         matching: find.byIcon(Icons.pause),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/theme.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class DiskIoChip extends StatelessWidget {
   const DiskIoChip({
@@ -36,7 +37,7 @@ class DiskIoChip extends StatelessWidget {
             '${S.ioUploadPrefix}${Formatter.setSize(read)} · '
             '${S.ioDownloadPrefix}${Formatter.setSize(written)}',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: af(context, 10),
               fontWeight: FontWeight.w600,
               color: tint,
             ),

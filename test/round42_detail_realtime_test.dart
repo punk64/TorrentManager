@@ -259,7 +259,7 @@ void main() {
       final TorrentController ctrl = await pumpDetail(
         tester,
         calls: calls,
-        writeOk: false, 
+        writeOk: false,
         torrents: () => <Map<String, dynamic>>[qbTorrentJson()],
       );
 

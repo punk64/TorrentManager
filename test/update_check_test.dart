@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:torrent_manager/app/app_version.dart';
 import 'package:torrent_manager/utils/update_check.dart';
 
-/// 造一份形似 GitHub `/releases/latest` 的响应。
 String _release(
   String tag, {
   List<String> assets = const <String>[],
@@ -88,7 +87,6 @@ void main() {
       expect(r.hasUpdate, isFalse);
     });
 
-    // ↓↓↓ 口径 A（严格）：版本号更大还不够，必须有能装在本机上的安装包。↓↓↓
     test('★ 纯文本版本号更大但没有安装包 → 不算更新', () async {
       final UpdateCheckResult r = await UpdateChecker(
         fetcher: (String url) async => '1.2.3',

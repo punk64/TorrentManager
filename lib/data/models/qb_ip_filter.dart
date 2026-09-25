@@ -127,7 +127,7 @@ class QbIpFilter {
     for (final String o in octets) {
       final int? n = int.tryParse(o);
       if (n == null || n < 0 || n > 255) return false;
-      if (o.length > 1 && o.startsWith('0')) return false; 
+      if (o.length > 1 && o.startsWith('0')) return false;
     }
     if (prefix != null && (prefix < 0 || prefix > 32)) return false;
     return true;

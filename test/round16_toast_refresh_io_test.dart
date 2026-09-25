@@ -144,7 +144,7 @@ void main() {
 
       AppToast.show('最上层提示');
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200)); 
+      await tester.pump(const Duration(milliseconds: 200));
 
       final Finder toast = find.text('最上层提示');
       expect(toast, findsOneWidget, reason: '★ 提示必须渲染出来');

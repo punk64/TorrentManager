@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../app/adaptive.dart';
 
 class IoChip extends StatelessWidget {
   const IoChip({super.key, required this.jobs});
@@ -27,7 +28,7 @@ class IoChip extends StatelessWidget {
       ),
       child: Text(
         'I/O: $jobs',
-        style: const TextStyle(fontSize: 8, color: Colors.white),
+        style: TextStyle(fontSize: af(context, 8), color: Colors.white),
       ),
     );
   }

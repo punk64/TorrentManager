@@ -28,6 +28,7 @@ import '../widgets/sort_filter_panel.dart';
 import '../widgets/torrent_edit_fields.dart';
 import '../widgets/torrent_edit_sheet.dart';
 import 'drawer_page.dart';
+import '../app/adaptive.dart';
 
 class TorrentListPage extends StatefulWidget {
   const TorrentListPage({super.key});
@@ -42,14 +43,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   bool _selecting = false;
 
-  /// 删除按钮是否处于「已上膛」状态（首次点击后等待再次点击确认）
   bool _deleteArmed = false;
 
   Timer? _deleteArmTimer;
 
   final Set<String> _expanded = <String>{};
 
-  /// 展开区编辑提交中（与详情页的 `_busy` 同义，防连点重复提交）。
   bool _cardBusy = false;
 
   bool _drawerOpen = false;
@@ -162,7 +161,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                       ),
                     ),
 
-              // 多选态不显示居中的服务器名（给左侧「已选 N 个」让位，避免文字重叠）
               flexibleSpace: _selecting
                   ? null
                   : Padding(
@@ -183,8 +181,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 18,
+                              style: TextStyle(
+                                fontSize: af(context, 18),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -199,8 +197,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     ? Obx(() => Text(S.selectedCount(ctrl.selected.length)))
                     : const _SpeedTitle(),
               ),
-              // 多选态的操作按钮已下移到列表上方「操作行」（AppBar 只留标题，
-              // 避免按钮与标题挤在一行互相重叠 —— 历史上曾出现点"暂停"命中"删除"）
+
               actions: <Widget>[
                 if (!_selecting) ...<Widget>[
                   Obx(
@@ -255,14 +252,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                   padding: const EdgeInsets.only(bottom: 6),
                                   child: Text(
                                     S.srvSuspended,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Colors.orange),
+                                    style: TextStyle(
+                                        fontSize: af(context, 11), color: Colors.orange),
                                   ),
                                 ),
                               Text(
                                 '${S.execFailed}\n${ctrl.error.value ?? why}',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: af(context, 12)),
                               ),
                               const SizedBox(height: 12),
                               if (authFailed && cur != null)
@@ -322,7 +319,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         controller: _search,
         maxLength: AppTheme.maxLenName,
         buildCounter: AppTheme.noCounter,
-        style: const TextStyle(fontSize: 12),
+        style: TextStyle(fontSize: af(context, 12)),
         decoration: InputDecoration(
           filled: true,
           fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -337,7 +334,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   },
                 ),
           hintText: S.search,
-          hintStyle: const TextStyle(fontSize: 12),
+          hintStyle: TextStyle(fontSize: af(context, 12)),
           isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -375,7 +372,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(10, 0, 4, 0),
               children: <Widget>[
-                // D2：状态横条收进面板，顶部只留「已选状态 + 清除」。
+
                 Obx(() {
                   final bool hasStatus = ctrl.hasStatusFilter;
                   final bool hasKw = ctrl.keyword.value.isNotEmpty;
@@ -394,7 +391,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                             : (hasKw
                                 ? '${S.search}: ${ctrl.keyword.value}'
                                 : S.filterStatusTitle),
-                        style: const TextStyle(fontSize: 11),
+                        style: TextStyle(fontSize: af(context, 11)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -408,7 +405,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: ActionChip(
                       avatar: const Icon(Icons.clear_all, size: 14),
-                      label: const Text('清除', style: TextStyle(fontSize: 11)),
+                      label: Text('清除', style: TextStyle(fontSize: af(context, 11))),
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
                         AppLog.instance.act('种子列表', '筛选[清除]');
@@ -422,7 +419,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               ],
             ),
           ),
-          // 固定在筛选行右端：多选 / 排序筛选（图标 + 文字，始终可见）；多选态隐藏
+
           if (!_selecting)
             Padding(
               padding: const EdgeInsets.only(right: 8),
@@ -448,19 +445,20 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 图标 + 文字的小按钮（筛选行右侧的「多选 / 排序筛选」）
   Widget _toolButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return SizedBox(
       height: 28,
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 14),
-        label: Text(label, style: const TextStyle(fontSize: 11)),
+        label: Text(label, style: TextStyle(fontSize: af(context, 11))),
         style: OutlinedButton.styleFrom(
+          backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.92),
           padding: const EdgeInsets.symmetric(horizontal: 8),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -473,21 +471,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 多选态的操作行（位于全选行上方）：开始 / 暂停 / 校验 /（TR）队列移动 / 删除。
-  ///
-  /// 删除为**二次点击确认**：首次点击后按钮变为红底「再点确认删除 N 项」，
-  /// 4 秒内不再点击自动还原；避免误触/单击穿到删除（数据安全底线）。
-  /// 多选态操作区（2026-09-24 用户整改）：**固定 2 行 × 4 列**按钮网格。
-  ///
-  /// ★ 原实现是「`Row` 平铺 + `_batchRow` 横向 `SingleChildScrollView`」，两个毛病：
-  ///   ① 按钮只有描边、**没有填充底** ⇒ 彩色壁纸下文字看不清；
-  ///   ② 第二行能左右滑动 ⇒ 位置不固定、末尾按钮常年在屏幕外。
-  /// ⇒ 现改为**固定两行**（每行 4 格 `Expanded` 等宽，随屏幕宽度自适应，
-  ///   **永不横向滑动**），每个按钮带**不透明填充 + 边框 + 圆角**（与「状态筛选」
-  ///   按钮同口径）；整块再加一层不透明底，彻底隔开壁纸。
-  ///
-  /// 行 1 = 对种子本身的操作：开始 / 暂停 / 重新校验 / 删除
-  /// 行 2 = 取出信息与批量：批量编辑 / 复制哈希 / 复制磁力链 /（TR 队列移动 | qB 批量导出）
   Widget _actionGrid() {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final int n = ctrl.selected.length;
@@ -498,8 +481,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
     Widget gap() => const SizedBox(width: 6);
 
-    // 第 2 行末格：TR 走队列移动（弹菜单）、qB 走批量导出；都不支持时留空占位，
-    // 保证两行的列宽完全对齐（不留空会出现 3 格撑满、宽度与上行错开）。
     Widget lastCell() {
       if (isTr) return Expanded(child: _queueMoveButton());
       if (canExport) {
@@ -515,7 +496,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     }
 
     return Container(
-      // ★ 不透明底：彩色壁纸不再透上来（用户要求「和状态筛选按钮一样」的可读性口径）
+
       color: cs.surface,
       padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
       child: Column(
@@ -585,10 +566,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 网格里的按钮：**填充底 + 边框 + 圆角**（对齐筛选面板 `_btn` 的观感）。
-  ///
-  /// ★ `onTap` 传 null ⇒ 不套 `InkWell`（外观照旧、手势交给外层，例如
-  ///   `PopupMenuButton` 自带手势）—— 嵌两层 InkWell 会让外层点不动。
   Widget _gridButton({
     required IconData icon,
     required String label,
@@ -612,7 +589,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: fg),
+              style: TextStyle(fontSize: af(context, 11), color: fg),
             ),
           ),
         ],
@@ -640,7 +617,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 批量编辑：把选中项交给第三期做好的批量面板（接口已就绪）。
   Future<void> _batchEdit() async {
     final List<String> hashes = ctrl.selected.toList();
     if (hashes.isEmpty) return;
@@ -648,7 +624,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     await TorrentEditSheet.show(hashes);
   }
 
-  /// 批量复制哈希（每行一条；多行粘贴到别处也认得）。
   Future<void> _copyHashes() async {
     final List<String> hashes = ctrl.selected.toList();
     if (hashes.isEmpty) return;
@@ -657,10 +632,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     Formatter.showToast(S.batchCopied(hashes.length, S.fieldHash));
   }
 
-  /// 批量复制磁力链。
-  ///
-  /// ⚠️ 磁力链里带 **passkey**（私人站点的个人标识）⇒ 复制前必须脱敏，
-  ///    与 trackers 页同一口径（清单 6.4 第 17 条）。
   Future<void> _copyMagnets() async {
     final List<String> magnets = <String>[
       for (final Torrent t in ctrl.items)
@@ -677,10 +648,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     Formatter.showToast(S.batchCopied(magnets.length, S.fieldMagnet));
   }
 
-  /// 批量导出 .torrent（逐个拉字节流 → 系统另存为）。
-  ///
-  /// 逐个而不是打包：`saveBytesAs` 走的是系统另存为，一次只能落一个文件；
-  /// 且导出是重操作，失败要能按种子定位。
   Future<void> _batchExport() async {
     final List<Torrent> list = ctrl.items
         .where((Torrent t) => ctrl.selected.contains(t.hash))
@@ -720,10 +687,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
         isError: fail > 0);
   }
 
-  /// 队列移动（TR 专有）：弹出菜单选「置顶 / 上移 / 下移 / 置底」。
-  ///
-  /// ★ 外观复用 `_gridButton`（不传 `onTap` ⇒ 不套内层 `InkWell`，手势交给
-  ///   `PopupMenuButton` 自己），保证与相邻网格按钮完全一致。
   Widget _queueMoveButton() {
     return PopupMenuButton<String>(
       onSelected: (String v) =>
@@ -731,19 +694,19 @@ class _TorrentListPageState extends State<TorrentListPage> {
       itemBuilder: (_) => <PopupMenuEntry<String>>[
         PopupMenuItem<String>(
           value: 'top',
-          child: Text(S.queueMoveTop, style: const TextStyle(fontSize: 13)),
+          child: Text(S.queueMoveTop, style: TextStyle(fontSize: af(context, 13))),
         ),
         PopupMenuItem<String>(
           value: 'up',
-          child: Text(S.queueMoveUp, style: const TextStyle(fontSize: 13)),
+          child: Text(S.queueMoveUp, style: TextStyle(fontSize: af(context, 13))),
         ),
         PopupMenuItem<String>(
           value: 'down',
-          child: Text(S.queueMoveDown, style: const TextStyle(fontSize: 13)),
+          child: Text(S.queueMoveDown, style: TextStyle(fontSize: af(context, 13))),
         ),
         PopupMenuItem<String>(
           value: 'bottom',
-          child: Text(S.queueMoveBottom, style: const TextStyle(fontSize: 13)),
+          child: Text(S.queueMoveBottom, style: TextStyle(fontSize: af(context, 13))),
         ),
       ],
       child: _gridButton(
@@ -753,8 +716,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 删除（网格第 1 行末格）：**二次点击确认** —— 首次点击只"上膛"（按钮转
-  /// 红底实心「再点确认删除 N 项」），4 秒内不再点自动还原，避免误触。
   Widget _deleteButton(int n) {
     final Color red = _actColor(Colors.red);
     if (_deleteArmed) {
@@ -774,7 +735,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 删除必须点两次：首次只"上膛"，再次点击才真正弹确认框。
   void _onDeleteTapped() {
     if (_deleteArmed) {
       _disarmDelete();
@@ -814,14 +774,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: Row(
           children: <Widget>[
-            // 全选：图标 + 文字（原来是纯图标，不易理解）
+
             SizedBox(
               height: 28,
               child: TextButton.icon(
                 onPressed: ctrl.selectAll,
                 icon: Icon(Icons.select_all, size: 15, color: onBg),
                 label: Text(S.logSelectAll,
-                    style: TextStyle(fontSize: 11, color: onBg)),
+                    style: TextStyle(fontSize: af(context, 11), color: onBg)),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   minimumSize: Size.zero,
@@ -838,7 +798,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 '${Formatter.setSize(_selectedSize())}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11),
+                style: TextStyle(fontSize: af(context, 11)),
               ),
             ),
             SizedBox(
@@ -847,7 +807,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 onPressed: _exitSelect,
                 icon: Icon(Icons.close, size: 15, color: onBg),
                 label:
-                    Text(S.cancel, style: TextStyle(fontSize: 11, color: onBg)),
+                    Text(S.cancel, style: TextStyle(fontSize: af(context, 11), color: onBg)),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   minimumSize: Size.zero,
@@ -875,7 +835,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
           children: <Widget>[
             Image.asset('assets/images/empty.webp', width: 96),
             const SizedBox(height: 12),
-            const Text('暂无种子', style: TextStyle(fontSize: 12)),
+            Text('暂无种子', style: TextStyle(fontSize: af(context, 12))),
           ],
         ),
       );
@@ -924,9 +884,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
           ctrl.toggleSelect(t.hash);
         },
         onSlideChanged: _onCardSlideChanged,
-        // ★ D9 方案 C：整块点击 = 展开/收起。
-        //   手势**不挂在这里**——挂这会让展开区里的「修改 / 查看详情」按钮冒泡上来
-        //   把卡片一起收起（第六节 6.1 第 1 条）。改为只绑收起态的两个内容区。
+
         startActions: <SlidableActionItem>[
           SlidableActionItem(
             icon: Icons.search,
@@ -1011,8 +969,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 t.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: TextStyle(
+                                  fontSize: af(context, 12),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1021,7 +979,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                             Text(
                               Formatter.setProgress(t.progress),
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: af(context, 11),
                                 fontWeight: FontWeight.w600,
                                 color: Formatter.setStatusColor(t.state, cs),
                               ),
@@ -1030,8 +988,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                               const SizedBox(width: 6),
                               _pausedChip(cs),
                             ],
-                            // ▼ 只是「整块可点」的视觉提示；走同一个 handler，
-                            //   保证"收起即丢草稿"这条不会从这个入口漏掉。
+
                             InkWell(
                               onTap: () => _onCardTap(t),
                               child: Padding(
@@ -1054,7 +1011,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 _metaLine(t),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 9),
+                                style: TextStyle(fontSize: af(context, 9)),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1063,7 +1020,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: af(context, 9),
                                 color: Formatter.setStatusColor(t.state, cs),
                               ),
                             ),
@@ -1094,8 +1051,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          // ★ 4.1：底部区从 2:1 改成 1:1（右栏补到 4 行后，
-                          //   2:1 会把右侧挤成一行一行换行的碎字）。
+
                           Expanded(
                             flex: 1,
                             child: Column(
@@ -1110,7 +1066,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                            fontSize: 10, color: cs.primary),
+                                            fontSize: af(context, 10), color: cs.primary),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1120,7 +1076,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                            fontSize: 10, color: cs.secondary),
+                                            fontSize: af(context, 10), color: cs.secondary),
                                       ),
                                     ),
                                   ],
@@ -1163,7 +1119,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                           minHeight: 4,
                         ),
                       ),
-                      // 4.1：分类/标签直接上卡片（原来是挤在 _metaLine 的一行灰字里）。
+
                       if (_catChips(t).isNotEmpty ||
                           _tagChips(t).isNotEmpty) ...<Widget>[
                         const SizedBox(height: 6),
@@ -1220,7 +1176,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// 分类 chip（紫）。分类为空时不产生 chip。
   List<Widget> _catChips(Torrent t) {
     final String cat = (t.category ?? '').trim();
     if (cat.isEmpty) return const <Widget>[];
@@ -1235,7 +1190,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     ];
   }
 
-  /// 标签 chip（青）。qB 是逗号串、TR 是 labels 拼的串 ⇒ 统一按逗号切。
   List<Widget> _tagChips(Torrent t) {
     final String raw = (t.tags ?? '').trim();
     if (raw.isEmpty) return const <Widget>[];
@@ -1279,7 +1233,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, color: fg),
+              style: TextStyle(fontSize: af(context, 9), color: fg),
             ),
           ),
         ],
@@ -1294,9 +1248,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
         color: cs.outline,
         borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
       ),
+
       child: Text(
-        L.t('已暂停'),
-        style: TextStyle(fontSize: 9, color: cs.surface),
+        L.t('暂停'),
+        style: TextStyle(fontSize: af(context, 9), color: cs.surface),
       ),
     );
   }
@@ -1333,10 +1288,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   String _siteHost(Torrent t) => t.site;
 
-  /// 副标题行：做种者数 + 站点。
-  ///
-  /// ★ 4.1 之后分类/标签已经做成 **chip 上卡片**（见 [_catChips] / [_tagChips]），
-  ///   这里不能再重复一遍 —— 否则卡片上会出现两处同样的分类。
   String _metaLine(Torrent t) {
     final List<String> parts = <String>[];
 
@@ -1351,24 +1302,9 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return parts.join(' · ');
   }
 
-  /// 卡片展开区（方案 A · 分区卡片式）。
-  ///
-  /// ① 可编辑段（路径/分类/标签 + 限速×2/分享率上限/做种时限 **各独占一行**）
-  /// ② 下载策略开关（**同一行 chip**，点即生效，按服务器能力裁剪）
-  /// ③ 只读信息段（**两列网格**、长值独占行）—— 与概览 Tab 共用 `ReadonlyKvGrid`
-  /// ④ 操作行：「查看详情」——方案 C 之后进详情的**唯一入口**
-  ///
-  /// ★ 2026-09-24 用户整改：① 每栏目套 `EditSectionCard` 分区（**边界感 + 可读性**）；
-  ///   ② 限速×2 / 分享率上限 / 做种时限**改回独占一行**（撤回 v3 的 2×2：半格里
-  ///   输入框只剩几十 dp —— 边框看不见、胶囊按钮挤在一起）。
-  /// ★ 草稿一律走 controller 的 `setDraft`：列表 `ListView` 会回收重建卡片，
-  ///   存 widget state 会"滚出去再滚回来输入就没了"（清单 6.2 第 5 条）。
   Widget _detail(Torrent t, ColorScheme cs) {
     final CapabilitySet cap = ctrl.capabilities;
 
-    /// 下载策略开关：v3 定稿 = **同一行 chip**（原来是 4 个整行 Switch）。
-    ///
-    /// ★ 点即生效；不支持的能力**直接隐藏**（D4/V6）—— 调用方负责裁剪。
     Widget chip({
       required String label,
       required bool? value,
@@ -1381,8 +1317,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
           onChanged: (bool v) => _cardApply(t, label, () => run(v)),
         );
 
-    // 可编辑 4 项：**各独占一行**（2026-09-24 用户整改，撤回 v3 的 2×2 紧凑形态）。
-    // 独占行时 label 有 88dp、输入框拿满剩余宽度 ⇒ 边框可见、按钮不再互相挤。
     Widget dlField({bool compact = false}) => EditNumberField(
           label: S.fieldDlLimit,
           initial:
@@ -1455,8 +1389,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         );
 
     return GestureDetector(
-      // ★ 吞掉展开区内部的点击：展开区里按钮/输入框的点击会冒泡到卡片手势，
-      //   导致"点一下修改，卡片同时收起了"（第六节 6.1 第 1 条）。
+
       behavior: HitTestBehavior.opaque,
       onTap: () {},
       child: RepaintBoundary(
@@ -1466,7 +1399,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              // ① 常规：路径 / 分类（qB）/ 标签 —— 每项点「修改」走弹窗提交
+
               EditSectionCard(
                 dense: true,
                 title: S.editSectionBasic,
@@ -1498,8 +1431,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 ),
               ),
 
-              // ② 限速与分享：4 项**各独占一行**（2026-09-24 用户整改；
-              //   文案以「下载限速 / 上传限速 / 分享率上限 / 做种时限」为准）
               EditSectionCard(
                 dense: true,
                 title: S.editSectionLimits,
@@ -1515,7 +1446,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 ),
               ),
 
-              // ③ 下载策略（**同一行 chip**；点即生效；不支持的直接隐藏 —— D4/V6）
               if (cap.forceStart ||
                   cap.sequentialDownload ||
                   cap.isQb ||
@@ -1561,7 +1491,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   ),
                 ),
 
-              // ④ 只读信息（短值两列网格、长值独占行 —— 与概览 Tab **共用组件**）
               EditSectionCard(
                 dense: true,
                 title: S.editSectionInfo,
@@ -1588,7 +1517,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 ),
               ),
 
-              // ④ 操作行：进详情（方案 C）
               const SizedBox(height: 4),
               Align(
                 alignment: Alignment.centerRight,
@@ -1598,7 +1526,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     onPressed: () => _openDetail(t),
                     icon: const Icon(Icons.open_in_new, size: 14),
                     label: Text(S.viewDetail,
-                        style: const TextStyle(fontSize: 11)),
+                        style: TextStyle(fontSize: af(context, 11))),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
@@ -1612,9 +1540,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  // ---------------------------------------------------------------- 展开区编辑
-
-  /// 展开区草稿读取（int）。没有草稿就回落服务端值。
   int _draftInt(Torrent t, String key, int fallback) {
     final dynamic v = ctrl.draftOf(t.hash, key);
     return v is int ? v : fallback;
@@ -1625,9 +1550,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return v is num ? v.toDouble() : fallback;
   }
 
-  /// 展开区统一的编辑提交外壳（对齐详情页 `_apply`）。
-  ///
-  /// 成功后：清掉**该字段**草稿 + 延迟 400ms 定点刷新（qB 常"返回成功但状态没变"）。
   Future<bool> _cardApply(
     Torrent t,
     String what,
@@ -1640,7 +1562,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     try {
       await body();
     } catch (_) {
-      // 失败详情由控制器写进 ctrl.error，下面统一提示。
+
     }
     final bool ok = ctrl.lastActionOk.value != false;
     if (!mounted) return ok;
@@ -1669,7 +1591,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: t.savePath ?? '',
-      // TR 的 set-location 可选 move；qB 恒移动 ⇒ 弹窗里只给说明（清单 6.3 第 11 条）。
+
       askMove: !isQb,
     );
     if (r == null) return;
@@ -1712,10 +1634,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  /// ★ D9 方案 C：卡片**整块**点击 = 展开 / 收起。
-  ///
-  /// 不再直接进详情（进详情改走展开区底部的「查看详情」按钮，见 [_detail]）。
-  /// 多选态下仍然是「勾选/取消」，与旧行为一致。
   void _onCardTap(Torrent t) {
     if (_selecting) {
       ctrl.toggleSelect(t.hash);
@@ -1727,17 +1645,16 @@ class _TorrentListPageState extends State<TorrentListPage> {
         _expanded.add(t.hash);
       } else {
         _expanded.remove(t.hash);
-        // D6：收起即丢弃草稿（滚动重建不清草稿，只有主动收起才清）。
+
         ctrl.clearDraft(t.hash);
       }
     });
     AppLog.instance.act(
         '种子列表', '卡片[${willExpand ? '展开' : '收起'}]', target: t.name);
-    // 展开时按需补齐开关类字段（带 60s 缓存，失败静默）。
+
     if (willExpand) unawaited(ctrl.ensureEditFields(t));
   }
 
-  /// 展开区底部的「查看详情」：方案 C 之后进详情的唯一入口。
   void _openDetail(Torrent t) {
     if (_selecting) {
       ctrl.toggleSelect(t.hash);
@@ -1778,10 +1695,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
       title: '${S.querySubTorrents}（${subs.length}）',
       context: context,
       child: subs.isEmpty
-          ? const Padding(
+          ? Padding(
               padding: EdgeInsets.fromLTRB(16, 24, 16, 32),
               child: Center(
-                child: Text('未找到其它辅种', style: TextStyle(fontSize: 12)),
+                child: Text('未找到其它辅种', style: TextStyle(fontSize: af(context, 12))),
               ),
             )
           : ListView.separated(
@@ -1797,7 +1714,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                       text,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10),
+                      style: TextStyle(fontSize: af(context, 10)),
                     );
                 return ListTile(
                   dense: true,
@@ -1810,7 +1727,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     s.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: af(context, 12)),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1901,14 +1818,14 @@ class _SpeedTitleState extends State<_SpeedTitle> {
               arrow,
               style: TextStyle(
                 color: color,
-                fontSize: 11,
+                fontSize: af(context, 11),
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 3),
             Text(
               Formatter.setSpeed(bytesPerSec),
-              style: const TextStyle(fontSize: 11),
+              style: TextStyle(fontSize: af(context, 11)),
             ),
           ],
         );

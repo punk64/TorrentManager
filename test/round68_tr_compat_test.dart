@@ -7,9 +7,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/server_capabilities.dart';
 import 'package:torrent_manager/data/transmission/tr_method.dart';
 
-/// 假 TR 客户端：拦下 RPC，记录 `<method> <arguments json>`，并回一份可控响应。
-///
-/// [trackerList] 是 `torrent-get` 时返回的 trackerList 内容（V5 的读-改-写要用它）。
 Dio _fakeTrDio(List<String> calls,
     {List<String> trackerList = const <String>[]}) {
   final Dio dio = Dio(BaseOptions(

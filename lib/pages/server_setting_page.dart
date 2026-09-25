@@ -16,6 +16,7 @@ import '../utils/ip_geo.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
+import '../app/adaptive.dart';
 
 const int _kBanPreview = 30;
 
@@ -431,7 +432,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 padding: const EdgeInsets.all(28),
                 child: Center(
                   child: Text(S.noServer,
-                      style: const TextStyle(fontSize: 12)),
+                      style: TextStyle(fontSize: af(context, 12))),
                 ),
               ),
             if (_server != null && _prefsError != null) _prefsErrorNotice(),
@@ -530,9 +531,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         help: S.setCategoryEditHelp,
         children: <Widget>[
           if (_categories.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Text('未分类', style: TextStyle(fontSize: 12)),
+              child: Text('未分类', style: TextStyle(fontSize: af(context, 12))),
             ),
           Wrap(
             spacing: 6,
@@ -540,7 +541,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             children: <Widget>[
               for (final String c in _categories)
                 FilterChip(
-                  label: Text(c, style: const TextStyle(fontSize: 11)),
+                  label: Text(c, style: TextStyle(fontSize: af(context, 11))),
                   selected: _selectedCategories.contains(c),
                   visualDensity: VisualDensity.compact,
                   onSelected: (_) => setState(() {
@@ -598,9 +599,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         help: S.setTagDeleteHelp,
         children: <Widget>[
           if (_tags.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Text('无标签', style: TextStyle(fontSize: 12)),
+              child: Text('无标签', style: TextStyle(fontSize: af(context, 12))),
             ),
           Wrap(
             spacing: 6,
@@ -608,7 +609,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             children: <Widget>[
               for (final String t in _tags)
                 FilterChip(
-                  label: Text(t, style: const TextStyle(fontSize: 11)),
+                  label: Text(t, style: TextStyle(fontSize: af(context, 11))),
                   selected: _selectedTags.contains(t),
                   visualDensity: VisualDensity.compact,
                   onSelected: (_) => setState(() {
@@ -891,7 +892,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               _prefsLoaded
                   ? '当前屏蔽 ${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
                   : '当前屏蔽 —',
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: af(context, 12)),
             ),
           ),
         ],
@@ -954,11 +955,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 enabled: _prefsLoaded,
                 maxLength: 64,
                 buildCounter: AppTheme.noCounter,
-                style: const TextStyle(fontSize: 12.5),
-                decoration: const InputDecoration(
+                style: TextStyle(fontSize: af(context, 12.5)),
+                decoration: InputDecoration(
                   isDense: true,
                   hintText: '输入 IP 或网段，如 1.2.3.0/24',
-                  hintStyle: TextStyle(fontSize: 11.5),
+                  hintStyle: TextStyle(fontSize: af(context, 11.5)),
                   border: OutlineInputBorder(),
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 8, vertical: 9),
@@ -974,7 +975,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 12),
             ),
-            child: const Text('添加', style: TextStyle(fontSize: 12)),
+            child: Text('添加', style: TextStyle(fontSize: af(context, 12))),
           ),
         ],
       ),
@@ -989,14 +990,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           Expanded(
             child: Text(
               _banDirtyHint ?? '',
-              style: const TextStyle(fontSize: 10.5, color: Color(0xFFB26A00)),
+              style: TextStyle(fontSize: af(context, 10.5), color: Color(0xFFB26A00)),
             ),
           ),
           ElevatedButton(
             onPressed: (_busy || !_prefsLoaded || _banDirtyHint == null)
                 ? null
                 : _saveBanList,
-            child: const Text('保存黑名单', style: TextStyle(fontSize: 12)),
+            child: Text('保存黑名单', style: TextStyle(fontSize: af(context, 12))),
           ),
         ],
       ),
@@ -1021,8 +1022,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           Expanded(
             child: Text(
               _prefsLoaded ? '已封禁 ${_banDraft.count} 条' : '已封禁 —',
-              style: const TextStyle(
-                  fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  fontSize: af(context, 12.5), fontWeight: FontWeight.w600),
             ),
           ),
           TextButton(
@@ -1031,7 +1032,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 6),
             ),
-            child: const Text('批量编辑', style: TextStyle(fontSize: 11.5)),
+            child: Text('批量编辑', style: TextStyle(fontSize: af(context, 11.5))),
           ),
         ],
       ),
@@ -1040,19 +1041,19 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   List<Widget> _banListRows() {
     if (!_prefsLoaded) {
-      return const <Widget>[
+      return <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Text('未读取到服务器设置', style: TextStyle(fontSize: 12)),
+          child: Text('未读取到服务器设置', style: TextStyle(fontSize: af(context, 12))),
         ),
       ];
     }
     final List<String> list = _banDraft.entries;
     if (list.isEmpty) {
-      return const <Widget>[
+      return <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Text('名单为空', style: TextStyle(fontSize: 12)),
+          child: Text('名单为空', style: TextStyle(fontSize: af(context, 12))),
         ),
       ];
     }
@@ -1071,7 +1072,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               onPressed: () => setState(() => _banShowAll = true),
               style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
               child: Text('显示全部（还有 ${list.length - shown} 条）',
-                  style: const TextStyle(fontSize: 11.5)),
+                  style: TextStyle(fontSize: af(context, 11.5))),
             ),
           ),
         ),
@@ -1139,7 +1140,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                         ip,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: af(context, 14)),
                       ),
                     ),
                     if (ip.contains('/'))
@@ -1155,7 +1156,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                           ),
                           child: Text('网段',
                               style: TextStyle(
-                                  fontSize: 9.5, color: cs.onSurfaceVariant)),
+                                  fontSize: af(context, 9.5), color: cs.onSurfaceVariant)),
                         ),
                       ),
                   ],
@@ -1178,7 +1179,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            fontSize: 10.5, color: cs.onSurfaceVariant),
+                            fontSize: af(context, 10.5), color: cs.onSurfaceVariant),
                       ),
                     ),
                   ],
@@ -1334,7 +1335,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             child: Text(
               '没能读取这台服务器的设置，下面的数字与开关暂不可信'
               '（${_prefsError ?? ''}）。点右上角刷新重试。',
-              style: TextStyle(fontSize: 12, color: cs.error),
+              style: TextStyle(fontSize: af(context, 12), color: cs.error),
             ),
           ),
         ],
@@ -1351,7 +1352,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return showDialog<String>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(title, style: const TextStyle(fontSize: 15)),
+        title: Text(title, style: TextStyle(fontSize: af(context, 15))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1359,13 +1360,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             if (help != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(help, style: const TextStyle(fontSize: 10)),
+                child: Text(help, style: TextStyle(fontSize: af(context, 10))),
               ),
             TextField(
               controller: c,
               maxLines: 8,
               minLines: 5,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: af(context, 13)),
               decoration: const InputDecoration(
                 isDense: true,
                 border: OutlineInputBorder(),
@@ -1402,7 +1403,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         title: Text(
           title,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: af(context, 15),
             fontWeight: FontWeight.bold,
             color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
@@ -1412,7 +1413,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           if (help != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-              child: Text(help, style: const TextStyle(fontSize: 10)),
+              child: Text(help, style: TextStyle(fontSize: af(context, 10))),
             ),
           ...children,
         ],
@@ -1428,10 +1429,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }) {
     return ListTile(
       dense: true,
-      title: Text(label, style: const TextStyle(fontSize: 14)),
+      title: Text(label, style: TextStyle(fontSize: af(context, 14))),
       subtitle: sub == null
           ? null
-          : Text(sub, style: const TextStyle(fontSize: 10)),
+          : Text(sub, style: TextStyle(fontSize: af(context, 10))),
       trailing: CupertinoSwitch(
         value: value,
         onChanged: _prefsLoaded ? onChanged : null,
@@ -1464,9 +1465,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(label, style: const TextStyle(fontSize: 15)),
+                Text(label, style: TextStyle(fontSize: af(context, 15))),
                 if (help != null)
-                  Text(help, style: const TextStyle(fontSize: 10)),
+                  Text(help, style: TextStyle(fontSize: af(context, 10))),
               ],
             ),
           ),
@@ -1478,7 +1479,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               buildCounter: AppTheme.noCounter,
               keyboardType:
                   numeric ? TextInputType.number : TextInputType.text,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: af(context, 13)),
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 isDense: true,
@@ -1493,7 +1494,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
           if (suffix != null) ...<Widget>[
             const SizedBox(width: 4),
-            Text(suffix, style: const TextStyle(fontSize: 13)),
+            Text(suffix, style: TextStyle(fontSize: af(context, 13))),
           ],
         ],
       ),
@@ -1515,7 +1516,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           onPressed: _busy
               ? null
               : () => _run(label, okMsg, failMsg, act, detail: detail),
-          child: Text(S.change, style: const TextStyle(fontSize: 12)),
+          child: Text(S.change, style: TextStyle(fontSize: af(context, 12))),
         ),
       ),
     );
@@ -1531,12 +1532,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           children: <Widget>[
             TextButton(
               onPressed: _busy ? null : onDelete,
-              child: Text(S.delete, style: const TextStyle(fontSize: 12)),
+              child: Text(S.delete, style: TextStyle(fontSize: af(context, 12))),
             ),
             const SizedBox(width: 6),
             ElevatedButton(
               onPressed: _busy ? null : onAdd,
-              child: Text(S.add, style: const TextStyle(fontSize: 12)),
+              child: Text(S.add, style: TextStyle(fontSize: af(context, 12))),
             ),
           ],
         ),
@@ -1553,7 +1554,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return showDialog<String>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(title, style: const TextStyle(fontSize: 15)),
+        title: Text(title, style: TextStyle(fontSize: af(context, 15))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1561,14 +1562,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             if (help != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(help, style: const TextStyle(fontSize: 10)),
+                child: Text(help, style: TextStyle(fontSize: af(context, 10))),
               ),
             TextField(
               controller: c,
               maxLength: AppTheme.maxLenGeneral,
               buildCounter: AppTheme.noCounter,
               autofocus: true,
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: af(context, 13)),
               decoration: InputDecoration(labelText: label, isDense: true),
             ),
           ],

@@ -340,7 +340,7 @@ void main() {
 
       for (int i = 0; i < ServerController.kMaxConsecutiveFailures - 1; i++) {
         sc.reportFailure('a', Exception('boom'));
-        now = now.add(const Duration(hours: 1)); 
+        now = now.add(const Duration(hours: 1));
       }
       expect(sc.isSuspended('a'), isFalse, reason: '第 9 次还不该挂起');
       sc.reportFailure('a', Exception('boom'));
@@ -628,7 +628,7 @@ void main() {
     });
   });
 
-  group('★ 服务器卡片：重试按钮 / 挂起芯片 / 失败文案', () {
+  group('★ 服务器卡片：重试按钮 / 失败文案', () {
     Future<void> pumpPage(WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);
       await tester.pumpWidget(GetMaterialApp(
@@ -638,7 +638,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
-    testWidgets('失败 → 出现「重试」按钮；可重试类**不**显示挂起芯片',
+    testWidgets('失败 → 出现「重试」按钮；卡片上**不再有**「已暂停重试」徽章',
         (WidgetTester tester) async {
       await pumpPage(tester);
       final ServerController sc = Get.find<ServerController>();
@@ -651,11 +651,11 @@ void main() {
       await tester.pump();
       expect(find.text('重试'), findsOneWidget);
       expect(find.text('已暂停重试'), findsNothing,
-          reason: 'unknown 类只退避，不挂起');
+          reason: '★ 第 77 轮：「已暂停重试」徽章已删除，挂起态只靠重试按钮表达');
       expect(find.textContaining('刷新失败'), findsOneWidget);
     });
 
-    testWidgets('鉴权失败 → 挂起芯片出现，且失败文案**没有双重前缀**',
+    testWidgets('鉴权失败 → 有「重试」按钮，且失败文案**没有双重前缀**',
         (WidgetTester tester) async {
       await pumpPage(tester);
       final ServerController sc = Get.find<ServerController>();
@@ -665,7 +665,8 @@ void main() {
       sc.reportAuthFailure('a', '账号或密码错误（HTTP 401）');
       await tester.pump();
 
-      expect(find.text('已暂停重试'), findsOneWidget);
+      expect(find.text('已暂停重试'), findsNothing,
+          reason: '★ 第 77 轮：「已暂停重试」徽章已删除');
       expect(find.text('重试'), findsOneWidget);
 
       expect(find.textContaining('刷新失败：登录失败'), findsNothing);
@@ -681,7 +682,8 @@ void main() {
 
       sc.reportFailureKind('a', ConnErrorKind.missingConfig, '未填写账号或密码');
       await tester.pump();
-      expect(find.text('已暂停重试'), findsOneWidget);
+      expect(find.text('已暂停重试'), findsNothing,
+          reason: '★ 第 77 轮：「已暂停重试」徽章已删除');
       expect(find.textContaining('刷新失败：未填写账号'), findsNothing);
       expect(find.text('未填写账号或密码'), findsOneWidget);
     });

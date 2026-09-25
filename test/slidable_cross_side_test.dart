@@ -6,7 +6,7 @@ import 'package:torrent_manager/widgets/slidable_tile.dart';
 const Key kContent = Key('content');
 const double kRowWidth = 300;
 const double kExtentRatio = 0.5;
-const double kExtent = kRowWidth * kExtentRatio; 
+const double kExtent = kRowWidth * kExtentRatio;
 
 const double kResistance = SlidableTile.defaultDragResistance;
 

@@ -46,7 +46,7 @@ void main() {
       final t = s.connectionTarget(viaLan: false);
       expect(t.host, 'nas.example.com');
       expect(t.port, 8080);
-      expect(t, same(s)); 
+      expect(t, same(s));
     });
 
     test('connectionTarget(viaLan:true) 把 host/port 换成局域网', () {

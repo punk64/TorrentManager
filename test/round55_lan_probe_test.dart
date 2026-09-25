@@ -64,7 +64,7 @@ void main() {
     await _pump();
     expect(probes, 1, reason: '前置：第一次切过去探了一次');
 
-    sc.select(s); 
+    sc.select(s);
     await _pump();
     expect(probes, 1,
         reason: '★ 结论只在**本次会话内**复用 —— 撤销的是"落盘记忆"，'
@@ -132,7 +132,7 @@ void main() {
     int probes = 0;
     LanDetector.overrideProbe = (_) async {
       probes++;
-      return true; 
+      return true;
     };
     final ServerController sc = ServerController();
     final ServerData s = _lanSrv();
@@ -175,7 +175,7 @@ void main() {
     int probes = 0;
     LanDetector.overrideProbe = (_) async {
       probes++;
-      await gate.future; 
+      await gate.future;
       return true;
     };
     final ServerController sc = ServerController();
@@ -215,7 +215,7 @@ void main() {
     int probes = 0;
     LanDetector.overrideProbe = (_) async {
       probes++;
-      return false; 
+      return false;
     };
     final ServerController sc = ServerController();
     final ServerData s = _lanSrv();

@@ -1,4 +1,3 @@
-// ⚠️ get 也导出 `Response`，与 dio 的撞名 ⇒ dio 整体加别名。
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -32,8 +31,6 @@ ServerData _qbSrv() => ServerData(
       lanPort: 8080,
     );
 
-/// 造一个**不发真请求**的 TrMethod：按调用顺序返回预设的 `config-dir`
-/// （身份校验先取公网、再取局域网）。条目为 null 时令 RPC 失败。
 TrMethod _fakeTr(List<String?> dirs) {
   int i = 0;
   final dio.Dio d = dio.Dio(dio.BaseOptions(baseUrl: 'http://placeholder'));

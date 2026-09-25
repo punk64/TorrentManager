@@ -85,17 +85,18 @@ class S {
 
   static String get chartLabelDownload => L.t('下载');
   static String get chartLabelUpload => L.t('上传');
+  static String get limitLabel => L.t('限制');
   static String get chartLabelVerifying => L.t('校验');
-  static String get chartLabelServersOnline => L.t('服务器在线');
+
+  static String get chartLabelServersOnline => L.t('服务器');
 
   static String get statsLabelPeers => L.t('当前连接');
-  static String get statsLabelTotalDl => L.t('累计下载');
-  static String get statsLabelTotalUl => L.t('累计上传');
 
-  /// 环形图中心「种子」小标签
+  static String get statsLabelTotalDl => L.t('总下载');
+  static String get statsLabelTotalUl => L.t('总上传');
+
   static String get statsLabelTorrents => L.t('种子');
 
-  // ↓ 第 67 轮第二期新增：状态筛选（主状态 label / 细分态 label / 面板文案）
   static String get filterAll => L.pick('全部', 'All');
   static String get filterDownloading => L.pick('下载中', 'Downloading');
   static String get filterSeeding => L.pick('做种中', 'Seeding');
@@ -149,8 +150,8 @@ class S {
   static String get stMissingFiles => L.t('数据文件丢失');
   static String get stNotWorking => L.t('未工作');
 
-  static String get stPaused => L.t('已暂停');
-  static String get stUnknownState => L.t('未知状态');
+  static String get stPaused => L.t('暂停');
+  static String get stUnknownState => L.t('未知');
 
   static String get stVerifyColon => L.t('校验状态: ');
 
@@ -200,7 +201,6 @@ class S {
   static String get actResume => L.t('继续');
   static String get actPause => L.t('暂停');
 
-  /// 种子列表多选栏（图标 + 文字按钮）用；自带英文，不进英文映射表
   static String get actStart => L.pick('开始', 'Start');
 
   static String get actMultiSelect => L.pick('多选', 'Select');
@@ -306,6 +306,8 @@ class S {
 
   static String get srvHideDomain => L.t('隐藏服务器域名');
   static String get srvHidePort => L.t('屏蔽端口');
+  static String get srvHidePrivacy => L.t('隐藏地址与端口');
+  static String get srvShowPrivacy => L.t('显示地址与端口');
   static String get srvConfirmDeleteTitle => L.t('确认删除');
   static String get srvConfirmDeleteBody => L.t('您确定要删除该服务器吗？');
 
@@ -462,6 +464,8 @@ class S {
   static String get btExportFailPrefix => L.t('exportTorrent 导出种子失败: ');
 
   static String get logTitle => L.t('日志');
+  static String get logSystem => L.t('系统日志');
+  static String get logServer => L.t('服务器日志');
   static String get logRefreshed => L.t('已刷新日志');
   static String get logQbFetchFailed => L.t('getQbLogs 获取日志失败: ');
   static String get noTraffic => L.t('暂无流量活动');
@@ -583,7 +587,6 @@ class S {
 
   static String get checkingUpdate => L.t('正在检查更新…');
 
-  // ↓↓↓ 更新弹窗（V0.2.12 起：可看发布页、可直接下载安装）↓↓↓
   static String updateFoundTitle(String v) =>
       L.pick('发现新版本 V$v', 'New version V$v found');
 
@@ -771,8 +774,6 @@ class S {
   static String renamedToast(String name) =>
       "${L.t('已重命名为「')}$name${L.pick('」', '"')}";
 
-  // ===== 第 67 轮 · 编辑能力（第三期） =====
-
   static String get editModify => L.pick('修改', 'Apply');
   static String get editSaved => L.pick('已保存', ' saved');
   static String get editMinutesUnit => L.pick('分钟', 'min');
@@ -805,13 +806,10 @@ class S {
       L.pick('批量时各种子标签不同，默认追加更安全',
           'Safer for batch: seeds usually have different tags');
 
-  /// 卡片展开区：进详情入口（D9 方案 C 之后进详情的**唯一**入口）。
   static String get viewDetail => L.pick('查看详情', 'Open details');
 
-  /// 卡片展开区：只读信息段标题。
   static String get editSectionInfo => L.pick('信息', 'Info');
 
-  /// 分区卡片标题（2026-09-24 用户整改：每栏目给边界感）。
   static String get editSectionBasic => L.pick('常规', 'General');
   static String get editSectionLimits => L.pick('限速与分享', 'Limits & sharing');
   static String get editSectionStats => L.pick('实时状态', 'Live status');
@@ -827,7 +825,7 @@ class S {
 
   static String get fieldRemaining => L.pick('剩余量', 'Remaining');
   static String get fieldWasted => L.pick('已损坏/浪费', 'Wasted');
-  // 注意：`fieldFreeSpace`（"剩余空间:"）在上方已存在且带冒号，是另一处的用法 ⇒ 另起名。
+
   static String get fieldDiskFree => L.pick('剩余磁盘', 'Free space');
   static String get fieldPrivate => L.pick('私有种子', 'Private');
   static String get fieldHealth => L.pick('健康度', 'Health');
@@ -839,8 +837,6 @@ class S {
   static String get fieldComment => L.pick('注释', 'Comment');
   static String get fieldErrorReason => L.pick('错误原因', 'Error');
 
-  /// 概览 Tab **两列网格**专用短标签（v3 布局定稿：半格 label 仅 50dp，
-  /// 「已损坏/浪费」「Tracker 状态」这类长文案会被省略号截掉 ⇒ 各配一版短的）。
   static String get fieldWastedShort => L.pick('损坏/浪费', 'Wasted');
   static String get fieldTrackerShort => L.pick('Tracker', 'Tracker');
   static String get fieldRatioLimitShort => L.pick('分享上限', 'Ratio');
@@ -872,11 +868,9 @@ class S {
       L.pick('当前 qBittorrent 版本不支持导出种子（需 4.5+）',
           'Export needs qBittorrent 4.5 or newer');
 
-  // ---- 多选栏批量入口（4.2 / D8）----
   static String get batchEdit => L.pick('批量编辑', 'Batch edit');
   static String get fieldHash => L.pick('哈希', 'Hash');
 
-  /// 删除弹窗：勾了「同时删除本地文件」时的红字警告（不可逆）。
   static String deleteFilesWarn(int count) => L.pick(
       '⚠ 将连同 $count 个种子的本地文件一起删除，不可恢复！',
       '⚠ Local files of $count torrents will also be deleted. Cannot be undone!');
@@ -884,11 +878,9 @@ class S {
   static String get copyMagnet => L.pick('复制磁力链', 'Copy magnets');
   static String get batchExport => L.pick('批量导出', 'Export all');
 
-  /// 批量复制成功提示（哈希/磁力链共用）。
   static String batchCopied(int n, String what) =>
       L.pick('已复制 $n 条$what', 'Copied $n $what');
 
-  /// 一批里一个磁力链都没有（TR 侧常发生：老版本不给 magnetLink）。
   static String get batchNoMagnet => L.pick('没有可复制的磁力链', 'No magnet links');
   static String get batchExportNothing =>
       L.pick('没有成功导出的种子', 'Nothing exported');

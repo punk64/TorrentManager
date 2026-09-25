@@ -50,7 +50,6 @@ ServerData _srv(String id) => ServerData(
       password: 'adminadmin',
     );
 
-/// 判断某个文本是否出现在任何 RichText（含 Text.rich 的 TextSpan）中。
 bool _richHas(WidgetTester tester, String s) => tester
     .widgetList(find.byType(RichText))
     .any((Widget w) => (w as RichText).text.toPlainText().contains(s));
@@ -153,8 +152,6 @@ void main() {
         ),
       ));
 
-      // 数值与标签都在 Text.rich 内（find.text 匹配不到 TextSpan），
-      // 因此按 RichText 的明文判断是否渲染出来。
       expect(_richHas(tester, S.statsLabelPeers), isTrue);
       expect(_richHas(tester, S.statsLabelTotalDl), isTrue);
       expect(_richHas(tester, S.statsLabelTotalUl), isTrue);
@@ -162,12 +159,15 @@ void main() {
       expect(_richHas(tester, Formatter.setSize(totals.downloadedBytes)),
           isTrue);
       expect(_richHas(tester, Formatter.setSize(totals.uploadedBytes)), isTrue);
-      // 速度右侧的「下载 / 上传」标签
-      expect(_richHas(tester, S.chartLabelDownload), isTrue);
-      expect(_richHas(tester, S.chartLabelUpload), isTrue);
-      // 图例含「错误」项（不再按 0 过滤）
+
+      expect(find.text(Formatter.setSpeed(1024)), findsOneWidget);
+      expect(find.text(Formatter.setSpeed(2048)), findsOneWidget);
+
       expect(_richHas(tester, S.error), isTrue);
-      expect(find.byKey(const Key('stats-status-donut')), findsOneWidget);
+
+      expect(find.byKey(const Key('stats-status-donut')), findsNothing);
+      expect(_richHas(tester, S.chartLabelServersOnline), isTrue);
+      expect(_richHas(tester, '2/3'), isTrue);
       expect(tester.takeException(), isNull);
     });
 

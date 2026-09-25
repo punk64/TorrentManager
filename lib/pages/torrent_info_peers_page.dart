@@ -11,6 +11,7 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../utils/ip_geo.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class TorrentInfoPeersPage extends StatefulWidget {
   const TorrentInfoPeersPage({super.key});
@@ -127,17 +128,17 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text(S.peerBanTitle, style: const TextStyle(fontSize: 14)),
+        title: Text(S.peerBanTitle, style: TextStyle(fontSize: af(context, 14))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(S.peerBanConfirm(target),
-                style: const TextStyle(fontSize: 12)),
+                style: TextStyle(fontSize: af(context, 12))),
             const SizedBox(height: 6),
             Text(
               S.peerBanNoDuration,
-              style: TextStyle(fontSize: 10, color: Theme.of(ctx).hintColor),
+              style: TextStyle(fontSize: af(context, 10), color: Theme.of(ctx).hintColor),
             ),
           ],
         ),
@@ -184,14 +185,14 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
             children: <Widget>[
               Text(
                 S.fieldSort,
-                style: TextStyle(fontSize: 10, color: cs.outline),
+                style: TextStyle(fontSize: af(context, 10), color: cs.outline),
               ),
               for (final PeerSort s in PeerSort.values)
                 Tooltip(
                   message: _sortTip(s),
                   child: ChoiceChip(
                     label:
-                        Text(_sortLabel(s), style: const TextStyle(fontSize: 11)),
+                        Text(_sortLabel(s), style: TextStyle(fontSize: af(context, 11))),
                     selected: _sort == s,
                     visualDensity: VisualDensity.compact,
                     onSelected: (_) => setState(() => _sort = s),
@@ -205,7 +206,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                     size: 14,
                   ),
 
-                  label: Text(_dirLabel, style: const TextStyle(fontSize: 11)),
+                  label: Text(_dirLabel, style: TextStyle(fontSize: af(context, 11))),
                   visualDensity: VisualDensity.compact,
                   onPressed: () => setState(() => _asc = !_asc),
                 ),
@@ -218,8 +219,8 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
           child: Obx(() {
             final List<Map<String, dynamic>> peers = _sorted;
             if (peers.isEmpty) {
-              return const Center(
-                child: Text('暂无 Peer 数据', style: TextStyle(fontSize: 12)),
+              return Center(
+                child: Text('暂无 Peer 数据', style: TextStyle(fontSize: af(context, 12))),
               );
             }
 
@@ -258,7 +259,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: <Widget>[
 
-                            Text(ip, style: const TextStyle(fontSize: 12)),
+                            Text(ip, style: TextStyle(fontSize: af(context, 12))),
                             _verBadge(cs, ip.contains(':') ? 'IPv6' : 'IPv4'),
                           ],
                         ),
@@ -281,7 +282,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                                 client,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 10),
+                                style: TextStyle(fontSize: af(context, 10)),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -303,7 +304,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.right,
                                   style:
-                                      TextStyle(fontSize: 9, color: cs.outline),
+                                      TextStyle(fontSize: af(context, 9), color: cs.outline),
                                 ),
                               ),
                           ],
@@ -319,7 +320,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                                 ' · ${Formatter.setProgress(progress)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 10),
+                                style: TextStyle(fontSize: af(context, 10)),
                               ),
                             ),
                             if (isQb) ...<Widget>[
@@ -332,7 +333,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.right,
                                   style:
-                                      TextStyle(fontSize: 9, color: cs.outline),
+                                      TextStyle(fontSize: af(context, 9), color: cs.outline),
                                 ),
                               ),
                             ],
@@ -359,7 +360,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 9, color: cs.outline, height: 1.15),
+        style: TextStyle(fontSize: af(context, 9), color: cs.outline, height: 1.15),
       ),
     );
   }

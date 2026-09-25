@@ -51,7 +51,7 @@ void main() {
       expect(ServerCapabilities.qbCanSetTags('2.11.4'), isTrue);
       expect(ServerCapabilities.qbCanSetTags('2.11.3'), isFalse);
       expect(ServerCapabilities.qbCanSetTags('2.8.11'), isFalse);
-      // 版本探测失败 ⇒ 乐观放行，靠 404 自适应兜底（不能因为探测失败就禁用功能）。
+
       expect(ServerCapabilities.qbCanSetTags(''), isTrue);
       expect(ServerCapabilities.qbCanSetTags('', unknownAs: false), isFalse);
     });
@@ -189,7 +189,7 @@ void main() {
 
       final Finder btn = find.text(S.editModify);
       expect(btn, findsOneWidget);
-      // 初始与 initial 一致 ⇒ 按钮不可用
+
       expect(tester.widget<FilledButton>(find.ancestor(
           of: btn, matching: find.byType(FilledButton))).enabled, isFalse);
 
@@ -213,7 +213,7 @@ void main() {
             value: false,
             onChanged: (bool v) async {
               asked = v;
-              return false; // 服务端失败
+              return false;
             },
           ),
         ),
@@ -222,7 +222,7 @@ void main() {
       await tester.tap(find.byType(Switch));
       await tester.pumpAndSettle();
       expect(asked, isTrue);
-      // 失败 ⇒ 回到 false（不回弹就会出现"开着但没生效"）
+
       expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
     });
   });
@@ -264,7 +264,7 @@ void main() {
       expect(src.contains('cap.sequentialDownload'), isTrue,
           reason: 'V6：顺序下载按版本显示');
       expect(src.contains('cap.superSeeding'), isTrue);
-      // 逐种子提交 ⇒ 才能统计"哪些成功哪些失败"
+
       expect(src.contains('for (final String h in widget.hashes)'), isTrue);
       expect(src.contains('failed.add(name)'), isTrue);
     });

@@ -148,7 +148,7 @@ class LocalStore {
         decoded is List<dynamic> ? decoded : <dynamic>[decoded];
     final List<ServerData> out = <ServerData>[];
     for (final dynamic e in rows) {
-      if (e is! Map) continue; 
+      if (e is! Map) continue;
       try {
         out.add(ServerData.fromJson(Map<String, dynamic>.from(e)));
       } catch (_) {

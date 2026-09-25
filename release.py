@@ -105,6 +105,31 @@ def die(msg: str, code: int = 1):
     sys.exit(code)
 
 
+def pause_before_exit(code: int = 0) -> None:
+    """跑完停住等按键，窗口不会一闪而过。
+
+    双击 .py / 在终端里直接跑时，脚本一结束窗口就关，几屏构建输出根本来不及看；
+    这里统一在退出前等一次回车。两种情况下**不**停：
+      - 传了 `--no-pause`（自动化 / CI）；
+      - stdin 不是 tty（管道、重定向，`python release.py < /dev/null` 等）。
+
+    [code] 只影响提示语，不改变退出码。
+    """
+    if '--no-pause' in sys.argv:
+        return
+    try:
+        if sys.stdin is None or not sys.stdin.isatty():
+            return
+    except Exception:
+        return
+    try:
+        log('')
+        log('— 按回车键关闭窗口…（加 --no-pause 可直接退出，退出码 %d）' % code)
+        input()
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
 # ── 读 local.properties ─────────────────────────────────────────────────────
 def read_local_props() -> dict:
     """读 `android/local.properties` → {键: 值}。
@@ -719,6 +744,8 @@ def main() -> int:
                     help='把本次构建记入该文件（也可用环境变量 TM_LOG）')
     ap.add_argument('--abi', action='append', choices=ABIS, metavar='ABI',
                     help='出哪些架构（可重复；默认只出 %s）' % DEFAULT_ABIS[0])
+    ap.add_argument('--no-pause', action='store_true',
+                    help='跑完直接退出，不等按键（自动化 / CI 用；双击运行时别加）')
     args = ap.parse_args()
 
     abis = args.abi if args.abi else list(DEFAULT_ABIS)
@@ -832,4 +859,9 @@ if __name__ == '__main__':
         sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
-    sys.exit(main())
+    try:
+        _code = main()
+    except SystemExit as e:                # die() 走的是 sys.exit，也要能停住
+        _code = e.code if isinstance(e.code, int) else (0 if e.code is None else 1)
+    pause_before_exit(_code)
+    sys.exit(_code)

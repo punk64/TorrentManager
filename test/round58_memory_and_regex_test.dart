@@ -60,7 +60,7 @@ void main() {
     test('E2 ★ 总量超限 → 按整台淘汰，且当前服务器豁免', () {
       final ServerController sc = ServerController();
       sc.servers.assignAll(<ServerData>[_srv('a'), _srv('b'), _srv('c')]);
-      sc.current.value = _srv('a'); 
+      sc.current.value = _srv('a');
 
       sc.cacheTorrents('a', _many('a', 20000));
       sc.cacheTorrents('b', _many('b', 20000));
@@ -68,7 +68,7 @@ void main() {
       expect(sc.hasAnyCache('a'), isTrue);
       expect(sc.hasAnyCache('b'), isTrue);
 
-      sc.cacheTorrents('c', _many('c', 20000)); 
+      sc.cacheTorrents('c', _many('c', 20000));
       expect(sc.hasAnyCache('a'), isTrue,
           reason: '★ 当前正在看的服务器**豁免淘汰** —— 否则用户眼前的数据被抽走');
       expect(sc.hasAnyCache('b'), isFalse,
@@ -81,7 +81,7 @@ void main() {
         for (int i = 0; i < 7; i++) _srv('s$i'),
       ];
       sc.servers.assignAll(all);
-      sc.current.value = all.first; 
+      sc.current.value = all.first;
 
       for (int i = 0; i < 7; i++) {
         sc.cacheTorrents('s$i', _many('s$i-', 10));

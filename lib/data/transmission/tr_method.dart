@@ -275,10 +275,6 @@ class TrMethod {
   Future<void> _sessionSet(Map<String, dynamic> fields) =>
       _rpc('session-set', fields);
 
-  /// `session-get`。
-  ///
-  /// [baseUrl] 非空时**只针对该地址**发这一次请求（不改动实例当前路由），
-  /// 供「局域网地址后面是不是同一台 TR」这类一次性探测使用。
   Future<Map<String, dynamic>> sessionGet({String? baseUrl}) =>
       _rpc('session-get', <String, dynamic>{}, baseUrl: baseUrl);
 
@@ -287,15 +283,6 @@ class TrMethod {
   Future<void> blocklistUpdate() =>
       _rpc('blocklist-update', <String, dynamic>{});
 
-  /// V7：查某个路径所在磁盘的剩余空间（**字节**）。
-  ///
-  /// ★ TR **4.0 起** torrent-get 的 `downloadDirFreeSpace` 已废弃，官方替代是
-  ///   `free-space` 方法（入参 `{path}` → 返回 `{path, size-bytes}`）。判据 =
-  ///   `ServerCapabilities.trHasFreeSpaceMethod`；调用方按
-  ///   `capabilities.freeSpaceMethod` 决定「走这个方法」还是「继续读字段」。
-  ///
-  /// 失败（老版本不认该方法 / 路径不存在 / 权限不足）一律返回 null ——
-  /// 「剩余空间」只是详情页的一行展示，取不到就不显示，**绝不因此让详情页报错**。
   Future<int?> freeSpace(String path) async {
     if (path.trim().isEmpty) return null;
     try {
@@ -310,11 +297,6 @@ class TrMethod {
     }
   }
 
-  /// `torrent-get` 的字段清单（列表轮询用）。
-  ///
-  /// ★ 这里曾经有**两份**几乎一样的清单（带 ids / 不带 ids 两个分支），
-  /// 加字段时漏掉一份就会出现「进详情有值、回列表没值」的鬼故事
-  /// ⇒ 收敛成一份常量，完整版只是它 + `trackerStats`。
   static const List<String> _trFields = <String>[
     'id',
     'hashString',
@@ -341,13 +323,11 @@ class TrMethod {
     'comment',
     'magnetLink',
 
-    // ↓ 第 67 轮新增：限速与「是否启用限速」必须成对，
-    //   否则 UI 永远显示"不限"（TR 不接受只改值不改开关）。
     'downloadLimit',
     'downloadLimited',
     'uploadLimit',
     'uploadLimited',
-    // 「忽略全局限速」——注意它不是 qB 语义的"强制做种"。
+
     'honorsSessionLimits',
     'bandwidthPriority',
     'isPrivate',
@@ -362,7 +342,6 @@ class TrMethod {
     'seedIdleLimit',
   ];
 
-  /// 完整清单（详情页 / 定点刷新用）：比轮询多带 `trackerStats`（数组较大）。
   static const List<String> _trFieldsFull = <String>[
     ..._trFields,
     'trackerStats',
@@ -520,26 +499,9 @@ class TrMethod {
     };
   }
 
-  // ── Tracker 增删改（两套并存，按 TR 版本选） ─────────────────────────────
-  //
-  // ★ V5：TR 4.0 起 torrent-set 的 `trackerAdd` / `trackerRemove` /
-  //   `trackerReplace` 三个字段**已废弃**（4.x 仍能用，故不是立刻失效），
-  //   官方替代是 `trackerList`（整份 URL 字符串数组）。
-  //   判据 = `ServerCapabilities.trCanTrackerList`（4.0.0）；**调用方按
-  //   `capabilities.trackerList` 选下面哪一组**，别在这里自己猜版本。
-  //
-  //   两者差别：旧三件套按 **tracker id** 操作，`trackerList` 只能**整份写回**
-  //   ⇒ 增删改都得「读回全量 → 改 → 写回」，故拆成三个方法。
-  //   ⚠️ 下标口径：`trackerList` 与 `torrent-get` 的 `trackerStats` **同序**
-  //     ⇒ 页面拿 trackerStats 里的 id 当下标即可，两边可以互推。
-
   Future<void> addTracker(List<int> ids, String tracker) =>
       addTrackers(ids, <String>[tracker]);
 
-  /// 一次追加多个 tracker（**旧接口**路径）：`trackerAdd` 本就是数组。
-  ///
-  /// ★ 顺手修一处既有偏差：页面把「多行输入」整体当一个字符串发过来，TR 会把它
-  ///   当成**一个含换行的畸形 URL**（而不是多个 tracker）。这里统一按行拆开成组发送。
   Future<void> addTrackers(List<int> ids, List<String> trackers) =>
       _torrentSet(ids, <String, dynamic>{'trackerAdd': trackers});
 
@@ -551,7 +513,6 @@ class TrMethod {
         'trackerReplace': <dynamic>[trackerId, newTracker],
       });
 
-  /// 读某个种子的 `trackerList`（TR 4.0+）。取不到返回空表。
   Future<List<String>> trackerList(int id) async {
     final Map<String, dynamic> res = await _rpc('torrent-get', <String, dynamic>{
       'ids': <int>[id],
@@ -564,20 +525,17 @@ class TrMethod {
         <String>[];
   }
 
-  /// 整份写回 `trackerList`（TR 4.0+）。**整体替换** ⇒ 调用方必须传全量。
   Future<void> setTrackerList(int id, List<String> urls) => _torrentSet(
         <int>[id],
         <String, dynamic>{'trackerList': urls},
       );
 
-  /// V5 新增（TR 4.0+）：读回全量后 append。
   Future<void> addTrackersByList(int id, List<String> trackers) async {
     final List<String> cur = await trackerList(id);
     cur.addAll(trackers);
     await setTrackerList(id, cur);
   }
 
-  /// V5 删除（TR 4.0+）：按 `trackerStats` 的下标删。
   Future<void> removeTrackerByIndex(int id, int index) async {
     final List<String> cur = await trackerList(id);
     if (index < 0 || index >= cur.length) return;
@@ -585,7 +543,6 @@ class TrMethod {
     await setTrackerList(id, cur);
   }
 
-  /// V5 修改（TR 4.0+）：按 `trackerStats` 的下标替换。
   Future<void> editTrackerByIndex(int id, int index, String newUrl) async {
     final List<String> cur = await trackerList(id);
     if (index < 0 || index >= cur.length) return;
@@ -609,9 +566,6 @@ class TrMethod {
   Future<void> setServerRatio(List<int> ids, double ratio) =>
       setShareLimits(ids, seedRatioLimit: ratio, seedRatioMode: 1);
 
-  /// 做种闲置时限（**分钟**）：`seedIdleMode` 0 = 跟随全局 / 1 = 单种子 / 2 = 不限。
-  ///
-  /// 与 [setShareLimits] 是一对：TR 把「分享率」和「闲置时限」分成两套字段。
   Future<void> setIdleLimit(
     List<int> ids, {
     int? seedIdleLimit,
@@ -671,20 +625,12 @@ class TrMethod {
   Future<void> setTempPathEnabled(bool enabled) =>
       _sessionSet(<String, dynamic>{'incomplete-dir-enabled': enabled});
 
-  /// 「是否遵守全局限速」（`honorsSessionLimits`）。
-  ///
-  /// ⚠️ 这里**不是** qB 语义的「强制做种」：Transmission 没有强制开始的概念，
-  /// 旧实现把它叫 `setForceStart` 会让 UI 误以为是强制做种开关
-  /// ⇒ 第 67 轮改名，UI 侧 TR 不显示「强制做种」。
-  /// 传 `false` = 忽略全局限速（全速跑），传 `true` = 遵守。
   Future<void> setHonorsSessionLimits(List<int> ids, bool value) =>
       _torrentSet(ids, <String, dynamic>{'honorsSessionLimits': value});
 
-  /// 队列位置（`torrent-set` 的 `queuePosition`，原先只查不写）。
   Future<void> setQueuePosition(List<int> ids, int position) =>
       _torrentSet(ids, <String, dynamic>{'queuePosition': position});
 
-  /// 带宽优先级：TR 用 -1 低 / 0 正常 / 1 高。
   Future<void> setBandwidthPriority(List<int> ids, int priority) =>
       _torrentSet(ids, <String, dynamic>{'bandwidthPriority': priority});
 

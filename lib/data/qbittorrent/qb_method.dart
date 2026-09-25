@@ -9,6 +9,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 import '../dio/log_interceptor.dart';
 import '../dio/redirect_interceptor.dart';
 import '../../utils/app_log.dart';
+import '../../utils/net_error.dart';
 import '../models/qb_ip_filter.dart';
 import '../models/qb_log.dart';
 import '../models/server_data.dart';
@@ -21,10 +22,6 @@ class QbMethod {
 
   final Map<String, String> probedVersion = <String, String>{};
 
-  /// ★ 第 67 轮新增：`app/webapiVersion` 的探测缓存（如 `2.11.4`）。
-  ///
-  /// 能力判定（`ServerCapabilities`）**必须用接口版本而不是应用主版本**：
-  /// `torrents/setTags` 要 WebAPI ≥ 2.11.4（qB 5.1），用主版本 ≥5 判断会在 4.6 上误判。
   final Map<String, String> probedApiVersion = <String, String>{};
 
   int _routeGen = 0;
@@ -116,7 +113,7 @@ class QbMethod {
       if (r.statusCode == 200 && raw.isNotEmpty) {
         _apiV5 = isApiV5Version(raw);
         _apiProbeServerId = s.id;
-        // 顺带把接口版本取回来（很轻，且与上面这次探测同属一次建连）。
+
         final String api = await _probeText('/api/v2/app/webapiVersion');
         if (api.trim().isNotEmpty) probedApiVersion[s.id] = api.trim();
       }
@@ -277,12 +274,18 @@ class QbMethod {
 
   String? lastLoginError;
 
+  Object? lastLoginErrorRaw;
+
+  ConnErrorKind? lastLoginKind;
+
   bool lastLoginBanned = false;
 
   bool lastLoginMissingCreds = false;
 
   void _resetLoginResult() {
     lastLoginError = null;
+    lastLoginErrorRaw = null;
+    lastLoginKind = null;
     lastLoginBanned = false;
     lastLoginMissingCreds = false;
   }
@@ -359,7 +362,15 @@ class QbMethod {
             scope: target.logScope);
         return false;
       }
-    } catch (_) {
+    } catch (e) {
+
+      lastLoginErrorRaw = e;
+      lastLoginKind = NetError.classify(e);
+      lastLoginError = NetError.describe(e);
+      AppLog.instance.net(
+        'qBittorrent 探测失败（${lastLoginKind?.name ?? 'unknown'}）：$lastLoginError',
+        scope: target.logScope,
+      );
     }
 
     if (gen != _routeGen) {

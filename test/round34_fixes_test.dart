@@ -175,7 +175,7 @@ void main() {
 
   test('④ 超长文本仍上限封顶（避免几百 KB 的日志条目）', () {
     final String des = NetError.describe(Exception('E' * 5000));
-    expect(des.length, NetError.maxFallbackLength + 1); 
+    expect(des.length, NetError.maxFallbackLength + 1);
     expect(des, endsWith('…'));
   });
 

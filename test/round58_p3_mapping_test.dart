@@ -133,8 +133,9 @@ void main() {
               '而且界面上完全看不出来');
     });
 
-    test('H2 ★ TR 的 `stopped` → 「已暂停」（与 qB 的暂停态同一套说法）', () {
-      expect(Formatter.setStatus('stopped'), '已暂停',
+    test('H2 ★ TR 的 `stopped` → 「暂停」（与 qB 的暂停态同一套说法）', () {
+
+      expect(Formatter.setStatus('stopped'), '暂停',
           reason: '★ 此前映射到「未工作」/ Idle，而 qB 显示「暂停下载」—— '
               '同一件事两种说法，用户会以为 TR 那边是另一种状态');
 

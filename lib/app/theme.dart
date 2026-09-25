@@ -85,22 +85,22 @@ class AppTheme {
     const double r = 0.2126, g = 0.7152, b = 0.0722;
     final double ir = r * (1 - v), ig = g * (1 - v), ib = b * (1 - v);
     return ColorFilter.matrix(<double>[
-      ir + v, ig, ib, 0, 0, 
-      ir, ig + v, ib, 0, 0, 
-      ir, ig, ib + v, 0, 0, 
-      0, 0, 0, 1, 0, 
+      ir + v, ig, ib, 0, 0,
+      ir, ig + v, ib, 0, 0,
+      ir, ig, ib + v, 0, 0,
+      0, 0, 0, 1, 0,
     ]);
   }
 
   static const List<Color> seedColors = <Color>[
-    Color(0xFF1565C0), 
-    Color(0xFF2E7D32), 
-    Color(0xFFC62828), 
-    Color(0xFF6A1B9A), 
-    Color(0xFFEF6C00), 
-    Color(0xFF00838F), 
-    Color(0xFF282828), 
-    Color(0xFF464646), 
+    Color(0xFF1565C0),
+    Color(0xFF2E7D32),
+    Color(0xFFC62828),
+    Color(0xFF6A1B9A),
+    Color(0xFFEF6C00),
+    Color(0xFF00838F),
+    Color(0xFF282828),
+    Color(0xFF464646),
   ];
 
   static Color contrastOn(Color background) =>

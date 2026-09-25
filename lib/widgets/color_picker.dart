@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../app/adaptive.dart';
 
 class ColorPicker extends StatefulWidget {
   const ColorPicker({
@@ -76,7 +77,7 @@ class _ColorPickerState extends State<ColorPicker> {
           child: Text(
             '#${(((c.r * 255).round() << 16) | ((c.g * 255).round() << 8) | (c.b * 255).round()).toRadixString(16).padLeft(6, '0').toUpperCase()}',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: af(context, 12),
               color: ThemeData.estimateBrightnessForColor(c) == Brightness.dark
                   ? Colors.white
                   : Colors.black,
@@ -137,7 +138,7 @@ class _ColorPickerState extends State<ColorPicker> {
       children: <Widget>[
         SizedBox(
           width: 14,
-          child: Text(label, style: const TextStyle(fontSize: 11)),
+          child: Text(label, style: TextStyle(fontSize: af(context, 11))),
         ),
         Expanded(
           child: Stack(
@@ -172,7 +173,7 @@ class _ColorPickerState extends State<ColorPicker> {
           child: Text(
             value.toStringAsFixed(label == 'H' ? 0 : 2),
             textAlign: TextAlign.end,
-            style: const TextStyle(fontSize: 10),
+            style: TextStyle(fontSize: af(context, 10)),
           ),
         ),
       ],

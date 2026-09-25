@@ -48,7 +48,7 @@ class AppToast {
     final Color fg =
         isError ? cs.onError : (isWarning ? onWarningSurface : cs.onInverseSurface);
 
-    final int gen = ++_gen; 
+    final int gen = ++_gen;
     _timer?.cancel();
 
     _current.value = _ToastData(text: message, bg: bg, fg: fg);
@@ -61,7 +61,7 @@ class AppToast {
     }
 
     _timer = Timer(duration ?? defaultDuration, () {
-      if (gen != _gen) return; 
+      if (gen != _gen) return;
       hide();
     });
   }

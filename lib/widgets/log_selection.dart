@@ -8,6 +8,7 @@ import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
+import '../app/adaptive.dart';
 
 class LogSelectionAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -36,13 +37,13 @@ class LogSelectionAppBar extends StatelessWidget
         onPressed: onClose,
       ),
       title:
-          Text(S.logSelectedCount(count), style: const TextStyle(fontSize: 15)),
+          Text(S.logSelectedCount(count), style: TextStyle(fontSize: af(context, 15))),
       actions: <Widget>[
         TextButton(
           onPressed: onToggleAll,
           child: Text(
             allSelected ? S.cancel : S.logSelectAll,
-            style: const TextStyle(fontSize: 13),
+            style: TextStyle(fontSize: af(context, 13)),
           ),
         ),
         const SizedBox(width: 4),
@@ -98,7 +99,7 @@ class LogSelectionBar extends StatelessWidget {
                     icon: const Icon(Icons.content_copy, size: 18),
                     label: Text(
                       S.logCopyCount(count),
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: af(context, 12)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -109,7 +110,7 @@ class LogSelectionBar extends StatelessWidget {
                     icon: const Icon(Icons.save_alt, size: 18),
                     label: Text(
                       S.logExportSelected,
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: af(context, 12)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -134,17 +135,17 @@ class LogSelectionBar extends StatelessWidget {
                     PopupMenuItem<String>(
                       value: 'invert',
                       child: Text(S.logInvert,
-                          style: const TextStyle(fontSize: 13)),
+                          style: TextStyle(fontSize: af(context, 13))),
                     ),
                     PopupMenuItem<String>(
                       value: 'all',
                       child: Text(exportAllLabel ?? S.logExportAll,
-                          style: const TextStyle(fontSize: 13)),
+                          style: TextStyle(fontSize: af(context, 13))),
                     ),
                     PopupMenuItem<String>(
                       value: 'clear',
                       child: Text(S.logClear,
-                          style: const TextStyle(fontSize: 13)),
+                          style: TextStyle(fontSize: af(context, 13))),
                     ),
                   ],
                 ),
@@ -196,7 +197,7 @@ Future<bool> exportLogLines(
   }
   final String name0 = name.trim();
   try {
-    // 弹系统「另存为」：用户自己挑位置，文件就在他选的目录里（不再落到看不见的 Android/data）
+
     final String? saved = await FileExport.saveTextAs(
       fileName: name0,
       content: LogExport.buildText(lines),
@@ -227,7 +228,7 @@ Future<String?> askExportFileName(BuildContext context, String suggested) {
   return showDialog<String>(
     context: context,
     builder: (BuildContext ctx) => AlertDialog(
-      title: const Text('导出日志', style: TextStyle(fontSize: 14)),
+      title: Text('导出日志', style: TextStyle(fontSize: af(context, 14))),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -236,7 +237,7 @@ Future<String?> askExportFileName(BuildContext context, String suggested) {
             autofocus: true,
             maxLength: AppTheme.maxLenGeneral,
             buildCounter: AppTheme.noCounter,
-            style: const TextStyle(fontSize: 13),
+            style: TextStyle(fontSize: af(context, 13)),
             decoration: InputDecoration(
               labelText: S.logExportFileName,
               isDense: true,
@@ -245,7 +246,7 @@ Future<String?> askExportFileName(BuildContext context, String suggested) {
           const SizedBox(height: 6),
           Text(
             '下一步会弹出系统「另存为」，请选择保存位置（如「下载」文件夹）',
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: af(context, 10), color: Colors.grey.shade600),
           ),
         ],
       ),

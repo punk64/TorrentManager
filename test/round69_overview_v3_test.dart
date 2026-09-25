@@ -16,10 +16,6 @@ import 'package:torrent_manager/pages/torrent_info_overview_page.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 
-/// 第 69 轮：概览 Tab **紧凑布局 v3 补做**（2026-09-24 17:30 拍板、此前漏做）。
-///
-/// v3 三条排布规则：只读短值两列网格 / 长内容独占一行 / 可编辑 4 项 2×2 + 开关同一行 chip。
-/// 外加审查台账 **B3**：窄屏与大字体必须回退单列。
 const Torrent t = Torrent(
   hash: 'h1',
   name: '示例种子',
@@ -42,6 +38,19 @@ ServerData _qb() => ServerData(
       host: '1.2.3.4',
       port: 8080,
     );
+
+int _nextDecl(String src, int from) {
+  final RegExp re = RegExp(
+      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
+  final Match? m = re.firstMatch(src.substring(from + 1));
+  return m == null ? src.length : from + 1 + m.start;
+}
+
+int _nextTopDecl(String src, int from) {
+  final RegExp re = RegExp(r'\nclass\s+[A-Z]');
+  final Match? m = re.firstMatch(src.substring(from + 1));
+  return m == null ? src.length : from + 1 + m.start;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -84,13 +93,11 @@ void main() {
         File('lib/widgets/torrent_edit_fields.dart').readAsStringSync();
 
     test('两列网格骨架齐备（共享组件 ReadonlyKvGrid/EditLayout）', () {
-      // ★ 第 70 轮起：v3 的判据与两列排布**抽成共享组件**（概览 Tab 与卡片展开区共用），
-      //   所以这几条断言从"本页私有方法"改指组件。
+
       expect(ef.contains('class ReadonlyKvGrid'), isTrue);
       expect(ef.contains('static bool gridOkOf('), isTrue);
       expect(src.contains('ReadonlyKvGrid(pairs:'), isTrue);
-      // ★ 2026-09-24 用户整改：2×2 撤回 ⇒ 本页 `_editGrid` 已拆除，
-      //   改由分区卡片（EditSectionCard）直排 4 个整行。
+
       expect(src.contains('Widget _editGrid('), isFalse,
           reason: '4 项改回独占一行后不再需要 2×2 装配方法');
       expect(ef.contains('class EditSectionCard'), isTrue,
@@ -102,13 +109,13 @@ void main() {
       final String body = ef.substring(i, i + 200);
       expect(body.contains('>= 360'), isTrue);
       expect(body.contains('1.15'), isTrue);
-      // 回退分支必须真的走整行，否则判据是摆设（现在在共享组件里）。
+
       expect(ef.contains('if (!EditLayout.gridOkOf(context))'), isTrue);
       expect(ef.contains('fullCell(p[0], p[1])'), isTrue);
     });
 
     test('旧的单列 _remainingRow 已拆除（剩余量并入组①、元数据进条件块）', () {
-      // 断言"方法定义没了"而不是"字里没有这个词" —— 注释里保留新旧对照是好事。
+
       expect(src.contains('_remainingRow(Torrent'), isFalse,
           reason: 'v3：剩余量移进组①两列网格、元数据进度移进末尾条件块');
       expect(src.contains('bool _metaIncomplete('), isTrue);
@@ -131,10 +138,8 @@ void main() {
           reason: 'v3 排布规则第 4 条：4 个开关压成同一行');
       expect(ef.contains('class EditSwitchChip'), isTrue);
 
-      // ★ v3 实现要点 1：必须 SizedBox + FittedBox ——
-      //   Transform.scale 只缩视觉不缩布局，Switch 布局宽仍约 59dp 会挤爆文字。
       final int i = ef.indexOf('class EditSwitchChip');
-      final String chip = ef.substring(i, ef.indexOf('/// B 类 · 只读值'));
+      final String chip = ef.substring(i, _nextTopDecl(ef, i));
       expect(chip.contains('FittedBox'), isTrue);
       expect(chip.contains('Transform.scale'), isFalse);
       expect(chip.contains('width: 26'), isTrue);
@@ -142,13 +147,13 @@ void main() {
     });
 
     test('★ 可编辑 4 项**各独占一行**（2026-09-24 用户整改：撤回 2×2）', () {
-      // 组件层仍保留 compact 能力（将来可能复用），但本页**不再传 compact**。
+
       expect(ef.contains('this.compact = false'), isTrue);
       expect(src.contains('_dlLimitField(t, compact: true)'), isFalse);
       expect(src.contains('_upLimitField(t, compact: true)'), isFalse);
       expect(src.contains('_ratioLimitField(t, compact: true)'), isFalse);
       expect(src.contains('_seedTimeField(t, compact: true)'), isFalse);
-      // 顺序：下载限速 / 上传限速 / 分享率上限 / 做种时限（各项独占一行）。
+
       final int dl = src.indexOf('_dlLimitField(t)');
       final int up = src.indexOf('_upLimitField(t)');
       final int ratio = src.indexOf('_ratioLimitField(t)');
@@ -157,7 +162,7 @@ void main() {
       expect(up, greaterThan(dl));
       expect(ratio, greaterThan(up));
       expect(seed, greaterThan(ratio));
-      // 独行后 label 有 88dp ⇒ 用**完整文案**「分享率上限」（用户口径），不再用短文案。
+
       expect(src.contains('label: S.fieldRatioLimit,'), isTrue);
     });
 
@@ -243,7 +248,7 @@ void main() {
       expect(yUp, greaterThan(yDl), reason: '下载限速独占一行');
       expect(yRatio, greaterThan(yUp), reason: '上传限速独占一行');
       expect(ySeed, greaterThan(yRatio), reason: '分享率上限独占一行');
-      // ★ 独行后 label 恢复完整文案（用户口径「文本以这个为准」）。
+
       expect(find.text(S.fieldRatioLimitShort), findsNothing);
     });
 

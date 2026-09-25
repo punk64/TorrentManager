@@ -9,37 +9,26 @@ import '../utils/app_update.dart';
 import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../utils/update_check.dart';
+import '../app/adaptive.dart';
 
-/// 弹窗内部的阶段。
 enum UpdatePhase {
-  /// 正在请求远端。
+
   checking,
 
-  /// 结果已出来（有更新 / 已是最新 / 无可用安装包）。
   result,
 
-  /// 正在下载安装包。
   downloading,
 
-  /// 已下载完，正在唤起安装器。
   installing,
 
-  /// 下载或安装失败。
   failed,
 }
 
-/// 检查更新 / 更新安装的统一弹窗。
-///
-/// 两个入口共用它：
-/// - 抽屉里手动点「检查更新」：不传 [initial]，弹窗自己发一次请求；
-/// - 启动时自动检查：把已经拿到的 [initial] 传进来，避免重复请求。
 class UpdateDialog extends StatefulWidget {
   const UpdateDialog({super.key, this.initial, this.fetcher});
 
-  /// 已经查到的结果；为 null 时弹窗自己查。
   final UpdateCheckResult? initial;
 
-  /// 仅供测试注入的取数函数。
   final UpdateFetcher? fetcher;
 
   static Future<void> open(
@@ -146,7 +135,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     if (!mounted) return;
 
     if (code == UpdateInstallCode.ok) {
-      // 系统安装器已接管，弹窗可以退场了。
+
       Navigator.of(context).pop();
       return;
     }
@@ -158,7 +147,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
       return;
     }
 
-    // 平台没实现安装通道：降级为浏览器打开发布页。
     await _openRelease();
     if (!mounted) return;
     setState(() {
@@ -182,7 +170,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final ColorScheme cs = theme.colorScheme;
 
     return AlertDialog(
-      title: Text(_title, style: const TextStyle(fontSize: 14)),
+      title: Text(_title, style: TextStyle(fontSize: af(context, 14))),
       content: SingleChildScrollView(child: _body(cs)),
       actions: _actions,
     );
@@ -229,10 +217,10 @@ class _UpdateDialogState extends State<UpdateDialog> {
           Text(
             '${Formatter.setSize(_received)} / ${Formatter.setSize(_total)}'
             '（${(v * 100).round()}%）',
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: af(context, 12)),
           ),
           const SizedBox(height: 6),
-          Text(S.updateDownloadHint, style: const TextStyle(fontSize: 10)),
+          Text(S.updateDownloadHint, style: TextStyle(fontSize: af(context, 10))),
         ],
       );
     }
@@ -246,7 +234,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
           const Center(child: SizedBox(width: 22, height: 22,
               child: CircularProgressIndicator(strokeWidth: 2))),
           const SizedBox(height: 8),
-          Text(S.updateInstallingHint, style: const TextStyle(fontSize: 12)),
+          Text(S.updateInstallingHint, style: TextStyle(fontSize: af(context, 12))),
         ],
       );
     }
@@ -256,14 +244,13 @@ class _UpdateDialogState extends State<UpdateDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(_error ?? '', style: const TextStyle(fontSize: 12, height: 1.5)),
+          Text(_error ?? '', style: TextStyle(fontSize: af(context, 12), height: 1.5)),
           const SizedBox(height: 10),
           _linkRow(cs),
         ],
       );
     }
 
-    // 结果态
     if (!r.hasUpdate) {
       final bool noPkg = r.reason != null && r.latest != null;
       return Column(
@@ -272,7 +259,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         children: <Widget>[
           Text(
             noPkg ? S.updateNoInstallerBody(r.latest!) : S.appVersionText(),
-            style: const TextStyle(fontSize: 12, height: 1.5),
+            style: TextStyle(fontSize: af(context, 12), height: 1.5),
           ),
           const SizedBox(height: 10),
           _linkRow(cs),
@@ -288,23 +275,23 @@ class _UpdateDialogState extends State<UpdateDialog> {
         Text(
           '${S.appVersionText()}'
           '${apk != null && apk.size > 0 ? ' · ${Formatter.setSize(apk.size)}' : ''}',
-          style: const TextStyle(fontSize: 12),
+          style: TextStyle(fontSize: af(context, 12)),
         ),
         if (apk != null) ...<Widget>[
           const SizedBox(height: 6),
           Text(apk.name,
-              style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+              style: TextStyle(fontSize: af(context, 11), fontFamily: 'monospace')),
         ],
         if (r.notes != null && r.notes!.trim().isNotEmpty) ...<Widget>[
           const SizedBox(height: 10),
           Text(S.updateNotes,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+              style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
           ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 120),
             child: SingleChildScrollView(
               child: Text(_clipNotes(r.notes!),
-                  style: const TextStyle(fontSize: 11, height: 1.5)),
+                  style: TextStyle(fontSize: af(context, 11), height: 1.5)),
             ),
           ),
         ],
@@ -332,7 +319,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
               child: Text(
                 _releaseUrl.replaceFirst(RegExp(r'^https?://'), ''),
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: af(context, 11),
                   color: cs.primary,
                   decoration: TextDecoration.underline,
                 ),

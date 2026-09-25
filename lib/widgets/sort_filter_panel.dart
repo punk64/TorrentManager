@@ -5,6 +5,7 @@ import '../app/theme.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/strings.dart';
 import 'bottom_panel.dart';
+import '../app/adaptive.dart';
 
 Future<void> showSortFilterPanel([BuildContext? context]) =>
     BottomPanel.show<void>(
@@ -164,11 +165,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  /// 状态筛选（D1 两级）：主状态**按钮网格** + 选中后的细分 chip 行。
-  /// 顶部横条已按 D2 收敛 ⇒ 这里是选状态的唯一入口。
-  ///
-  /// ★ 2026-09-24 用户整改：主状态原来是**下拉菜单**（展开才知道有哪几种），
-  ///   现改为与「排序方式」同形态的 **4 列按钮网格 —— 单选**（点即生效）。
   Widget _statusSection() {
     return _card(
       title: S.filterStatusTitle,
@@ -199,9 +195,6 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
     );
   }
 
-  /// 主状态按钮网格（4 列等宽、**单选**）—— 与「排序方式」同形态。
-  ///
-  /// ★ 单选由 `ctrl.setFilter` 保证（枚举值天然互斥），点即生效、无需确认。
   Widget _statusGrid() {
     const int cols = _PanelMetrics.cols;
     const double spacing = _PanelMetrics.gap;
@@ -358,8 +351,8 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                   children: <Widget>[
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: af(context, 14),
                         fontWeight: FontWeight.w600,
                       ),
                     ),

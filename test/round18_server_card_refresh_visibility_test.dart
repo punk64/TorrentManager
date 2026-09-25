@@ -83,8 +83,8 @@ ServerController createControllers(Dio dio) {
 void installTwoServers(ServerController sc, Dio dio) {
   sc.qbFactory = () => QbMethod(dio: dio);
   sc.servers.assignAll(<ServerData>[
-    qbSrv('a', '10.0.0.1'), 
-    qbSrv('b', '10.0.0.2'), 
+    qbSrv('a', '10.0.0.1'),
+    qbSrv('b', '10.0.0.2'),
   ]);
   sc.current.value = sc.servers.first;
 }

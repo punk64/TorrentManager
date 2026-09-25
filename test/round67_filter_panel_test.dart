@@ -30,7 +30,6 @@ Torrent _t(String hash, String state, {double progress = 0.5}) => Torrent(
       ratio: 0,
     );
 
-/// TR 侧 rawState 是 status 数字串（与 fromTr 一致）。
 Torrent _tr(String hash, int status, String state) => Torrent(
       hash: hash,
       name: 'n-$hash',
@@ -53,7 +52,7 @@ void main() {
       expect(TorrentFilter.queued.matches(_t('a', 'queuedDL')), isTrue);
       expect(TorrentFilter.checking.matches(_t('b', 'checkingUP')), isTrue);
       expect(TorrentFilter.error.matches(_t('c', 'missingFiles')), isTrue);
-      // 与相邻主状态不互相污染
+
       expect(TorrentFilter.paused.matches(_t('a', 'queuedDL')), isFalse);
       expect(TorrentFilter.queued.matches(_t('b', 'checkingUP')), isFalse);
     });
@@ -78,7 +77,7 @@ void main() {
       expect(opts, contains('forcedDL'));
       expect(opts, contains('metaDL'));
       expect(opts, contains('forcedMetaDL'));
-      // TR 的数字串绝不能出现在 qB 表里
+
       expect(opts, isNot(contains('4')));
     });
 
@@ -116,7 +115,7 @@ void main() {
       expect(tc.subStates, isEmpty, reason: '细分依附主状态，换主状态必须清空');
 
       tc.toggleSubState('stalledDL');
-      tc.setFilter(TorrentFilter.downloading); // 同一主状态 ⇒ 不清
+      tc.setFilter(TorrentFilter.downloading);
       expect(tc.subStates, <String>['stalledDL']);
     });
   });
@@ -153,7 +152,7 @@ void main() {
       expect(tc.visibleItems.map((Torrent t) => t.hash).toList(),
           <String>['b', 'c']);
 
-      tc.toggleSubState('stalledDL'); // 再点一次取消
+      tc.toggleSubState('stalledDL');
       expect(tc.visibleItems.single.hash, 'c');
     });
 
@@ -162,8 +161,8 @@ void main() {
       final TorrentController tc = TorrentController();
       tc.serverCtrl.current.value = _server('transmission');
       tc.debugSetItems(<Torrent>[
-        _tr('a', 3, 'queued'), // 排队下载
-        _tr('b', 5, 'queued'), // 排队做种
+        _tr('a', 3, 'queued'),
+        _tr('b', 5, 'queued'),
         _tr('c', 4, 'downloading'),
       ]);
       tc.setFilter(TorrentFilter.queued);
@@ -175,14 +174,14 @@ void main() {
       Get.put(ServerController());
       final TorrentController tc = TorrentController();
       tc.serverCtrl.current.value = _server('qbittorrent');
-      // 4.x 的数据：rawState 是老的 pausedDL / pausedUP
+
       tc.debugSetItems(<Torrent>[
         _t('old', 'pausedDL'),
         _t('new', 'stoppedDL'),
       ]);
       tc.setFilter(TorrentFilter.paused);
-      tc.toggleSubState('stoppedDL'); // chip 只有新名
-      // 用集合比较：visibleItems 走排序，同分种子顺序不保证。
+      tc.toggleSubState('stoppedDL');
+
       expect(tc.visibleItems.map((Torrent t) => t.hash).toSet(),
           <String>{'old', 'new'},
           reason: '5.0 把 pausedDL 改名为 stoppedDL ⇒ 匹配必须做归一');
@@ -235,7 +234,7 @@ void main() {
 
     test('筛选面板新增状态区，并挂在排序区之后', () {
       expect(panel.contains('_statusSection()'), isTrue);
-      // ★ 2026-09-24 用户整改：主状态**下拉菜单 → 按钮网格**（与「排序方式」同形态、单选）。
+
       expect(panel.contains('_statusGrid()'), isTrue);
       expect(panel.contains('_statusDropdown('), isFalse);
       expect(panel.contains('_subStateChips()'), isTrue);
