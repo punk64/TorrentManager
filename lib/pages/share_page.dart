@@ -58,7 +58,7 @@ class _SharePageState extends State<SharePage> {
       ),
       body: Obx(
         () => Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(af(context, 14)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -75,7 +75,7 @@ class _SharePageState extends State<SharePage> {
                     : '最近备份：${Formatter.setDate(sc.backupAt.value!.millisecondsSinceEpoch ~/ 1000)}',
                 style: TextStyle(fontSize: af(context, 10)),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: af(context, 10)),
 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -93,7 +93,7 @@ class _SharePageState extends State<SharePage> {
                     ),
                   ),
                   TextButton.icon(
-                    icon: const Icon(Icons.folder_open, size: 16),
+                    icon: Icon(Icons.folder_open, size: af(context, 16)),
                     label: Text('选择', style: TextStyle(fontSize: af(context, 11))),
                     onPressed: _busy ? null : () => sc.pickBackupDir(),
                   ),
@@ -106,7 +106,7 @@ class _SharePageState extends State<SharePage> {
                 style: TextStyle(fontSize: af(context, 10)),
               ),
 
-              const SizedBox(height: 10),
+              SizedBox(height: af(context, 10)),
               Expanded(
                 child: sc.servers.isEmpty
                     ? Center(
@@ -115,8 +115,8 @@ class _SharePageState extends State<SharePage> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              Image.asset('assets/images/empty.webp', width: 80),
-                              const SizedBox(height: 10),
+                              Image.asset('assets/images/empty.webp', width: af(context, 80)),
+                              SizedBox(height: af(context, 10)),
                               Text('尚未配置服务器',
                                   style: TextStyle(fontSize: af(context, 12))),
                             ],
@@ -134,8 +134,8 @@ class _SharePageState extends State<SharePage> {
                               s.isQbittorrent
                                   ? 'assets/images/qbittorrent.png'
                                   : 'assets/images/transmission.png',
-                              width: 26,
-                              height: 26,
+                              width: af(context, 26),
+                              height: af(context, 26),
                             ),
                             title: Text(s.name, style: TextStyle(fontSize: af(context, 12))),
                             subtitle: Text(
@@ -146,12 +146,12 @@ class _SharePageState extends State<SharePage> {
                         },
                       ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: af(context, 10)),
 
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  icon: const Icon(Icons.save, size: AppTheme.iconSize),
+                  icon: Icon(Icons.save, size: AppTheme.iconSize),
                   label: Text(_busy ? S.fieldUpdating : '保存备份到本机',
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: (_busy || sc.servers.isEmpty)
@@ -165,12 +165,12 @@ class _SharePageState extends State<SharePage> {
                           }),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
 
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.drive_file_move_outline,
+                  icon: Icon(Icons.drive_file_move_outline,
                       size: AppTheme.iconSize),
                   label: Text('导出备份副本到…',
                       style: TextStyle(fontSize: af(context, 12))),
@@ -183,11 +183,11 @@ class _SharePageState extends State<SharePage> {
                           }),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.restore, size: AppTheme.iconSize),
+                  icon: Icon(Icons.restore, size: AppTheme.iconSize),
                   label: Text('从本机备份恢复',
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: _busy
@@ -203,15 +203,15 @@ class _SharePageState extends State<SharePage> {
                           }),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
 
               Text(S.bkPortableHint,
                   style: TextStyle(fontSize: af(context, 10), height: 1.4)),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.enhanced_encryption,
+                  icon: Icon(Icons.enhanced_encryption,
                       size: AppTheme.iconSize),
                   label: Text(S.bkPortableExport,
                       style: TextStyle(fontSize: af(context, 12))),
@@ -232,11 +232,11 @@ class _SharePageState extends State<SharePage> {
                           }),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.lock_open, size: AppTheme.iconSize),
+                  icon: Icon(Icons.lock_open, size: AppTheme.iconSize),
                   label: Text(S.bkPortableImport,
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: _busy
@@ -262,13 +262,13 @@ class _SharePageState extends State<SharePage> {
                           }),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
 
               Row(
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.ios_share, size: AppTheme.iconSize),
+                      icon: Icon(Icons.ios_share, size: AppTheme.iconSize),
                       label: Text('导出 JSON',
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: sc.servers.isEmpty
@@ -287,10 +287,10 @@ class _SharePageState extends State<SharePage> {
                             },
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: af(context, 8)),
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.download, size: AppTheme.iconSize),
+                      icon: Icon(Icons.download, size: AppTheme.iconSize),
                       label: Text('导入 JSON',
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: _busy ? null : _importDialog,
@@ -299,7 +299,7 @@ class _SharePageState extends State<SharePage> {
                 ],
               ),
 
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
             ],
           ),
         ),
@@ -358,7 +358,7 @@ class _SharePageState extends State<SharePage> {
               S.bkJsonImportNote,
               style: TextStyle(fontSize: af(context, 11), height: 1.4),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             TextField(
               controller: input,
               maxLength: AppTheme.maxLenJson,
@@ -372,7 +372,7 @@ class _SharePageState extends State<SharePage> {
               ),
             ),
             TextButton.icon(
-              icon: const Icon(Icons.content_paste, size: AppTheme.iconSize),
+              icon: Icon(Icons.content_paste, size: AppTheme.iconSize),
               label: Text('从剪贴板粘贴',
                   style: TextStyle(fontSize: af(context, 12))),
               onPressed: () async {
@@ -464,7 +464,7 @@ class _PassphraseDialogState extends State<_PassphraseDialog> {
         children: <Widget>[
           Text(widget.body,
               style: TextStyle(fontSize: af(context, 11), height: 1.4)),
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           TextField(
             controller: _pass,
             obscureText: _obscure,
@@ -487,7 +487,7 @@ class _PassphraseDialogState extends State<_PassphraseDialog> {
             ),
           ),
           if (widget.withConfirm) ...<Widget>[
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             TextField(
               controller: _confirm,
               obscureText: _obscure,

@@ -76,7 +76,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       final CapabilitySet cap = _ctrl.capabilities;
 
       return ListView(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+        padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), af(context, 24)),
         children: <Widget>[
 
           Row(
@@ -92,7 +92,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.copy, size: AppTheme.iconSize),
+                icon: Icon(Icons.copy, size: AppTheme.iconSize),
                 tooltip: S.nameCopied,
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: t.name));
@@ -111,7 +111,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 _liveHeader(t, cs, checking: checking),
-                const SizedBox(height: 10),
+                SizedBox(height: af(context, 10)),
                 Row(
                   children: <Widget>[
                     Text('最近 3 分钟',
@@ -119,7 +119,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                             TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant)),
                     const Spacer(),
                     _legend('下载', SpeedSparkline.kDlColor),
-                    const SizedBox(width: 10),
+                    SizedBox(width: af(context, 10)),
                     _legend('上传', SpeedSparkline.kUlColor),
                   ],
                 ),
@@ -128,7 +128,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                   dl: List<double>.of(_ctrl.dlSamples),
                   ul: List<double>.of(_ctrl.ulSamples),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: af(context, 10)),
                 LinearProgressIndicator(
                   value: t.progress.clamp(0, 1),
                   minHeight: 6,
@@ -148,18 +148,18 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                         : cs.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: af(context, 8)),
                 Row(
                   children: <Widget>[
                     _statChip(
                         '连接', t.activePeers < 0 ? '-' : '${t.activePeers}', cs),
-                    const SizedBox(width: 8),
+                    SizedBox(width: af(context, 8)),
                     _statChip('做种', '${t.numComplete}', cs),
-                    const SizedBox(width: 8),
+                    SizedBox(width: af(context, 8)),
                     _statChip('下载', '${t.numIncomplete}', cs),
 
                     if (_ctrl.capabilities.isQb && t.availability > 0) ...<Widget>[
-                      const SizedBox(width: 8),
+                      SizedBox(width: af(context, 8)),
                       _statChip(
                         S.fieldHealth,
                         '${(t.availability * 100).toStringAsFixed(0)}%',
@@ -193,7 +193,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                     cap.sequentialDownload ||
                     cap.isQb ||
                     cap.superSeeding) ...<Widget>[
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   _switchGroup(t),
                 ],
               ],
@@ -336,11 +336,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
 
           if (_ctrl.capabilities.exportTorrent) ...<Widget>[
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.download, size: AppTheme.iconSize),
+                icon: Icon(Icons.download, size: AppTheme.iconSize),
                 label:
                     Text(S.btExportTorrent, style: TextStyle(fontSize: af(context, 11))),
                 onPressed: _busy ? null : () => _exportTorrent(t),
@@ -349,19 +349,19 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ],
 
           if (t.isError) ...<Widget>[
-            const SizedBox(height: 10),
+            SizedBox(height: af(context, 10)),
             _errorBanner(t, cs),
           ],
 
           if (_metaIncomplete(t)) ...<Widget>[
-            const SizedBox(height: 10),
+            SizedBox(height: af(context, 10)),
             _metadataBar(t),
           ],
 
           if (_draft.isNotEmpty) ...<Widget>[
             const Divider(height: 18),
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: af(context, 8)),
               child: Text(
                 S.editUnsavedHint,
                 style: TextStyle(fontSize: af(context, 10), color: Colors.deepOrange),
@@ -376,7 +376,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   Widget _liveHeader(Torrent t, ColorScheme cs, {required bool checking}) {
     final Color st = Formatter.setStatusColor(t.state, cs);
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), af(context, 10)),
       decoration: BoxDecoration(
         color: st.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -385,16 +385,16 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 38,
-            height: 38,
+            width: af(context, 38),
+            height: af(context, 38),
             decoration: BoxDecoration(color: st, shape: BoxShape.circle),
             child: Icon(
               Formatter.statusIcon(t.state),
-              size: 20,
+              size: af(context, 20),
               color: Colors.white,
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: af(context, 10)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,7 +466,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       );
 
   Widget _statChip(String label, String value, ColorScheme cs) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: EdgeInsets.symmetric(horizontal: af(context, 8), vertical: 3),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -491,7 +491,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(k, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -509,7 +509,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(k, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -520,10 +520,10 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             ),
           ),
           SizedBox(
-            height: 28,
-            width: 28,
+            height: af(context, 28),
+            width: af(context, 28),
             child: IconButton(
-              icon: const Icon(Icons.copy, size: 14),
+              icon: Icon(Icons.copy, size: af(context, 14)),
               tooltip: S.nameCopied,
               onPressed: () async {
 
@@ -542,7 +542,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     final String reason = (t.errorMessage ?? '').trim();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 10), af(context, 8)),
       decoration: BoxDecoration(
         color: cs.error.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -551,7 +551,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.error_outline, size: 16, color: cs.error),
+          Icon(Icons.error_outline, size: af(context, 16), color: cs.error),
           const SizedBox(width: 6),
           Expanded(
             child: Text(

@@ -30,6 +30,8 @@ void main() {
   });
 
   Future<void> pumpPage(WidgetTester tester, Widget page) async {
+    await tester.binding.setSurfaceSize(const Size(445, 985));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(GetMaterialApp(
       home: page,
       initialBinding: AppBinding(),

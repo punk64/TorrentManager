@@ -46,7 +46,7 @@ class ThemePreview extends StatelessWidget {
 
               child: IgnorePointer(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(af(context, 8)),
                   child: Container(
                     decoration: BoxDecoration(
 
@@ -54,7 +54,7 @@ class ThemePreview extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppTheme.radius),
                       border: Border.all(color: theme.dividerColor, width: 0.5),
                     ),
-                    padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
+                    padding: EdgeInsets.fromLTRB(af(context, 10), 2, af(context, 10), 2),
                     child: Column(
 
                       mainAxisSize: MainAxisSize.min,

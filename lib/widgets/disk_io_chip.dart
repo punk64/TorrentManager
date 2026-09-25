@@ -30,7 +30,7 @@ class DiskIoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(Icons.swap_vert, size: 11, color: tint),
+          Icon(Icons.swap_vert, size: af(context, 11), color: tint),
           const SizedBox(width: 3),
           Text(
 

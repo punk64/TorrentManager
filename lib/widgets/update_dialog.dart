@@ -198,9 +198,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final UpdateCheckResult? r = _r;
 
     if (_phase == UpdatePhase.checking || r == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Center(child: SizedBox(width: 22, height: 22,
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: af(context, 8)),
+        child: Center(child: SizedBox(width: af(context, 22), height: 22,
             child: CircularProgressIndicator(strokeWidth: 2))),
       );
     }
@@ -213,7 +213,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         children: <Widget>[
           const SizedBox(height: 4),
           LinearProgressIndicator(value: v.clamp(0.0, 1.0)),
-          const SizedBox(height: 8),
+          SizedBox(height: af(context, 8)),
           Text(
             '${Formatter.setSize(_received)} / ${Formatter.setSize(_total)}'
             '（${(v * 100).round()}%）',
@@ -231,9 +231,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const SizedBox(height: 4),
-          const Center(child: SizedBox(width: 22, height: 22,
+          Center(child: SizedBox(width: af(context, 22), height: 22,
               child: CircularProgressIndicator(strokeWidth: 2))),
-          const SizedBox(height: 8),
+          SizedBox(height: af(context, 8)),
           Text(S.updateInstallingHint, style: TextStyle(fontSize: af(context, 12))),
         ],
       );
@@ -245,7 +245,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(_error ?? '', style: TextStyle(fontSize: af(context, 12), height: 1.5)),
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           _linkRow(cs),
         ],
       );
@@ -261,7 +261,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             noPkg ? S.updateNoInstallerBody(r.latest!) : S.appVersionText(),
             style: TextStyle(fontSize: af(context, 12), height: 1.5),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           _linkRow(cs),
         ],
       );
@@ -283,7 +283,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
               style: TextStyle(fontSize: af(context, 11), fontFamily: 'monospace')),
         ],
         if (r.notes != null && r.notes!.trim().isNotEmpty) ...<Widget>[
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           Text(S.updateNotes,
               style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),
@@ -295,7 +295,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
           ),
         ],
-        const SizedBox(height: 10),
+        SizedBox(height: af(context, 10)),
         _linkRow(cs),
       ],
     );
@@ -313,7 +313,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(Icons.open_in_new, size: 13, color: cs.primary),
+            Icon(Icons.open_in_new, size: af(context, 13), color: cs.primary),
             const SizedBox(width: 4),
             Flexible(
               child: Text(

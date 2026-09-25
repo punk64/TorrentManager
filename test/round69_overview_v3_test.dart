@@ -142,8 +142,8 @@ void main() {
       final String chip = ef.substring(i, _nextTopDecl(ef, i));
       expect(chip.contains('FittedBox'), isTrue);
       expect(chip.contains('Transform.scale'), isFalse);
-      expect(chip.contains('width: 26'), isTrue);
-      expect(chip.contains('height: 15'), isTrue);
+      expect(chip.contains(RegExp(r'width:\s*(af\(context,\s*)?26')), isTrue);
+      expect(chip.contains(RegExp(r'height:\s*(af\(context,\s*)?15')), isTrue);
     });
 
     test('★ 可编辑 4 项**各独占一行**（2026-09-24 用户整改：撤回 2×2）', () {

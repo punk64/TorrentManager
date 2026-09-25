@@ -59,7 +59,7 @@ class BottomPanel {
               children: <Widget>[
                 if (title != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    padding: EdgeInsets.fromLTRB(af(context, 16), 0, af(context, 16), af(context, 8)),
                     child: Text(
                       title,
                       style: TextStyle(

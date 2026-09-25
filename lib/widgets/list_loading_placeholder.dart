@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../utils/app_log.dart';
+import '../app/adaptive.dart';
 
 class ListLoadingPlaceholder extends StatefulWidget {
   const ListLoadingPlaceholder({super.key});
@@ -43,18 +44,18 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
       return Column(
         children: <Widget>[
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 14), af(context, 16), af(context, 8)),
             child: Row(
               children: <Widget>[
                 SizedBox(
-                  width: 13,
-                  height: 13,
+                  width: af(context, 13),
+                  height: af(context, 13),
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: cs.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: af(context, 10)),
                 Expanded(
                   child: Text(
                     text,
@@ -67,7 +68,7 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: af(context, 12)),
               itemCount: 6,
               itemBuilder: (BuildContext _, int __) => const _SkeletonCard(),
             ),
@@ -86,8 +87,8 @@ class _SkeletonCard extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final Color base = cs.onSurface.withValues(alpha: 0.08);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(horizontal: af(context, 12), vertical: 5),
+      padding: EdgeInsets.all(af(context, 12)),
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -102,17 +103,17 @@ class _SkeletonCard extends StatelessWidget {
               color: base,
               borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
             ),
-            child: const SizedBox(width: double.infinity, height: 13),
+            child: SizedBox(width: double.infinity, height: af(context, 13)),
           ),
-          const SizedBox(height: 9),
+          SizedBox(height: af(context, 9)),
           DecoratedBox(
             decoration: BoxDecoration(
               color: base,
               borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
             ),
-            child: const SizedBox(width: 150, height: 11),
+            child: SizedBox(width: af(context, 150), height: 11),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           DecoratedBox(
             decoration: BoxDecoration(
               color: base,

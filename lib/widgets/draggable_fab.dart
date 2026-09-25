@@ -6,6 +6,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../app/adaptive.dart';
 
 class DraggableFab extends StatefulWidget {
   const DraggableFab({
@@ -288,7 +289,7 @@ class DraggableFabState extends State<DraggableFab>
                   behavior: HitTestBehavior.translucent,
                   onTap: _onTap,
                   child: SizedBox(
-                    width: 88,
+                    width: af(context, 88),
                     height: widget.height + 48,
                   ),
                 ),
@@ -324,7 +325,7 @@ class DraggableFabState extends State<DraggableFab>
                           width: w,
                           height: widget.height,
                           child: Icon(widget.icon,
-                              size: 24, color: cs.onPrimaryContainer),
+                              size: af(context, 24), color: cs.onPrimaryContainer),
                         ),
                       ),
                     );

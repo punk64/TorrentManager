@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../app/adaptive.dart';
 
 class AppToast {
   AppToast._();
@@ -179,9 +180,9 @@ class _ToastLayerState extends State<_ToastLayer>
               position: _slide,
               child: Container(
                 margin:
-                    const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    EdgeInsets.fromLTRB(af(context, 16), af(context, 12), af(context, 16), af(context, 16)),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    EdgeInsets.symmetric(horizontal: af(context, 16), vertical: af(context, 10)),
                 decoration: BoxDecoration(
                   color: view.bg,
                   borderRadius: BorderRadius.circular(AppTheme.radiusSheet),

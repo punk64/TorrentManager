@@ -395,7 +395,7 @@ class _LogQbPageState extends State<LogQbPage> {
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
+                    icon: Icon(Icons.refresh, size: AppTheme.iconSize),
                     tooltip: S.logRefreshed,
                     onPressed: () async {
                       await _load();
@@ -405,7 +405,7 @@ class _LogQbPageState extends State<LogQbPage> {
 
                   PopupMenuButton<String>(
                     tooltip: '',
-                    icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
+                    icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
                     onSelected: (String v) {
                       switch (v) {
                         case 'select':
@@ -469,7 +469,7 @@ class _LogQbPageState extends State<LogQbPage> {
 
   Widget _picker(ColorScheme cs) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 8), af(context, 12), af(context, 8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -477,7 +477,7 @@ class _LogQbPageState extends State<LogQbPage> {
             final List<ServerData> list = _servers;
             if (list.isEmpty) {
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: af(context, 8)),
                 child: Text(S.logNoServer,
                     style: TextStyle(fontSize: af(context, 11), color: cs.error)),
               );
@@ -495,16 +495,16 @@ class _LogQbPageState extends State<LogQbPage> {
 
               borderRadius: BorderRadius.circular(AppTheme.radius),
 
-              icon: const Padding(
+              icon: Padding(
                 padding: EdgeInsets.only(right: 4),
-                child: Icon(Icons.arrow_drop_down, size: 24),
+                child: Icon(Icons.arrow_drop_down, size: af(context, 24)),
               ),
               decoration: InputDecoration(
                 labelText: '服务器',
                 hintText: S.logPickServer,
                 isDense: true,
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    EdgeInsets.symmetric(horizontal: af(context, 12), vertical: af(context, 10)),
               ),
               items: list
                   .map((ServerData s) => DropdownMenuItem<String>(
@@ -584,10 +584,10 @@ class _LogQbPageState extends State<LogQbPage> {
 
   Widget _trBody(ColorScheme cs) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
+      padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), af(context, 16)),
       children: <Widget>[
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(af(context, 10)),
           decoration: BoxDecoration(
             color: cs.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -595,7 +595,7 @@ class _LogQbPageState extends State<LogQbPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Icon(Icons.info_outline, size: 15, color: cs.primary),
+              Icon(Icons.info_outline, size: af(context, 15), color: cs.primary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -625,7 +625,7 @@ class _LogQbPageState extends State<LogQbPage> {
     if (_serverId == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(af(context, 24)),
           child: Text(
             '${S.logPickServer}\n${S.logPickServerHint}',
             textAlign: TextAlign.center,
@@ -640,7 +640,7 @@ class _LogQbPageState extends State<LogQbPage> {
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(af(context, 24)),
           child: Text(
             _error!,
             textAlign: TextAlign.center,
@@ -677,8 +677,8 @@ class _LogQbPageState extends State<LogQbPage> {
 
           selectedTileColor: cs.primary.withValues(alpha: 0.08),
           leading: SizedBox(
-            width: 20,
-            height: 20,
+            width: af(context, 20),
+            height: af(context, 20),
             child: _selecting
                 ? Checkbox(
                     value: checked,
@@ -686,7 +686,7 @@ class _LogQbPageState extends State<LogQbPage> {
                     visualDensity: VisualDensity.compact,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   )
-                : Center(child: Icon(Icons.circle, size: 9, color: color)),
+                : Center(child: Icon(Icons.circle, size: af(context, 9), color: color)),
           ),
           title: Text(
 

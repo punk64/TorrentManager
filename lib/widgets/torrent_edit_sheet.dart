@@ -205,7 +205,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     final bool isQb = cap.isQb;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      padding: EdgeInsets.fromLTRB(af(context, 14), 0, af(context, 14), af(context, 14)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -276,7 +276,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
             ),
           ),
           if (_result != null) ...<Widget>[
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             Text(
               _result!,
               style: TextStyle(
@@ -285,7 +285,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
               ),
             ),
           ],
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           Row(
             children: <Widget>[
               Expanded(
@@ -297,14 +297,14 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
                       style: TextStyle(fontSize: af(context, 12))),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: af(context, 10)),
               Expanded(
                 flex: 2,
                 child: FilledButton.icon(
                   icon: _submitting
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
+                      ? SizedBox(
+                          width: af(context, 14),
+                          height: af(context, 14),
                           child: CircularProgressIndicator(strokeWidth: 1.8),
                         )
                       : const Icon(Icons.check, size: AppTheme.iconSize),

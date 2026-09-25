@@ -124,7 +124,7 @@ class _LogPageState extends State<LogPage> {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+                  padding: EdgeInsets.fromLTRB(af(context, 16), 0, af(context, 8), 0),
                   child: Row(
                     children: <Widget>[
                       Text(S.logFilterTitle,
@@ -159,7 +159,7 @@ class _LogPageState extends State<LogPage> {
                 const Divider(height: 1),
 
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+                  padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 8), af(context, 16), 2),
                   child: Row(
                     children: <Widget>[
                       Text(S.logFilterServerSection,
@@ -173,7 +173,7 @@ class _LogPageState extends State<LogPage> {
 
                 if (opts.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 14), af(context, 16), af(context, 14)),
                     child: Text(S.logFilterNoServer,
                         style: TextStyle(fontSize: af(context, 12), color: cs.outline)),
                   )
@@ -215,7 +215,7 @@ class _LogPageState extends State<LogPage> {
 
                 const Divider(height: 1),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 8), af(context, 16), 0),
                   child: Row(
                     children: <Widget>[
                       TextButton(
@@ -272,7 +272,7 @@ class _LogPageState extends State<LogPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.filter_alt, size: 11, color: cs.primary),
+              Icon(Icons.filter_alt, size: af(context, 11), color: cs.primary),
               const SizedBox(width: 3),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 180),
@@ -355,7 +355,7 @@ class _LogPageState extends State<LogPage> {
       builder: (BuildContext ctx) => AlertDialog(
         title: Row(
           children: <Widget>[
-            Icon(Icons.circle, size: 9, color: color),
+            Icon(Icons.circle, size: af(context, 9), color: color),
             const SizedBox(width: 6),
             Expanded(
               child: Text(label, style: TextStyle(fontSize: af(context, 14))),
@@ -371,7 +371,7 @@ class _LogPageState extends State<LogPage> {
                 _display(e.message),
                 style: TextStyle(fontSize: af(context, 12), height: 1.5),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: af(context, 10)),
               Text(
                 '${e.formattedTime} · ${e.source}',
                 style: TextStyle(fontSize: af(context, 10)),
@@ -446,7 +446,7 @@ class _LogPageState extends State<LogPage> {
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
+                    icon: Icon(Icons.refresh, size: AppTheme.iconSize),
                     tooltip: S.logRefreshed,
                     onPressed: () {
                       log.info(S.logRefreshed);
@@ -471,7 +471,7 @@ class _LogPageState extends State<LogPage> {
 
                   PopupMenuButton<String>(
                     tooltip: '',
-                    icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
+                    icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
                     onSelected: (String v) {
                       switch (v) {
                         case 'select':
@@ -524,8 +524,8 @@ class _LogPageState extends State<LogPage> {
                   sc.current.value?.isTransmission == true
                       ? 'assets/images/transmission.png'
                       : 'assets/images/qbittorrent.png',
-                  width: 22,
-                  height: 22,
+                  width: af(context, 22),
+                  height: af(context, 22),
                 ),
                 title: Text('服务器日志', style: TextStyle(fontSize: af(context, 12))),
                 subtitle: Text(
@@ -537,7 +537,7 @@ class _LogPageState extends State<LogPage> {
                   style: TextStyle(fontSize: af(context, 10)),
                 ),
                 trailing:
-                    const Icon(Icons.chevron_right, size: AppTheme.iconSize),
+                    Icon(Icons.chevron_right, size: AppTheme.iconSize),
 
                 onTap: () => Get.toNamed(Routes.logQb,
                     arguments: sc.current.value),
@@ -546,7 +546,7 @@ class _LogPageState extends State<LogPage> {
             const Divider(height: 1),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 3),
+              padding: EdgeInsets.fromLTRB(af(context, 14), af(context, 10), af(context, 14), 3),
               child: Row(
                 children: <Widget>[
                   Text('应用日志', style: TextStyle(fontSize: af(context, 11))),
@@ -572,7 +572,7 @@ class _LogPageState extends State<LogPage> {
 
                 if (log.entries.isEmpty) {
                   return Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: EdgeInsets.all(af(context, 24)),
                     child: Center(
                       child: Text(
                         '暂无日志记录。应用内的操作提示、网络请求与异常'
@@ -586,7 +586,7 @@ class _LogPageState extends State<LogPage> {
 
                 if (rows.isEmpty) {
                   return Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.all(af(context, 24)),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -596,7 +596,7 @@ class _LogPageState extends State<LogPage> {
                             style: TextStyle(fontSize: af(context, 12)),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: af(context, 8)),
                           TextButton(
                             onPressed: _resetFilter,
                             child: Text(
@@ -626,8 +626,8 @@ class _LogPageState extends State<LogPage> {
 
                       selectedTileColor: cs.primary.withValues(alpha: 0.08),
                       leading: SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: af(context, 20),
+                        height: af(context, 20),
                         child: _selecting
                             ? Checkbox(
                                 value: checked,
@@ -637,7 +637,7 @@ class _LogPageState extends State<LogPage> {
                                     MaterialTapTargetSize.shrinkWrap,
                               )
                             : Center(
-                                child: Icon(Icons.circle, size: 9, color: c),
+                                child: Icon(Icons.circle, size: af(context, 9), color: c),
                               ),
                       ),
                       title: Text(

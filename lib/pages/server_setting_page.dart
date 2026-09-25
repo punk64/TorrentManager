@@ -404,7 +404,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         title: Text(name.isEmpty ? '服务器设置' : '$name · 服务器设置'),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
+            icon: Icon(Icons.refresh, size: AppTheme.iconSize),
             tooltip: S.fieldUpdating,
 
             onPressed: () async {
@@ -424,12 +424,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         onTick: _tick,
         enabled: !_busy,
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: EdgeInsets.only(bottom: af(context, 24)),
           children: <Widget>[
 
             if (_server == null)
               Padding(
-                padding: const EdgeInsets.all(28),
+                padding: EdgeInsets.all(af(context, 28)),
                 child: Center(
                   child: Text(S.noServer,
                       style: TextStyle(fontSize: af(context, 12))),
@@ -532,7 +532,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         children: <Widget>[
           if (_categories.isEmpty)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
               child: Text('未分类', style: TextStyle(fontSize: af(context, 12))),
             ),
           Wrap(
@@ -600,7 +600,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         children: <Widget>[
           if (_tags.isEmpty)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
               child: Text('无标签', style: TextStyle(fontSize: af(context, 12))),
             ),
           Wrap(
@@ -887,7 +887,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             detail: '地址 ${_blocklistUrl.text.trim()}',
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+            padding: EdgeInsets.fromLTRB(af(context, 16), 2, af(context, 16), 6),
             child: Text(
               _prefsLoaded
                   ? '当前屏蔽 ${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
@@ -944,12 +944,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _banAddRow() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 0, af(context, 16), 0),
       child: Row(
         children: <Widget>[
           Expanded(
             child: SizedBox(
-              height: 36,
+              height: af(context, 36),
               child: TextField(
                 controller: _banInput,
                 enabled: _prefsLoaded,
@@ -962,18 +962,18 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                   hintStyle: TextStyle(fontSize: af(context, 11.5)),
                   border: OutlineInputBorder(),
                   contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+                      EdgeInsets.symmetric(horizontal: af(context, 8), vertical: af(context, 9)),
                 ),
                 onSubmitted: (_) => _addBanEntry(),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: af(context, 8)),
           ElevatedButton(
             onPressed: (_busy || !_prefsLoaded) ? null : _addBanEntry,
             style: ElevatedButton.styleFrom(
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
             ),
             child: Text('添加', style: TextStyle(fontSize: af(context, 12))),
           ),
@@ -984,7 +984,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _banSaveRow() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 12, 2),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 6, af(context, 12), 2),
       child: Row(
         children: <Widget>[
           Expanded(
@@ -1016,7 +1016,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _banListHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 8, 2),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 0, af(context, 8), 2),
       child: Row(
         children: <Widget>[
           Expanded(
@@ -1043,7 +1043,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     if (!_prefsLoaded) {
       return <Widget>[
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
           child: Text('未读取到服务器设置', style: TextStyle(fontSize: af(context, 12))),
         ),
       ];
@@ -1052,7 +1052,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     if (list.isEmpty) {
       return <Widget>[
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
           child: Text('名单为空', style: TextStyle(fontSize: af(context, 12))),
         ),
       ];
@@ -1067,7 +1067,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 4),
+            padding: EdgeInsets.only(left: af(context, 8), bottom: 4),
             child: TextButton(
               onPressed: () => setState(() => _banShowAll = true),
               style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
@@ -1125,7 +1125,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   Widget _banRow(int index, String ip) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 4, 2),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 2, 4, 2),
       child: Row(
         children: <Widget>[
           Expanded(
@@ -1166,7 +1166,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                   children: <Widget>[
                     if (_geoLoading.contains(ip)) ...<Widget>[
                       SizedBox(
-                        width: 9,
+                        width: af(context, 9),
                         height: 9,
                         child: CircularProgressIndicator(
                             strokeWidth: 1.4, color: cs.onSurfaceVariant),
@@ -1188,13 +1188,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 17),
+            icon: Icon(Icons.edit_outlined, size: af(context, 17)),
             visualDensity: VisualDensity.compact,
             tooltip: '编辑',
             onPressed: _busy ? null : () => _editBanEntry(index, ip),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, size: 17),
+            icon: Icon(Icons.delete_outline, size: af(context, 17)),
             visualDensity: VisualDensity.compact,
             tooltip: '删除',
             onPressed: _busy ? null : () => _removeBanEntry(index, ip),
@@ -1325,12 +1325,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   Widget _prefsErrorNotice() {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 10), af(context, 16), 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Icon(Icons.error_outline, size: AppTheme.iconSize, color: cs.error),
-          const SizedBox(width: 8),
+          SizedBox(width: af(context, 8)),
           Expanded(
             child: Text(
               '没能读取这台服务器的设置，下面的数字与开关暂不可信'
@@ -1359,7 +1359,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           children: <Widget>[
             if (help != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: af(context, 8)),
                 child: Text(help, style: TextStyle(fontSize: af(context, 10))),
               ),
             TextField(
@@ -1408,11 +1408,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
-        childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+        childrenPadding: EdgeInsets.only(left: af(context, 8), right: af(context, 8), bottom: af(context, 8)),
         children: <Widget>[
           if (help != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              padding: EdgeInsets.fromLTRB(af(context, 12), 0, af(context, 12), 6),
               child: Text(help, style: TextStyle(fontSize: af(context, 10))),
             ),
           ...children,
@@ -1456,7 +1456,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     String? prefKey,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 4, af(context, 16), 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
@@ -1472,7 +1472,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
           ),
           SizedBox(
-            width: 92,
+            width: af(context, 92),
             child: TextField(
               controller: c,
               maxLength: AppTheme.maxLenGeneral,
@@ -1511,7 +1511,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
-        padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+        padding: EdgeInsets.only(right: af(context, 12), top: 4, bottom: 4),
         child: ElevatedButton(
           onPressed: _busy
               ? null
@@ -1526,7 +1526,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
-        padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+        padding: EdgeInsets.only(right: af(context, 12), top: 4, bottom: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -1561,7 +1561,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           children: <Widget>[
             if (help != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: af(context, 8)),
                 child: Text(help, style: TextStyle(fontSize: af(context, 10))),
               ),
             TextField(

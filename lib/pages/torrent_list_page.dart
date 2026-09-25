@@ -151,12 +151,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
             appBar: AppBar(
               leading: _selecting
                   ? IconButton(
-                      icon: const Icon(Icons.close, size: AppTheme.iconSize),
+                      icon: Icon(Icons.close, size: AppTheme.iconSize),
                       onPressed: _exitSelect,
                     )
                   : Builder(
                       builder: (BuildContext ctx) => IconButton(
-                        icon: const Icon(Icons.menu, size: AppTheme.iconSize),
+                        icon: Icon(Icons.menu, size: AppTheme.iconSize),
                         onPressed: () => Scaffold.of(ctx).openDrawer(),
                       ),
                     ),
@@ -243,7 +243,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                           why != null && why.startsWith('登录失败');
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: EdgeInsets.all(af(context, 24)),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
@@ -261,17 +261,17 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: af(context, 12)),
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: af(context, 12)),
                               if (authFailed && cur != null)
                                 FilledButton.icon(
                                   onPressed: () => sc.relogin(cur),
-                                  icon: const Icon(Icons.login, size: 16),
+                                  icon: Icon(Icons.login, size: af(context, 16)),
                                   label: Text(S.relogin),
                                 )
                               else
                                 TextButton.icon(
                                   onPressed: () => ctrl.refresh(),
-                                  icon: const Icon(Icons.refresh, size: 16),
+                                  icon: Icon(Icons.refresh, size: af(context, 16)),
                                   label: Text(S.retry),
                                 ),
                             ],
@@ -314,7 +314,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   Widget _searchBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 3),
+      padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 8), af(context, 12), 3),
       child: TextField(
         controller: _search,
         maxLength: AppTheme.maxLenName,
@@ -323,11 +323,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
         decoration: InputDecoration(
           filled: true,
           fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
-          prefixIcon: const Icon(Icons.search, size: AppTheme.iconSize),
+          prefixIcon: Icon(Icons.search, size: AppTheme.iconSize),
           suffixIcon: _search.text.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(Icons.clear_all, size: AppTheme.iconSize),
+                  icon: Icon(Icons.clear_all, size: AppTheme.iconSize),
                   onPressed: () {
                     _clearKeywordNow();
                     setState(() {});
@@ -364,13 +364,13 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   Widget _filterBar() {
     return SizedBox(
-      height: 40,
+      height: af(context, 40),
       child: Row(
         children: <Widget>[
           Expanded(
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(10, 0, 4, 0),
+              padding: EdgeInsets.fromLTRB(af(context, 10), 0, 4, 0),
               children: <Widget>[
 
                 Obx(() {
@@ -383,7 +383,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                         hasStatus
                             ? Icons.filter_alt
                             : (hasKw ? Icons.search : Icons.filter_alt_outlined),
-                        size: 14,
+                        size: af(context, 14),
                       ),
                       label: Text(
                         hasStatus
@@ -404,7 +404,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: ActionChip(
-                      avatar: const Icon(Icons.clear_all, size: 14),
+                      avatar: Icon(Icons.clear_all, size: af(context, 14)),
                       label: Text('清除', style: TextStyle(fontSize: af(context, 11))),
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
@@ -422,7 +422,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
           if (!_selecting)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: EdgeInsets.only(right: af(context, 8)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -452,14 +452,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return SizedBox(
-      height: 28,
+      height: af(context, 28),
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: 14),
+        icon: Icon(icon, size: af(context, 14)),
         label: Text(label, style: TextStyle(fontSize: af(context, 11))),
         style: OutlinedButton.styleFrom(
           backgroundColor: cs.surfaceContainerHighest.withValues(alpha: 0.92),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
@@ -498,7 +498,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return Container(
 
       color: cs.surface,
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
+      padding: EdgeInsets.fromLTRB(af(context, 8), 4, af(context, 8), 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -578,11 +578,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
         ? cs.onSurface
         : (solid ? Colors.white : danger);
     final Widget content = SizedBox(
-      height: 32,
+      height: af(context, 32),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(icon, size: 14, color: fg),
+          Icon(icon, size: af(context, 14), color: fg),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
@@ -771,26 +771,26 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return Material(
       color: Theme.of(context).colorScheme.secondaryContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: EdgeInsets.symmetric(horizontal: af(context, 8), vertical: 2),
         child: Row(
           children: <Widget>[
 
             SizedBox(
-              height: 28,
+              height: af(context, 28),
               child: TextButton.icon(
                 onPressed: ctrl.selectAll,
-                icon: Icon(Icons.select_all, size: 15, color: onBg),
+                icon: Icon(Icons.select_all, size: af(context, 15), color: onBg),
                 label: Text(S.logSelectAll,
                     style: TextStyle(fontSize: af(context, 11), color: onBg)),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: af(context, 8)),
             Flexible(
               child: Text(
                 '${S.selectedCount(ctrl.selected.length)}'
@@ -802,14 +802,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
               ),
             ),
             SizedBox(
-              height: 28,
+              height: af(context, 28),
               child: TextButton.icon(
                 onPressed: _exitSelect,
-                icon: Icon(Icons.close, size: 15, color: onBg),
+                icon: Icon(Icons.close, size: af(context, 15), color: onBg),
                 label:
                     Text(S.cancel, style: TextStyle(fontSize: af(context, 11), color: onBg)),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
@@ -833,8 +833,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Image.asset('assets/images/empty.webp', width: 96),
-            const SizedBox(height: 12),
+            Image.asset('assets/images/empty.webp', width: af(context, 96)),
+            SizedBox(height: af(context, 12)),
             Text('暂无种子', style: TextStyle(fontSize: af(context, 12))),
           ],
         ),
@@ -849,7 +849,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         child: ListView.builder(
           controller: _scrollCtl,
           addAutomaticKeepAlives: false,
-          padding: const EdgeInsets.only(top: 4, bottom: 88),
+          padding: EdgeInsets.only(top: 4, bottom: af(context, 88)),
           itemCount: list.length,
           itemBuilder: (BuildContext context, int i) => AppPageTheme(
             key: ValueKey<String>(list[i].hash),
@@ -871,7 +871,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
               (selected ? cs.secondaryContainer : cs.surfaceContainerLow);
 
       return SlidableTile(
-        margin: const EdgeInsets.fromLTRB(10, 4, 10, 4),
+        margin: EdgeInsets.fromLTRB(af(context, 10), 4, af(context, 10), 4),
         motion: SlidableMotionKind.scroll,
         extentRatio: 0.30,
         slotCount: 2,
@@ -941,7 +941,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 InkWell(
                   onTap: () => _onCardTap(t),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+                    padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 10), 6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -959,7 +959,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                             ] else ...<Widget>[
                               Icon(
                                 Formatter.statusIcon(t.state),
-                                size: 16,
+                                size: af(context, 16),
                                 color: Formatter.setStatusColor(t.state, cs),
                               ),
                               const SizedBox(width: 6),
@@ -997,7 +997,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                   _expanded.contains(t.hash)
                                       ? Icons.expand_less
                                       : Icons.expand_more,
-                                  size: 16,
+                                  size: af(context, 16),
                                 ),
                               ),
                             ),
@@ -1044,7 +1044,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   child: Container(
                     width: double.infinity,
                     color: _sectionTint(cardBg),
-                    padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+                    padding: EdgeInsets.fromLTRB(af(context, 10), 7, af(context, 10), af(context, 8)),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
@@ -1069,7 +1069,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                             fontSize: af(context, 10), color: cs.primary),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: af(context, 8)),
                                     Flexible(
                                       child: Text(
                                         '${S.downArrow}${Formatter.setSpeed(t.newDownSpeed)}',
@@ -1087,7 +1087,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: af(context, 8)),
                           Expanded(
                             flex: 1,
                             child: Column(
@@ -1226,7 +1226,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 10, color: fg),
+          Icon(icon, size: af(context, 10), color: fg),
           const SizedBox(width: 2),
           Flexible(
             child: Text(
@@ -1268,7 +1268,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(icon, size: 11, color: cs.onSurfaceVariant),
+        Icon(icon, size: af(context, 11), color: cs.onSurfaceVariant),
         const SizedBox(width: 3),
         Flexible(
           child: Text(
@@ -1521,14 +1521,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(
-                  height: 30,
+                  height: af(context, 30),
                   child: FilledButton.tonalIcon(
                     onPressed: () => _openDetail(t),
-                    icon: const Icon(Icons.open_in_new, size: 14),
+                    icon: Icon(Icons.open_in_new, size: af(context, 14)),
                     label: Text(S.viewDetail,
                         style: TextStyle(fontSize: af(context, 11))),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
                     ),
                   ),
                 ),
@@ -1696,7 +1696,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
       context: context,
       child: subs.isEmpty
           ? Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 32),
+              padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 24), af(context, 16), af(context, 32)),
               child: Center(
                 child: Text('未找到其它辅种', style: TextStyle(fontSize: af(context, 12))),
               ),

@@ -80,10 +80,10 @@ class TorrentInfoPage extends StatelessWidget {
             labelStyle: TextStyle(fontSize: af(context, 12)),
 
             tabs: <Widget>[
-              Tab(text: '概览', height: 38),
-              Tab(text: 'Tracker', height: 38),
-              Tab(text: 'Peers', height: 38),
-              Tab(text: '文件', height: 38),
+              Tab(text: '概览', height: af(context, 38)),
+              Tab(text: 'Tracker', height: af(context, 38)),
+              Tab(text: 'Peers', height: af(context, 38)),
+              Tab(text: '文件', height: af(context, 38)),
             ],
           ),
         ),

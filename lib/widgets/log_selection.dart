@@ -32,7 +32,7 @@ class LogSelectionAppBar extends StatelessWidget
   Widget build(BuildContext context) {
     return AppBar(
       leading: IconButton(
-        icon: const Icon(Icons.close, size: AppTheme.iconSize),
+        icon: Icon(Icons.close, size: AppTheme.iconSize),
         tooltip: S.cancel,
         onPressed: onClose,
       ),
@@ -96,7 +96,7 @@ class LogSelectionBar extends StatelessWidget {
                 Expanded(
                   child: TextButton.icon(
                     onPressed: none ? null : onCopy,
-                    icon: const Icon(Icons.content_copy, size: 18),
+                    icon: Icon(Icons.content_copy, size: af(context, 18)),
                     label: Text(
                       S.logCopyCount(count),
                       style: TextStyle(fontSize: af(context, 12)),
@@ -107,7 +107,7 @@ class LogSelectionBar extends StatelessWidget {
                 Expanded(
                   child: TextButton.icon(
                     onPressed: none ? null : onExportSelected,
-                    icon: const Icon(Icons.save_alt, size: 18),
+                    icon: Icon(Icons.save_alt, size: af(context, 18)),
                     label: Text(
                       S.logExportSelected,
                       style: TextStyle(fontSize: af(context, 12)),
@@ -117,7 +117,7 @@ class LogSelectionBar extends StatelessWidget {
                 ),
                 PopupMenuButton<String>(
                   tooltip: '',
-                  icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
+                  icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
                   onSelected: (String v) {
                     switch (v) {
                       case 'invert':

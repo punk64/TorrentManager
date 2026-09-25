@@ -199,7 +199,7 @@ class _ServerListPageState extends State<ServerListPage> {
                   value: Routes.logQb, child: Text(S.logServer)),
             ],
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
               child: Text(
                 S.logTitle,
 
@@ -235,8 +235,8 @@ class _ServerListPageState extends State<ServerListPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Image.asset('assets/images/empty.webp', width: 96),
-                  const SizedBox(height: 12),
+                  Image.asset('assets/images/empty.webp', width: af(context, 96)),
+                  SizedBox(height: af(context, 12)),
                   Text('暂无服务器', style: TextStyle(fontSize: af(context, 12))),
                   const SizedBox(height: 4),
                   Text(
@@ -298,7 +298,7 @@ class _ServerListPageState extends State<ServerListPage> {
   ) {
     if (!kEnableServerGroup) {
       return ReorderableListView.builder(
-        padding: const EdgeInsets.only(bottom: 96),
+        padding: EdgeInsets.only(bottom: af(context, 96)),
         itemCount: ctrl.servers.length,
 
         onReorderItem: ctrl.reorderServer,
@@ -320,7 +320,7 @@ class _ServerListPageState extends State<ServerListPage> {
     }
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 96),
+      padding: EdgeInsets.only(bottom: af(context, 96)),
       children: <Widget>[
         for (final MapEntry<String, List<ServerData>> e in groups.entries)
           ...<Widget>[
@@ -370,8 +370,8 @@ class _ServerListPageState extends State<ServerListPage> {
     }
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), 2),
+      padding: EdgeInsets.symmetric(horizontal: af(context, 10), vertical: 6),
       decoration: BoxDecoration(
         color: cs.primaryContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppTheme.radius),
@@ -391,7 +391,7 @@ class _ServerListPageState extends State<ServerListPage> {
           const Spacer(),
           Text('${S.upArrow}${Formatter.setSpeed(up)}',
               style: TextStyle(fontSize: af(context, 10))),
-          const SizedBox(width: 8),
+          SizedBox(width: af(context, 8)),
           Text('${S.downArrow}${Formatter.setSpeed(dl)}',
               style: TextStyle(fontSize: af(context, 10))),
         ],
@@ -425,7 +425,7 @@ class _ServerListPageState extends State<ServerListPage> {
     final ServerData s = ctrl.withSnapshot(raw);
 
     return SlidableTile(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(af(context, 12), 6, af(context, 12), 6),
       motion: SlidableMotionKind.scroll,
       extentRatio: 0.30,
 
@@ -490,7 +490,7 @@ class _ServerListPageState extends State<ServerListPage> {
           Get.toNamed(Routes.torrents);
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+          padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), 6, af(context, 8)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -663,10 +663,10 @@ class _ServerListPageState extends State<ServerListPage> {
               s.isQbittorrent
                   ? 'assets/images/qbittorrent.png'
                   : 'assets/images/transmission.png',
-              width: 28,
-              height: 28,
+              width: af(context, 28),
+              height: af(context, 28),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: af(context, 8)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,11 +786,11 @@ class _ServerListPageState extends State<ServerListPage> {
                 iconSize: 18,
                 padding: EdgeInsets.zero,
                 constraints:
-                    const BoxConstraints.tightFor(width: 30, height: 30),
+                    BoxConstraints.tightFor(width: af(context, 30), height: af(context, 30)),
                 tooltip: allHidden ? S.srvShowPrivacy : S.srvHidePrivacy,
                 icon: Icon(
                   allHidden ? Icons.visibility_off : Icons.visibility,
-                  size: 18,
+                  size: af(context, 18),
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () async {
@@ -849,7 +849,7 @@ class _ServerListPageState extends State<ServerListPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 10, color: tint),
+          Icon(icon, size: af(context, 10), color: tint),
           const SizedBox(width: 3),
           Text(
             label,
@@ -885,7 +885,7 @@ class _ServerListPageState extends State<ServerListPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.refresh, size: 11, color: cs.primary),
+              Icon(Icons.refresh, size: af(context, 11), color: cs.primary),
               const SizedBox(width: 3),
               Text(
                 S.retry,
@@ -927,7 +927,7 @@ class _ServerListPageState extends State<ServerListPage> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           SizedBox(
-            width: 9,
+            width: af(context, 9),
             height: 9,
             child: CircularProgressIndicator(
               strokeWidth: 1.4,
@@ -985,7 +985,7 @@ class _ServerListPageState extends State<ServerListPage> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         block(56 * k, 20 * k),
-        SizedBox(width: 14 * k),
+        SizedBox(width: af(context, 14) * k),
         block(84 * k, 20 * k),
         const Spacer(),
         Column(
@@ -1058,7 +1058,7 @@ class _ServerListPageState extends State<ServerListPage> {
             SizedBox(height: 8 * k),
             Row(
               children: <Widget>[
-                Icon(Icons.error_outline, size: 12 * k, color: cs.error),
+                Icon(Icons.error_outline, size: af(context, 12) * k, color: cs.error),
                 SizedBox(width: 4 * k),
                 Expanded(
                   child: Text(

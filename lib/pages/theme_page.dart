@@ -47,12 +47,12 @@ class _ThemePageState extends State<ThemePage> {
 
           TextButton.icon(
             onPressed: () => _saveDialog(context, tc),
-            icon: const Icon(Icons.save_outlined, size: 16, color: Colors.white),
+            icon: Icon(Icons.save_outlined, size: af(context, 16), color: Colors.white),
             label: Text(L.t('保存'),
                 style: TextStyle(fontSize: af(context, 12), color: Colors.white)),
             style: TextButton.styleFrom(
               backgroundColor: const Color(0xFF2F80ED),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 10)),
               minimumSize: const Size(0, 30),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -71,20 +71,20 @@ class _ThemePageState extends State<ThemePage> {
       ),
       body: Obx(
         () => ListView(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+          padding: EdgeInsets.fromLTRB(af(context, 12), af(context, 8), af(context, 12), af(context, 24)),
           children: <Widget>[
 
             ExpansionTile(
         clipBehavior: Clip.antiAlias,
               dense: true,
               tilePadding: EdgeInsets.zero,
-              leading: const Icon(Icons.palette, size: AppTheme.iconSize),
+              leading: Icon(Icons.palette, size: AppTheme.iconSize),
               title: Text(S.themeCustom, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
                   Container(
-                    width: 14,
-                    height: 14,
+                    width: af(context, 14),
+                    height: af(context, 14),
                     decoration: BoxDecoration(
                       color: tc.seed.value,
                       borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
@@ -99,10 +99,10 @@ class _ThemePageState extends State<ThemePage> {
                   color: tc.seed.value,
                   onChanged: tc.setSeed,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: af(context, 8)),
 
                 const PagePreview(page: AppPageKey.serverList),
-                const SizedBox(height: 8),
+                SizedBox(height: af(context, 8)),
               ],
             ),
 
@@ -110,13 +110,13 @@ class _ThemePageState extends State<ThemePage> {
         clipBehavior: Clip.antiAlias,
               dense: true,
               tilePadding: EdgeInsets.zero,
-              leading: const Icon(Icons.text_fields, size: AppTheme.iconSize),
+              leading: Icon(Icons.text_fields, size: AppTheme.iconSize),
               title: Text(S.themeFontColor, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
                   Container(
-                    width: 14,
-                    height: 14,
+                    width: af(context, 14),
+                    height: af(context, 14),
                     decoration: BoxDecoration(
                       color: tc.effectiveFontColor,
                       borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
@@ -144,7 +144,7 @@ class _ThemePageState extends State<ThemePage> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    icon: const Icon(Icons.auto_awesome,
+                    icon: Icon(Icons.auto_awesome,
                         size: AppTheme.iconSize),
                     label: Text(S.themeFontColorAuto,
                         style: TextStyle(fontSize: af(context, 12))),
@@ -155,15 +155,15 @@ class _ThemePageState extends State<ThemePage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                  padding: EdgeInsets.fromLTRB(af(context, 12), 0, af(context, 12), af(context, 8)),
                   child: Text(
                     S.themeFontColorHelp,
                     style: TextStyle(fontSize: af(context, 10)),
                   ),
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(0, 0, 0, 8),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, af(context, 8)),
                   child: PagePreview(page: AppPageKey.serverList),
                 ),
               ],
@@ -188,12 +188,12 @@ class _ThemePageState extends State<ThemePage> {
               child: Text(S.themeOpacityHelp, style: TextStyle(fontSize: af(context, 10))),
             ),
 
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             ThemePreview(
                 theme: tc.previewTheme,
                 transparency: tc.componentOpacity.value),
 
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
 
             _actionTile(Icons.menu_open, S.themePickMenuImage,
                 () => _pick(context, tc)),
@@ -225,7 +225,7 @@ class _ThemePageState extends State<ThemePage> {
 
             const Divider(height: 20),
 
-            const SizedBox(height: 12),
+            SizedBox(height: af(context, 12)),
 
             Text(
               L.t('全局背景图片'),
@@ -283,7 +283,7 @@ class _ThemePageState extends State<ThemePage> {
                 ),
               ),
 
-            const SizedBox(height: 12),
+            SizedBox(height: af(context, 12)),
 
             Text(
               L.t('分页面配色'),
@@ -350,7 +350,7 @@ class _ThemePageState extends State<ThemePage> {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 84,
+            width: af(context, 84),
             child: Text(label,
                 style: TextStyle(fontSize: af(context, 11), color: dim)),
           ),
@@ -364,7 +364,7 @@ class _ThemePageState extends State<ThemePage> {
             ),
           ),
           SizedBox(
-            width: 46,
+            width: af(context, 46),
             child: Text(
               format(value),
               textAlign: TextAlign.end,
@@ -404,7 +404,7 @@ class _ThemePageState extends State<ThemePage> {
                 style: TextStyle(fontSize: af(context, 13)),
               ),
               if (targets.length > 1) ...<Widget>[
-                const SizedBox(height: 12),
+                SizedBox(height: af(context, 12)),
                 Text(L.t('覆盖目标'), style: TextStyle(fontSize: af(context, 11))),
                 DropdownButton<CustomTheme>(
                   value: target,
@@ -424,7 +424,7 @@ class _ThemePageState extends State<ThemePage> {
               ],
               if (target != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 10),
+                  padding: EdgeInsets.only(top: af(context, 10)),
                   child: Text(
 
                     editingSaved
@@ -529,18 +529,18 @@ class _ThemePageState extends State<ThemePage> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 22,
-            height: 22,
+            width: af(context, 22),
+            height: af(context, 22),
             decoration: BoxDecoration(
               color: c ?? Colors.transparent,
               border: Border.all(color: Colors.grey),
               borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
             ),
             child: c == null
-                ? const Icon(Icons.remove, size: 14, color: Colors.grey)
+                ? Icon(Icons.remove, size: af(context, 14), color: Colors.grey)
                 : null,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: af(context, 8)),
           Expanded(
             child: Text(spec.labelOf(slot),
                 style: TextStyle(fontSize: af(context, 11))),

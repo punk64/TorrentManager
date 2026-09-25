@@ -177,7 +177,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       children: <Widget>[
 
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+          padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 10), 6),
           child: Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -203,7 +203,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                 child: ActionChip(
                   avatar: Icon(
                     _asc ? Icons.arrow_upward : Icons.arrow_downward,
-                    size: 14,
+                    size: af(context, 14),
                   ),
 
                   label: Text(_dirLabel, style: TextStyle(fontSize: af(context, 11))),
@@ -247,7 +247,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                 return ListTile(
                   key: ValueKey<String>('peer_$ip'),
                   dense: true,
-                  leading: const Icon(Icons.devices, size: AppTheme.iconSize),
+                  leading: Icon(Icons.devices, size: AppTheme.iconSize),
 
                   title: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -288,7 +288,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                             const SizedBox(width: 6),
                             if (g.loading)
                               SizedBox(
-                                width: 10,
+                                width: af(context, 10),
                                 height: 10,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 1.5,
@@ -399,10 +399,10 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      width: 22,
-      height: 22,
+      width: af(context, 22),
+      height: af(context, 22),
       child: IconButton(
-        icon: Icon(icon, size: 15, color: color),
+        icon: Icon(icon, size: af(context, 15), color: color),
         tooltip: tooltip,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),

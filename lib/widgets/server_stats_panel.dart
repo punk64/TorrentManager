@@ -140,7 +140,7 @@ class ServerStatsPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Icon(Icons.arrow_downward_rounded, size: 16 * k, color: dl),
+                Icon(Icons.arrow_downward_rounded, size: af(context, 16) * k, color: dl),
                 SizedBox(width: 3 * k),
                 Text(
                   hasData ? Formatter.setSpeed(dlSpeed < 0 ? 0 : dlSpeed) : '--',
@@ -151,8 +151,8 @@ class ServerStatsPanel extends StatelessWidget {
                     height: 1.05,
                   ),
                 ),
-                SizedBox(width: 14 * k),
-                Icon(Icons.arrow_upward_rounded, size: 16 * k, color: up),
+                SizedBox(width: af(context, 14) * k),
+                Icon(Icons.arrow_upward_rounded, size: af(context, 16) * k, color: up),
                 SizedBox(width: 3 * k),
                 Text(
                   hasData ? Formatter.setSpeed(upSpeed < 0 ? 0 : upSpeed) : '--',
@@ -195,7 +195,7 @@ class ServerStatsPanel extends StatelessWidget {
           SizedBox(width: 8 * k),
           Icon(
             expanded ? Icons.expand_less : Icons.expand_more,
-            size: 18 * k,
+            size: af(context, 18) * k,
             color: cs.onSurfaceVariant,
           ),
         ],

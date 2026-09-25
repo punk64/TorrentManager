@@ -66,7 +66,7 @@ class _ColorPickerState extends State<ColorPicker> {
       children: <Widget>[
 
         Container(
-          height: 44,
+          height: af(context, 44),
           width: double.infinity,
           decoration: BoxDecoration(
             color: c,
@@ -84,7 +84,7 @@ class _ColorPickerState extends State<ColorPicker> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: af(context, 10)),
 
         _slider('H', _hsv.hue, 0, 360, (double v) {
           _emit(_hsv.withHue(v));
@@ -97,7 +97,7 @@ class _ColorPickerState extends State<ColorPicker> {
         }, _valGradient()),
 
         if (widget.showPresets) ...<Widget>[
-          const SizedBox(height: 8),
+          SizedBox(height: af(context, 8)),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -105,8 +105,8 @@ class _ColorPickerState extends State<ColorPicker> {
               return InkWell(
                 onTap: () => _emit(HSVColor.fromColor(p)),
                 child: Container(
-                  width: 26,
-                  height: 26,
+                  width: af(context, 26),
+                  height: af(context, 26),
                   decoration: BoxDecoration(
                     color: p,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
@@ -137,7 +137,7 @@ class _ColorPickerState extends State<ColorPicker> {
     return Row(
       children: <Widget>[
         SizedBox(
-          width: 14,
+          width: af(context, 14),
           child: Text(label, style: TextStyle(fontSize: af(context, 11))),
         ),
         Expanded(
@@ -169,7 +169,7 @@ class _ColorPickerState extends State<ColorPicker> {
           ),
         ),
         SizedBox(
-          width: 40,
+          width: af(context, 40),
           child: Text(
             value.toStringAsFixed(label == 'H' ? 0 : 2),
             textAlign: TextAlign.end,

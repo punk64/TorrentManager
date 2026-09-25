@@ -224,7 +224,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         title: Text('添加种子', style: TextStyle(fontSize: af(context, 15))),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(af(context, 14)),
         children: <Widget>[
           SegmentedButton<_AddMode>(
             segments: <ButtonSegment<_AddMode>>[
@@ -245,7 +245,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                 ? null
                 : (Set<_AddMode> v) => setState(() => _mode = v.first),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: af(context, 14)),
 
           if (_mode == _AddMode.url)
             TextField(
@@ -271,24 +271,24 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                 Row(
                   children: <Widget>[
                     OutlinedButton.icon(
-                      icon: const Icon(Icons.folder, size: AppTheme.iconSize),
+                      icon: Icon(Icons.folder, size: AppTheme.iconSize),
                       label: Text('选择种子文件（可多选）',
                           style: TextStyle(fontSize: af(context, 12))),
                       onPressed: _busy ? null : _pick,
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: af(context, 10)),
                     Text('已选 ${_files.length} 个',
                         style: TextStyle(fontSize: af(context, 11))),
                   ],
                 ),
                 if (_files.isNotEmpty) ...<Widget>[
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   for (final _PickedFile f in _files) _fileTile(context, f),
                 ],
               ],
             ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: af(context, 12)),
 
           Obx(() {
             final bool isQb = ctrl.current.value?.isQbittorrent ?? false;
@@ -309,7 +309,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                     isDense: true,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: af(context, 12)),
 
                 TextField(
                   controller: _category,
@@ -341,19 +341,19 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
           }),
 
           if (_result != null && !_result!.allOk) ...<Widget>[
-            const SizedBox(height: 14),
+            SizedBox(height: af(context, 14)),
             _failureCard(context, _result!),
           ],
 
-          const SizedBox(height: 20),
+          SizedBox(height: af(context, 20)),
           FilledButton.icon(
             icon: _busy
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
+                ? SizedBox(
+                    width: af(context, 16),
+                    height: af(context, 16),
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.add, size: AppTheme.iconSize),
+                : Icon(Icons.add, size: AppTheme.iconSize),
             label: Text(
                 _busy ? '${S.fieldUpdating} $_done/$_total' : '添加',
                 style: TextStyle(fontSize: af(context, 13))),
@@ -375,9 +375,9 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         ),
         child: Row(
           children: <Widget>[
-            const SizedBox(width: 8),
-            const Icon(Icons.insert_drive_file, size: AppTheme.iconSize),
-            const SizedBox(width: 8),
+            SizedBox(width: af(context, 8)),
+            Icon(Icons.insert_drive_file, size: AppTheme.iconSize),
+            SizedBox(width: af(context, 8)),
             Expanded(
               child: Text(
                 f.name,
@@ -387,11 +387,11 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.close, size: 16),
+              icon: Icon(Icons.close, size: af(context, 16)),
               tooltip: S.remove,
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+              constraints: BoxConstraints.tightFor(width: af(context, 32), height: af(context, 32)),
               onPressed: _busy ? null : () => _removeFile(f),
             ),
           ],
@@ -404,7 +404,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     final Color err = Theme.of(context).colorScheme.error;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(af(context, 10)),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         border: Border.all(color: err.withValues(alpha: 0.5)),
@@ -414,7 +414,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Icon(Icons.error_outline, size: 16, color: err),
+              Icon(Icons.error_outline, size: af(context, 16), color: err),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(

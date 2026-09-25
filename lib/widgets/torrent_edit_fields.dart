@@ -141,7 +141,7 @@ class _EditTextFieldState extends State<EditTextField> {
             : CrossAxisAlignment.center,
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(widget.label, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -154,7 +154,7 @@ class _EditTextFieldState extends State<EditTextField> {
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                    EdgeInsets.symmetric(horizontal: af(context, 8), vertical: 7),
                 hintText: widget.hint,
                 hintStyle: TextStyle(fontSize: af(context, 11)),
                 suffixText: widget.suffix,
@@ -183,17 +183,17 @@ class _EditTextFieldState extends State<EditTextField> {
           ),
           const SizedBox(width: 6),
           SizedBox(
-            height: 30,
+            height: af(context, 30),
             child: FilledButton.tonal(
               onPressed: canSave ? _submit : null,
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: af(context, 10)),
                 textStyle: TextStyle(fontSize: af(context, 11)),
               ),
               child: _busy
-                  ? const SizedBox(
-                      width: 12,
-                      height: 12,
+                  ? SizedBox(
+                      width: af(context, 12),
+                      height: af(context, 12),
                       child: CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
@@ -336,7 +336,7 @@ class _EditNumberFieldState extends State<EditNumberField> {
               decoration: InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: cmp ? 5 : 8,
+                  horizontal: cmp ? 5 : af(context, 8),
                   vertical: cmp ? 6 : 7,
                 ),
                 hintText: widget.zeroMeansUnlimited ? S.editUnlimitedHint : '0',
@@ -372,7 +372,7 @@ class _EditNumberFieldState extends State<EditNumberField> {
                         _markDirty();
                       },
                 style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: cmp ? 5 : 8),
+                  padding: EdgeInsets.symmetric(horizontal: cmp ? 5 : af(context, 8)),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: TextStyle(fontSize: cmp ? 9 : 10),
@@ -387,15 +387,15 @@ class _EditNumberFieldState extends State<EditNumberField> {
             child: FilledButton.tonal(
               onPressed: canSave ? _submit : null,
               style: FilledButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: cmp ? 6 : 10),
+                padding: EdgeInsets.symmetric(horizontal: cmp ? 6 : af(context, 10)),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 textStyle: TextStyle(fontSize: cmp ? 10 : 11),
               ),
               child: _busy
-                  ? const SizedBox(
-                      width: 12,
-                      height: 12,
+                  ? SizedBox(
+                      width: af(context, 12),
+                      height: af(context, 12),
                       child: CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
@@ -507,7 +507,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(widget.label, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -548,8 +548,8 @@ class _EditRatioFieldState extends State<EditRatioField> {
                     style: TextStyle(fontSize: af(context, 11)),
                     decoration: InputDecoration(
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 7),
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: af(context, 8), vertical: 7),
                       hintText: '2.00',
                       hintStyle: TextStyle(fontSize: af(context, 11)),
                       enabledBorder: OutlineInputBorder(
@@ -572,17 +572,17 @@ class _EditRatioFieldState extends State<EditRatioField> {
           ),
           const SizedBox(width: 6),
           SizedBox(
-            height: 30,
+            height: af(context, 30),
             child: FilledButton.tonal(
               onPressed: canSave ? _submit : null,
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: af(context, 10)),
                 textStyle: TextStyle(fontSize: af(context, 11)),
               ),
               child: _busy
-                  ? const SizedBox(
-                      width: 12,
-                      height: 12,
+                  ? SizedBox(
+                      width: af(context, 12),
+                      height: af(context, 12),
                       child: CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
@@ -599,7 +599,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 40,
+            width: af(context, 40),
             child: Text(
               widget.label,
               maxLines: 1,
@@ -638,7 +638,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
           ),
           const SizedBox(width: 4),
           SizedBox(
-            height: 26,
+            height: af(context, 26),
             child: OutlinedButton(
               onPressed: _busy ? null : _cycleMode,
               style: OutlinedButton.styleFrom(
@@ -652,7 +652,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
           ),
           const SizedBox(width: 4),
           SizedBox(
-            height: 26,
+            height: af(context, 26),
             child: FilledButton.tonal(
               onPressed: canSave ? _submit : null,
               style: FilledButton.styleFrom(
@@ -662,9 +662,9 @@ class _EditRatioFieldState extends State<EditRatioField> {
                 textStyle: TextStyle(fontSize: af(context, 10)),
               ),
               child: _busy
-                  ? const SizedBox(
-                      width: 12,
-                      height: 12,
+                  ? SizedBox(
+                      width: af(context, 12),
+                      height: af(context, 12),
                       child: CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
@@ -763,7 +763,7 @@ class _EditSwitchRowState extends State<EditSwitchRow> {
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(widget.label, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -866,8 +866,8 @@ class _EditSwitchChipState extends State<EditSwitchChip> {
           ),
           const SizedBox(width: 2),
           SizedBox(
-            width: 26,
-            height: 15,
+            width: af(context, 26),
+            height: af(context, 15),
             child: FittedBox(
               child: Switch(
                 value: _v,
@@ -903,7 +903,7 @@ class EditActionRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(
-            width: 88,
+            width: af(context, 88),
             child: Text(label, style: TextStyle(fontSize: af(context, 11))),
           ),
           Expanded(
@@ -911,11 +911,11 @@ class EditActionRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           SizedBox(
-            height: 30,
+            height: af(context, 30),
             child: FilledButton.tonal(
               onPressed: onTap,
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: af(context, 10)),
                 textStyle: TextStyle(fontSize: af(context, 11)),
               ),
               child: Text(S.editModify),
@@ -1031,7 +1031,7 @@ class _TagEditorState extends State<TagEditor> {
                 decoration: InputDecoration(
                   isDense: true,
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                      EdgeInsets.symmetric(horizontal: af(context, 8), vertical: 7),
                   hintText: S.tagInputHint,
                   hintStyle: TextStyle(fontSize: af(context, 11)),
                   enabledBorder: OutlineInputBorder(
@@ -1044,9 +1044,9 @@ class _TagEditorState extends State<TagEditor> {
             ),
             const SizedBox(width: 6),
             SizedBox(
-              height: 32,
+              height: af(context, 32),
               child: IconButton.filledTonal(
-                icon: const Icon(Icons.add, size: 16),
+                icon: Icon(Icons.add, size: af(context, 16)),
                 tooltip: S.tagAdd,
                 onPressed: () => _add(_c.text),
               ),
@@ -1220,7 +1220,7 @@ class EditDialogs {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: af(context, 8)),
               TextField(
                 controller: c,
                 style: TextStyle(fontSize: af(context, 12)),
@@ -1363,7 +1363,7 @@ class ReadonlyKvGrid extends StatelessWidget {
     Widget halfCell(String k, String v) => Row(
           children: <Widget>[
             SizedBox(
-              width: 50,
+              width: af(context, 50),
               child: Text(
                 k,
                 maxLines: 1,
@@ -1386,7 +1386,7 @@ class ReadonlyKvGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SizedBox(
-              width: 88,
+              width: af(context, 88),
               child: Text(k, style: TextStyle(fontSize: af(context, 11))),
             ),
             Expanded(
@@ -1420,7 +1420,7 @@ class ReadonlyKvGrid extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Expanded(child: halfCell(pairs[i][0], pairs[i][1])),
-            const SizedBox(width: 10),
+            SizedBox(width: af(context, 10)),
             Expanded(
               child: i + 1 < pairs.length
                   ? halfCell(pairs[i + 1][0], pairs[i + 1][1])
@@ -1454,8 +1454,8 @@ class EditSectionCard extends StatelessWidget {
     final double h = dense ? 8 : 10;
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.only(bottom: dense ? 6 : 9),
-      padding: EdgeInsets.fromLTRB(h, dense ? 6 : 8, h, dense ? 7 : 9),
+      margin: EdgeInsets.only(bottom: dense ? 6 : af(context, 9)),
+      padding: EdgeInsets.fromLTRB(h, dense ? 6 : af(context, 8), h, dense ? 7 : af(context, 9)),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),

@@ -75,11 +75,11 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
         return Obx(
           () => ListView(
             shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               _PanelMetrics.listPadH,
               4,
               _PanelMetrics.listPadH,
-              24,
+              af(context, 24),
             ),
             children: <Widget>[
               _sortSection(),
@@ -105,7 +105,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
         children: <Widget>[
 
           _sortGrid(),
-          const SizedBox(height: 12),
+          SizedBox(height: af(context, 12)),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -115,7 +115,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                 selected: !ctrl.sortDesc.value,
                 onTap: () => ctrl.setSortDesc(false),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: af(context, 8)),
               _btn(
                 text: '降序',
                 selected: ctrl.sortDesc.value,
@@ -174,7 +174,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _statusGrid(),
-          const SizedBox(height: 10),
+          SizedBox(height: af(context, 10)),
           _subStateChips(),
           if (ctrl.hasStatusFilter) ...<Widget>[
             const SizedBox(height: 2),
@@ -182,7 +182,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: ctrl.clearStatus,
-                icon: const Icon(Icons.filter_alt_off, size: 16),
+                icon: Icon(Icons.filter_alt_off, size: af(context, 16)),
                 label: Text(
                   S.filterStatusClear,
                   style: TextStyle(fontSize: _m.fontSize),
@@ -282,7 +282,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: ctrl.hasFacet(d) ? () => ctrl.clearFacet(d) : null,
-              icon: const Icon(Icons.filter_alt_off, size: 16),
+              icon: Icon(Icons.filter_alt_off, size: af(context, 16)),
 
               label: Text(
                 '清除筛选',
@@ -319,7 +319,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
         onPressed: ctrl.hasFacets ? ctrl.clearFacets : null,
-        icon: const Icon(Icons.filter_alt_off, size: 18),
+        icon: Icon(Icons.filter_alt_off, size: af(context, 18)),
 
         label: Text('清除全部筛选', style: TextStyle(fontSize: _m.fontSize)),
       ),
@@ -334,7 +334,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: af(context, 10)),
       child: Material(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
 
@@ -346,7 +346,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             InkWell(
               onTap: onToggle,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+                padding: EdgeInsets.fromLTRB(af(context, 14), af(context, 13), af(context, 12), af(context, 13)),
                 child: Row(
                   children: <Widget>[
                     Text(
@@ -359,7 +359,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                     const Spacer(),
                     Icon(
                       open ? Icons.expand_less : Icons.expand_more,
-                      size: 20,
+                      size: af(context, 20),
                     ),
                   ],
                 ),
@@ -368,11 +368,11 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             if (open)
               Padding(
 
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   _PanelMetrics.cardPadH,
                   0,
                   _PanelMetrics.cardPadH,
-                  14,
+                  af(context, 14),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -386,7 +386,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                           .outlineVariant
                           .withValues(alpha: 0.7),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: af(context, 12)),
                     child,
                   ],
                 ),

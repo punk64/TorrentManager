@@ -101,8 +101,8 @@ class DrawerMenu extends StatelessWidget {
                     for (final CustomTheme t in tc.customThemes)
                       _button(context,
                         leadingWidget: Container(
-                          width: 30,
-                          height: 30,
+                          width: af(context, 30),
+                          height: af(context, 30),
                           decoration: t.swatch,
                         ),
                         title: t.name,
@@ -208,7 +208,7 @@ class DrawerMenu extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: af(context, 12)),
       ],
       );
     });
@@ -240,7 +240,7 @@ class DrawerMenu extends StatelessWidget {
     final ImageProvider<Object> image = ThemeController.imageProviderFor(path);
 
     return SizedBox(
-      height: 150,
+      height: af(context, 150),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
         child: Stack(
@@ -263,7 +263,7 @@ class DrawerMenu extends StatelessWidget {
             ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              padding: EdgeInsets.fromLTRB(af(context, 16), af(context, 10), af(context, 16), af(context, 10)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -298,12 +298,12 @@ class DrawerMenu extends StatelessWidget {
 
   static Widget _sectionLabel(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, top: 8, bottom: 2),
+      padding: EdgeInsets.only(left: af(context, 16), top: af(context, 8), bottom: 2),
       child: Row(
         children: <Widget>[
           Icon(
             Icons.wallpaper,
-            size: 14,
+            size: af(context, 14),
             color: _subColor,
           ),
           const SizedBox(width: 6),
@@ -335,7 +335,7 @@ class DrawerMenu extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         initiallyExpanded: initiallyExpanded,
 
-        leading: Icon(leading, size: 20, color: _iconColor),
+        leading: Icon(leading, size: af(context, 20), color: _iconColor),
         iconColor: _iconColor,
         collapsedIconColor: _iconColor,
         textColor: _titleColor,
@@ -348,7 +348,7 @@ class DrawerMenu extends StatelessWidget {
             color: _titleColor,
           ),
         ),
-        childrenPadding: const EdgeInsets.only(left: 12, bottom: 4),
+        childrenPadding: EdgeInsets.only(left: af(context, 12), bottom: 4),
         children: children,
       ),
     );
@@ -374,7 +374,7 @@ class DrawerMenu extends StatelessWidget {
       enabled: !inactive,
       leading: leadingWidget ??
 
-          Icon(icon, size: 20, color: _iconColor.withValues(alpha: 0.75 * dim)),
+          Icon(icon, size: af(context, 20), color: _iconColor.withValues(alpha: 0.75 * dim)),
       title: Text(title,
           style: TextStyle(
               fontSize: _childFontSize,
@@ -390,8 +390,8 @@ class DrawerMenu extends StatelessWidget {
             ),
       trailing: busy
           ? SizedBox(
-              width: 16,
-              height: 16,
+              width: af(context, 16),
+              height: af(context, 16),
               child: CircularProgressIndicator(
                 strokeWidth: 2,
 
@@ -400,7 +400,7 @@ class DrawerMenu extends StatelessWidget {
             )
           : (trailingCheck
               ? Icon(Icons.check,
-                  size: 20, color: Theme.of(context).colorScheme.primary)
+                  size: af(context, 20), color: Theme.of(context).colorScheme.primary)
               : null),
 
       onTap: inactive ? null : onTap,
@@ -412,7 +412,7 @@ class DrawerMenu extends StatelessWidget {
   static Widget _dashedDivider(BuildContext context) {
     final Color c = _fontColor.withValues(alpha: 0.3);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 5, 16, 5),
+      padding: EdgeInsets.fromLTRB(af(context, 16), 5, af(context, 16), 5),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints cts) {
           final int n = (cts.maxWidth / 8).floor().clamp(1, 200);
@@ -473,7 +473,7 @@ class DrawerMenu extends StatelessWidget {
       children: <Widget>[
         Icon(
           Icons.check,
-          size: 18,
+          size: af(ctx, 18),
           color: selected
               ? Theme.of(ctx).colorScheme.primary
               : Colors.transparent,
@@ -598,8 +598,8 @@ class DrawerMenu extends StatelessWidget {
           )
         : Image.asset(p.bgImage!, fit: BoxFit.cover, gaplessPlayback: true);
     return Container(
-      width: 20,
-      height: 20,
+      width: af(context, 20),
+      height: af(context, 20),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: br,
@@ -642,7 +642,7 @@ class DrawerMenu extends StatelessWidget {
           children: <Widget>[
             if (note != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: EdgeInsets.only(bottom: af(context, 8)),
                 child: Text(note, style: TextStyle(fontSize: af(context, 12))),
               ),
             SelectableText(url, style: TextStyle(fontSize: af(context, 12))),

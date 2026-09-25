@@ -29,10 +29,10 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Image.asset('assets/images/empty.webp', width: 80),
-              const SizedBox(height: 10),
+              Image.asset('assets/images/empty.webp', width: af(context, 80)),
+              SizedBox(height: af(context, 10)),
               Text(S.trkNone, style: TextStyle(fontSize: af(context, 12))),
-              const SizedBox(height: 12),
+              SizedBox(height: af(context, 12)),
               OutlinedButton.icon(
                 icon: const Icon(Icons.add, size: AppTheme.iconSize),
                 label: Text(S.trkAddTitle, style: TextStyle(fontSize: af(context, 12))),
@@ -44,12 +44,12 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       }
 
       return ListView(
-        padding: const EdgeInsets.only(bottom: 24),
+        padding: EdgeInsets.only(bottom: af(context, 24)),
         children: <Widget>[
           SizedBox(
-            height: 180,
+            height: af(context, 180),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 10, 12, 4),
+              padding: EdgeInsets.fromLTRB(af(context, 8), af(context, 10), af(context, 12), 4),
               child: _TrackerBarChart(trackers: trackers),
             ),
           ),
@@ -57,7 +57,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           for (final Map<String, dynamic> t in trackers)
             _trackerTile(context, ctrl, sc, t),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(af(context, 12)),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add, size: AppTheme.iconSize),
               label: Text(S.trkAddTitle, style: TextStyle(fontSize: af(context, 12))),
@@ -166,7 +166,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
               editing ? S.trkReplaceHelp : S.trkAddAllHelp,
               style: TextStyle(fontSize: af(context, 10), height: 1.4),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             if (editing)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
@@ -307,7 +307,7 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(S.trkDeleteHelp, style: TextStyle(fontSize: af(context, 11))),
-            const SizedBox(height: 8),
+            SizedBox(height: af(context, 8)),
             Text(url, style: TextStyle(fontSize: af(context, 10))),
           ],
         ),

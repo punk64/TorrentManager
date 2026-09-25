@@ -66,7 +66,7 @@ Future<String?> showConnectionErrorDialog(
           children: <Widget>[
             Text(S.srvConnFail, style: TextStyle(fontSize: af(context, 12))),
             if (reason != null && reason.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 10),
+              SizedBox(height: af(context, 10)),
               Text('原因：$reason', style: TextStyle(fontSize: af(context, 12))),
             ],
             if (address != null && address.isNotEmpty) ...<Widget>[
@@ -281,7 +281,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
     final bool selected = value == _type;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
       decoration: BoxDecoration(
         color: selected ? cs.primary.withValues(alpha: 0.10) : null,
         borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
@@ -300,9 +300,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
             ),
           ),
           if (selected)
-            Icon(Icons.check, size: 16, color: cs.primary)
+            Icon(Icons.check, size: af(context, 16), color: cs.primary)
           else
-            const SizedBox(width: 16),
+            SizedBox(width: af(context, 16)),
         ],
       ),
     );
@@ -321,7 +321,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
         title: Text(_isEdit ? S.srvEditing : S.srvAdd,
             style: TextStyle(fontSize: af(context, 15))),
       content: SizedBox(
-        width: 340,
+        width: af(context, 340),
         child: AutofillGroup(
           child: Form(
             key: _formKey,
@@ -345,7 +345,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                         ? S.srvEnterName
                         : null,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   DropdownButtonFormField<String>(
                     initialValue: _type,
                     isDense: true,
@@ -361,9 +361,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     alignment: AlignmentDirectional.centerStart,
                     itemHeight: 48,
 
-                    icon: const Padding(
+                    icon: Padding(
                       padding: EdgeInsets.only(right: 4),
-                      child: Icon(Icons.arrow_drop_down, size: 24),
+                      child: Icon(Icons.arrow_drop_down, size: af(context, 24)),
                     ),
                     decoration: const InputDecoration(
                       labelText: '类型',
@@ -395,7 +395,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       });
                     },
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _host,
                     maxLength: AppTheme.maxLenHost,
@@ -418,7 +418,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _port,
                     maxLength: AppTheme.maxLenPort,
@@ -438,7 +438,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _lanHost,
                     maxLength: AppTheme.maxLenHost,
@@ -452,7 +452,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       contentPadding: _fieldPadding,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _lanPort,
                     maxLength: AppTheme.maxLenPort,
@@ -475,7 +475,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _user,
                     maxLength: AppTheme.maxLenName,
@@ -491,7 +491,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     validator: (String? v) =>
                         (v ?? '').trim().isEmpty ? S.srvEnterUsername : null,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: af(context, 8)),
                   TextFormField(
                     controller: _pass,
                     maxLength: AppTheme.maxLenName,
@@ -563,15 +563,15 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                   ),
                   if (_saving)
                     Padding(
-                      padding: EdgeInsets.only(top: 8),
+                      padding: EdgeInsets.only(top: af(context, 8)),
                       child: Row(
                         children: <Widget>[
                           SizedBox(
-                            width: 14,
-                            height: 14,
+                            width: af(context, 14),
+                            height: af(context, 14),
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          SizedBox(width: 8),
+                          SizedBox(width: af(context, 8)),
                           Text('正在连接服务器…', style: TextStyle(fontSize: af(context, 11))),
                         ],
                       ),

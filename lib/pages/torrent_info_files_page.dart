@@ -61,7 +61,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
           if (_selected.isNotEmpty) _prioBar(),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: EdgeInsets.only(bottom: af(context, 24)),
               children: <Widget>[
                 _tree(nodes: tree, depth: 0),
               ],
@@ -77,14 +77,14 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     return Material(
       color: Theme.of(context).colorScheme.secondaryContainer,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+        padding: EdgeInsets.fromLTRB(af(context, 8), 4, af(context, 8), 4),
         child: Row(
           children: <Widget>[
             Text(
               S.countLabel(_selected.length),
               style: TextStyle(fontSize: af(context, 11)),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: af(context, 8)),
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -102,7 +102,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
                           ),
                         ),
                     ActionChip(
-                      avatar: const Icon(Icons.clear_all, size: 14),
+                      avatar: Icon(Icons.clear_all, size: af(context, 14)),
                       label: Text('取消选择',
                           style: TextStyle(fontSize: af(context, 10))),
                       visualDensity: VisualDensity.compact,
@@ -178,9 +178,9 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     final bool checked = _selected.contains(n.path);
     return ListTile(
       dense: true,
-      contentPadding: EdgeInsets.only(left: 8.0 + depth * 14, right: 8),
+      contentPadding: EdgeInsets.only(left: af(context, 8.0) + depth * af(context, 14), right: af(context, 8)),
       leading: SizedBox(
-        width: 56,
+        width: af(context, 56),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -236,13 +236,13 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         clipBehavior: Clip.antiAlias,
       dense: true,
       initiallyExpanded: depth == 0,
-      tilePadding: EdgeInsets.only(left: 8.0 + depth * 14, right: 8),
+      tilePadding: EdgeInsets.only(left: af(context, 8.0) + depth * af(context, 14), right: af(context, 8)),
       leading: SizedBox(
-        width: 56,
+        width: af(context, 56),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.folder, size: AppTheme.iconSize),
+            Icon(Icons.folder, size: AppTheme.iconSize),
             Checkbox(
               tristate: true,
               value: tri,
