@@ -621,4 +621,8 @@ const Map<String, String> kEnStrings = <String, String>{
   '显示地址与端口': 'Show address and port',
   '服务器': 'Servers',
   '限制': 'Limit',
+  '数据加载中...': 'Loading...',
+  '限速设置': 'Speed limits',
+  '普通限速': 'Normal limits',
+  '备用限速': 'Alternative limits',
 };

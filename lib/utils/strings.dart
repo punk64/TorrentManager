@@ -49,6 +49,7 @@ class S {
   static String get fieldProgress => L.t('种子进度');
   static String get fieldState => L.t('种子状态');
   static String get fieldCount => L.t('种子数量');
+  static String get statsLoading => L.t('数据加载中...');
   static String get fieldTags => L.t('种子标签');
   static String get fieldCategory => L.t('种子分类');
   static String get fieldSiteName => L.t('站点名称');

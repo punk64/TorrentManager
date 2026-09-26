@@ -178,6 +178,10 @@ void main() {
       ));
       await tester.pump();
 
+      await tester.tap(find.text(S.filterStatusTitle));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
       for (final TorrentFilter f in TorrentFilter.values) {
         expect(find.text(f.label), findsOneWidget,
             reason: '缺「${f.label}」按钮');
@@ -240,6 +244,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       final TorrentController ctrl = Get.find<TorrentController>();
       ctrl.items.assignAll(<Torrent>[t]);
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(find.byIcon(Icons.checklist));

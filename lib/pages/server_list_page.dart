@@ -10,6 +10,7 @@ import '../app/style_keys.dart';
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../data/models/server_data.dart';
+import '../data/models/server_state.dart';
 import '../data/models/torrent.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
@@ -511,10 +512,13 @@ class _ServerListPageState extends State<ServerListPage> {
                     errorIsFinal: ctrl.isSuspended(s.id),
                   );
                 }
-                if (liveTs.isEmpty) {
+                final bool statsPending =
+                    ctrl.torrentStatsPending[raw.id] == true;
+                if (liveTs.isEmpty && !statsPending) {
                   return _statsRefreshingPlaceholder(context);
                 }
                 final ServerData live = raw.copyWith(torrents: liveTs);
+                final ServerState liveState = ctrl.stateOf(s.id);
                 final ServerSpeedLimit limit = ctrl.limitOf(s.id);
 
                 final ColorScheme cs = Theme.of(context).colorScheme;
@@ -532,27 +536,36 @@ class _ServerListPageState extends State<ServerListPage> {
                     MetricRow(
                       gap: 6,
                       inline: true,
+                      fitRow: statsPending,
                       valueSize: 13,
                       labelSize: 8.5,
                       minValueSize: 9,
                       items: <MetricItem>[
                         MetricItem(
-                          value: '${live.totalTorrents}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalTorrents}',
                           label: S.fieldCount,
                           color: cs.onSurface,
                         ),
                         MetricItem(
-                          value: '${live.totalDownloading}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalDownloading}',
                           label: S.fieldDlLoading,
                           color: dlColor,
                         ),
                         MetricItem(
-                          value: '${live.totalSeeding}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalSeeding}',
                           label: S.stSeeding,
                           color: upColor,
                         ),
                         MetricItem(
-                          value: '${live.totalUploading}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalUploading}',
                           label: S.fieldUpLoading,
                           color: actColor,
                         ),
@@ -563,27 +576,36 @@ class _ServerListPageState extends State<ServerListPage> {
                     MetricRow(
                       gap: 6,
                       inline: true,
+                      fitRow: statsPending,
                       valueSize: 13,
                       labelSize: 8.5,
                       minValueSize: 9,
                       items: <MetricItem>[
                         MetricItem(
-                          value: '${live.totalPausedDL}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalPausedDL}',
                           label: S.stPausedDl,
                           color: cs.onSurfaceVariant,
                         ),
                         MetricItem(
-                          value: '${live.totalPausedUP}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalPausedUP}',
                           label: S.stPausedUp,
                           color: cs.onSurfaceVariant,
                         ),
                         MetricItem(
-                          value: '${live.totalChecking}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalChecking}',
                           label: S.fieldVerifyState,
                           color: adaptSemantic(kSemanticPeer, br),
                         ),
                         MetricItem(
-                          value: '${live.totalError}',
+                          value: statsPending
+                              ? '--'
+                              : '${live.totalError}',
                           label: S.error,
                           color: adaptSemantic(kSemanticError, br),
                         ),
@@ -608,21 +630,27 @@ class _ServerListPageState extends State<ServerListPage> {
                       items: <MetricItem>[
                         MetricItem(
                           icon: Icons.arrow_upward_rounded,
-                          value: Formatter.setSpeed(live.totalUpSpeed),
+                          value: Formatter.setSpeed(statsPending
+                              ? liveState.upInfoSpeed
+                              : live.totalUpSpeed),
                           label:
                               '${S.chartLabelUpload}${Formatter.setSpeedLimit(limit.up)}',
                           color: upColor,
                         ),
                         MetricItem(
                           icon: Icons.arrow_downward_rounded,
-                          value: Formatter.setSpeed(live.totalDlSpeed),
+                          value: Formatter.setSpeed(statsPending
+                              ? liveState.dlInfoSpeed
+                              : live.totalDlSpeed),
                           label:
                               '${S.chartLabelDownload}${Formatter.setSpeedLimit(limit.dl)}',
                           color: dlColor,
                         ),
                         MetricItem(
                           icon: Icons.storage_rounded,
-                          value: Formatter.setSize(live.totalSize),
+                          value: statsPending
+                              ? '-'
+                              : Formatter.setSize(live.totalSize),
                           label: S.fieldSize,
                           color: cs.onSurfaceVariant,
                         ),
@@ -702,6 +730,8 @@ class _ServerListPageState extends State<ServerListPage> {
                         final bool suspended = ctrl.isSuspended(s.id);
                         final bool failed = st == ConnStatus.failed;
                         final bool showRetry = suspended || failed;
+                        final bool statsPending =
+                            ctrl.torrentStatsPending[s.id] == true;
 
                         final String verText =
                             (refreshing || failed)
@@ -735,6 +765,11 @@ class _ServerListPageState extends State<ServerListPage> {
                                   onLan: onLan,
                                 ),
                               ),
+                            ),
+                          if (statsPending)
+                            _BadgeEntry(
+                              widget: _loadingBadge(context),
+                              width: _chipWidth(S.statsLoading, lead: 13),
                             ),
                           if (verText.isNotEmpty)
                             _BadgeEntry(
@@ -937,6 +972,31 @@ class _ServerListPageState extends State<ServerListPage> {
           const SizedBox(width: 4),
           Text('刷新中', style: TextStyle(fontSize: af(context, 9), color: cs.primary)),
         ],
+      ),
+    );
+  }
+
+  Widget _loadingBadge(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return _BlinkingBadge(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.hourglass_top,
+                size: af(context, 10), color: cs.primary),
+            const SizedBox(width: 3),
+            Text(
+              S.statsLoading,
+              style: TextStyle(fontSize: af(context, 9), color: cs.primary),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -646,7 +646,9 @@ class TorrentController extends GetxController {
       return;
     }
 
-    if (_refreshInFlight && _inFlightServerId == s.id) return;
+    if (_refreshInFlight && _inFlightServerId == s.id && _inFlightSeq == _reqSeq) {
+      return;
+    }
 
     serverCtrl.resumeServer(s.id);
     final ConnErrorKind? cfgBad = ServerController.configProblemOf(s);
@@ -805,6 +807,13 @@ class TorrentController extends GetxController {
   void resetForServerSwitch({bool loading = true}) {
     _reqSeq++;
 
+    _refreshInFlight = false;
+    _inFlightServerId = null;
+    _inFlightSeq = 0;
+
+    _autoInFlight = false;
+    _autoServerId = null;
+
     _ridServerId = null;
     _rid = 0;
 
@@ -820,6 +829,7 @@ class TorrentController extends GetxController {
     trackers.clear();
     error.value = null;
     isLoading.value = loading;
+    _scrollPaused = false;
   }
 
   bool _scrollPaused = false;
@@ -831,7 +841,13 @@ class TorrentController extends GetxController {
   }
 
   Future<void> refreshAuto() async {
-    if (_scrollPaused) return;
+    if (_scrollPaused) {
+      AppLog.instance.view(
+        '自动取数被跳过：列表正在滚动（防抖中）',
+        key: '列表:auto:paused',
+      );
+      return;
+    }
     final s = serverCtrl.current.value;
     if (s == null) return;
 

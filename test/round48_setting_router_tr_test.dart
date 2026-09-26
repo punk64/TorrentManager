@@ -306,7 +306,7 @@ void main() {
     ServerSettingPage.debugPrefsOverride =
         QbPrefsApi(client: QbMethod(dio: fake.dio()), resolve: (ServerData s) => s);
     await _pump(tester, server: qbSrv());
-    await _expand(tester, '设置全局限速');
+    await _expand(tester, '限速设置');
 
     final List<String> texts = _fieldTexts(tester);
     expect(texts, contains('1024'), reason: '1048576 字节/秒 → 1024 KB/s');
@@ -323,7 +323,7 @@ void main() {
     ServerSettingPage.debugPrefsOverride = TrPrefsApi(
         client: TrMethod(dio: fake.dio()), resolve: (ServerData s) => s);
     await _pump(tester, server: trSrv());
-    await _expand(tester, '设置全局限速');
+    await _expand(tester, '限速设置');
 
     final List<String> texts = _fieldTexts(tester);
 
@@ -343,7 +343,7 @@ void main() {
         client: TrMethod(dio: fake.dio()), resolve: (ServerData s) => s);
     await _pump(tester, server: trSrv());
 
-    expect(find.text('设置全局限速'), findsOneWidget);
+    expect(find.text('限速设置'), findsOneWidget);
     expect(find.text('管理分类'), findsNothing, reason: 'TR 没有"分类"这个概念');
     expect(find.text('管理标签'), findsNothing);
 
@@ -393,7 +393,7 @@ void main() {
     ServerSettingPage.debugPrefsOverride =
         QbPrefsApi(client: QbMethod(dio: fake.dio()), resolve: (ServerData s) => s);
     await _pump(tester, server: qbSrv());
-    await _expand(tester, '设置全局限速');
+    await _expand(tester, '限速设置');
 
     final Finder up = find.byType(TextField).first;
     await tester.enterText(up, '64');

@@ -265,6 +265,12 @@ void main() {
       await tester.pump();
 
       expect(find.text('排序方式'), findsOneWidget);
+      expect(find.text('添加时间'), findsNothing,
+          reason: '第 86 轮起默认全部折叠：进面板先只给分组标题 + 当前值摘要');
+
+      await tester.tap(find.text('排序方式'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('添加时间'), findsOneWidget);
       expect(find.text('做种人数'), findsOneWidget);
@@ -298,6 +304,7 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('分类'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('电影 (1)'), findsOneWidget);
       expect(find.text('未分类 (1)'), findsOneWidget);
@@ -316,6 +323,10 @@ void main() {
         const GetMaterialApp(home: Scaffold(body: SortFilterPanel())),
       );
       await tester.pump();
+
+      await tester.tap(find.text('排序方式'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       await tester.tap(find.text('分享比率'));
       await tester.pump();

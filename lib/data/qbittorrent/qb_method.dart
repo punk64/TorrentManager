@@ -408,6 +408,11 @@ class QbMethod {
 
   static const int kParseInIsolateBytes = 512 * 1024;
 
+  Future<Map<String, dynamic>> getTransferInfo() async {
+    final Response<dynamic> resp = await _dio.get('/api/v2/transfer/info');
+    return _asMap(resp, '/api/v2/transfer/info');
+  }
+
   Future<List<Torrent>> getTorrentList({
     String? filter,
     String? category,

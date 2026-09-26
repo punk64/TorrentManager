@@ -365,6 +365,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     Future<void> Function() act, {
     VoidCallback? after,
     String? detail,
+    bool refreshLimit = false,
   }) async {
     AppLog.instance.act('服务器设置', label,
         target: _server?.name, detail: detail);
@@ -376,6 +377,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       await _loadCategoriesAndTags();
 
       await _loadPreferences();
+
+      if (refreshLimit) {
+        final ServerData? srv = _server;
+        if (srv != null) unawaited(ctrl.invalidateSpeedLimit(srv.id));
+      }
     } catch (e) {
       AppLog.instance.op('$label 失败：${Formatter.safeErr(e)}',
           level: 'ERROR', scope: _server?.logScope);
@@ -437,8 +443,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               ),
             if (_server != null && _prefsError != null) _prefsErrorNotice(),
             if (_server != null) ...<Widget>[
-              _globalLimitGroup(),
-              _altLimitGroup(),
+              _limitGroup(),
 
               if (_isQb) _categoryGroup(),
               if (_isQb) _tagGroup(),
@@ -456,32 +461,27 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     );
   }
 
-  Widget _globalLimitGroup() => _group(
-        title: '设置全局限速',
+  Widget _limitGroup() => _group(
+        title: '限速设置',
         help: '${S.setNoLimitZero}\n${S.setSwitchToEnable}',
         children: <Widget>[
+          _sectionTitle('普通限速'),
           _kbRow('上传限速', _upLimit, prefKey: PrefKey.upLimit),
           _kbRow('下载限速', _dlLimit, prefKey: PrefKey.dlLimit),
           _changeButton(
             '全局限速[更改]',
             S.qbSetServerLimit,
             S.qbSetServerLimitFail,
-
             () => _api.write(<String, dynamic>{
               PrefKey.upLimit: _kb(_upLimit),
               PrefKey.dlLimit: _kb(_dlLimit),
             }),
             detail:
                 '上行 ${_kbText(_upLimit)} KB/s · 下行 ${_kbText(_dlLimit)} KB/s',
+            refreshLimit: true,
           ),
-        ],
-      );
-
-  Widget _altLimitGroup() => _group(
-        title: '设置备用限速',
-        help: S.setAltLimitHelp,
-        children: <Widget>[
-
+          _sectionDivider(),
+          _sectionTitle('备用限速', help: S.setAltLimitHelp),
           _switchRow(
             S.setEnableAltLimit,
             _ssBool(PrefKey.altSpeedEnabled),
@@ -500,6 +500,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                   ctrl.state.refresh();
                 }
               },
+              refreshLimit: true,
             ),
           ),
           _kbRow(
@@ -522,8 +523,60 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             }),
             detail:
                 '上行 ${_kbText(_altUpLimit)} KB/s · 下行 ${_kbText(_altDlLimit)} KB/s',
+            refreshLimit: true,
           ),
         ],
+      );
+
+  Widget _sectionTitle(String text, {String? help}) {
+    final Color accent = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          af(context, 16), af(context, 6), af(context, 16), 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: af(context, 3),
+                height: af(context, 13),
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(af(context, 2)),
+                ),
+              ),
+              SizedBox(width: af(context, 7)),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: af(context, 13),
+                  fontWeight: FontWeight.bold,
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+          if (help != null)
+            Padding(
+              padding: EdgeInsets.only(
+                  left: af(context, 10), top: af(context, 2)),
+              child: Text(help, style: TextStyle(fontSize: af(context, 10))),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionDivider() => Padding(
+        padding: EdgeInsets.fromLTRB(
+            af(context, 16), af(context, 12), af(context, 16), 0),
+        child: Divider(
+          height: af(context, 1),
+          thickness: af(context, 0.5),
+          color:
+              Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.7),
+        ),
       );
 
   Widget _categoryGroup() => _group(
@@ -1507,6 +1560,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     String failMsg,
     Future<void> Function() act, {
     String? detail,
+    bool refreshLimit = false,
   }) {
     return Align(
       alignment: Alignment.centerRight,
@@ -1515,7 +1569,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         child: ElevatedButton(
           onPressed: _busy
               ? null
-              : () => _run(label, okMsg, failMsg, act, detail: detail),
+              : () => _run(label, okMsg, failMsg, act,
+                  detail: detail, refreshLimit: refreshLimit),
           child: Text(S.change, style: TextStyle(fontSize: af(context, 12))),
         ),
       ),

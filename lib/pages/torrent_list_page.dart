@@ -92,7 +92,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
     _deleteArmTimer?.cancel();
     _scrollCtl.dispose();
 
-    if (Get.isRegistered<TorrentController>()) ctrl.setListVisible(false);
+    if (Get.isRegistered<TorrentController>()) {
+      ctrl.setScrollPaused(false);
+      ctrl.setListVisible(false);
+    }
     _search.dispose();
     super.dispose();
   }

@@ -306,7 +306,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     final String t = took == null ? '' : ' ｜ 用时 ${secs(took)}';
     AppLog.instance.view(
       sessionOnly
-          ? '服务器卡片[${_nameOf(id)}] 会话已建立（先用上次快照点亮，真实统计随后）$t'
+          ? '服务器卡片[${_nameOf(id)}] 会话已建立（先显示全局速率，种子统计随后）$t'
           : '服务器卡片[${_nameOf(id)}] 数据已获取'
               '$t ｜ 种子 ${torrentsOf(id).length} 个',
       key: sessionOnly ? '卡片:$id:session' : '卡片:$id:connected',
@@ -647,9 +647,35 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         manualRefreshing.remove(s.id);
         manualRefreshing.refresh();
       }
+      _clearStatsPending(s.id);
       _serverInFlight.remove(s.id);
 
       _serverInFlightAt.remove(s.id);
+    }
+  }
+
+  final torrentStatsPending = <String, bool>{}.obs;
+
+  void _clearStatsPending(String id) {
+    if (torrentStatsPending[id] != true) return;
+    torrentStatsPending[id] = false;
+    torrentStatsPending.refresh();
+  }
+
+  ServerState stateOf(String id) => _bgState[id] ?? ServerState();
+
+  Future<bool> _loadQbTransferInfo(ServerData s, QbMethod c) async {
+    try {
+      final Map<String, dynamic> info = await c.getTransferInfo();
+      if (info.isEmpty) return false;
+      _bgState.putIfAbsent(s.id, ServerState.new).updateQbData(info);
+      if (current.value?.id == s.id) {
+        state.value.updateQbData(info);
+        state.refresh();
+      }
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -688,6 +714,17 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
       final Duration loginTook = sw.elapsed;
       final int rid = _bgRid[s.id] ?? 0;
+      final bool firstLoad = rid == 0;
+      final bool hasSnapshot = hasFullCache(s.id);
+      if (firstLoad) {
+        if (!hasSnapshot) {
+          torrentStatsPending[s.id] = true;
+          torrentStatsPending.refresh();
+        }
+        if (await _loadQbTransferInfo(s, c)) {
+          reportConnected(s.id, took: sw.elapsed, sessionOnly: true);
+        }
+      }
       final Map<String, dynamic> md = await c.getMaindata(rid: rid);
       _bgRid[s.id] = Formatter.getInt(md, 'rid', def: rid);
 
@@ -713,6 +750,10 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         TorrentController.mergeQbMaindata(torrentsOf(s.id), md, full: full),
       );
       torrentCache.refresh();
+      if (firstLoad) {
+        torrentStatsPending[s.id] = false;
+        torrentStatsPending.refresh();
+      }
       reportConnected(s.id, took: sw.elapsed);
 
       reportRefreshed(
@@ -1001,6 +1042,8 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   final Map<String, DateTime> _limitAt = <String, DateTime>{};
 
+  final Map<String, String> _limitSig = <String, String>{};
+
   static const Duration kLimitCacheTtl = Duration(minutes: 5);
 
   ServerPrefsSnap? prefsSnapOf(String id) => _prefsCache[id];
@@ -1058,13 +1101,48 @@ class ServerController extends GetxController with WidgetsBindingObserver {
   ServerSpeedLimit limitOf(String id) =>
       speedLimits[id] ?? const ServerSpeedLimit();
 
-  Future<void> collectSpeedLimits(ServerData s) async {
+  String _limitSigOf(ServerData s) {
+    if (s.isQbittorrent) {
+      final ServerState? st = _bgState[s.id];
+      if (st == null) return '';
+      final Map<String, dynamic> prefs =
+          _prefsCache[s.id]?.prefs ?? const <String, dynamic>{};
+      return '${st.dlRateLimit}|${st.upRateLimit}|${st.useAltSpeedLimits}'
+          '|${prefs['alt_dl_limit']}|${prefs['alt_up_limit']}';
+    }
+    final Map<String, dynamic>? sess = clientForTr(s.id).lastSession;
+    if (sess == null) return '';
+    return '${sess['alt-speed-enabled']}|${sess['alt-speed-down']}'
+        '|${sess['alt-speed-up']}|${sess['speed-limit-down-enabled']}'
+        '|${sess['speed-limit-down']}|${sess['speed-limit-up-enabled']}'
+        '|${sess['speed-limit-up']}';
+  }
+
+  Future<void> collectSpeedLimits(ServerData s, {bool force = false}) async {
     final DateTime? at = _limitAt[s.id];
-    if (at != null && DateTime.now().difference(at) < kLimitCacheTtl) return;
+    final bool unchanged = at != null &&
+        DateTime.now().difference(at) < kLimitCacheTtl &&
+        _limitSig[s.id] == _limitSigOf(s);
+    if (unchanged && !force) return;
     if (s.isQbittorrent) {
       await _collectQbLimit(s);
     } else if (s.isTransmission) {
       await _collectTrLimit(s);
+    }
+  }
+
+  Future<void> invalidateSpeedLimit(String id) async {
+    _limitAt.remove(id);
+    _limitSig.remove(id);
+    for (final ServerData s in servers) {
+      if (s.id != id) continue;
+      if (s.isTransmission) {
+        try {
+          await clientForTr(id).sessionGet();
+        } catch (_) {}
+      }
+      await collectSpeedLimits(s, force: true);
+      return;
     }
   }
 
@@ -1078,13 +1156,16 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
     speedLimits[s.id] = ServerSpeedLimit.fromQbState(st, altPrefs: altPrefs);
     _limitAt[s.id] = DateTime.now();
+    _limitSig[s.id] = _limitSigOf(s);
   }
 
   Future<void> _collectTrLimit(ServerData s) async {
     try {
-      final Map<String, dynamic> sess = await clientForTr(s.id).sessionGet();
+      final TrMethod c = clientForTr(s.id);
+      final Map<String, dynamic> sess = c.lastSession ?? await c.sessionGet();
       speedLimits[s.id] = ServerSpeedLimit.fromTrSession(sess);
       _limitAt[s.id] = DateTime.now();
+      _limitSig[s.id] = _limitSigOf(s);
     } catch (_) {}
   }
 
@@ -1225,6 +1306,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   void select(ServerData s) {
     current.value = s;
+
+    _connStage.remove(s.id);
+    _clearStatsPending(s.id);
 
     _resetTorrentView();
 

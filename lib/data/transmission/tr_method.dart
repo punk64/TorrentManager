@@ -53,6 +53,8 @@ class TrMethod {
   final Dio _dio;
   String? _sessionId;
 
+  Map<String, dynamic>? lastSession;
+
   String? _authHeader;
 
   static String? _authOf(ServerData s) {
@@ -264,9 +266,11 @@ class TrMethod {
     if (data['result'] != 'success') {
       throw Exception('Transmission RPC error: ${data['result']}');
     }
-    return Map<String, dynamic>.from(
+    final Map<String, dynamic> args = Map<String, dynamic>.from(
       data['arguments'] as Map? ?? <String, dynamic>{},
     );
+    if (method == 'session-get') lastSession = args;
+    return args;
   }
 
   Future<void> _torrentSet(List<int> ids, Map<String, dynamic> fields) =>
