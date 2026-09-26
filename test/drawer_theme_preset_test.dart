@@ -39,13 +39,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
   }
 
-  testWidgets('抽屉主题分组默认折叠，点「查看更多」展开全部', (WidgetTester tester) async {
+  testWidgets('抽屉主题分组默认整组收起，展开后预设仍走「查看更多」', (WidgetTester tester) async {
     await pumpDrawer(tester);
 
     expect(find.text(S.groupTheme), findsOneWidget);
 
+    expect(find.text(S.themeLight), findsNothing,
+        reason: '★ 第 91 轮：抽屉分组默认全部折叠，主题组子项不可见');
     expect(find.text(S.themePresets), findsNothing,
         reason: '需求 6：不再有「精选主题」分隔文本');
+
+    await tester.tap(find.text(S.groupTheme));
+    await tester.pumpAndSettle();
+
     expect(find.text(S.themeCustom), findsOneWidget,
         reason: '预设应跟在「自定义主题」条目之后');
 
@@ -75,6 +81,9 @@ void main() {
     await pumpDrawer(tester);
     final ThemeController tc = Get.find<ThemeController>();
 
+    await tester.tap(find.text(S.groupTheme));
+    await tester.pumpAndSettle();
+
     final Finder green = find.text(presets[1].name);
     await tester.ensureVisible(green);
     await tester.pumpAndSettle();
@@ -90,6 +99,9 @@ void main() {
       (WidgetTester tester) async {
     await pumpDrawer(tester);
     final ThemeController tc = Get.find<ThemeController>();
+
+    await tester.tap(find.text(S.groupTheme));
+    await tester.pumpAndSettle();
 
     tc.applyBuiltinMode(2);
     await tester.pump(const Duration(milliseconds: 100));

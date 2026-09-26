@@ -218,6 +218,13 @@ class S {
   static String get setEnableAutoTmm => L.t('启用自动种子管理');
   static String get setPreallocate => L.t('为文件预分配磁盘空间');
 
+  static String get stateEnabled => L.t('已启用');
+  static String get stateDisabled => L.t('未启用');
+  static String get setAutoTmmSub => L.t('按分类自动指定保存路径');
+  static String get setPreallocateSub => L.t('创建任务即占满文件大小');
+  static String get setIncompleteExtSub => L.t('未完成任务临时文件追加 .!qB');
+  static String autoMgrActiveCount(int n) => L.pick('$n 项开启', '$n enabled');
+
   static String get themeCustom => L.t('自定义主题');
   static String get themeCurrentPrefix => L.t('当前主题: ');
   static String get themeFollowSystem => L.t('跟随系统');
@@ -428,10 +435,12 @@ class S {
   static String get bkRestoreOk => L.t('恢复配置文件成功, 已恢复服务器列表:\n');
   static String get bkRestoreFail => L.t('恢复配置文件失败, 错误信息: ');
 
+  static String get batchInvert => L.t('反选');
+
   static String get bkPortableExport => L.t('导出便携备份到…');
   static String get bkPortableImport => L.t('导入便携备份');
-  static String get bkPortableHint => L.t('便携备份含服务器密码，用你设置的口令加密，可在任意设备导入；'
-      '下方的明文 JSON 不含密码，只适合本机留档。');
+  static String get bkPortableHint => L.t('便携备份与「导出 JSON」均为口令加密'
+      '（含服务器密码），口令遗失无法找回，可在任意设备导入。');
   static String get bkPortableExportTitle => L.t('设置便携备份口令');
   static String get bkPortableImportTitle => L.t('输入便携备份口令');
   static String get bkPortableExportBody => L.t('这份备份含服务器地址与密码。口令用于加密文件，请牢记 —— '
@@ -451,9 +460,18 @@ class S {
       L.t('这不是便携备份文件。便携备份请用「导出便携备份到…」生成（文件内含 portable 标识）。');
 
   static String get bkJsonImportNote =>
-      L.t('粘贴从其他设备导出的 JSON。⚠️ 该格式不含密码：同 id 的服务器保留本机已有密码，'
-          '新增的服务器需要导入后手动补填密码。要连密码一起迁移请用「便携备份」。');
-  static String get bkJsonExportNote => L.t('已复制到剪贴板（含服务器地址与用户名，不含密码）');
+      L.t('粘贴本应用「导出 JSON」生成的口令加密密文（含账号与密码，导入需同一口令）。'
+          '⚠️ 旧的明文 JSON 已不再支持。');
+  static String get bkJsonExportNote =>
+      L.t('已复制到剪贴板（口令加密，含账号与密码；导入时需同一口令）');
+
+  static String get bkJsonExportTitle => L.t('设置导出口令');
+  static String get bkJsonExportBody => L.t('导出内容含服务器账号与密码，将以口令加密后复制到剪贴板'
+      '（剪贴板里只有密文）。口令遗失无法找回，请务必牢记。');
+  static String get bkJsonPassTitle => L.t('输入导出口令');
+  static String get bkJsonCipherHint => L.t('粘贴口令加密导出的密文…');
+  static String get bkJsonNotEnvelope =>
+      L.t('这不是口令加密导出的密文（旧明文 JSON 已不再支持）。');
 
   static String get btExportTorrent => L.t('导出种子');
   static String get btExportOk => L.t('导出种子成功!');
@@ -656,7 +674,7 @@ class S {
   static String get openSourceTitle => L.t('开源说明');
 
   static String get openSourceBody =>
-      L.t('TorrentManager 是自由开源软件，以 MIT License 发布。\n'
+      L.pick('TorrentManager 是自由开源软件，以 MIT License 发布。\n'
           '\n'
           '一、源码与发布\n'
           '项目主页：$kProjectUrl\n'
@@ -680,7 +698,42 @@ class S {
           'assets 中的 qbittorrent / transmission 标识版权归各自项目所有，'
           '不适用本仓库的 MIT 许可，仅用于在界面上标识所连接的服务器类型。'
           '本项目与 qBittorrent、Transmission 无隶属、赞助或背书关系，是独立'
-          '开发的第三方客户端，仅通过二者公开的 RPC 接口通信。');
+          '开发的第三方客户端，仅通过二者公开的 RPC 接口通信。',
+          'TorrentManager is free, open-source software released under the '
+          'MIT License.\n'
+          '\n'
+          '1. Source code and releases\n'
+          'Project homepage: $kProjectUrl\n'
+          'Release page (prebuilt APKs): $kReleasesUrl\n'
+          '\n'
+          '2. License (summary)\n'
+          'You may use, copy, modify, merge, publish, distribute, sublicense, '
+          'and/or sell copies of this software, provided the above copyright '
+          'notice and this permission notice appear in all copies. The '
+          'software is provided "as is", without warranty of any kind, '
+          'express or implied; the authors are not liable for any claim, '
+          'damages, or other liability. See the LICENSE file at the '
+          'repository root for the full text.\n'
+          '\n'
+          '3. Third-party components\n'
+          'This app is built on Flutter / Dart and the following open-source '
+          'projects: GetX (state management and routing), Dio with '
+          'dio_cookie_manager / cookie_jar (HTTP client), pointycastle '
+          '(AES-GCM encryption), flutter_secure_storage and '
+          'shared_preferences / path_provider (local storage), file_picker '
+          '(file selection), fl_chart (charts), and intl (number and date '
+          'formatting). Each is governed by its own license; see '
+          'pubspec.yaml and pubspec.lock in the repository for the complete '
+          'list.\n'
+          '\n'
+          '4. Third-party logos and trademarks\n'
+          'The qbittorrent / transmission logos in assets belong to their '
+          'respective projects and are not covered by the MIT license of '
+          'this repository; they are used solely to identify the connected '
+          'server type in the UI. This project is an independently developed '
+          'third-party client with no affiliation, sponsorship, or '
+          'endorsement from qBittorrent or Transmission, and communicates '
+          'only through their public RPC APIs.');
 
   static String startupUpdateBody(String latest) =>
       "${L.t('发现新版本 V')}$latest${L.pick('，当前版本 ', ', current ')}$kAppVersion\n"
@@ -689,7 +742,8 @@ class S {
 
   static String get copyReleaseLink => L.t('复制发布页地址');
 
-  static String get privacyBody => L.t('本应用是一个纯本地工具，不设服务端、不收集账号。\n'
+  static String get privacyBody =>
+      L.pick('本应用是一个纯本地工具，不设服务端、不收集账号。\n'
       '\n'
       '一、存储在你设备上的数据\n'
       '服务器地址、端口、账号与密码只保存在本机；密码经加密后存储，'
@@ -720,9 +774,54 @@ class S {
       '五、开源\n'
       '本应用是开源软件（MIT License），代码公开可审阅：\n'
       '$kProjectUrl\n'
-      '所有上述行为你都可以在源码里自行核对。');
+      '所有上述行为你都可以在源码里自行核对。',
+      'This app is a purely local tool: no server of its own, no account '
+      'collection.\n'
+      '\n'
+      '1. Data stored on your device\n'
+      'Server addresses, ports, accounts, and passwords are stored only on '
+      'this device; passwords are stored encrypted and never leave the '
+      'device through logs or crash reports. You can delete a server entry '
+      'at any time, and the corresponding credentials are not kept on the '
+      'device afterwards.\n'
+      '\n'
+      '2. Outbound requests\n'
+      'Apart from the download servers you configure, the app reaches the '
+      'external network in only two cases:\n'
+      '1. IP geolocation — when the detail page shows where a peer is '
+      'located, that IP is sent to a public geolocation service (such as '
+      'ip-api.com or ip9.com.cn; the app spreads requests across several '
+      'providers to avoid overloading any single one). The request contains '
+      'only that IP and no device information; private and reserved '
+      'addresses are never sent.\n'
+      '2. Update check — once automatically at each startup (version number '
+      'comparison only; one reminder when a new version is found, and you '
+      'can also tap "Check for updates" in the drawer). It queries the '
+      'GitHub releases API of this repository (api.github.com), reads only '
+      'the latest version number, and sends no device information or usage '
+      'data; the app never downloads or installs an APK by itself — whether '
+      'and when to update is entirely up to you.\n'
+      'Beyond this, your torrent list, file lists, and tracker addresses '
+      'are never uploaded anywhere.\n'
+      '\n'
+      '3. Logs\n'
+      'Run logs are kept locally and can be exported or cleared manually. '
+      'Domains, IPs, and ports are masked by default; login passwords and '
+      'session credentials are never written to logs.\n'
+      '\n'
+      '4. Backups\n'
+      'When exporting a backup you can choose to exclude passwords; '
+      'portable backups are encrypted with a passphrase that you keep '
+      'yourself — once lost, it cannot be recovered.\n'
+      '\n'
+      '5. Open source\n'
+      'This app is open-source software (MIT License) with publicly '
+      'reviewable code:\n'
+      '$kProjectUrl\n'
+      'Everything above can be verified by you in the source code.');
 
-  static String get termsBody => L.t('一、本应用是什么\n'
+  static String get termsBody =>
+      L.pick('一、本应用是什么\n'
       'TorrentManager 是一个下载器远程管理客户端。它本身不下载、不存储、'
       '不传播任何内容，只是把你自己的 qBittorrent / Transmission 服务端'
       '界面搬到手机上。\n'
@@ -748,7 +847,41 @@ class S {
       '本应用是开源软件，以 MIT License 发布，源码见：\n'
       '$kProjectUrl\n'
       '你可以自行审阅代码、提出缺陷或自行构建。自行构建的版本不属于本'
-      '应用官方发布，由构建者自行承担使用风险。');
+      '应用官方发布，由构建者自行承担使用风险。',
+      '1. What this app is\n'
+      'TorrentManager is a remote-management client for downloaders. It '
+      'downloads, stores, and shares nothing itself — it simply brings the '
+      'web interface of your own qBittorrent / Transmission servers to '
+      'your phone.\n'
+      '\n'
+      '2. Your responsibility\n'
+      'Which servers you connect to and what you download are entirely up '
+      'to you, and so is the responsibility. Obey the laws and regulations '
+      'of your region and the rules of the sites you use; do not download '
+      'or distribute content that infringes the rights of others.\n'
+      '\n'
+      '3. Accounts and credentials\n'
+      'Server accounts and passwords are entered by you and stored only on '
+      'this device (encrypted). Keep your device and backup files safe; '
+      'you bear any loss caused by a lost device or a leaked backup file.\n'
+      '\n'
+      '4. Disclaimer\n'
+      'This app is provided "as is", with no warranty as to the legality, '
+      'completeness, or availability of downloaded content, and accepts no '
+      'liability for any direct or indirect loss arising from its use.\n'
+      '\n'
+      '5. Deletion cannot be undone\n'
+      'Deleting a torrent, or checking "also delete local files", acts '
+      'directly on your server — confirm before proceeding. The app cannot '
+      'recover data deleted by mistake.\n'
+      '\n'
+      '6. Open source\n'
+      'This app is open-source software released under the MIT License; '
+      'source code:\n'
+      '$kProjectUrl\n'
+      'You may review the code, report defects, or build it yourself. '
+      'Self-built versions are not official releases of this app; whoever '
+      'builds it bears the risk of using it.');
 
   static String get langTitle => L.t('语言');
   static String get langZh => L.t('简体中文');

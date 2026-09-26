@@ -514,7 +514,9 @@ class _ServerListPageState extends State<ServerListPage> {
                 }
                 final bool statsPending =
                     ctrl.torrentStatsPending[raw.id] == true;
-                if (liveTs.isEmpty && !statsPending) {
+                if (liveTs.isEmpty &&
+                    !statsPending &&
+                    !ctrl.statsLoadedOnce(raw.id)) {
                   return _statsRefreshingPlaceholder(context);
                 }
                 final ServerData live = raw.copyWith(torrents: liveTs);
@@ -630,18 +632,22 @@ class _ServerListPageState extends State<ServerListPage> {
                       items: <MetricItem>[
                         MetricItem(
                           icon: Icons.arrow_upward_rounded,
-                          value: Formatter.setSpeed(statsPending
-                              ? liveState.upInfoSpeed
-                              : live.totalUpSpeed),
+                          value: statsPending
+                              ? (live.isQbittorrent
+                                  ? Formatter.setSpeed(liveState.upInfoSpeed)
+                                  : '--')
+                              : Formatter.setSpeed(live.totalUpSpeed),
                           label:
                               '${S.chartLabelUpload}${Formatter.setSpeedLimit(limit.up)}',
                           color: upColor,
                         ),
                         MetricItem(
                           icon: Icons.arrow_downward_rounded,
-                          value: Formatter.setSpeed(statsPending
-                              ? liveState.dlInfoSpeed
-                              : live.totalDlSpeed),
+                          value: statsPending
+                              ? (live.isQbittorrent
+                                  ? Formatter.setSpeed(liveState.dlInfoSpeed)
+                                  : '--')
+                              : Formatter.setSpeed(live.totalDlSpeed),
                           label:
                               '${S.chartLabelDownload}${Formatter.setSpeedLimit(limit.dl)}',
                           color: dlColor,
@@ -649,7 +655,7 @@ class _ServerListPageState extends State<ServerListPage> {
                         MetricItem(
                           icon: Icons.storage_rounded,
                           value: statsPending
-                              ? '-'
+                              ? '--'
                               : Formatter.setSize(live.totalSize),
                           label: S.fieldSize,
                           color: cs.onSurfaceVariant,

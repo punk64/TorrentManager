@@ -198,30 +198,31 @@ void main() {
   });
 
   group('第 67 轮第四期 · 收起态布局（4.1）', () {
-    test('底部区左右栏 1:1（原来是 2:1）', () {
+    test('★ v2 重设计：底部左右栏取消，改为单列信息带（Text.rich 流量行）', () {
       final String src = _listPageSrc();
 
       expect(src.contains('flex: 2,'), isFalse,
-          reason: '4.1 要求底部区从 2:1 改成 1:1');
-      expect(src.contains('flex: 1,'), isTrue);
+          reason: '4.1 要求底部区从 2:1 改成 1:1，v2 进一步取消左右栏');
+      expect(src.contains('flex: 1,'), isFalse,
+          reason: 'v2 卡片不再有左右栏结构');
+      expect(src.contains('Text.rich'), isTrue,
+          reason: 'v2：已下载/总量 · 比率 · 剩余量 走 Text.rich 流量行');
     });
 
-    test('右栏补了第 4 行（剩余量）', () {
+    test('剩余量仍在卡上（v2 并入流量行）', () {
       final String src = _listPageSrc();
       expect(src.contains('Icons.hourglass_bottom'), isTrue);
       expect(src.contains('t.amountLeft'), isTrue);
     });
 
-    test('分类/标签 chip 上卡片，且不再挤在 _metaLine 里', () {
+    test('分类/标签 chip 上卡片（v2：_metaLine 已按行拆分移除）', () {
       final String src = _listPageSrc();
       expect(src.contains('List<Widget> _catChips('), isTrue);
       expect(src.contains('List<Widget> _tagChips('), isTrue);
-
-      final int i = src.indexOf('String _metaLine(Torrent t)');
-      final String body = src.substring(i, i + 500);
-      expect(body.contains('t.category'), isFalse,
-          reason: '分类已经做成 chip，_metaLine 里不该再重复一遍');
-      expect(body.contains('t.tags'), isFalse);
+      expect(src.contains('String _metaLine(Torrent t)'), isFalse,
+          reason: 'v2 重设计：旧 meta 行已拆成信息带各行');
+      expect(src.contains('ctrl.siteMasked.value'), isTrue,
+          reason: '站点打码开关仍生效');
     });
 
     test('标签 chip 按逗号切且限流 4 个（防止撑爆卡片）', () {

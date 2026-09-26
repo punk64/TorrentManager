@@ -50,6 +50,8 @@ void main() {
   });
 }
 
+bool _screenDiagLogged = false;
+
 class TorrentManagerApp extends StatelessWidget {
   const TorrentManagerApp({super.key});
 
@@ -85,7 +87,22 @@ class TorrentManagerApp extends StatelessWidget {
 
         navigatorObservers: <NavigatorObserver>[autoRefreshRouteObserver],
         builder: (BuildContext ctx, Widget? child) {
-          return child ?? const SizedBox.shrink();
+          final MediaQueryData mq = MediaQuery.of(ctx);
+          final double sysScale = mq.textScaler.scale(1);
+          final double clamped = sysScale.clamp(1.0, 1.15);
+          if (!_screenDiagLogged) {
+            _screenDiagLogged = true;
+            AppLog.instance.op(
+                '屏幕诊断: width=${mq.size.width.toStringAsFixed(1)}dp '
+                'height=${mq.size.height.toStringAsFixed(1)}dp '
+                'dpr=${mq.devicePixelRatio} '
+                'textScaler=$sysScale(钳制后$clamped) '
+                '设计基准=445dp(Mate 80 Pro)');
+          }
+          return MediaQuery(
+            data: mq.copyWith(textScaler: TextScaler.linear(clamped)),
+            child: child ?? const SizedBox.shrink(),
+          );
         },
       );
       },

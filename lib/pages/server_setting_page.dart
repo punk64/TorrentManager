@@ -410,7 +410,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         title: Text(name.isEmpty ? '服务器设置' : '$name · 服务器设置'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.refresh, size: AppTheme.iconSize),
+            icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
             tooltip: S.fieldUpdating,
 
             onPressed: () async {
@@ -430,7 +430,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         onTick: _tick,
         enabled: !_busy,
         child: ListView(
-          padding: EdgeInsets.only(bottom: af(context, 24)),
+          padding: EdgeInsets.only(
+              top: af(context, 8), bottom: af(context, 24)),
           children: <Widget>[
 
             if (_server == null)
@@ -462,13 +463,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }
 
   Widget _limitGroup() => _group(
+        icon: Icons.speed_rounded,
         title: '限速设置',
+        summary: '↑ ${_kbText(_upLimit)} · ↓ ${_kbText(_dlLimit)} KB/s',
         help: '${S.setNoLimitZero}\n${S.setSwitchToEnable}',
         children: <Widget>[
-          _sectionTitle('普通限速'),
-          _kbRow('上传限速', _upLimit, prefKey: PrefKey.upLimit),
-          _kbRow('下载限速', _dlLimit, prefKey: PrefKey.dlLimit),
-          _changeButton(
+          _sectionTitle('普通限速', onChange: () => _run(
             '全局限速[更改]',
             S.qbSetServerLimit,
             S.qbSetServerLimitFail,
@@ -479,9 +479,30 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             detail:
                 '上行 ${_kbText(_upLimit)} KB/s · 下行 ${_kbText(_dlLimit)} KB/s',
             refreshLimit: true,
-          ),
+          )),
+          _gridRow(<Widget>[
+            Expanded(
+              child: _numCell('上传限速', _upLimit,
+                  prefKey: PrefKey.upLimit, unit: 'KB/S'),
+            ),
+            Expanded(
+              child: _numCell('下载限速', _dlLimit,
+                  prefKey: PrefKey.dlLimit, unit: 'KB/S'),
+            ),
+          ]),
           _sectionDivider(),
-          _sectionTitle('备用限速', help: S.setAltLimitHelp),
+          _sectionTitle('备用限速', onChange: () => _run(
+            '备用限速[更改]',
+            S.qbSetAltLimit,
+            S.qbSetAltLimitFail,
+            () => _api.write(<String, dynamic>{
+              PrefKey.altUpLimit: _kb(_altUpLimit),
+              PrefKey.altDlLimit: _kb(_altDlLimit),
+            }),
+            detail:
+                '上行 ${_kbText(_altUpLimit)} KB/s · 下行 ${_kbText(_altDlLimit)} KB/s',
+            refreshLimit: true,
+          )),
           _switchRow(
             S.setEnableAltLimit,
             _ssBool(PrefKey.altSpeedEnabled),
@@ -503,36 +524,24 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               refreshLimit: true,
             ),
           ),
-          _kbRow(
-            '上传限速',
-            _altUpLimit,
-            prefKey: 'alt_up_limit',
-          ),
-          _kbRow(
-            '下载限速',
-            _altDlLimit,
-            prefKey: 'alt_dl_limit',
-          ),
-          _changeButton(
-            '备用限速[更改]',
-            S.qbSetAltLimit,
-            S.qbSetAltLimitFail,
-            () => _api.write(<String, dynamic>{
-              PrefKey.altUpLimit: _kb(_altUpLimit),
-              PrefKey.altDlLimit: _kb(_altDlLimit),
-            }),
-            detail:
-                '上行 ${_kbText(_altUpLimit)} KB/s · 下行 ${_kbText(_altDlLimit)} KB/s',
-            refreshLimit: true,
-          ),
+          _gridRow(<Widget>[
+            Expanded(
+              child: _numCell('上传限速', _altUpLimit,
+                  prefKey: 'alt_up_limit', unit: 'KB/S'),
+            ),
+            Expanded(
+              child: _numCell('下载限速', _altDlLimit,
+                  prefKey: 'alt_dl_limit', unit: 'KB/S'),
+            ),
+          ]),
         ],
       );
 
-  Widget _sectionTitle(String text, {String? help}) {
+  Widget _sectionTitle(String text, {String? help, VoidCallback? onChange}) {
     final Color accent = Theme.of(context).colorScheme.primary;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          af(context, 16), af(context, 6), af(context, 16), 0),
+          af(context, 8), af(context, 6), af(context, 8), 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -540,27 +549,29 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             children: <Widget>[
               Container(
                 width: af(context, 3),
-                height: af(context, 13),
+                height: af(context, 12),
                 decoration: BoxDecoration(
                   color: accent,
                   borderRadius: BorderRadius.circular(af(context, 2)),
                 ),
               ),
-              SizedBox(width: af(context, 7)),
+              SizedBox(width: af(context, 6)),
               Text(
                 text,
                 style: TextStyle(
-                  fontSize: af(context, 13),
+                  fontSize: af(context, 12),
                   fontWeight: FontWeight.bold,
                   color: accent,
                 ),
               ),
+              const Spacer(),
+              if (onChange != null) _pillButton(S.change, accent, onChange),
             ],
           ),
           if (help != null)
             Padding(
               padding: EdgeInsets.only(
-                  left: af(context, 10), top: af(context, 2)),
+                  left: af(context, 9), top: af(context, 2)),
               child: Text(help, style: TextStyle(fontSize: af(context, 10))),
             ),
         ],
@@ -570,7 +581,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _sectionDivider() => Padding(
         padding: EdgeInsets.fromLTRB(
-            af(context, 16), af(context, 12), af(context, 16), 0),
+            af(context, 8), af(context, 12), af(context, 8), 0),
         child: Divider(
           height: af(context, 1),
           thickness: af(context, 0.5),
@@ -580,13 +591,18 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _categoryGroup() => _group(
+        icon: Icons.folder_open_rounded,
         title: '管理分类',
+        summary: S.countLabel(_categories.length),
         help: S.setCategoryEditHelp,
         children: <Widget>[
           if (_categories.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
-              child: Text('未分类', style: TextStyle(fontSize: af(context, 12))),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text('未分类', style: TextStyle(fontSize: af(context, 12))),
+              ),
             ),
           Wrap(
             spacing: 6,
@@ -648,13 +664,18 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }
 
   Widget _tagGroup() => _group(
+        icon: Icons.label_outline_rounded,
         title: '管理标签',
+        summary: S.countLabel(_tags.length),
         help: S.setTagDeleteHelp,
         children: <Widget>[
           if (_tags.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
-              child: Text('无标签', style: TextStyle(fontSize: af(context, 12))),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text('无标签', style: TextStyle(fontSize: af(context, 12))),
+              ),
             ),
           Wrap(
             spacing: 6,
@@ -705,10 +726,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }
 
   Widget _savePathGroup() => _group(
+        icon: Icons.save_outlined,
         title: '默认保存路径',
+        summary: _savePath.text,
         help: S.setPickFromBelowNoAutoTmm,
         children: <Widget>[
-          _textRow('保存路径', _savePath, prefKey: 'save_path'),
+          _pathField('保存路径', _savePath, prefKey: 'save_path'),
           _changeButton(
             '保存路径[更改]',
             S.qbSetSavePath,
@@ -722,7 +745,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _tempPathGroup() => _group(
+        icon: Icons.timelapse_rounded,
         title: '临时保存路径',
+        summary: _onOffLabel(_prefBool('temp_path_enabled')),
         help: S.setTempPathHelp,
         children: <Widget>[
 
@@ -737,7 +762,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               after: () => _prefs['temp_path_enabled'] = v,
             ),
           ),
-          _textRow('临时路径', _tempPath, prefKey: 'temp_path'),
+          _pathField('临时路径', _tempPath, prefKey: 'temp_path'),
           _changeButton(
             '临时路径[更改]',
             S.qbSetTempPath,
@@ -751,7 +776,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _queueGroup() => _group(
+        icon: Icons.low_priority_rounded,
         title: '设置队列限制',
+        summary: _onOffLabel(_prefBool('queueing_enabled')),
         help: S.setQueueSwitchHelp,
         children: <Widget>[
           _switchRow(
@@ -773,15 +800,23 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
           ),
 
-          if (_supports(PrefKey.maxActiveUploads))
-            _textRow('最大活动上传数', _maxActiveUp,
-                numeric: true, prefKey: PrefKey.maxActiveUploads),
-          if (_supports(PrefKey.maxActiveDownloads))
-            _textRow('最大活动下载数', _maxActiveDl,
-                numeric: true, prefKey: PrefKey.maxActiveDownloads),
-          if (_supports(PrefKey.maxActiveTorrents))
-            _textRow('最大活动种子数', _maxActiveTorrents,
-                numeric: true, prefKey: PrefKey.maxActiveTorrents),
+          _gridRow(<Widget>[
+            if (_supports(PrefKey.maxActiveUploads))
+              Expanded(
+                child: _numCell('最大活动上传数', _maxActiveUp,
+                    prefKey: PrefKey.maxActiveUploads),
+              ),
+            if (_supports(PrefKey.maxActiveDownloads))
+              Expanded(
+                child: _numCell('最大活动下载数', _maxActiveDl,
+                    prefKey: PrefKey.maxActiveDownloads),
+              ),
+            if (_supports(PrefKey.maxActiveTorrents))
+              Expanded(
+                child: _numCell('最大活动种子数', _maxActiveTorrents,
+                    prefKey: PrefKey.maxActiveTorrents),
+              ),
+          ]),
           _changeButton(
             '队列限制[更改]',
             S.qbSetQueueing,
@@ -800,17 +835,25 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _seedingGroup() => _group(
+        icon: Icons.trending_up_rounded,
         title: '设置做种限制',
+        summary: '比率 ${_kbText(_maxRatio)}',
         help: S.setRatioHelp,
         children: <Widget>[
-          _textRow('最大分享比率', _maxRatio,
-              help: S.setNoLimitMinusOneShort, prefKey: PrefKey.maxRatio),
-
-          if (_supports(PrefKey.maxSeedingTime))
-            _textRow('最长做种时间', _maxSeedingTime,
-                numeric: true, prefKey: PrefKey.maxSeedingTime),
-          _textRow('非活动状态下\n最长做种时间', _maxInactiveSeedingTime,
-              numeric: true, prefKey: PrefKey.maxInactiveSeedingTime),
+          _gridRow(<Widget>[
+            Expanded(
+              child: _numCell('最大分享比率', _maxRatio, prefKey: PrefKey.maxRatio),
+            ),
+            if (_supports(PrefKey.maxSeedingTime))
+              Expanded(
+                child: _numCell('最长做种时间', _maxSeedingTime,
+                    prefKey: PrefKey.maxSeedingTime, unit: '分'),
+              ),
+            Expanded(
+              child: _numCell('非活动做种时间', _maxInactiveSeedingTime,
+                  prefKey: PrefKey.maxInactiveSeedingTime, unit: '分'),
+            ),
+          ]),
           _changeButton(
             '做种限制[更改]',
             S.qbSetRatio,
@@ -832,19 +875,32 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _connectionGroup() => _group(
+        icon: Icons.lan_rounded,
         title: '设置连接限制',
+        summary: '全局 ${_kbText(_maxConnec)} · 单种 ${_kbText(_maxConnecPerTorrent)}',
         help: S.setQueueSwitchHelp,
         children: <Widget>[
-          _textRow('全局最大连接数', _maxConnec,
-              numeric: true, prefKey: PrefKey.maxConnec),
-          _textRow('单种最大连接数', _maxConnecPerTorrent,
-              numeric: true, prefKey: PrefKey.maxConnecPerTorrent),
-
-          if (_supports(PrefKey.maxUploads))
-            _textRow('全局上传连接数', _maxUpConnec,
-                numeric: true, prefKey: PrefKey.maxUploads),
-          _textRow('单种上传连接数', _maxUpConnecPerTorrent,
-              numeric: true, prefKey: PrefKey.maxUploadsPerTorrent),
+          _gridRow(<Widget>[
+            Expanded(
+              child: _numCell('全局最大连接数', _maxConnec,
+                  prefKey: PrefKey.maxConnec),
+            ),
+            Expanded(
+              child: _numCell('单种最大连接数', _maxConnecPerTorrent,
+                  prefKey: PrefKey.maxConnecPerTorrent),
+            ),
+          ]),
+          _gridRow(<Widget>[
+            if (_supports(PrefKey.maxUploads))
+              Expanded(
+                child: _numCell('全局上传连接数', _maxUpConnec,
+                    prefKey: PrefKey.maxUploads),
+              ),
+            Expanded(
+              child: _numCell('单种上传连接数', _maxUpConnecPerTorrent,
+                  prefKey: PrefKey.maxUploadsPerTorrent),
+            ),
+          ]),
           _changeButton(
             '连接限制[更改]',
             S.qbSetMaxConnec,
@@ -866,7 +922,9 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
 
   Widget _miscGroup() => _group(
+        icon: Icons.auto_mode_rounded,
         title: '自动种子管理',
+        summary: _autoMgrSummary(),
         help: S.setCategoryAutoTmmHelp,
         children: <Widget>[
 
@@ -881,6 +939,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 () => _api.write(<String, dynamic>{PrefKey.autoTmmEnabled: v}),
                 after: () => _prefs[PrefKey.autoTmmEnabled] = v,
               ),
+              sub: S.setAutoTmmSub,
             ),
 
           if (_supports(PrefKey.preallocateAll))
@@ -894,6 +953,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 () => _api.write(<String, dynamic>{PrefKey.preallocateAll: v}),
                 after: () => _prefs[PrefKey.preallocateAll] = v,
               ),
+              sub: S.setPreallocateSub,
             ),
 
           _switchRow(
@@ -906,14 +966,33 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               () => _api.write(<String, dynamic>{PrefKey.incompleteFilesExt: v}),
               after: () => _prefs['incomplete_files_ext'] = v,
             ),
+            sub: S.setIncompleteExtSub,
           ),
         ],
       );
 
+  String _autoMgrSummary() {
+    int n = 0;
+    if (_supports(PrefKey.autoTmmEnabled) &&
+        _prefBool(PrefKey.autoTmmEnabled)) {
+      n++;
+    }
+    if (_supports(PrefKey.preallocateAll) &&
+        _prefBool(PrefKey.preallocateAll)) {
+      n++;
+    }
+    if (_prefBool('incomplete_files_ext')) n++;
+    return S.autoMgrActiveCount(n);
+  }
+
   Widget _banGroup() => _isQb ? _qbBanGroup() : _trBlocklistGroup();
 
   Widget _trBlocklistGroup() => _group(
+        icon: Icons.block_rounded,
         title: '黑名单 / IP 过滤',
+        summary: _prefsLoaded
+            ? '${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
+            : '',
         help: 'Transmission 只能整份**订阅**黑名单文件（blocklist-url），\n'
             '由服务端自行下载解析；它没有逐条增删的接口。',
         children: <Widget>[
@@ -929,7 +1008,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
             sub: '关掉后订阅来的黑名单不再生效',
           ),
-          _textRow('订阅地址', _blocklistUrl, prefKey: PrefKey.blocklistUrl),
+          _pathField('订阅地址', _blocklistUrl, prefKey: PrefKey.blocklistUrl),
           _changeButton(
             '黑名单订阅[更改]',
             '黑名单订阅已更新',
@@ -941,18 +1020,23 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(af(context, 16), 2, af(context, 16), 6),
-            child: Text(
-              _prefsLoaded
-                  ? '当前屏蔽 ${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
-                  : '当前屏蔽 —',
-              style: TextStyle(fontSize: af(context, 12)),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                _prefsLoaded
+                    ? '当前屏蔽 ${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
+                    : '当前屏蔽 —',
+                style: TextStyle(fontSize: af(context, 12)),
+              ),
             ),
           ),
         ],
       );
 
   Widget _qbBanGroup() => _group(
+        icon: Icons.block_rounded,
         title: '黑名单 / IP 过滤',
+        summary: _banSummary(),
         help: '服务器（qBittorrent）上被封禁的来源 IP / 网段，每行一条、支持 CIDR。\n'
             '上面两个开关即时生效；名单改动点「保存黑名单」后一次性下发。',
         children: <Widget>[
@@ -997,38 +1081,25 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _banAddRow() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(af(context, 16), 0, af(context, 16), 0),
+      padding: EdgeInsets.fromLTRB(af(context, 8), 0, af(context, 8), 0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Expanded(
-            child: SizedBox(
-              height: af(context, 36),
-              child: TextField(
-                controller: _banInput,
-                enabled: _prefsLoaded,
-                maxLength: 64,
-                buildCounter: AppTheme.noCounter,
-                style: TextStyle(fontSize: af(context, 12.5)),
-                decoration: InputDecoration(
-                  isDense: true,
-                  hintText: '输入 IP 或网段，如 1.2.3.0/24',
-                  hintStyle: TextStyle(fontSize: af(context, 11.5)),
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: af(context, 8), vertical: af(context, 9)),
-                ),
-                onSubmitted: (_) => _addBanEntry(),
-              ),
+            child: _bareInput(
+              _banInput,
+              enabled: _prefsLoaded,
+              maxLength: 64,
+              hint: '输入 IP 或网段，如 1.2.3.0/24',
+              onSubmitted: (_) => _addBanEntry(),
             ),
           ),
           SizedBox(width: af(context, 8)),
-          ElevatedButton(
-            onPressed: (_busy || !_prefsLoaded) ? null : _addBanEntry,
-            style: ElevatedButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
-            ),
-            child: Text('添加', style: TextStyle(fontSize: af(context, 12))),
+          _pillButton(
+            S.add,
+            _prefsLoaded ? Theme.of(context).colorScheme.primary : null,
+            (_busy || !_prefsLoaded) ? null : _addBanEntry,
+            filled: true,
           ),
         ],
       ),
@@ -1036,21 +1107,26 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }
 
   Widget _banSaveRow() {
+    final Brightness br = Theme.of(context).brightness;
+    final Color dirtyColor =
+        br == Brightness.dark ? const Color(0xFFE8A24A) : const Color(0xFFB26A00);
     return Padding(
-      padding: EdgeInsets.fromLTRB(af(context, 16), 6, af(context, 12), 2),
+      padding: EdgeInsets.fromLTRB(af(context, 8), 6, af(context, 8), 2),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Text(
               _banDirtyHint ?? '',
-              style: TextStyle(fontSize: af(context, 10.5), color: Color(0xFFB26A00)),
+              style: TextStyle(fontSize: af(context, 10.5), color: dirtyColor),
             ),
           ),
-          ElevatedButton(
-            onPressed: (_busy || !_prefsLoaded || _banDirtyHint == null)
+          _pillButton(
+            '保存黑名单',
+            _banDirtyHint == null ? null : Theme.of(context).colorScheme.primary,
+            (_busy || !_prefsLoaded || _banDirtyHint == null)
                 ? null
                 : _saveBanList,
-            child: Text('保存黑名单', style: TextStyle(fontSize: af(context, 12))),
+            filled: true,
           ),
         ],
       ),
@@ -1097,7 +1173,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       return <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
-          child: Text('未读取到服务器设置', style: TextStyle(fontSize: af(context, 12))),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text('未读取到服务器设置', style: TextStyle(fontSize: af(context, 12))),
+          ),
         ),
       ];
     }
@@ -1106,7 +1185,10 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       return <Widget>[
         Padding(
           padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
-          child: Text('名单为空', style: TextStyle(fontSize: af(context, 12))),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text('名单为空', style: TextStyle(fontSize: af(context, 12))),
+          ),
         ),
       ];
     }
@@ -1178,7 +1260,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   Widget _banRow(int index, String ip) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: EdgeInsets.fromLTRB(af(context, 16), 2, 4, 2),
+      padding: EdgeInsets.fromLTRB(af(context, 8), 2, 4, 2),
       child: Row(
         children: <Widget>[
           Expanded(
@@ -1241,13 +1323,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, size: af(context, 17)),
+            icon: Icon(Icons.edit_outlined, size: af(context, 15)),
             visualDensity: VisualDensity.compact,
             tooltip: '编辑',
             onPressed: _busy ? null : () => _editBanEntry(index, ip),
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, size: af(context, 17)),
+            icon: Icon(Icons.delete_outline, size: af(context, 15)),
             visualDensity: VisualDensity.compact,
             tooltip: '删除',
             onPressed: _busy ? null : () => _removeBanEntry(index, ip),
@@ -1442,34 +1524,92 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     ).whenComplete(c.dispose);
   }
 
+  final Set<String> _openGroups = <String>{};
+
   Widget _group({
+    required IconData icon,
     required String title,
+    String? summary,
     required List<Widget> children,
     String? help,
   }) {
-    return Theme(
-
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool open = _openGroups.contains(title);
+    return Container(
+      margin: EdgeInsets.fromLTRB(
+          af(context, 12), 0, af(context, 12), af(context, 8)),
+      child: Material(
+        color: cs.surfaceContainerLow,
         clipBehavior: Clip.antiAlias,
-        initiallyExpanded: false,
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: af(context, 15),
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(af(context, 12)),
+          side: BorderSide(
+            color: open
+                ? cs.primary.withValues(alpha: 0.28)
+                : cs.outlineVariant.withValues(alpha: 0.30),
+            width: 0.8,
           ),
         ),
-        childrenPadding: EdgeInsets.only(left: af(context, 8), right: af(context, 8), bottom: af(context, 8)),
-        children: <Widget>[
-          if (help != null)
-            Padding(
-              padding: EdgeInsets.fromLTRB(af(context, 12), 0, af(context, 12), 6),
-              child: Text(help, style: TextStyle(fontSize: af(context, 10))),
-            ),
-          ...children,
-        ],
+        child: Theme(
+
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: af(context, 12)),
+          initiallyExpanded: false,
+          onExpansionChanged: (bool v) => setState(() {
+            if (v) {
+              _openGroups.add(title);
+            } else {
+              _openGroups.remove(title);
+            }
+          }),
+          title: Row(
+            children: <Widget>[
+              Icon(icon, size: af(context, 17), color: cs.primary),
+              SizedBox(width: af(context, 7)),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: af(context, 13.5),
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+              if (summary != null && summary.isNotEmpty) ...<Widget>[
+                SizedBox(width: af(context, 7)),
+                Flexible(
+                  child: Text(
+                    summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: af(context, 10.5),
+                        color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          childrenPadding: EdgeInsets.only(
+              left: af(context, 4),
+              right: af(context, 4),
+              bottom: af(context, 8)),
+          children: <Widget>[
+            if (help != null)
+              Padding(
+                padding:
+                    EdgeInsets.fromLTRB(af(context, 8), 0, af(context, 8), 6),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(help,
+                      textAlign: TextAlign.start,
+                      style: TextStyle(fontSize: af(context, 10))),
+                ),
+              ),
+            ...children,
+          ],
+        ),
+      ),
       ),
     );
   }
@@ -1480,76 +1620,252 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     ValueChanged<bool>? onChanged, {
     String? sub,
   }) {
-    return ListTile(
-      dense: true,
-      title: Text(label, style: TextStyle(fontSize: af(context, 14))),
-      subtitle: sub == null
-          ? null
-          : Text(sub, style: TextStyle(fontSize: af(context, 10))),
-      trailing: CupertinoSwitch(
-        value: value,
-        onChanged: _prefsLoaded ? onChanged : null,
-      ),
-    );
-  }
-
-  Widget _kbRow(
-    String label,
-    TextEditingController c, {
-    String? prefKey,
-  }) =>
-      _textRow(label, c, numeric: true, suffix: 'KB/S', prefKey: prefKey);
-
-  Widget _textRow(
-    String label,
-    TextEditingController c, {
-    bool numeric = false,
-    String? suffix,
-    String? help,
-    String? prefKey,
-  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: EdgeInsets.fromLTRB(af(context, 16), 4, af(context, 16), 4),
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 8), vertical: af(context, 3)),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text(label, style: TextStyle(fontSize: af(context, 15))),
-                if (help != null)
-                  Text(help, style: TextStyle(fontSize: af(context, 10))),
+                Text(label,
+                    style: TextStyle(
+                        fontSize: af(context, 13),
+                        height: 1.2,
+                        color: cs.onSurface)),
+                if (sub != null)
+                  Text(sub,
+                      style: TextStyle(
+                          fontSize: af(context, 10),
+                          height: 1.25,
+                          color: cs.onSurfaceVariant)),
               ],
             ),
           ),
-          SizedBox(
-            width: af(context, 92),
-            child: TextField(
-              controller: c,
-              maxLength: AppTheme.maxLenGeneral,
-              buildCounter: AppTheme.noCounter,
-              keyboardType:
-                  numeric ? TextInputType.number : TextInputType.text,
-              style: TextStyle(fontSize: af(context, 13)),
-              textAlign: TextAlign.end,
-              decoration: InputDecoration(
-                isDense: true,
-
-                hintText: prefKey != null && !_prefsLoaded ? '--' : null,
-              ),
-
-              onChanged: prefKey == null
-                  ? null
-                  : (String _) => setState(() => _touched.add(prefKey)),
+          SizedBox(width: af(context, 8)),
+          Transform.scale(
+            scale: 0.78,
+            child: CupertinoSwitch(
+              value: value,
+              onChanged: _prefsLoaded ? onChanged : null,
             ),
           ),
-          if (suffix != null) ...<Widget>[
-            const SizedBox(width: 4),
-            Text(suffix, style: TextStyle(fontSize: af(context, 13))),
+        ],
+      ),
+    );
+  }
+
+  Widget _gridRow(List<Widget> cells) {
+    if (cells.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding:
+          EdgeInsets.fromLTRB(af(context, 4), af(context, 4), af(context, 4), 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          for (int i = 0; i < cells.length; i++) ...<Widget>[
+            if (i > 0) SizedBox(width: af(context, 6)),
+            cells[i],
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _numCell(
+    String label,
+    TextEditingController c, {
+    String? prefKey,
+    String? unit,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 9), vertical: af(context, 6)),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(af(context, 8)),
+        border: Border.all(
+            color: cs.outlineVariant.withValues(alpha: 0.45), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  TextStyle(fontSize: af(context, 9.5), color: cs.onSurfaceVariant)),
+          SizedBox(height: af(context, 2)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: TextField(
+                  controller: c,
+                  maxLength: AppTheme.maxLenGeneral,
+                  buildCounter: AppTheme.noCounter,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                      fontSize: af(context, 13),
+                      fontWeight: FontWeight.w700,
+                      height: 1.1),
+                  textAlign: TextAlign.end,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    hintText: prefKey != null && !_prefsLoaded ? '--' : null,
+                    hintStyle: TextStyle(
+                        fontSize: af(context, 13),
+                        fontWeight: FontWeight.w700),
+                  ),
+                  onChanged: prefKey == null
+                      ? null
+                      : (String _) => setState(() => _touched.add(prefKey)),
+                ),
+              ),
+              if (unit != null) ...<Widget>[
+                SizedBox(width: af(context, 3)),
+                Text(unit,
+                    style: TextStyle(
+                        fontSize: af(context, 8),
+                        height: 1.7,
+                        color: cs.onSurfaceVariant)),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bareInput(
+    TextEditingController c, {
+    bool enabled = true,
+    int? maxLength,
+    String? hint,
+    ValueChanged<String>? onSubmitted,
+    ValueChanged<String>? onChanged,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return Container(
+      height: af(context, 34),
+      padding: EdgeInsets.symmetric(horizontal: af(context, 9)),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(af(context, 8)),
+        border: Border.all(
+            color: cs.outlineVariant.withValues(alpha: 0.45), width: 0.8),
+      ),
+      child: TextField(
+        controller: c,
+        enabled: enabled,
+        maxLength: maxLength,
+        buildCounter: AppTheme.noCounter,
+        style: TextStyle(fontSize: af(context, 12.5), color: cs.onSurface),
+        decoration: InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          hintText: hint,
+          hintStyle: TextStyle(
+              fontSize: af(context, 11.5),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+        ),
+        onSubmitted: onSubmitted,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _pathField(
+    String label,
+    TextEditingController c, {
+    String? prefKey,
+    String? hint,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 8), vertical: af(context, 4)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(label,
+              style: TextStyle(
+                  fontSize: af(context, 13),
+                  color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: af(context, 4)),
+          _bareInput(
+            c,
+            maxLength: AppTheme.maxLenGeneral,
+            hint: hint ?? (prefKey != null && !_prefsLoaded ? '--' : null),
+            onChanged: prefKey == null
+                ? null
+                : (_) => setState(() => _touched.add(prefKey)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _onOffLabel(bool v) => v ? S.stateEnabled : S.stateDisabled;
+
+  String _banSummary() {
+    if (!_prefsLoaded) return '';
+    final QbIpFilter? base = _banLoaded;
+    String extra = '';
+    if (_banTouched &&
+        base != null &&
+        _banDraft.bannedIps != base.bannedIps) {
+      final int d = _banDraft.count - base.count;
+      if (d != 0) extra = ' · ${d > 0 ? '+' : ''}$d';
+    }
+    return '${_banDraft.count} 条$extra';
+  }
+
+  Widget _pillButton(
+    String label,
+    Color? color,
+    VoidCallback? onPressed, {
+    bool filled = false,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color tint = color ?? cs.onSurfaceVariant;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: af(context, 4)),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: filled ? (color ?? Colors.transparent) : Colors.transparent,
+          foregroundColor: filled ? cs.onPrimary : tint,
+          side: filled
+              ? null
+              : BorderSide(color: tint.withValues(alpha: 0.55)),
+          shape: const StadiumBorder(),
+          padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
+          minimumSize: Size(0, af(context, 28)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(Icons.check_rounded, size: af(context, 12)),
+            SizedBox(width: af(context, 3)),
+            Text(label,
+                style: TextStyle(
+                    fontSize: af(context, 11.5),
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }
@@ -1565,13 +1881,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
-        padding: EdgeInsets.only(right: af(context, 12), top: 4, bottom: 4),
-        child: ElevatedButton(
-          onPressed: _busy
+        padding: EdgeInsets.only(right: af(context, 4)),
+        child: _pillButton(
+          S.change,
+          Theme.of(context).colorScheme.primary,
+          _busy
               ? null
               : () => _run(label, okMsg, failMsg, act,
                   detail: detail, refreshLimit: refreshLimit),
-          child: Text(S.change, style: TextStyle(fontSize: af(context, 12))),
         ),
       ),
     );
@@ -1581,7 +1898,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
-        padding: EdgeInsets.only(right: af(context, 12), top: 4, bottom: 4),
+        padding: EdgeInsets.only(right: af(context, 4)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -1589,10 +1906,12 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               onPressed: _busy ? null : onDelete,
               child: Text(S.delete, style: TextStyle(fontSize: af(context, 12))),
             ),
-            const SizedBox(width: 6),
-            ElevatedButton(
-              onPressed: _busy ? null : onAdd,
-              child: Text(S.add, style: TextStyle(fontSize: af(context, 12))),
+            SizedBox(width: af(context, 6)),
+            _pillButton(
+              S.add,
+              Theme.of(context).colorScheme.primary,
+              _busy ? null : onAdd,
+              filled: true,
             ),
           ],
         ),

@@ -22,32 +22,6 @@ class SharePage extends StatefulWidget {
 class _SharePageState extends State<SharePage> {
   bool _busy = false;
 
-  Future<bool> _confirmSensitiveExport(BuildContext context) async {
-    final bool? ok = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text('导出内容含敏感信息', style: TextStyle(fontSize: af(context, 15))),
-        content: Text(
-          '这份 JSON 含服务器地址、端口与用户名（密码与会话已在导出时剔除）。\n\n'
-          '复制后内容会进入系统剪贴板，其它应用与剪贴板历史工具都可能读到。'
-          '请只粘贴到可信位置，用完后及时清空剪贴板。',
-          style: TextStyle(fontSize: af(context, 12)),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('仍要复制'),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final ServerController sc = Get.find<ServerController>();
@@ -271,20 +245,25 @@ class _SharePageState extends State<SharePage> {
                       icon: Icon(Icons.ios_share, size: AppTheme.iconSize),
                       label: Text('导出 JSON',
                           style: TextStyle(fontSize: af(context, 11))),
-                      onPressed: sc.servers.isEmpty
+                      onPressed: (_busy || sc.servers.isEmpty)
                           ? null
-                          : () async {
-                              if (!await _confirmSensitiveExport(context)) {
-                                return;
-                              }
-                              await Clipboard.setData(
-                                ClipboardData(text: sc.exportJson()),
-                              );
-                              Formatter.showToast(S.bkJsonExportNote);
-                              AppLog.instance.op(
-                                  '导出服务器 JSON 到剪贴板：'
-                                  '${sc.servers.length} 台（不含密码 / SID）');
-                            },
+                          : () => _run(() async {
+                                final String? p = await _askPassphrase(
+                                  title: S.bkJsonExportTitle,
+                                  body: S.bkJsonExportBody,
+                                  withConfirm: true,
+                                );
+                                if (p == null) return;
+                                final String env =
+                                    await sc.buildPortableBackup(p);
+                                await Clipboard.setData(
+                                  ClipboardData(text: env),
+                                );
+                                Formatter.showToast(S.bkJsonExportNote);
+                                AppLog.instance.op(
+                                    '导出服务器 JSON 到剪贴板'
+                                    '（口令加密，含密码）：${sc.servers.length} 台');
+                              }),
                     ),
                   ),
                   SizedBox(width: af(context, 8)),
@@ -366,7 +345,7 @@ class _SharePageState extends State<SharePage> {
               maxLines: 6,
               style: TextStyle(fontSize: af(context, 11)),
               decoration: InputDecoration(
-                hintText: '[{"id": "...", "host": "..."}]',
+                hintText: S.bkJsonCipherHint,
                 hintStyle: TextStyle(fontSize: af(context, 11)),
                 border: OutlineInputBorder(),
               ),
@@ -399,9 +378,19 @@ class _SharePageState extends State<SharePage> {
     if (ok != true) return;
     final ServerController sc = Get.find<ServerController>();
     await _run(() async {
-      final (int added, int updated) = sc.importJson(input.text);
-      await sc.persist();
-      Formatter.showToast('导入完成：新增 $added，更新 $updated');
+      final String text = input.text.trim();
+      if (!CryptoBox.isPortableEnvelope(text)) {
+        throw CryptoBoxException(S.bkJsonNotEnvelope);
+      }
+      if (!mounted) return;
+      final String? p = await _askPassphrase(
+        title: S.bkJsonPassTitle,
+        body: S.bkPortableImportBody,
+        withConfirm: false,
+      );
+      if (p == null) return;
+      final int added = await sc.importPortableBackup(text, p);
+      Formatter.showToast(S.bkPortableImportOk(added));
     });
   }
 }

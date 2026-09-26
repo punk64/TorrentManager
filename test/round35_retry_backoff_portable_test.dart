@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -617,14 +616,18 @@ void main() {
       expect(dst.servers.single.password, 'pw');
     });
 
-    test('明文 JSON 导出**仍不含密码**（两条通道语义不能被混同）', () {
+    test('明文 JSON 通道已移除（导出走口令加密，见 round91）', () async {
       final ServerController sc = ServerController();
       sc.servers.assignAll(<ServerData>[
         qbSrv('a', '10.0.0.1', user: 'admin', pass: 'pw-A'),
       ]);
-      final String json = sc.exportJson();
-      expect(json, isNot(contains('pw-A')));
-      expect(jsonDecode(json), isA<List<dynamic>>());
+      final String env = await sc.buildPortableBackup('pass1234');
+      expect(CryptoBox.isPortableEnvelope(env), isTrue,
+          reason: '剪贴板通道与便携备份同为口令加密信封');
+      expect(env, isNot(contains('pw-A')),
+          reason: '剪贴板里不能出现密码明文');
+      expect(env, isNot(contains('10.0.0.1')),
+          reason: '剪贴板里不能出现服务器地址明文');
     });
   });
 
@@ -748,7 +751,7 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextFormField, '密码'), '');
       await tester.pump();
-      await tester.tap(find.widgetWithText(TextButton, '保存'));
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 

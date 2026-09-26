@@ -17,7 +17,6 @@ import '../data/server_capabilities.dart';
 import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
-import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/list_loading_placeholder.dart';
@@ -499,9 +498,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
     }
 
     return Container(
-
-      color: cs.surface,
-      padding: EdgeInsets.fromLTRB(af(context, 8), 4, af(context, 8), 6),
+      margin: EdgeInsets.fromLTRB(af(context, 8), 0, af(context, 8), 4),
+      padding: EdgeInsets.all(af(context, 8)),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -511,6 +513,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 child: _gridButton(
                   icon: Icons.play_arrow,
                   label: S.actStart,
+                  tint: cs.primary,
                   onTap: () => _runSelected(ctrl.resumeSelected, '开始'),
                 ),
               ),
@@ -527,6 +530,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 child: _gridButton(
                   icon: Icons.fact_check_outlined,
                   label: S.fieldVerifyState,
+                  tint: cs.tertiary,
                   onTap: () => _runSelected(ctrl.recheckSelected, '重新校验'),
                 ),
               ),
@@ -575,45 +579,43 @@ class _TorrentListPageState extends State<TorrentListPage> {
     VoidCallback? onTap,
     Color? danger,
     bool solid = false,
+    Color? tint,
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final Color fg = danger == null
-        ? cs.onSurface
-        : (solid ? Colors.white : danger);
+    final Color fg =
+        danger == null ? (tint ?? cs.onSurface) : (solid ? Colors.white : danger);
+    final Color bg = solid
+        ? danger!
+        : danger != null
+            ? danger.withValues(alpha: 0.10)
+            : (tint ?? cs.onSurfaceVariant).withValues(alpha: 0.09);
     final Widget content = SizedBox(
-      height: af(context, 32),
-      child: Row(
+      height: af(context, 46),
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(icon, size: af(context, 14), color: fg),
-          const SizedBox(width: 4),
-          Flexible(
+          Icon(icon, size: af(context, 18), color: fg),
+          const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: af(context, 11), color: fg),
+              style: TextStyle(
+                fontSize: af(context, 9.5),
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
             ),
           ),
         ],
       ),
     );
     return Material(
-      color: solid
-          ? danger
-          : (danger != null
-              ? danger.withValues(alpha: 0.14)
-              : cs.surfaceContainerHighest.withValues(alpha: 0.9)),
+      color: bg,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-        side: BorderSide(
-          color: solid
-              ? Colors.transparent
-              : (danger != null
-                  ? danger.withValues(alpha: 0.6)
-                  : cs.outlineVariant),
-          width: 0.7,
-        ),
+        borderRadius: BorderRadius.circular(10),
       ),
       clipBehavior: Clip.antiAlias,
       child: onTap == null ? content : InkWell(onTap: onTap, child: content),
@@ -770,53 +772,63 @@ class _TorrentListPageState extends State<TorrentListPage> {
   }
 
   Widget _selectionBar() {
-    final Color onBg = Theme.of(context).colorScheme.onSecondaryContainer;
-    return Material(
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: af(context, 8), vertical: 2),
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color onBg = cs.primary;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(af(context, 8), 2, af(context, 8), 2),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: af(context, 10)),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.11),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.4)),
+        ),
         child: Row(
           children: <Widget>[
-
-            SizedBox(
-              height: af(context, 28),
-              child: TextButton.icon(
-                onPressed: ctrl.selectAll,
-                icon: Icon(Icons.select_all, size: af(context, 15), color: onBg),
-                label: Text(S.logSelectAll,
-                    style: TextStyle(fontSize: af(context, 11), color: onBg)),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ),
-            ),
-            SizedBox(width: af(context, 8)),
             Flexible(
               child: Text(
                 '${S.selectedCount(ctrl.selected.length)}'
-                '　${S.fieldSelectedSize}'
+                '　·　${S.fieldSelectedSize}'
                 '${Formatter.setSize(_selectedSize())}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: af(context, 11)),
+                style: TextStyle(
+                  fontSize: af(context, 11),
+                  fontWeight: FontWeight.w700,
+                  color: onBg,
+                ),
               ),
             ),
-            SizedBox(
-              height: af(context, 28),
-              child: TextButton.icon(
-                onPressed: _exitSelect,
-                icon: Icon(Icons.close, size: af(context, 15), color: onBg),
-                label:
-                    Text(S.cancel, style: TextStyle(fontSize: af(context, 11), color: onBg)),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                ),
+            const Spacer(),
+            _selectionAction(S.logSelectAll, ctrl.selectAll),
+            _selectionAction(S.batchInvert, ctrl.invertSelection),
+            _selectionAction(S.cancel, _exitSelect, icon: Icons.close),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _selectionAction(String label, VoidCallback onTap, {IconData? icon}) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: af(context, 7), vertical: af(context, 6)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (icon != null) ...<Widget>[
+              Icon(icon, size: af(context, 12), color: cs.onSurfaceVariant),
+              const SizedBox(width: 2),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: af(context, 10),
+                fontWeight: FontWeight.w600,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ],
@@ -934,212 +946,266 @@ class _TorrentListPageState extends State<TorrentListPage> {
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(AppTheme.radius),
-              border:
-                  Border.all(color: cs.outlineVariant.withValues(alpha: 0.55)),
+              border: Border.all(
+                color: selected
+                    ? cs.primary.withValues(alpha: 0.85)
+                    : cs.outlineVariant.withValues(alpha: 0.55),
+                width: selected ? 1.2 : 0.8,
+              ),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                InkWell(
-                  onTap: () => _onCardTap(t),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 10), 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Container(
+                    width: 3.5,
+                    color: Formatter.setStatusColor(t.state, cs),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _onCardTap(t),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 10), af(context, 8)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            if (_selecting) ...<Widget>[
-                              Checkbox(
-                                value: selected,
-                                visualDensity: VisualDensity.compact,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                onChanged: (_) => ctrl.toggleSelect(t.hash),
-                              ),
-                              const SizedBox(width: 4),
-                            ] else ...<Widget>[
-                              Icon(
-                                Formatter.statusIcon(t.state),
-                                size: af(context, 16),
-                                color: Formatter.setStatusColor(t.state, cs),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Expanded(
-                              child: Text(
-                                t.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                if (_selecting) ...<Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 1),
+                                    child: _selectRing(
+                                      cs,
+                                      selected,
+                                      onTap: () => ctrl.toggleSelect(t.hash),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 7),
+                                ] else ...<Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 1),
+                                    child: Icon(
+                                      Formatter.statusIcon(t.state),
+                                      size: af(context, 16),
+                                      color: Formatter.setStatusColor(t.state, cs),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    t.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: af(context, 13),
+                                      height: 1.22,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 1),
+                                  child: Icon(
+                                    _expanded.contains(t.hash)
+                                        ? Icons.expand_less
+                                        : Icons.expand_more,
+                                    size: af(context, 18),
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 7),
+                            Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(2.5),
+                                    child: LinearProgressIndicator(
+                                      value: t.progress.clamp(0, 1),
+                                      minHeight: 5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Formatter.setStatusColor(t.state, cs)),
+                                      backgroundColor:
+                                          cs.surfaceContainerHighest,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  Formatter.setProgress(t.progress),
+                                  style: TextStyle(
+                                    fontSize: af(context, 12),
+                                    fontWeight: FontWeight.w800,
+                                    color: Formatter.setStatusColor(t.state, cs),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 7),
+                            Row(
+                              children: <Widget>[
+                                Icon(Icons.arrow_upward,
+                                    size: af(context, 12), color: cs.primary),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    Formatter.setSpeed(t.newUpspeed),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: af(context, 11.5),
+                                        fontWeight: FontWeight.w700,
+                                        color: cs.primary),
+                                  ),
+                                ),
+                                SizedBox(width: af(context, 10)),
+                                Icon(Icons.arrow_downward,
+                                    size: af(context, 12), color: cs.secondary),
+                                const SizedBox(width: 2),
+                                Flexible(
+                                  child: Text(
+                                    Formatter.setSpeed(t.newDownSpeed),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: af(context, 11.5),
+                                        fontWeight: FontWeight.w700,
+                                        color: cs.secondary),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(Icons.hourglass_bottom,
+                                    size: af(context, 11),
+                                    color: cs.onSurfaceVariant),
+                                const SizedBox(width: 3),
+                                Text(
+                                  Formatter.setEta(t.newEta),
+                                  style: TextStyle(
+                                      fontSize: af(context, 10),
+                                      color: cs.onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text.rich(
+                              TextSpan(
                                 style: TextStyle(
-                                  fontSize: af(context, 12),
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                    fontSize: af(context, 10),
+                                    color: cs.onSurfaceVariant),
+                                children: <InlineSpan>[
+                                  TextSpan(
+                                    text:
+                                        '${Formatter.setSize(t.downloaded)} / ${Formatter.setSize(t.newSize)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          cs.onSurface.withValues(alpha: 0.92),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        '　·　${S.fieldRatio} ${Formatter.setRatio(t.ratio)}'
+                                        '　·　${S.fieldRemaining} ${Formatter.setSize(t.amountLeft)}',
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              Formatter.setProgress(t.progress),
-                              style: TextStyle(
-                                fontSize: af(context, 11),
-                                fontWeight: FontWeight.w600,
-                                color: Formatter.setStatusColor(t.state, cs),
-                              ),
-                            ),
-                            if (t.isPause) ...<Widget>[
-                              const SizedBox(width: 6),
-                              _pausedChip(cs),
-                            ],
-
-                            InkWell(
-                              onTap: () => _onCardTap(t),
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 2),
-                                child: Icon(
-                                  _expanded.contains(t.hash)
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                  size: af(context, 16),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                _metaLine(t),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: af(context, 9)),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              Formatter.setStatus(t.state),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: af(context, 9),
-                                color: Formatter.setStatusColor(t.state, cs),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: <Widget>[
+                                Icon(Icons.groups,
+                                    size: af(context, 11),
+                                    color: cs.onSurfaceVariant),
+                                const SizedBox(width: 3),
+                                Flexible(
+                                  child: Text(
+                                    '${S.fieldSeeders} '
+                                    '${Formatter.getSeederCount(t.numSeeds, t.numLeechs, t.transferPeers)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: af(context, 10),
+                                        fontWeight: FontWeight.w600,
+                                        color: cs.onSurfaceVariant),
+                                  ),
+                                ),
+                                if (_siteHost(t).isNotEmpty) ...<Widget>[
+                                  const SizedBox(width: 8),
+                                  Icon(Icons.language,
+                                      size: af(context, 11),
+                                      color: cs.onSurfaceVariant),
+                                  const SizedBox(width: 3),
+                                  Flexible(
+                                    child: Text(
+                                      ctrl.siteMasked.value
+                                          ? Formatter.maskSite(_siteHost(t))
+                                          : _siteHost(t),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontSize: af(context, 10),
+                                          color: cs.onSurfaceVariant),
+                                    ),
+                                  ),
+                                ],
+                                const Spacer(),
+                                Text(
+                                  Formatter.setStatus(t.state),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: af(context, 10),
+                                    fontWeight: FontWeight.w700,
+                                    color: Formatter.setStatusColor(t.state, cs),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (t.downloaded > 0 ||
+                                t.uploaded > 0 ||
+                                _catChips(t).isNotEmpty ||
+                                _tagChips(t).isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 7),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 3,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: <Widget>[
+                                  if (t.downloaded > 0 || t.uploaded > 0)
+                                    DiskIoChip(
+                                      written: t.downloaded,
+                                      read: t.uploaded,
+                                      compact: true,
+                                    ),
+                                  ..._catChips(t),
+                                  ..._tagChips(t),
+                                ],
                               ),
+                            ],
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 160),
+                              curve: Curves.easeOut,
+                              alignment: Alignment.topCenter,
+                              child: _expanded.contains(t.hash)
+                                  ? _detail(t, cs)
+                                  : const SizedBox(
+                                      width: double.infinity, height: 0),
                             ),
                           ],
                         ),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 160),
-                          curve: Curves.easeOut,
-                          alignment: Alignment.topCenter,
-                          child: _expanded.contains(t.hash)
-                              ? _detail(t, cs)
-                              : const SizedBox(
-                                  width: double.infinity, height: 0),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () => _onCardTap(t),
-                  child: Container(
-                    width: double.infinity,
-                    color: _sectionTint(cardBg),
-                    padding: EdgeInsets.fromLTRB(af(context, 10), 7, af(context, 10), af(context, 8)),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
-                                    Flexible(
-                                      child: Text(
-                                        '${S.upArrow}${Formatter.setSpeed(t.newUpspeed)}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                            fontSize: af(context, 10), color: cs.primary),
-                                      ),
-                                    ),
-                                    SizedBox(width: af(context, 8)),
-                                    Flexible(
-                                      child: Text(
-                                        '${S.downArrow}${Formatter.setSpeed(t.newDownSpeed)}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                            fontSize: af(context, 10), color: cs.secondary),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                DiskIoChip(
-                                    written: t.downloaded, read: t.uploaded),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: af(context, 8)),
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                _metricRow(Icons.save_alt,
-                                    Formatter.setSize(t.newSize),
-                                    strong: true),
-                                const SizedBox(height: 3),
-                                _metricRow(Icons.swap_horiz,
-                                    '${S.fieldRatio} ${Formatter.setRatio(t.ratio)}'),
-                                const SizedBox(height: 3),
-                                _metricRow(
-                                    Icons.schedule, Formatter.setEta(t.newEta)),
-                                const SizedBox(height: 3),
-                                _metricRow(Icons.hourglass_bottom,
-                                    Formatter.setSize(t.amountLeft)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusBar),
-                        child: LinearProgressIndicator(
-                          value: t.progress.clamp(0, 1),
-                          minHeight: 4,
-                        ),
-                      ),
-
-                      if (_catChips(t).isNotEmpty ||
-                          _tagChips(t).isNotEmpty) ...<Widget>[
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 3,
-                          children: <Widget>[
-                            ..._catChips(t),
-                            ..._tagChips(t),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1175,6 +1241,31 @@ class _TorrentListPageState extends State<TorrentListPage> {
           0,
         ]),
         child: child,
+      ),
+    );
+  }
+
+  Widget _selectRing(ColorScheme cs, bool checked, {required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Container(
+          width: 19,
+          height: 19,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: checked ? cs.primary : Colors.transparent,
+            border: Border.all(
+              color: checked ? cs.primary : cs.outline.withValues(alpha: 0.9),
+              width: 1.6,
+            ),
+          ),
+          child: checked
+              ? Icon(Icons.check, size: 13, color: cs.onPrimary)
+              : null,
+        ),
       ),
     );
   }
@@ -1244,66 +1335,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     );
   }
 
-  Widget _pausedChip(ColorScheme cs) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-      decoration: BoxDecoration(
-        color: cs.outline,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-      ),
-
-      child: Text(
-        L.t('暂停'),
-        style: TextStyle(fontSize: af(context, 9), color: cs.surface),
-      ),
-    );
-  }
-
-  Color _sectionTint(Color cardBg) {
-    final bool onDark =
-        ThemeData.estimateBrightnessForColor(cardBg) == Brightness.dark;
-    return (onDark ? Colors.white : Colors.black)
-        .withValues(alpha: AppTheme.sectionTintShift);
-  }
-
-  Widget _metricRow(IconData icon, String text, {bool strong = false}) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, size: af(context, 11), color: cs.onSurfaceVariant),
-        const SizedBox(width: 3),
-        Flexible(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: strong ? 10 : 9,
-              fontWeight: strong ? FontWeight.w600 : FontWeight.normal,
-              color: strong ? cs.onSurface : cs.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   String _siteHost(Torrent t) => t.site;
-
-  String _metaLine(Torrent t) {
-    final List<String> parts = <String>[];
-
-    parts.add(
-      '${S.fieldSeeders} '
-      '${Formatter.getSeederCount(t.numComplete, t.numIncomplete, t.transferPeers)}',
-    );
-    final String site = _siteHost(t);
-    if (site.isNotEmpty) {
-      parts.add(ctrl.siteMasked.value ? Formatter.maskSite(site) : site);
-    }
-    return parts.join(' · ');
-  }
 
   Widget _detail(Torrent t, ColorScheme cs) {
     final CapabilitySet cap = ctrl.capabilities;
@@ -1391,136 +1423,169 @@ class _TorrentListPageState extends State<TorrentListPage> {
           ),
         );
 
+    Widget groupTitle(String text) => Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: af(context, 9.5),
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        );
+
+    Widget quickCell(String label, String value, {Color? color}) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(label,
+                  style: TextStyle(
+                      fontSize: af(context, 8.5),
+                      color: cs.onSurfaceVariant)),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: af(context, 11),
+                    fontWeight: FontWeight.w700,
+                    color: color ?? cs.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+    final List<Widget> switchChips = <Widget>[
+      if (cap.forceStart)
+        chip(
+          label: S.swForceStart,
+          value: t.forceStart,
+          run: (bool v) => ctrl.setForceStartOf(<String>[t.hash], v),
+        ),
+      if (cap.sequentialDownload)
+        chip(
+          label: S.swSequential,
+          value: t.sequentialDownload,
+          run: (bool v) =>
+              ctrl.toggleSequentialOf(<String>[t.hash], target: v),
+        ),
+      if (cap.isQb)
+        chip(
+          label: S.swFirstLast,
+          value: t.firstLastPiecePrio,
+          run: (bool v) =>
+              ctrl.toggleFirstLastPrioOf(<String>[t.hash], target: v),
+        ),
+      if (cap.superSeeding)
+        chip(
+          label: S.swSuperSeeding,
+          value: t.superSeeding,
+          run: (bool v) => ctrl.setSuperSeedingOf(<String>[t.hash], v),
+        ),
+    ];
+
     return GestureDetector(
 
       behavior: HitTestBehavior.opaque,
       onTap: () {},
       child: RepaintBoundary(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 2),
+        child: Container(
+          margin: const EdgeInsets.only(top: 6),
+          padding: EdgeInsets.all(af(context, 9)),
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.045), cs.surfaceContainerLow),
+            borderRadius: BorderRadius.circular(9),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-
-              EditSectionCard(
-                dense: true,
-                title: S.editSectionBasic,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    EditActionRow(
-                      label: S.fieldPath,
-                      value: (t.savePath ?? '').isEmpty
-                          ? S.editCategoryNone
-                          : t.savePath!,
-                      onTap: _cardBusy ? null : () => _editCardPath(t),
-                    ),
-                    if (cap.category)
-                      EditActionRow(
-                        label: S.fieldCategory,
-                        value: t.categoryName,
-                        onTap: _cardBusy ? null : () => _editCardCategory(t),
-                      ),
-                    EditActionRow(
-                      label: S.fieldTags,
-                      value: t.tagList.isEmpty
-                          ? S.editCategoryNone
-                          : t.tagList.join('、'),
-                      onTap: _cardBusy ? null : () => _editCardTags(t),
-                    ),
-                  ],
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  quickCell(S.fieldUploaded,
+                      Formatter.setSize(t.newUploaded),
+                      color: cs.primary),
+                  quickCell(S.fieldDownloaded,
+                      Formatter.setSize(t.downloaded)),
+                  quickCell(
+                      S.fieldAddedOn, Formatter.setDate(t.newAddedOn)),
+                  quickCell(S.fieldCompletionOn,
+                      Formatter.setDate(t.newCompletionOn)),
+                ],
               ),
-
-              EditSectionCard(
-                dense: true,
-                title: S.editSectionLimits,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    dlField(),
-                    upField(),
-                    ratioField(),
-                    seedTimeField(),
-                  ],
-                ),
+              const SizedBox(height: 9),
+              groupTitle(S.editSectionLimits),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(child: dlField(compact: true)),
+                  const SizedBox(width: 6),
+                  Expanded(child: upField(compact: true)),
+                ],
               ),
-
-              if (cap.forceStart ||
-                  cap.sequentialDownload ||
-                  cap.isQb ||
-                  cap.superSeeding)
-                EditSectionCard(
-                  dense: true,
-                  title: S.editSectionSwitches,
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: <Widget>[
-                      if (cap.forceStart)
-                        chip(
-                          label: S.swForceStart,
-                          value: t.forceStart,
-                          run: (bool v) =>
-                              ctrl.setForceStartOf(<String>[t.hash], v),
-                        ),
-                      if (cap.sequentialDownload)
-                        chip(
-                          label: S.swSequential,
-                          value: t.sequentialDownload,
-                          run: (bool v) => ctrl.toggleSequentialOf(
-                              <String>[t.hash],
-                              target: v),
-                        ),
-                      if (cap.isQb)
-                        chip(
-                          label: S.swFirstLast,
-                          value: t.firstLastPiecePrio,
-                          run: (bool v) => ctrl.toggleFirstLastPrioOf(
-                              <String>[t.hash],
-                              target: v),
-                        ),
-                      if (cap.superSeeding)
-                        chip(
-                          label: S.swSuperSeeding,
-                          value: t.superSeeding,
-                          run: (bool v) =>
-                              ctrl.setSuperSeedingOf(<String>[t.hash], v),
-                        ),
-                    ],
-                  ),
-                ),
-
-              EditSectionCard(
-                dense: true,
-                title: S.editSectionInfo,
-                child: ReadonlyKvGrid(
-                  fullRows: <List<String>>[
-                    <String>[
-                      S.fieldPath,
-                      (t.contentPath ?? '').isEmpty ? '-' : t.contentPath!,
-                    ],
-                  ],
-                  pairs: <List<String>>[
-                    <String>[S.fieldUploaded, Formatter.setSize(t.newUploaded)],
-                    <String>[S.fieldDownloaded, Formatter.setSize(t.downloaded)],
-                    <String>[S.fieldAddedOn, Formatter.setDate(t.newAddedOn)],
-                    <String>[
-                      S.fieldCompletionOn,
-                      Formatter.setDate(t.newCompletionOn),
-                    ],
-                    <String>[
-                      S.fieldActiveTime,
-                      Formatter.setLastActivity(t.newLastActivity),
-                    ],
-                  ],
-                ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(child: ratioField(compact: true)),
+                  const SizedBox(width: 6),
+                  Expanded(child: seedTimeField(compact: true)),
+                ],
               ),
-
-              const SizedBox(height: 4),
+              if (switchChips.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                groupTitle(S.editSectionSwitches),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: switchChips,
+                ),
+              ],
+              const SizedBox(height: 8),
+              groupTitle(S.editSectionBasic),
+              EditActionRow(
+                label: S.fieldPath,
+                value: (t.savePath ?? '').isEmpty
+                    ? S.editCategoryNone
+                    : t.savePath!,
+                onTap: _cardBusy ? null : () => _editCardPath(t),
+              ),
+              if (cap.category)
+                EditActionRow(
+                  label: S.fieldCategory,
+                  value: t.categoryName,
+                  onTap: _cardBusy ? null : () => _editCardCategory(t),
+                ),
+              EditActionRow(
+                label: S.fieldTags,
+                value: t.tagList.isEmpty ? S.editCategoryNone : t.tagList.join('、'),
+                onTap: _cardBusy ? null : () => _editCardTags(t),
+              ),
+              const SizedBox(height: 8),
+              groupTitle(S.editSectionInfo),
+              ReadonlyKvGrid(
+                fullRows: <List<String>>[
+                  <String>[
+                    S.fieldPath,
+                    (t.contentPath ?? '').isEmpty ? '-' : t.contentPath!,
+                  ],
+                ],
+                pairs: <List<String>>[
+                  <String>[
+                    S.fieldActiveTime,
+                    Formatter.setLastActivity(t.newLastActivity),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(

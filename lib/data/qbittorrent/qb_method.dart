@@ -477,12 +477,23 @@ class QbMethod {
     String? filePath,
     String? savepath,
     String? category,
+    List<String>? tags,
+    int? dlLimit,
+    int? upLimit,
+    double? ratioLimit,
+    int? seedingTimeLimit,
     bool paused = false,
   }) async {
     final Map<String, dynamic> fields = <String, dynamic>{
       if (urls != null) 'urls': urls,
       if (savepath != null) 'savepath': savepath,
       if (category != null) 'category': category,
+      if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
+      if (dlLimit != null && dlLimit > 0) 'dlLimit': '$dlLimit',
+      if (upLimit != null && upLimit > 0) 'upLimit': '$upLimit',
+      if (ratioLimit != null && ratioLimit > 0) 'ratioLimit': '$ratioLimit',
+      if (seedingTimeLimit != null && seedingTimeLimit > 0)
+        'seedingTimeLimit': '$seedingTimeLimit',
     };
 
     if (paused) {
@@ -958,6 +969,56 @@ class QbMethod {
       '/api/v2/transfer/banPeers',
       queryParameters: <String, dynamic>{'peers': peers},
     );
+  }
+
+  /// 分块状态：0=未下载 1=下载中 2=已完成（部分版本出现校验态）
+  Future<List<int>> getPieceStates(String hash) async {
+    final Response<dynamic> resp = await _dio.get(
+      '/api/v2/torrents/pieceStates',
+      queryParameters: <String, dynamic>{'hash': hash},
+    );
+    final List<dynamic> list = _asList(resp, '/api/v2/torrents/pieceStates');
+    return list.map((dynamic e) => (e as num?)?.toInt() ?? 0).toList();
+  }
+
+  Future<void> addPeers(String hashes, String peers) async {
+    await _postOk(
+      '/api/v2/torrents/addPeers',
+      queryParameters: <String, dynamic>{'hashes': hashes, 'peers': peers},
+    );
+  }
+
+  Future<void> renameTorrentFile(String hash, String oldPath, String newPath) async {
+    await _postOk(
+      '/api/v2/torrents/renameFile',
+      queryParameters: <String, dynamic>{
+        'hash': hash,
+        'oldPath': oldPath,
+        'newPath': newPath,
+      },
+    );
+  }
+
+  Future<void> renameTorrentFolder(String hash, String oldPath, String newPath) async {
+    await _postOk(
+      '/api/v2/torrents/renameFolder',
+      queryParameters: <String, dynamic>{
+        'hash': hash,
+        'oldPath': oldPath,
+        'newPath': newPath,
+      },
+    );
+  }
+
+  /// infohash v1/v2、seen_complete 等低频元数据（qB 5.x 起有 v1/v2 字段）
+  Future<Map<String, dynamic>> getTorrentMeta(String hash) async {
+    final Response<dynamic> resp = await _dio.get(
+      '/api/v2/torrents/info',
+      queryParameters: <String, dynamic>{'hashes': hash},
+    );
+    final List<dynamic> list = _asList(resp, '/api/v2/torrents/info');
+    if (list.isEmpty) return <String, dynamic>{};
+    return Map<String, dynamic>.from(list.first);
   }
 
   Future<List<QbLog>> getLog({int lastKnownId = -1, bool info = true}) async {

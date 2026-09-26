@@ -47,27 +47,34 @@ void main() {
           reason: 'v3：只读信息改两列网格；长值（内容路径）走 fullRows 独占行');
     });
 
-    test('展开区可编辑 4 项 = **各独占一行**（2026-09-24 用户整改：撤回 2×2）', () {
+    test('★ v2.b：展开区限速改 2×2 紧凑框（2026-09-26 用户拍板，覆盖 09-24 各占一行）', () {
       final String body = detailBody();
-      expect(body.contains('dlField(),'), isTrue);
-      expect(body.contains('upField(),'), isTrue);
-      expect(body.contains('ratioField(),'), isTrue);
-      expect(body.contains('seedTimeField(),'), isTrue);
+      expect(body.contains('Expanded(child: dlField(compact: true))'), isTrue);
+      expect(body.contains('Expanded(child: upField(compact: true))'), isTrue);
+      expect(body.contains('Expanded(child: ratioField(compact: true))'), isTrue);
+      expect(body.contains('Expanded(child: seedTimeField(compact: true))'), isTrue);
 
-      expect(body.contains('dlField(compact: true)'), isFalse);
       expect(body.contains('EditLayout.gridOkOf(context)'), isFalse,
-          reason: '不再 2×2 ⇒ 展开区无需紧凑判据（网格判据下沉到共享组件内部）');
+          reason: '网格判据不下放：2×2 是固定布局，不再按屏宽回退');
 
-      expect('EditSectionCard('.allMatches(body).length, 4,
-          reason: '展开区 4 个板块各套一张分区卡片');
+      expect('EditSectionCard('.allMatches(body).length, 0,
+          reason: 'v2：展开区用单一 inset 容器 + 分组标题，不再逐板块套分区卡片');
     });
 
     test('★ 与概览 Tab 共用同一套组件（不再各写一套排布）', () {
 
       expect(ov.contains('ReadonlyKvGrid(pairs:'), isTrue);
       expect(src.contains('ReadonlyKvGrid('), isTrue);
-      expect(ov.contains('EditSectionCard('), isTrue);
-      expect(src.contains('EditSectionCard('), isTrue);
+      // 2026-09-26 详情页重设计：概览 Tab 分组卡升级为可折叠 _foldCard
+      //（视觉沿用 EditSectionCard 规格：色条 + 分组标题 + 同款边框），
+      // KV 网格 / 限速输入 / 动作行仍与展开区共用同一批组件。
+      expect(ov.contains('_foldCard('), isTrue);
+      expect(src.contains('EditSectionCard('), isFalse,
+          reason: 'v2：卡片展开区不再套分区卡片（概览 Tab 改用 _foldCard 折叠卡）');
+      expect(src.contains('EditNumberField('), isTrue,
+          reason: '限速编辑仍与概览共用 EditNumberField/EditRatioField');
+      expect(src.contains('EditActionRow('), isTrue,
+          reason: '路径/分类/标签仍共用 EditActionRow');
 
       expect(src.contains('Widget _kvGrid('), isFalse);
       expect(src.contains('Widget _kvHalf('), isFalse);

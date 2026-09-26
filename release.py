@@ -478,12 +478,21 @@ def mirror_outputs(apks: list[Path], dest: Path) -> None:
 
 # ── 可选：记账 ──────────────────────────────────────────────────────────────
 BUILD_LOG_HEAD = ('# 构建记录（由 release.py 自动追加）\n\n'
+                  '> ⚠️ APK 里**实际**的 versionCode 会在下表基础上叠一个 ABI 偏移\n'
+                  '> （`--split-per-abi` 由 Flutter 自动加）：armeabi-v7a **+1000**、\n'
+                  '> arm64-v8a **+2000**、x86_64 **+4000**。\n'
+                  '> 例如基础 `1` → 三个包分别是 `1001` / `2001` / `4001`。\n'
+                  '> 偏移是常数，所以**升级方向仍然单调**，不影响覆盖安装。\n'
+                  '> 用户可见的版本号看 `versionName`（= 下表的 V 后面那串）。\n\n'
                   '| 时间 | 版本 | versionCode（基础） | 产物 | 体积 | MD5 |\n'
                   '|---|---|---|---|---|---|\n')
 
 
 def record_build(path: Path, core: str, code: int, apks: list[Path]) -> None:
-    """往指定文件追加一行（本轮构建的版本 / 体积 / MD5）。"""
+    """往指定文件追加数据行（本轮构建的版本 / 体积 / MD5）。
+
+    ABI 偏移说明只在文件创建时随 BUILD_LOG_HEAD 写入一次。
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         path.write_text(BUILD_LOG_HEAD, encoding='utf-8')
@@ -495,12 +504,6 @@ def record_build(path: Path, core: str, code: int, apks: list[Path]) -> None:
                        p.stat().st_size / 1048576.0, md5_of(p)))
     with path.open('a', encoding='utf-8') as f:
         f.write('\n'.join(rows) + '\n')
-        f.write('\n> ⚠️ APK 里**实际**的 versionCode 会在上表基础上叠一个 ABI 偏移\n'
-                '> （`--split-per-abi` 由 Flutter 自动加）：armeabi-v7a **+1000**、\n'
-                '> arm64-v8a **+2000**、x86_64 **+4000**。\n'
-                '> 例如基础 `1` → 三个包分别是 `1001` / `2001` / `4001`。\n'
-                '> 偏移是常数，所以**升级方向仍然单调**，不影响覆盖安装。\n'
-                '> 用户可见的版本号看 `versionName`（= 上表的 V 后面那串）。\n')
 
 
 # ── 后置断言（打包状态自检） ────────────────────────────────────────────────

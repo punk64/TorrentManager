@@ -625,6 +625,11 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     }
     _serverInFlightAt[s.id] = DateTime.now();
 
+    if (!hasAnyCache(s.id)) {
+      torrentStatsPending[s.id] = true;
+      torrentStatsPending.refresh();
+    }
+
     final Stopwatch sw = Stopwatch()..start();
     try {
       if (s.hasLan &&
@@ -661,6 +666,10 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     torrentStatsPending[id] = false;
     torrentStatsPending.refresh();
   }
+
+  final Set<String> _statsLoadedIds = <String>{};
+
+  bool statsLoadedOnce(String id) => _statsLoadedIds.contains(id);
 
   ServerState stateOf(String id) => _bgState[id] ?? ServerState();
 
@@ -754,6 +763,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
         torrentStatsPending[s.id] = false;
         torrentStatsPending.refresh();
       }
+      _statsLoadedIds.add(s.id);
       reportConnected(s.id, took: sw.elapsed);
 
       reportRefreshed(
@@ -793,7 +803,9 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
       cacheTorrents(s.id, TorrentController.fromTr(raw, scope: s.logScope));
       torrentCache.refresh();
+      _clearStatsPending(s.id);
 
+      _statsLoadedIds.add(s.id);
       reportConnected(s.id, took: sw.elapsed);
       reportRefreshed(
         s.id,
@@ -1714,60 +1726,6 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     return i >= 0 ? path.substring(i + 1) : path;
   }
 
-  String exportJson() {
-    final List<Map<String, dynamic>> rows = servers
-        .map((ServerData s) => <String, dynamic>{
-              'id': s.id,
-              'name': s.name,
-              'type': s.type,
-              'host': s.host,
-              'port': s.port,
-              if (s.lanHost != null && s.lanHost!.isNotEmpty)
-                'lanHost': s.lanHost,
-              if (s.lanPort != null) 'lanPort': s.lanPort,
-              'username': s.username,
-              'useHttps': s.useHttps,
-            })
-        .toList();
-    return const JsonEncoder.withIndent('  ').convert(rows);
-  }
-
-  (int added, int updated) importJson(String raw) {
-    final List<ServerData> incoming = LocalStore.parseServersJson(raw);
-    int added = 0;
-    int updated = 0;
-    for (final ServerData s in incoming) {
-      final int i = servers.indexWhere((ServerData e) => e.id == s.id);
-      if (i >= 0) {
-        servers[i] = ServerData(
-          id: servers[i].id,
-          name: s.name.isEmpty ? servers[i].name : s.name,
-          type: s.type,
-          host: s.host,
-          port: s.port,
-          username: s.username ?? servers[i].username,
-          password: servers[i].password,
-          useHttps: s.useHttps,
-
-          lanHost: s.lanHost ?? servers[i].lanHost,
-          lanPort: s.lanPort ?? servers[i].lanPort,
-          sid: servers[i].sid,
-          sessionId: servers[i].sessionId,
-          ratioLimit: servers[i].ratioLimit,
-          group: s.group ?? servers[i].group,
-        );
-        updated++;
-      } else {
-        servers.add(s);
-        added++;
-      }
-
-      _dropBgClients(s.id);
-    }
-    AppLog.instance.op('导入服务器 JSON：新增 $added 台，更新 $updated 台');
-    return (added, updated);
-  }
-
   final torrentCache = <String, List<Torrent>>{}.obs;
 
   final state = ServerState().obs;
@@ -1804,6 +1762,7 @@ class ServerController extends GetxController with WidgetsBindingObserver {
     torrentCache.remove(serverId);
     _liteCacheIds.remove(serverId);
     _lruOrder.remove(serverId);
+    _statsLoadedIds.remove(serverId);
     torrentCache.refresh();
   }
 

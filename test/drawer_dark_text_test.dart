@@ -39,6 +39,9 @@ void main() {
       themeMode: ThemeMode.dark,
     ));
     await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text(S.groupTheme));
+    await tester.pumpAndSettle();
     return tc;
   }
 

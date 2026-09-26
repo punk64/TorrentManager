@@ -283,7 +283,7 @@ void main() {
   });
 
   group('③ 种子卡片', () {
-    testWidgets('★ 上传在前、下载在后，速度之后接磁盘读写芯片',
+    testWidgets('★ 上传在前、下载在后（v2：方向走图标），流量行含磁盘读写芯片',
         (WidgetTester tester) async {
       Get.put(ThemeController(), permanent: true);
       await tester.pumpWidget(GetMaterialApp(
@@ -297,16 +297,17 @@ void main() {
       ctrl.items.assignAll(<Torrent>[t]);
       await tester.pump(const Duration(milliseconds: 200));
 
-      final String up = '${S.upArrow}${Formatter.setSpeed(t.newUpspeed)}';
-      final String down = '${S.downArrow}${Formatter.setSpeed(t.newDownSpeed)}';
-      expect(find.text(up), findsOneWidget);
+      final String up = Formatter.setSpeed(t.newUpspeed);
+      final String down = Formatter.setSpeed(t.newDownSpeed);
+      expect(find.text(up), findsOneWidget,
+          reason: 'v2：箭头改为 Icon，速度文本不再带 ▲/▼ 前缀');
       expect(find.text(down), findsOneWidget);
       expect(tester.getTopLeft(find.text(up)).dx,
           lessThan(tester.getTopLeft(find.text(down)).dx),
           reason: '★ 需求 3：种子卡片同样「上传在前、下载在后」');
 
       expect(find.byType(DiskIoChip), findsOneWidget,
-          reason: '★ 需求 4：种子卡片的磁盘读写要跟在上/下速度之后');
+          reason: '★ 需求 4：磁盘读写芯片仍在卡上（v2 在流量行右端）');
 
       expect(
         tester.getTopLeft(find.byType(DiskIoChip)).dy,

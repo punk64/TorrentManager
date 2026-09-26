@@ -1440,6 +1440,7 @@ class EditSectionCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.dense = false,
+    this.tail,
   });
 
   final String title;
@@ -1448,23 +1449,27 @@ class EditSectionCard extends StatelessWidget {
 
   final bool dense;
 
+  final String? tail;
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final double h = dense ? 8 : 10;
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: dense ? 6 : af(context, 9)),
-      padding: EdgeInsets.fromLTRB(h, dense ? 6 : af(context, 8), h, dense ? 7 : af(context, 9)),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+    return Material(
+      color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-        border: Border.all(
+        side: BorderSide(
           color: cs.outlineVariant.withValues(alpha: 0.75),
           width: 0.6,
         ),
       ),
-      child: Column(
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.only(bottom: dense ? 6 : af(context, 9)),
+        padding: EdgeInsets.fromLTRB(h, dense ? 6 : af(context, 8), h, dense ? 7 : af(context, 9)),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -1487,11 +1492,22 @@ class EditSectionCard extends StatelessWidget {
                   color: cs.onSurfaceVariant,
                 ),
               ),
+              if (tail != null) ...<Widget>[
+                const Spacer(),
+                Text(
+                  tail!,
+                  style: TextStyle(
+                    fontSize: dense ? 9 : 10,
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
             ],
           ),
           SizedBox(height: dense ? 4 : 6),
           child,
         ],
+        ),
       ),
     );
   }

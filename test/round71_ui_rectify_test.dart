@@ -93,27 +93,33 @@ void main() {
       expect(body.contains('AppTheme.radiusSmall'), isTrue);
     });
 
-    test('展开区 4 个栏目各套一张分区卡片；详情页 7 个栏目同样', () {
+    test('★ v2：展开区改单一 inset 容器 + 分组标题；详情页 5 栏目折叠卡（2026-09-26 重设计）', () {
 
       final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
       final String detail =
           listSrc.substring(a, _nextDecl(listSrc, a));
-      expect('EditSectionCard('.allMatches(detail).length, 4);
+      expect('EditSectionCard('.allMatches(detail).length, 0,
+          reason: 'v2：展开区不再逐板块套分区卡片');
+      expect(detail.contains('groupTitle('), isTrue,
+          reason: 'v2：栏目边界改由分组标题表达');
+      expect(detail.contains('Color.alphaBlend'), isTrue,
+          reason: 'v2：inset 底色由主题色派生');
 
-      expect('EditSectionCard('.allMatches(ovSrc).length, 7);
+      // 2026-09-26 详情页重设计：7 张分区卡合并为 5 张可折叠卡（_foldCard）：
+      // 传输统计 / 限速与做种 / 位置与组织 / 时间信息 / 元数据。
+      expect('_foldCard(S.'.allMatches(ovSrc).length, 5);
     });
   });
 
   group('第 71 轮 · ②⑦ 四个限速项改回独占一行', () {
-    test('展开区：4 个字段直排，不再传 compact、不再有 wide 判据', () {
+    test('★ v2.b：展开区限速 2×2 紧凑框（2026-09-26 用户拍板覆盖 09-24），wide 判据仍禁', () {
       final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
       final String detail =
           listSrc.substring(a, _nextDecl(listSrc, a));
-      expect(detail.contains('dlField(),'), isTrue);
-      expect(detail.contains('upField(),'), isTrue);
-      expect(detail.contains('ratioField(),'), isTrue);
-      expect(detail.contains('seedTimeField(),'), isTrue);
-      expect(detail.contains('compact: true'), isFalse);
+      expect(detail.contains('Expanded(child: dlField(compact: true))'), isTrue);
+      expect(detail.contains('Expanded(child: upField(compact: true))'), isTrue);
+      expect(detail.contains('Expanded(child: ratioField(compact: true))'), isTrue);
+      expect(detail.contains('Expanded(child: seedTimeField(compact: true))'), isTrue);
       expect(detail.contains('final bool wide'), isFalse);
     });
 
@@ -209,20 +215,23 @@ void main() {
       expect(body.contains('Expanded('), isTrue, reason: '等宽自适应');
     });
 
-    test('按钮有填充底 + 边框（与「状态筛选」按钮同口径）', () {
+    test('★ v2：仪表钮有主题派生填充底（icon 上 / 标签下），无边框', () {
       final int i = listSrc.indexOf('Widget _gridButton(');
       final String body = listSrc.substring(i, i + 1800);
-      expect(body.contains('surfaceContainerHighest'), isTrue,
-          reason: '不透明填充底 ⇒ 彩色壁纸下文字可读');
-      expect(body.contains('BorderSide'), isTrue);
-      expect(body.contains('AppTheme.radius'), isTrue);
+      expect(body.contains('withValues(alpha: 0.09)'), isTrue,
+          reason: 'v2：填充底 = 着色 9%（主题色派生，壁纸下文字可读）');
+      expect(body.contains('BorderSide'), isFalse,
+          reason: 'v2：按钮去边框，靠填充底分层');
+      expect(body.contains('borderRadius: BorderRadius.circular(10)'), isTrue);
       expect(body.contains('overflow: TextOverflow.ellipsis'), isTrue);
     });
 
-    test('整块有不透明外层底色（隔开壁纸）', () {
+    test('★ v2：多选栏整块 = 圆角面板（surfaceContainerHighest 派生）', () {
       final int i = listSrc.indexOf('Widget _actionGrid()');
       final String body = listSrc.substring(i, i + 2600);
-      expect(body.contains('color: cs.surface,'), isTrue);
+      expect(body.contains('surfaceContainerHighest'), isTrue,
+          reason: '外层底色跟主题走，隔开壁纸');
+      expect(body.contains('BorderRadius.circular(15)'), isTrue);
     });
 
     testWidgets('渲染：进入多选后 8 个按钮排成两行 × 4 列',
@@ -269,10 +278,10 @@ void main() {
     });
   });
 
-  group('第 71 轮 · ⑥ 详情页六按钮固定两行 × 3 列', () {
-    test('`_actionGrid` 就是两个 Row（不再用 Wrap）', () {
-      expect(ovSrc.contains('Widget _actionGrid('), isTrue);
-      final int i = ovSrc.indexOf('Widget _actionGrid(');
+  group('第 71 轮 · ⑥ 详情页操作按钮固定两行（2026-09-26 重设计：4 + 3 布局）', () {
+    test('`_actionArea` 就是两个 Row（不再用 Wrap）', () {
+      expect(ovSrc.contains('Widget _actionArea('), isTrue);
+      final int i = ovSrc.indexOf('Widget _actionArea(');
       final String body = ovSrc.substring(i, _nextDecl(ovSrc, i));
       expect(body.contains('Wrap('), isFalse,
           reason: 'Wrap 的折行位置随字数/屏幕变，位置不固定');
@@ -282,7 +291,8 @@ void main() {
       expect(ovSrc.contains('final bool wide'), isFalse);
     });
 
-    testWidgets('渲染：6 个按钮排成两行 × 3 列', (WidgetTester tester) async {
+    testWidgets('渲染：行 1 = 继续｜暂停｜重新校验｜重新汇报，行 2 = 重命名｜删除｜导出',
+        (WidgetTester tester) async {
       await pumpOverview(tester, server: qb());
 
       final double y1 = tester.getCenter(find.text('继续')).dy;
@@ -292,11 +302,11 @@ void main() {
       final double y5 = tester.getCenter(find.text(S.renameTorrent)).dy;
       final double y6 = tester.getCenter(find.text(S.delete)).dy;
 
-      expect(y2, closeTo(y1, 0.6), reason: '行 1：继续｜暂停｜重新校验');
+      expect(y2, closeTo(y1, 0.6), reason: '行 1：继续｜暂停｜重新校验｜重新汇报');
       expect(y3, closeTo(y1, 0.6));
-      expect(y5, closeTo(y4, 0.6), reason: '行 2：重新汇报｜重命名｜删除');
-      expect(y6, closeTo(y4, 0.6));
-      expect(y4, greaterThan(y1), reason: '第二行在第一行下方');
+      expect(y4, closeTo(y1, 0.6));
+      expect(y5, closeTo(y6, 0.6), reason: '行 2：重命名｜删除（+导出）');
+      expect(y5, greaterThan(y1), reason: '第二行在第一行下方');
     });
   });
 
@@ -304,7 +314,8 @@ void main() {
     test('两处都改用 _kvCopy（带复制按钮），不再是两列网格', () {
       expect(ovSrc.contains('_kvCopy(S.fieldSiteName, site, maxLines: 2)'),
           isTrue);
-      expect(ovSrc.contains('_kvCopy(S.fieldHash, t.hash, maxLines: 2)'),
+      // 2026-09-26 重设计：哈希行升级为 Info Hash（v1），v2 行另有独立条目
+      expect(ovSrc.contains('S.fieldHash}（v1）\', t.hash, maxLines: 2)'),
           isTrue);
 
       expect(ovSrc.contains('<String>[S.fieldSiteName, site]'), isFalse);
@@ -318,10 +329,15 @@ void main() {
         (WidgetTester tester) async {
       await pumpOverview(tester, server: qb());
 
+      // 2026-09-26 重设计：站点/哈希位于「元数据」折叠卡，先展开再断言
+      await tester.tap(find.text(S.editSectionLinks));
+      await tester.pump(const Duration(milliseconds: 300));
+
       expect(find.text(S.fieldSiteName), findsOneWidget);
-      expect(find.text(S.fieldHash), findsOneWidget);
+      expect(find.textContaining(S.fieldHash), findsOneWidget);
       final double ySite = tester.getCenter(find.text(S.fieldSiteName)).dy;
-      final double yHash = tester.getCenter(find.text(S.fieldHash)).dy;
+      final double yHash =
+          tester.getCenter(find.textContaining(S.fieldHash)).dy;
       expect(yHash, greaterThan(ySite),
           reason: '哈希在站点名称**下一行**（用户要求各独占一行）');
 

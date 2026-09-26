@@ -62,7 +62,6 @@ class DrawerMenu extends StatelessWidget {
         _group(context,
           title: S.groupTheme,
           leading: Icons.palette,
-          initiallyExpanded: true,
           children: <Widget>[
 
             Obx(() => _button(context,
@@ -122,8 +121,6 @@ class DrawerMenu extends StatelessWidget {
         _group(context,
           title: S.langTitle,
           leading: Icons.translate,
-
-          initiallyExpanded: true,
           children: <Widget>[
 
             Obx(() => _button(context,

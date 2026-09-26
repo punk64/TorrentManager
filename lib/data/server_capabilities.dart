@@ -9,6 +9,10 @@ class ServerCapabilities {
 
   static const String qbPrivateMinApi = '2.11.0';
 
+  static const String qbAddPeersMinApi = '2.8.2';
+
+  static const String qbRenameFileMinApi = '2.8.15';
+
   static const String trSequentialMinVer = '4.1.0';
 
   static const String trTrackerListMinVer = '4.0.0';
@@ -59,6 +63,12 @@ class ServerCapabilities {
   static bool qbHasPrivateFlag(String? api, {bool unknownAs = false}) =>
       atLeast(api, qbPrivateMinApi, unknownAs: unknownAs);
 
+  static bool qbCanAddPeers(String? api, {bool unknownAs = false}) =>
+      atLeast(api, qbAddPeersMinApi, unknownAs: unknownAs);
+
+  static bool qbCanRenameFile(String? api, {bool unknownAs = false}) =>
+      atLeast(api, qbRenameFileMinApi, unknownAs: unknownAs);
+
   static bool trCanSequential(String? version, {bool unknownAs = true}) =>
       atLeast(version, trSequentialMinVer, unknownAs: unknownAs);
 
@@ -91,6 +101,9 @@ class ServerCapabilities {
 
         trackerList: false,
         freeSpaceMethod: false,
+        renameFile: qbCanRenameFile(api),
+        addPeers: qbCanAddPeers(api),
+        pieceStates: true,
       );
     }
     return CapabilitySet(
@@ -108,6 +121,9 @@ class ServerCapabilities {
 
       trackerList: trCanTrackerList(app),
       freeSpaceMethod: trHasFreeSpaceMethod(app),
+      renameFile: true,
+      addPeers: false,
+      pieceStates: true,
     );
   }
 }
@@ -126,6 +142,9 @@ class CapabilitySet {
     this.bandwidthPriority = false,
     this.trackerList = false,
     this.freeSpaceMethod = false,
+    this.renameFile = false,
+    this.addPeers = false,
+    this.pieceStates = false,
   });
 
   final bool isQb;
@@ -151,4 +170,13 @@ class CapabilitySet {
   final bool trackerList;
 
   final bool freeSpaceMethod;
+
+  /// 文件/文件夹重命名（qB renameFile 2.8.15+ / TR rename-path）
+  final bool renameFile;
+
+  /// 手动添加 Peer（仅 qB addPeers 2.8.2+）
+  final bool addPeers;
+
+  /// 分块状态热力图（qB pieceStates / TR pieces 位图）
+  final bool pieceStates;
 }

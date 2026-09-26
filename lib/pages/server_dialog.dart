@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,6 +14,7 @@ import '../utils/formatter.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
+import '../widgets/torrent_edit_fields.dart';
 
 @visibleForTesting
 QbMethod Function() qbProbeFactory = QbMethod.new;
@@ -276,36 +276,79 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
         '${user.isEmpty ? '' : ' · 账号 $user'}';
   }
 
-  Widget _typeItem(BuildContext context, String value) {
+  Widget _typeCard(BuildContext context, String value) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool selected = value == _type;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
-      decoration: BoxDecoration(
-        color: selected ? cs.primary.withValues(alpha: 0.10) : null,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: af(context, 13),
-                color: selected ? cs.primary : cs.onSurface,
-              ),
+    final bool selected = _type == value;
+    final bool isQb = value == 'qbittorrent';
+    return Expanded(
+      child: Material(
+        color: selected ? cs.primary.withValues(alpha: 0.10) : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radius),
+          side: BorderSide(
+            color: selected ? cs.primary : cs.outlineVariant.withValues(alpha: 0.6),
+            width: selected ? 1.2 : 0.6,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radius),
+          onTap: _saving ? null : () => _selectType(value),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+                af(context, 10), af(context, 8), af(context, 10), af(context, 8)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      isQb ? Icons.dns : Icons.swap_horiz,
+                      size: af(context, 16),
+                      color: selected ? cs.primary : cs.onSurfaceVariant,
+                    ),
+                    SizedBox(width: af(context, 6)),
+                    Expanded(
+                      child: Text(
+                        isQb ? 'qBittorrent' : 'Transmission',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: af(context, 13),
+                          fontWeight: FontWeight.w600,
+                          color: selected ? cs.primary : cs.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: af(context, 2)),
+                Padding(
+                  padding: EdgeInsets.only(left: af(context, 22)),
+                  child: Text(
+                    isQb ? 'WebUI 接口' : 'RPC 接口',
+                    style: TextStyle(
+                      fontSize: af(context, 10),
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          if (selected)
-            Icon(Icons.check, size: af(context, 16), color: cs.primary)
-          else
-            SizedBox(width: af(context, 16)),
-        ],
+        ),
       ),
     );
+  }
+
+  void _selectType(String value) {
+    if (_type == value) return;
+    setState(() {
+      _type = value;
+      const Set<String> qbDefaults = <String>{'443', '8080'};
+      if (qbDefaults.contains(_port.text) || _port.text == '9091') {
+        _port.text = value == 'qbittorrent' ? '443' : '9091';
+      }
+    });
   }
 
   @override
@@ -346,218 +389,216 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                         : null,
                   ),
                   SizedBox(height: af(context, 8)),
-                  DropdownButtonFormField<String>(
-                    initialValue: _type,
-                    isDense: true,
-                    isExpanded: true,
-
-                    style: TextStyle(
-                      fontSize: af(context, 13),
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-
-                    borderRadius: BorderRadius.circular(AppTheme.radius),
-
-                    alignment: AlignmentDirectional.centerStart,
-                    itemHeight: 48,
-
-                    icon: Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: Icon(Icons.arrow_drop_down, size: af(context, 24)),
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: '类型',
-                      hintText: '选择服务器类型',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-                    ),
-
-                    items: <DropdownMenuItem<String>>[
-                      for (final String v in <String>[
-                        'qbittorrent',
-                        'transmission'
-                      ])
-                        DropdownMenuItem<String>(
-                          value: v,
-                          child: _typeItem(context, v),
-                        ),
+                  Row(
+                    children: <Widget>[
+                      _typeCard(context, 'qbittorrent'),
+                      SizedBox(width: af(context, 9)),
+                      _typeCard(context, 'transmission'),
                     ],
-                    onChanged: (String? v) {
-                      if (v == null) return;
-                      setState(() {
-                        _type = v;
-
-                        const Set<String> qbDefaults = <String>{'443', '8080'};
-                        if (qbDefaults.contains(_port.text) ||
-                            _port.text == '9091') {
-                          _port.text = v == 'qbittorrent' ? '443' : '9091';
-                        }
-                      });
-                    },
                   ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _host,
-                    maxLength: AppTheme.maxLenHost,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-                    keyboardType: TextInputType.url,
-                    decoration: InputDecoration(
-                      labelText: '公网地址',
-                      hintText: S.srvEnterAddress,
-                      isDense: true,
-                      contentPadding: _fieldPadding,
+                  SizedBox(height: af(context, 10)),
+                  EditSectionCard(
+                    title: '公网连接',
+                    child: Column(
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              flex: 3,
+                              child: TextFormField(
+                                controller: _host,
+                                maxLength: AppTheme.maxLenHost,
+                                buildCounter: AppTheme.noCounter,
+                                style: TextStyle(fontSize: af(context, 13)),
+                                keyboardType: TextInputType.url,
+                                decoration: InputDecoration(
+                                  labelText: '公网地址',
+                                  hintText: S.srvEnterAddress,
+                                  isDense: true,
+                                  contentPadding: _fieldPadding,
+                                ),
+
+                                onChanged: _autoSplitPort,
+                                validator: (String? v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return S.srvEnterAddress;
+                                  }
+                                  if (_parseAddress(v) == null) {
+                                    return S.srvAddrInvalid;
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: af(context, 8)),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _port,
+                                maxLength: AppTheme.maxLenPort,
+                                buildCounter: AppTheme.noCounter,
+                                style: TextStyle(fontSize: af(context, 13)),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: '公网端口',
+                                  isDense: true,
+                                  contentPadding: _fieldPadding,
+                                ),
+                                validator: (String? v) {
+                                  final int? p = int.tryParse((v ?? '').trim());
+                                  if (p == null || p <= 0 || p > 65535) {
+                                    return S.srvEnterValidNumber;
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: af(context, 8)),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              flex: 3,
+                              child: TextFormField(
+                                controller: _lanHost,
+                                maxLength: AppTheme.maxLenHost,
+                                buildCounter: AppTheme.noCounter,
+                                style: TextStyle(fontSize: af(context, 13)),
+                                keyboardType: TextInputType.url,
+                                decoration: const InputDecoration(
+                                  labelText: '局域网地址',
+                                  hintText: '可选，留空则用公网地址',
+                                  isDense: true,
+                                  contentPadding: _fieldPadding,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: af(context, 8)),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _lanPort,
+                                maxLength: AppTheme.maxLenPort,
+                                buildCounter: AppTheme.noCounter,
+                                style: TextStyle(fontSize: af(context, 13)),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: '局域网端口',
+                                  hintText: '可选',
+                                  isDense: true,
+                                  contentPadding: _fieldPadding,
+                                ),
+                                validator: (String? v) {
+                                  final String t = (v ?? '').trim();
+                                  if (t.isEmpty) return null;
+                                  final int? p = int.tryParse(t);
+                                  if (p == null || p <= 0 || p > 65535) {
+                                    return S.srvEnterValidNumber;
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-
-                    onChanged: _autoSplitPort,
-                    validator: (String? v) {
-                      if (v == null || v.trim().isEmpty) {
-                        return S.srvEnterAddress;
-                      }
-                      if (_parseAddress(v) == null) return S.srvAddrInvalid;
-                      return null;
-                    },
                   ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _port,
-                    maxLength: AppTheme.maxLenPort,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '公网端口',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-                    ),
-                    validator: (String? v) {
-                      final int? p = int.tryParse((v ?? '').trim());
-                      if (p == null || p <= 0 || p > 65535) {
-                        return S.srvEnterValidNumber;
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _lanHost,
-                    maxLength: AppTheme.maxLenHost,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-                    keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: '局域网地址',
-                      hintText: '可选，留空则用公网地址',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-                    ),
-                  ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _lanPort,
-                    maxLength: AppTheme.maxLenPort,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: '局域网端口',
-                      hintText: '可选',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-                    ),
-                    validator: (String? v) {
-                      final String t = (v ?? '').trim();
-                      if (t.isEmpty) return null;
-                      final int? p = int.tryParse(t);
-                      if (p == null || p <= 0 || p > 65535) {
-                        return S.srvEnterValidNumber;
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _user,
-                    maxLength: AppTheme.maxLenName,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-                    autofillHints: const <String>[AutofillHints.username],
-                    decoration: const InputDecoration(
-                      labelText: '账号',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-                    ),
+                  SizedBox(height: af(context, 10)),
+                  EditSectionCard(
+                    title: '认证',
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: TextFormField(
+                            controller: _user,
+                            maxLength: AppTheme.maxLenName,
+                            buildCounter: AppTheme.noCounter,
+                            style: TextStyle(fontSize: af(context, 13)),
+                            autofillHints: const <String>[AutofillHints.username],
+                            decoration: const InputDecoration(
+                              labelText: '账号',
+                              isDense: true,
+                              contentPadding: _fieldPadding,
+                            ),
 
-                    validator: (String? v) =>
-                        (v ?? '').trim().isEmpty ? S.srvEnterUsername : null,
-                  ),
-                  SizedBox(height: af(context, 8)),
-                  TextFormField(
-                    controller: _pass,
-                    maxLength: AppTheme.maxLenName,
-                    buildCounter: AppTheme.noCounter,
-                    style: TextStyle(fontSize: af(context, 13)),
-
-                    obscureText: _obscurePassword,
-                    autofillHints: const <String>[AutofillHints.password],
-                    decoration: InputDecoration(
-                      labelText: '密码',
-                      isDense: true,
-                      contentPadding: _fieldPadding,
-
-                      hintText: _isEdit ? S.srvPassKeepHint : null,
-                      hintStyle: TextStyle(fontSize: af(context, 12)),
-
-                      suffixIcon: Semantics(
-                        label: _obscurePassword
-                            ? S.srvShowPassword
-                            : S.srvHidePassword,
-                        button: true,
-                        enabled: true,
-                        child: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            size: AppTheme.iconSize,
+                            validator: (String? v) =>
+                                (v ?? '').trim().isEmpty ? S.srvEnterUsername : null,
                           ),
-                          tooltip: _obscurePassword
-                              ? S.srvShowPassword
-                              : S.srvHidePassword,
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
                         ),
-                      ),
-                    ),
-                    validator: (String? v) {
-                      final String t = (v ?? '').trim();
-                      if (t.isNotEmpty) return null;
+                        SizedBox(width: af(context, 8)),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _pass,
+                            maxLength: AppTheme.maxLenName,
+                            buildCounter: AppTheme.noCounter,
+                            style: TextStyle(fontSize: af(context, 13)),
 
-                      return _isEdit ? null : S.srvEnterPassword;
-                    },
+                            obscureText: _obscurePassword,
+                            autofillHints: const <String>[AutofillHints.password],
+                            decoration: InputDecoration(
+                              labelText: '密码',
+                              isDense: true,
+                              contentPadding: _fieldPadding,
+
+                              hintText: _isEdit ? S.srvPassKeepHint : null,
+                              hintStyle: TextStyle(fontSize: af(context, 12)),
+
+                              suffixIcon: Semantics(
+                                label: _obscurePassword
+                                    ? S.srvShowPassword
+                                    : S.srvHidePassword,
+                                button: true,
+                                enabled: true,
+                                child: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    size: AppTheme.iconSize,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                  constraints: BoxConstraints.tightFor(
+                                      width: af(context, 32),
+                                      height: af(context, 32)),
+                                  padding: EdgeInsets.zero,
+                                  tooltip: _obscurePassword
+                                      ? S.srvShowPassword
+                                      : S.srvHidePassword,
+                                  onPressed: () => setState(
+                                      () => _obscurePassword = !_obscurePassword),
+                                ),
+                              ),
+                            ),
+                            validator: (String? v) {
+                              final String t = (v ?? '').trim();
+                              if (t.isNotEmpty) return null;
+
+                              return _isEdit ? null : S.srvEnterPassword;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  SizedBox(height: af(context, 10)),
+                  Wrap(
+                    spacing: af(context, 8),
                     children: <Widget>[
-                      Expanded(
-                        child: Text(S.srvHideDomain,
-                            style: TextStyle(fontSize: af(context, 13))),
+                      FilterChip(
+                        selected: _hideDomain,
+                        label: Text(S.srvHideDomain,
+                            style: TextStyle(fontSize: af(context, 12))),
+                        onSelected: _saving
+                            ? null
+                            : (bool v) => setState(() => _hideDomain = v),
                       ),
-                      CupertinoSwitch(
-                        value: _hideDomain,
-                        onChanged: (bool v) => setState(() => _hideDomain = v),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(S.srvHidePort,
-                            style: TextStyle(fontSize: af(context, 13))),
-                      ),
-                      CupertinoSwitch(
-                        value: _hidePort,
-                        onChanged: (bool v) => setState(() => _hidePort = v),
+                      FilterChip(
+                        selected: _hidePort,
+                        label: Text(S.srvHidePort,
+                            style: TextStyle(fontSize: af(context, 12))),
+                        onSelected: _saving
+                            ? null
+                            : (bool v) => setState(() => _hidePort = v),
                       ),
                     ],
                   ),
@@ -587,7 +628,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
             onPressed: _saving ? null : () => Navigator.of(context).pop(false),
             child: Text(S.cancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: _saving ? null : _save,
             child: Text(_isEdit ? S.srvSave : S.srvSaveShort),
           ),

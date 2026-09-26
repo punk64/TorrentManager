@@ -392,6 +392,9 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 300));
 
+      await tester.tap(find.text(S.groupTheme));
+      await tester.pumpAndSettle();
+
       await tester.ensureVisible(find.text(S.themeImport));
       await tester.pumpAndSettle();
 

@@ -175,21 +175,24 @@ void main() {
       expect(st.contains("fieldRatioLimitShort => L.pick('分享上限'"), isTrue);
     });
 
-    test('★ 组③末尾有导出种子入口（v3 第 10 条）+ 条件块落在末尾（第 11 条）', () {
+    test('★ 导出入口存在 + 错误条/元数据条件块次序（2026-09-26 重设计适配：条件块上移到英雄卡之后）', () {
       expect(src.contains('Future<void> _exportTorrent('), isTrue);
       expect(src.contains('_exportTorrent(t)'), isTrue);
 
-      final int magnet = src.indexOf('S.fieldMagnet, t.magnetUri!');
       final int err = src.indexOf('_errorBanner(t, cs)');
       final int meta = src.indexOf('_metadataBar(t)');
-      expect(magnet, greaterThan(0));
-      expect(err, greaterThan(magnet),
-          reason: 'v3：错误红条挪到组③之后的末尾条件块（原来在名称下方）');
-      expect(meta, greaterThan(err), reason: '条件块②：元数据进度在错误红条之后');
+      expect(err, greaterThan(0),
+          reason: '重设计：错误红条在英雄卡之后出现');
+      expect(meta, greaterThan(err), reason: '元数据进度在错误红条之后');
     });
 
     test('导出仍然按能力显隐（V3：TR 无接口、qB 要 4.5+）', () {
-      expect(src.contains('_ctrl.capabilities.exportTorrent'), isTrue);
+      expect(
+        src.contains('_ctrl.capabilities.exportTorrent') ||
+            src.contains('cap.exportTorrent'),
+        isTrue,
+        reason: '2026-09-26 重设计：能力位经局部变量 cap 判断，语义不变',
+      );
     });
   });
 

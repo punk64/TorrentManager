@@ -343,6 +343,11 @@ class TorrentController extends GetxController {
   final trackers = <Map<String, dynamic>>[].obs;
   final detailLoading = false.obs;
 
+  /// 详情页低频附加数据（qB properties/infohash、TR detail/pieces 位图等）
+  final detailExtras = <String, dynamic>{}.obs;
+  final Map<String, DateTime> _extrasFetchedAt = <String, DateTime>{};
+  static const Duration kExtrasTtl = Duration(seconds: 30);
+
   final dlSamples = <double>[].obs;
   final ulSamples = <double>[].obs;
 
@@ -827,6 +832,8 @@ class TorrentController extends GetxController {
     files.clear();
     peers.clear();
     trackers.clear();
+    detailExtras.clear();
+    _extrasFetchedAt.clear();
     error.value = null;
     isLoading.value = loading;
     _scrollPaused = false;
@@ -1245,6 +1252,13 @@ class TorrentController extends GetxController {
     selected.assignAll(visibleItems.map((Torrent t) => t.hash));
   }
 
+  void invertSelection() {
+    final Set<String> cur = selected.toSet();
+    selected.assignAll(visibleItems
+        .map((Torrent t) => t.hash)
+        .where((String h) => !cur.contains(h)));
+  }
+
   void clearSelection() => selected.clear();
 
   List<int> get _selectedTrIds => items
@@ -1575,25 +1589,42 @@ class TorrentController extends GetxController {
 
   Future<void> queueMoveSelected(String where) => _runOnSelected(() async {
         final s = serverCtrl.current.value;
-        if (s == null || !s.isTransmission) return;
+        if (s == null) return;
 
-        final List<int> ids = _trIdsOrThrow();
-        switch (where) {
-          case 'top':
-            await serverCtrl.tr.queueMoveTop(ids);
-            break;
-          case 'up':
-            await serverCtrl.tr.queueMoveUp(ids);
-            break;
-          case 'down':
-            await serverCtrl.tr.queueMoveDown(ids);
-            break;
-          case 'bottom':
-            await serverCtrl.tr.queueMoveBottom(ids);
-            break;
+        if (s.isTransmission) {
+          final List<int> ids = _trIdsOrThrow();
+          switch (where) {
+            case 'top':
+              await serverCtrl.tr.queueMoveTop(ids);
+              break;
+            case 'up':
+              await serverCtrl.tr.queueMoveUp(ids);
+              break;
+            case 'down':
+              await serverCtrl.tr.queueMoveDown(ids);
+              break;
+            case 'bottom':
+              await serverCtrl.tr.queueMoveBottom(ids);
+              break;
+          }
+        } else {
+          final String hashes = _selectedHashes;
+          switch (where) {
+            case 'top':
+              await serverCtrl.qb.topPrio(hashes);
+              break;
+            case 'up':
+              await serverCtrl.qb.increasePrio(hashes);
+              break;
+            case 'down':
+              await serverCtrl.qb.decreasePrio(hashes);
+              break;
+            case 'bottom':
+              await serverCtrl.qb.bottomPrio(hashes);
+              break;
+          }
         }
-        AppLog.instance.op('队列移动 ${ids.length} 个种子 → $where',
-            scope: s.logScope);
+        AppLog.instance.op('队列移动 → $where', scope: s.logScope);
       });
 
   final Map<String, DateTime> _deepFetchedAt = <String, DateTime>{};
@@ -1921,6 +1952,81 @@ class TorrentController extends GetxController {
             scope: s.logScope);
       });
 
+  /// 手动添加 Peer（仅 qB）
+  Future<void> addPeersTo(String hash, List<String> peers) async {
+    if (peers.isEmpty) return;
+    final s = serverCtrl.current.value;
+    if (s == null) return;
+    lastActionOk.value = null;
+    try {
+      await serverCtrl.qb.addPeers(hash, peers.join(','));
+      lastActionOk.value = true;
+      AppLog.instance.op('添加 Peer：${peers.join(' | ')}',
+          scope: s.logScope);
+      await refresh();
+    } catch (e) {
+      error.value = NetError.describe(e);
+      lastActionOk.value = false;
+    }
+  }
+
+  /// 种子内文件/文件夹重命名（qB renameFile/renameFolder、TR rename-path）
+  Future<void> renameInTorrent(
+    Torrent t,
+    String oldPath,
+    String newName, {
+    bool isFolder = false,
+  }) async {
+    final s = serverCtrl.current.value;
+    if (s == null) return;
+    lastActionOk.value = null;
+    try {
+      if (s.isQbittorrent) {
+        if (isFolder) {
+          await serverCtrl.qb.renameTorrentFolder(t.hash, oldPath, newName);
+        } else {
+          await serverCtrl.qb.renameTorrentFile(t.hash, oldPath, newName);
+        }
+      } else {
+        if (t.trId == null) {
+          throw StateError('该种子缺少 Transmission 任务 ID，无法重命名');
+        }
+        await serverCtrl.tr.renamePath(t.trId!, oldPath, newName);
+      }
+      lastActionOk.value = true;
+      AppLog.instance.op('重命名文件：$oldPath → $newName（${t.name}）',
+          scope: s.logScope);
+      unawaited(_refreshAfterWrite(t));
+    } catch (e) {
+      error.value = NetError.describe(e);
+      lastActionOk.value = false;
+    }
+  }
+
+  Future<void> _refreshAfterWrite(Torrent t) async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    try {
+      await fetchOne(t);
+      final String hash = t.hash;
+      _extrasFetchedAt.remove(hash);
+      final int seq = ++_detailSeq;
+      await _loadDetailExtras(
+          serverCtrl.current.value?.id ?? '', hash, t, seq);
+    } catch (_) {}
+  }
+
+  /// 是否遵循全局限速（仅 TR）
+  Future<void> setHonorsLimitsOf(List<String> hashes, bool value) async {
+    final s = serverCtrl.current.value;
+    if (s == null || s.isQbittorrent) return;
+    await _runEdit(hashes, () async {
+      await serverCtrl.tr.setHonorsSessionLimits(_trIdsOf(hashes), value);
+      AppLog.instance.op(
+          '${value ? '开启' : '关闭'}遵循全局限速（${hashes.length} 个种子）',
+          scope: s.logScope);
+    });
+  }
+
   Future<void> setBandwidthPriorityOf(List<String> hashes, int priority) =>
       _runEdit(hashes, () async {
         final s = serverCtrl.current.value;
@@ -1951,6 +2057,8 @@ class TorrentController extends GetxController {
     files.clear();
     peers.clear();
     trackers.clear();
+    detailExtras.clear();
+    _extrasFetchedAt.remove(t.hash);
 
     dlSamples.clear();
     ulSamples.clear();
@@ -2074,6 +2182,8 @@ class TorrentController extends GetxController {
       peers.value = p;
       trackers.value = tk;
 
+      await _loadDetailExtras(targetId, targetHash, t, seq);
+
       Torrent? fresh;
       try {
 
@@ -2116,6 +2226,73 @@ class TorrentController extends GetxController {
   }
 
   List<FileNode> get fileTree => buildFileTree(files);
+
+  bool _extrasNeedFetch(String hash) {
+    final DateTime? at = _extrasFetchedAt[hash];
+    if (at != null && DateTime.now().difference(at) < kExtrasTtl) {
+      return false;
+    }
+    _extrasFetchedAt[hash] = DateTime.now();
+    return true;
+  }
+
+  Future<void> _loadDetailExtras(
+    String serverId,
+    String hash,
+    Torrent t,
+    int seq,
+  ) async {
+    final s = serverCtrl.current.value;
+    if (s == null) return;
+    try {
+      final Map<String, dynamic> extras =
+          Map<String, dynamic>.from(detailExtras);
+      if (s.isQbittorrent) {
+        if (_extrasNeedFetch(hash)) {
+          final Map<String, dynamic> pr =
+              await serverCtrl.qb.getProperties(hash);
+          extras
+            ..clear()
+            ..addAll(pr);
+          try {
+            final Map<String, dynamic> meta =
+                await serverCtrl.qb.getTorrentMeta(hash);
+            final dynamic v1 = meta['infohash_v1'];
+            final dynamic v2 = meta['infohash_v2'];
+            if (v1 != null) extras['infohash_v1'] = v1;
+            if (v2 != null) extras['infohash_v2'] = v2;
+            final dynamic seen = meta['seen_complete'];
+            if (seen is num) extras['seen_complete'] = seen.toInt();
+          } catch (_) {}
+        }
+        try {
+          final List<int> states = await serverCtrl.qb.getPieceStates(hash);
+          if (states.isNotEmpty) extras['piece_states'] = states;
+        } catch (_) {}
+      } else {
+        if (t.trId == null) return;
+        if (_extrasNeedFetch(hash)) {
+          final Map<String, dynamic> d =
+              await serverCtrl.tr.torrentDetail(<int>[t.trId!]);
+          extras
+            ..clear()
+            ..addAll(d);
+        }
+        try {
+          final List<int> pieces =
+              await serverCtrl.tr.torrentPieces(<int>[t.trId!]);
+          if (pieces.isNotEmpty) extras['piece_states'] = pieces;
+        } catch (_) {}
+      }
+      extras['hash'] = hash;
+      if (_detailStale(serverId, hash, seq)) return;
+      detailExtras
+        ..clear()
+        ..addAll(extras);
+    } catch (_) {
+      // 附加数据失败不影响主刷新
+    }
+  }
 }
 
 class FileNode {

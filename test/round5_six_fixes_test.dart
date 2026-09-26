@@ -85,6 +85,8 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
+    await tester.tap(find.text(S.groupTheme));
+    await tester.pumpAndSettle();
     expect(find.text(S.themeCustom), findsOneWidget);
 
     await tester.tap(find.text(S.themeCustom));

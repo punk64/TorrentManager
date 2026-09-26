@@ -129,6 +129,9 @@ void main() {
 
       expect(find.text(S.groupShare), findsWidgets);
 
+      await tester.tap(find.text(S.langTitle));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text(S.langZh));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

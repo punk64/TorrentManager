@@ -458,7 +458,86 @@ class TrMethod {
     });
     final List<dynamic> list = (res['torrents'] as List?) ?? <dynamic>[];
     if (list.isEmpty) return <Map<String, dynamic>>[];
-    return _flatten(list, 'files');
+    final List<Map<String, dynamic>> out = <Map<String, dynamic>>[];
+    for (final Map<String, dynamic> t
+        in list.map((dynamic e) => Map<String, dynamic>.from(e))) {
+      final List<dynamic> files = (t['files'] as List?) ?? <dynamic>[];
+      final List<dynamic> stats = (t['fileStats'] as List?) ?? <dynamic>[];
+      for (int i = 0; i < files.length; i++) {
+        final Map<String, dynamic> f = Map<String, dynamic>.from(files[i]);
+        if (i < stats.length) {
+          final Map<String, dynamic> st =
+              Map<String, dynamic>.from(stats[i]);
+          f['priority'] = st['priority'];
+          f['wanted'] = st['wanted'];
+        }
+        out.add(f);
+      }
+    }
+    return out;
+  }
+
+  /// 详情页低频元数据（含 base64 分块位图 pieces）
+  static const List<String> _trDetailFields = <String>[
+    'id',
+    'hashString',
+    'name',
+    'dateCreated',
+    'creator',
+    'pieceSize',
+    'pieceCount',
+    'maxConnectedPeers',
+    'desiredAvailable',
+    'webseedsSendingToUs',
+    'seedRatioMode',
+    'seedIdleMode',
+    'honorsSessionLimits',
+    'bandwidthPriority',
+    'comment',
+    'isPrivate',
+  ];
+
+  Future<Map<String, dynamic>> torrentDetail(List<int> ids) async {
+    final Map<String, dynamic> res = await _rpc('torrent-get', <String, dynamic>{
+      'ids': ids,
+      'fields': _trDetailFields,
+    });
+    final List<dynamic> list = (res['torrents'] as List?) ?? <dynamic>[];
+    if (list.isEmpty) return <String, dynamic>{};
+    return Map<String, dynamic>.from(list.first);
+  }
+
+  /// 分块完成位图（base64，每字节高 bit 在前）→ 0 未完成 / 2 已完成，对齐 qB 状态值
+  Future<List<int>> torrentPieces(List<int> ids) async {
+    final Map<String, dynamic> res = await _rpc('torrent-get', <String, dynamic>{
+      'ids': ids,
+      'fields': <String>['id', 'pieceCount', 'pieces'],
+    });
+    final List<dynamic> list = (res['torrents'] as List?) ?? <dynamic>[];
+    if (list.isEmpty) return <int>[];
+    final int count = (list.first['pieceCount'] as num?)?.toInt() ?? 0;
+    final String b64 = list.first['pieces']?.toString() ?? '';
+    if (count <= 0 || b64.isEmpty) return <int>[];
+    final List<int> bytes;
+    try {
+      bytes = base64Decode(b64);
+    } catch (_) {
+      return <int>[];
+    }
+    final List<int> out = List<int>.filled(count, 0);
+    for (int i = 0; i < count && (i >> 3) < bytes.length; i++) {
+      final int bit = (bytes[i >> 3] >> (7 - (i & 7))) & 1;
+      out[i] = bit == 1 ? 2 : 0;
+    }
+    return out;
+  }
+
+  Future<void> renamePath(int id, String path, String name) async {
+    await _rpc('torrent-rename-path', <String, dynamic>{
+      'ids': <int>[id],
+      'path': path,
+      'name': name,
+    });
   }
 
   Future<List<Map<String, dynamic>>> torrentPeers(List<int> ids) async {

@@ -11,20 +11,83 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
-class TorrentInfoTrackersPage extends StatelessWidget {
+class TorrentInfoTrackersPage extends StatefulWidget {
   const TorrentInfoTrackersPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TorrentController ctrl = Get.find<TorrentController>();
-    final ServerController sc = Get.find<ServerController>();
+  State<TorrentInfoTrackersPage> createState() =>
+      _TorrentInfoTrackersPageState();
+}
 
+class _TorrentSpecialEntry {
+  const _TorrentSpecialEntry(this.key, this.label);
+
+  final String key;
+
+  final String label;
+}
+
+class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
+  final TorrentController ctrl = Get.find<TorrentController>();
+  final ServerController sc = Get.find<ServerController>();
+
+  bool _showChart = false;
+
+  static const List<_TorrentSpecialEntry> _specials = <_TorrentSpecialEntry>[
+    _TorrentSpecialEntry('DHT', 'DHT'),
+    _TorrentSpecialEntry('PEX', 'PEX'),
+    _TorrentSpecialEntry('LSD', 'LSD'),
+  ];
+
+  /// qB 返回的 `** [DHT] **` 等特殊条目不算真实 Tracker
+  static final RegExp _specialRe = RegExp(r'^\*\*\s*\[(\w+)\]\s*\*\*$');
+
+  bool _isSpecial(Map<String, dynamic> t) {
+    final String url =
+        (t['url'] ?? t['announce'] ?? t['host'])?.toString() ?? '';
+    return _specialRe.hasMatch(url.trim());
+  }
+
+  List<Map<String, dynamic>> get _realTrackers =>
+      ctrl.trackers.where((Map<String, dynamic> t) => !_isSpecial(t)).toList();
+
+  Map<String, Map<String, dynamic>> get _specialMap {
+    final Map<String, Map<String, dynamic>> out = <String, Map<String, dynamic>>{};
+    for (final Map<String, dynamic> t in ctrl.trackers) {
+      if (!_isSpecial(t)) continue;
+      final String url =
+          (t['url'] ?? t['announce'] ?? t['host'])?.toString() ?? '';
+      final Match? m = _specialRe.firstMatch(url.trim());
+      if (m == null) continue;
+      out[m.group(1)!.toUpperCase()] = t;
+    }
+    return out;
+  }
+
+  int get _badCount {
+    int n = 0;
+    for (final Map<String, dynamic> t in _realTrackers) {
+      final bool isQb = sc.current.value?.isQbittorrent == true;
+      final int st = (t['status'] as num?)?.toInt() ?? -1;
+      if (isQb) {
+        if (st == 4) n++;
+      } else {
+        if (t['isBackup'] == true) continue;
+        if (t['lastAnnounceSucceeded'] == false) n++;
+      }
+    }
+    return n;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Obx(() {
       if (ctrl.detailLoading.value && ctrl.trackers.isEmpty) {
         return const Center(child: CircularProgressIndicator());
       }
-      final List<Map<String, dynamic>> trackers = ctrl.trackers;
-      if (trackers.isEmpty) {
+      final List<Map<String, dynamic>> trackers = _realTrackers;
+      final Map<String, Map<String, dynamic>> specials = _specialMap;
+      if (trackers.isEmpty && specials.isEmpty) {
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -46,16 +109,23 @@ class TorrentInfoTrackersPage extends StatelessWidget {
       return ListView(
         padding: EdgeInsets.only(bottom: af(context, 24)),
         children: <Widget>[
-          SizedBox(
-            height: af(context, 180),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(af(context, 8), af(context, 10), af(context, 12), 4),
-              child: _TrackerBarChart(trackers: trackers),
-            ),
-          ),
-          const Divider(height: 1),
+          _summaryBar(trackers.length, specials),
+          if (trackers.isNotEmpty) ...<Widget>[
+            SizedBox(height: af(context, 8)),
+            _chartToggle(trackers),
+            if (_showChart)
+              SizedBox(
+                height: af(context, 170),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                      af(context, 8), af(context, 8), af(context, 12), 0),
+                  child: _TrackerBarChart(trackers: trackers),
+                ),
+              ),
+          ],
+          const SizedBox(height: 6),
           for (final Map<String, dynamic> t in trackers)
-            _trackerTile(context, ctrl, sc, t),
+            _trackerCard(context, ctrl, sc, t),
           Padding(
             padding: EdgeInsets.all(af(context, 12)),
             child: OutlinedButton.icon(
@@ -69,72 +139,355 @@ class TorrentInfoTrackersPage extends StatelessWidget {
     });
   }
 
-  Widget _trackerTile(
+  // ─────────────────────────── 汇总条 ───────────────────────────
+
+  Widget _summaryBar(int realCount, Map<String, Map<String, dynamic>> specials) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), 0),
+      padding: EdgeInsets.symmetric(horizontal: af(context, 10), vertical: af(context, 8)),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.75), width: 0.6),
+      ),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: <Widget>[
+          Text(
+            '$realCount 个 Tracker',
+            style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600),
+          ),
+          if (_badCount > 0)
+            Text(
+              '· ⚠ $_badCount 个异常',
+              style: TextStyle(fontSize: af(context, 11), color: cs.error, fontWeight: FontWeight.w600),
+            ),
+          if (isQb)
+            for (final _TorrentSpecialEntry e in _specials)
+              _specialBadge(e, specials[e.key]),
+        ],
+      ),
+    );
+  }
+
+  Widget _specialBadge(_TorrentSpecialEntry e, Map<String, dynamic>? t) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool on = t != null;
+    final int nodes =
+        ((t?['num_peers'] ?? t?['peers']) as num?)?.toInt() ?? 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: on ? cs.primary.withValues(alpha: 0.08) : null,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: on ? cs.primary.withValues(alpha: 0.35) : cs.outlineVariant.withValues(alpha: 0.7),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: on ? cs.primary : cs.outlineVariant,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            on && nodes > 0 ? '${e.label} $nodes' : e.label,
+            style: TextStyle(
+              fontSize: af(context, 10),
+              color: on ? cs.onSurface : cs.outline,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chartToggle(List<Map<String, dynamic>> trackers) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: () => setState(() => _showChart = !_showChart),
+      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: af(context, 12)),
+        padding: EdgeInsets.symmetric(horizontal: af(context, 10), vertical: af(context, 8)),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.75), width: 0.6),
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              _showChart ? Icons.expand_less : Icons.expand_more,
+              size: af(context, 15),
+              color: cs.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                _showChart ? '收起分布图' : 'Tracker 分布图（做种 / 下载者对比）',
+                style: TextStyle(fontSize: af(context, 10.5), color: cs.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────── Tracker 卡片 ───────────────────────────
+
+  /// 返回 (颜色语义, 文案)：0 正常 1 进行中 2 异常 3 空闲
+  (int, String) _statusOf(Map<String, dynamic> t, bool isQb) {
+    if (isQb) {
+      final int st = (t['status'] as num?)?.toInt() ?? -1;
+      switch (st) {
+        case 2:
+          return (0, '工作中');
+        case 3:
+          return (1, '更新中');
+        case 4:
+          return (2, '不可用');
+        case 1:
+          return (3, '未联系');
+        case 0:
+          return (3, '未启用');
+        default:
+          return (3, '未知');
+      }
+    }
+    if (t['isBackup'] == true) return (3, '备用');
+    final int st = (t['announceState'] as num?)?.toInt() ?? 0;
+    switch (st) {
+      case 3:
+        return (0, '活动中');
+      case 2:
+        return (1, '排队');
+      case 1:
+        return (1, '等待');
+      default:
+        return (3, '未活动');
+    }
+  }
+
+  Color _statusColor(int level, ColorScheme cs) {
+    switch (level) {
+      case 0:
+        return const Color(0xFF0F9D58);
+      case 1:
+        return const Color(0xFFE8710A);
+      case 2:
+        return cs.error;
+      default:
+        return cs.outline;
+    }
+  }
+
+  Widget _trackerCard(
     BuildContext context,
     TorrentController ctrl,
     ServerController sc,
     Map<String, dynamic> t,
   ) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+
     final String url =
         (t['url'] ?? t['announce'] ?? t['host'])?.toString() ?? '-';
-    final String status =
-        (t['msg'] ?? t['lastAnnounceResult'])?.toString() ?? '';
     final int seeds =
         ((t['num_seeds'] ?? t['seederCount']) as num?)?.toInt() ?? 0;
     final int leechs =
         ((t['num_leeches'] ?? t['leecherCount']) as num?)?.toInt() ?? 0;
-    final String host = Formatter.trackerHost(url) ?? url;
+    final int downloaded =
+        ((t['num_downloaded'] ?? t['downloadCount']) as num?)?.toInt() ?? 0;
+    final int tier = ((t['tier']) as num?)?.toInt() ?? 0;
 
-    return ListTile(
-      dense: true,
-      leading: const Icon(Icons.public, size: AppTheme.iconSize),
-      title: Text(
-        url,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: af(context, 11)),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Text(
-          '${S.fieldSiteName} $host · '
-          '${S.fieldSeeders} $seeds · ${S.fieldLeechers} $leechs'
-          '${status.isEmpty ? '' : ' · $status'}',
-          style: TextStyle(fontSize: af(context, 10)),
-        ),
-      ),
-      trailing: PopupMenuButton<String>(
-        onSelected: (String v) async {
-          switch (v) {
-            case 'copy':
+    final (int level, String statusText) = _statusOf(t, isQb);
+    final Color stc = _statusColor(level, cs);
 
-              await Clipboard.setData(
-                ClipboardData(text: Formatter.maskUrl(url)),
-              );
-              Formatter.showToast('${S.trkCopied}（passkey 已打码）');
-              break;
-            case 'edit':
-              await _editTracker(context, ctrl, sc, url);
-              break;
-            case 'remove':
-              await _removeTracker(context, ctrl, sc, url);
-              break;
-          }
-        },
-        itemBuilder: (_) => <PopupMenuEntry<String>>[
-          PopupMenuItem<String>(
-              value: 'copy',
-              child: Text(S.trkCopied, style: TextStyle(fontSize: af(context, 12)))),
-          PopupMenuItem<String>(
-              value: 'edit',
-              child: Text(S.trkEditTitle, style: TextStyle(fontSize: af(context, 12)))),
-          PopupMenuItem<String>(
-              value: 'remove',
-              child: Text(S.trkDeleteTitle, style: TextStyle(fontSize: af(context, 12)))),
+    String? errMsg;
+    if (isQb) {
+      if (level == 2) {
+        final String m = (t['msg'] ?? '').toString();
+        if (m.isNotEmpty) errMsg = m;
+      }
+    } else {
+      if (t['lastAnnounceSucceeded'] == false) {
+        final String m = (t['lastAnnounceResult'] ?? '').toString();
+        if (m.isNotEmpty) errMsg = m;
+      }
+    }
+
+    String? nextAnnounce;
+    if (!isQb) {
+      final int next = (t['nextAnnounceTime'] as num?)?.toInt() ?? 0;
+      if (next > 0 && level != 3 && t['isBackup'] != true) {
+        final int diff = next - DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        nextAnnounce = diff > 0 ? '下次汇报 $diff 秒后' : '下次汇报 等待中';
+      }
+    }
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(af(context, 12), af(context, 6), af(context, 12), 0),
+      padding: EdgeInsets.fromLTRB(af(context, 11), af(context, 9), af(context, 7), af(context, 9)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.75), width: 0.6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: af(context, 8),
+                height: af(context, 8),
+                decoration: BoxDecoration(color: stc, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: af(context, 11),
+                  fontWeight: FontWeight.w700,
+                  color: stc,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  url,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: af(context, 11.5), fontWeight: FontWeight.w600),
+                ),
+              ),
+              _trackerMenu(context, ctrl, sc, url),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 3,
+              children: <Widget>[
+                _stat('做种', '$seeds'),
+                _stat('下载者', '$leechs'),
+                _stat('已完成', '$downloaded'),
+                _stat('层级', '$tier'),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 14, top: 2),
+            child: Row(
+              children: <Widget>[
+                if (nextAnnounce != null)
+                  Text(
+                    nextAnnounce,
+                    style: TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant),
+                  ),
+                const Spacer(),
+                if (errMsg == null && level == 0)
+                  Text(
+                    isQb ? (t['msg']?.toString().isNotEmpty == true ? t['msg'].toString() : '成功 ✓') : '成功 ✓',
+                    style: TextStyle(fontSize: af(context, 10), color: cs.outline),
+                  ),
+              ],
+            ),
+          ),
+          if (errMsg != null) ...<Widget>[
+            const SizedBox(height: 5),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: cs.error.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              ),
+              child: Text(
+                '✗ $errMsg',
+                style: TextStyle(fontSize: af(context, 10.5), color: cs.error),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _stat(String label, String value) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return Text.rich(
+      TextSpan(
+        text: '$label ',
+        style: TextStyle(fontSize: af(context, 10.5), color: cs.onSurfaceVariant),
+        children: <TextSpan>[
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              fontSize: af(context, 10.5),
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _trackerMenu(
+    BuildContext context,
+    TorrentController ctrl,
+    ServerController sc,
+    String url,
+  ) {
+    return PopupMenuButton<String>(
+      onSelected: (String v) async {
+        switch (v) {
+          case 'copy':
+            await Clipboard.setData(
+              ClipboardData(text: Formatter.maskUrl(url)),
+            );
+            Formatter.showToast('${S.trkCopied}（passkey 已打码）');
+            break;
+          case 'edit':
+            await _editTracker(context, ctrl, sc, url);
+            break;
+          case 'remove':
+            await _removeTracker(context, ctrl, sc, url);
+            break;
+        }
+      },
+      itemBuilder: (_) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+            value: 'copy',
+            child: Text(S.trkCopied, style: TextStyle(fontSize: af(context, 12)))),
+        PopupMenuItem<String>(
+            value: 'edit',
+            child: Text(S.trkEditTitle, style: TextStyle(fontSize: af(context, 12)))),
+        PopupMenuItem<String>(
+            value: 'remove',
+            child: Text(S.trkDeleteTitle, style: TextStyle(fontSize: af(context, 12)))),
+      ],
+    );
+  }
+
+  // ─────────────────────────── 增删改（保留原逻辑） ───────────────────────────
 
   Future<void> _editTracker(
     BuildContext context,
@@ -206,7 +559,6 @@ class TorrentInfoTrackersPage extends StatelessWidget {
           ),
         ],
       ),
-
     ).whenComplete(input.dispose);
     if (result == null || result.isEmpty) return;
 
