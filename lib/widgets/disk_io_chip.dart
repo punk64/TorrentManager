@@ -17,7 +17,6 @@ class DiskIoChip extends StatelessWidget {
 
   final int read;
 
-  /// 紧凑文案 `↑ X · ↓ Y`（种子卡片信息带用，宽度约为全称的一半）。
   final bool compact;
 
   @override

@@ -17,6 +17,7 @@ import '../widgets/piece_heatmap.dart';
 import '../widgets/progress_ring.dart';
 import '../widgets/speed_sparkline.dart';
 import '../widgets/torrent_edit_fields.dart';
+import '../widgets/path_dropdown.dart';
 import '../app/adaptive.dart';
 
 class TorrentInfoOverviewPage extends StatefulWidget {
@@ -35,13 +36,12 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   final EditDraft _draft = EditDraft();
 
-  bool _openStats = true;
-  bool _openLimits = true;
-  bool _openPlace = true;
-  bool _openTimes = true;
+  bool _openStats = false;
+  bool _openLimits = false;
+  bool _openPlace = false;
+  bool _openTimes = false;
   bool _openMeta = false;
 
-  /// null = 跟随当前值推导；true = 强制展示自定义输入
   bool? _ratioCustom;
   bool? _seedCustom;
 
@@ -176,8 +176,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       );
     });
   }
-
-  // ─────────────────────────── 英雄卡 ───────────────────────────
 
   Widget _heroCard(Torrent t, ColorScheme cs, {required bool checking}) {
     final Color st = Formatter.setStatusColor(t.state, cs);
@@ -397,12 +395,10 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     return '$sec 秒前更新 · 每 3 秒自动刷新';
   }
 
-  // ─────────────────────────── 操作区 ───────────────────────────
-
   Widget _actionArea(Torrent t, {required bool running, required bool checking}) {
     final Color danger = Theme.of(context).colorScheme.error;
     final CapabilitySet cap = _ctrl.capabilities;
-    Widget gap() => const SizedBox(width: 6);
+    Widget gap() => const SizedBox(width: 8);
 
     Widget btn({
       required String label,
@@ -413,15 +409,15 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     }) =>
         Expanded(
           child: (filled ? FilledButton.icon : OutlinedButton.icon)(
-            icon: Icon(icon, size: AppTheme.iconSize, color: color),
+            icon: Icon(icon, size: af(context, 18), color: color),
             label: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: af(context, 11), color: color)),
+                style: TextStyle(fontSize: af(context, 11.5), color: color)),
             onPressed: onTap,
             style: (filled ? FilledButton.styleFrom : OutlinedButton.styleFrom)(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              minimumSize: const Size(0, 34),
+              padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
+              minimumSize: const Size(0, 38),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
               side: (!filled && color != null)
@@ -467,17 +463,17 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               icon: Icons.fact_check_outlined,
               onTap: (!checking && !_busy) ? () => _recheck(t) : null,
             ),
-            gap(),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: <Widget>[
             btn(
               label: '重新汇报',
               icon: Icons.sync,
               onTap: _busy ? null : () => _reannounce(t),
             ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: <Widget>[
+            gap(),
             btn(
               label: S.renameTorrent,
               icon: Icons.drive_file_rename_outline,
@@ -490,21 +486,29 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               color: danger,
               onTap: _busy ? null : () => _delete(t),
             ),
-            if (cap.exportTorrent) ...<Widget>[
-              gap(),
-              btn(
-                label: S.btExportTorrent,
-                icon: Icons.download,
-                onTap: _busy ? null : () => _exportTorrent(t),
-              ),
-            ],
           ],
         ),
+        if (cap.exportTorrent) ...<Widget>[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: Icon(Icons.download, size: af(context, 18)),
+              label: Text(S.btExportTorrent,
+                  style: TextStyle(fontSize: af(context, 11.5))),
+              onPressed: _busy ? null : () => _exportTorrent(t),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
+                minimumSize: const Size(0, 38),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
-
-  // ─────────────────────────── 折叠卡 ───────────────────────────
 
   Widget _foldCard(String title, bool open, VoidCallback onToggle, Widget child) {
     final ColorScheme cs = Theme.of(context).colorScheme;
@@ -564,8 +568,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       ),
     );
   }
-
-  // ─────────────────────────── 传输统计 ───────────────────────────
 
   Widget _statsBody(Torrent t, ColorScheme cs, {required bool isQb, required CapabilitySet cap}) {
     final List<int>? states = _pieceStates;
@@ -649,8 +651,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       ],
     );
   }
-
-  // ─────────────────────────── 限速与做种 ───────────────────────────
 
   Widget _limitsBody(Torrent t) {
     final CapabilitySet cap = _ctrl.capabilities;
@@ -777,8 +777,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       ],
     );
   }
-
-  // ─────────────────────────── 位置与组织 ───────────────────────────
 
   Widget _placeBody(Torrent t, CapabilitySet cap) {
     final ColorScheme cs = Theme.of(context).colorScheme;
@@ -935,8 +933,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
   }
 
-  // ─────────────────────────── 时间信息 ───────────────────────────
-
   Widget _timesBody(Torrent t, {required bool isQb, required CapabilitySet cap}) {
     final int? createdOn = _createdOnOf(isQb);
     final int? lastSeen = isQb ? _extraInt('last_seen') : null;
@@ -968,8 +964,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ],
     ]);
   }
-
-  // ─────────────────────────── 元数据 ───────────────────────────
 
   Widget _metaBody(Torrent t, {required bool isQb, required CapabilitySet cap}) {
     final String site = t.site;
@@ -1107,13 +1101,53 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       t.metadataPercent < 1 &&
       (t.magnetUri ?? '').isNotEmpty;
 
-  // ─────────────────────────── 开关组 ───────────────────────────
+  Widget _bigSwitchCell(
+    Torrent t, {
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color accent = cs.primary;
+    return Container(
+      height: af(context, 50),
+      padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
+      decoration: BoxDecoration(
+        color: value
+            ? accent.withValues(alpha: 0.13)
+            : cs.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(af(context, 12)),
+        border: Border.all(
+            color: value
+                ? accent.withValues(alpha: 0.55)
+                : cs.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      child: Row(children: <Widget>[
+        Expanded(
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: af(context, 11.5),
+                  fontWeight: FontWeight.w600,
+                  color: value ? accent : cs.onSurface)),
+        ),
+        SizedBox(
+          width: af(context, 46),
+          height: af(context, 26),
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: Switch(value: value, onChanged: onChanged),
+          ),
+        ),
+      ]),
+    );
+  }
 
   Widget _switchGroup(Torrent t) {
     final CapabilitySet cap = _ctrl.capabilities;
-    final List<Widget> chips = <Widget>[
+    final List<Widget> cells = <Widget>[
       if (cap.forceStart)
-        EditSwitchChip(
+        _bigSwitchCell(
+          t,
           label: S.swForceStart,
           value: t.forceStart ?? false,
           onChanged: (bool v) => _apply(
@@ -1123,7 +1157,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
         ),
       if (cap.sequentialDownload)
-        EditSwitchChip(
+        _bigSwitchCell(
+          t,
           label: S.swSequential,
           value: t.sequentialDownload ?? false,
           onChanged: (bool v) => _apply(
@@ -1133,7 +1168,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
         ),
       if (cap.isQb)
-        EditSwitchChip(
+        _bigSwitchCell(
+          t,
           label: S.swFirstLast,
           value: t.firstLastPiecePrio ?? false,
           onChanged: (bool v) => _apply(
@@ -1143,7 +1179,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
         ),
       if (cap.superSeeding)
-        EditSwitchChip(
+        _bigSwitchCell(
+          t,
           label: S.swSuperSeeding,
           value: t.superSeeding ?? false,
           onChanged: (bool v) => _apply(
@@ -1153,11 +1190,29 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
         ),
     ];
-    if (chips.isEmpty) return const SizedBox.shrink();
-    return Wrap(spacing: 6, runSpacing: 6, children: chips);
-  }
+    if (cells.isEmpty) return const SizedBox.shrink();
 
-  // ─────────────────────────── 编辑字段 ───────────────────────────
+    final List<Widget> rows = <Widget>[];
+    for (int i = 0; i < cells.length; i += 2) {
+      final bool hasNext = i + 1 < cells.length;
+      rows.add(Row(
+        children: <Widget>[
+          Expanded(child: cells[i]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: hasNext
+                ? cells[i + 1]
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ));
+      if (hasNext) rows.add(const SizedBox(height: 8));
+    }
+    return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows);
+  }
 
   Widget _dlLimitField(Torrent t, {bool compact = false}) => EditNumberField(
         label: S.fieldDlLimit,
@@ -1218,8 +1273,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
       );
 
-  // ─────────────────────────── 动作逻辑 ───────────────────────────
-
   Future<bool> _apply(
     Torrent t,
     String what,
@@ -1251,10 +1304,16 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   Future<void> _editPath(Torrent t) async {
     final bool isQb = _ctrl.capabilities.isQb;
+    final List<PathCandidate> cands = <PathCandidate>[
+      for (final FacetEntry e in _ctrl.facets(FilterDim.path))
+        if (e.value.trim().startsWith('/'))
+          PathCandidate(e.value.trim(), '种子 ×${e.count}'),
+    ];
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: t.savePath ?? '',
       askMove: !isQb,
+      candidates: cands,
     );
     if (r == null) return;
     AppLog.instance.act('种子详情', '编辑[${S.fieldPath}]', target: t.name);
@@ -1461,7 +1520,6 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   }
 }
 
-/// 剪贴板小工具（避免本文件直接依赖 flutter/services 的散落调用）
 class ClipboardSet {
   ClipboardSet._();
 

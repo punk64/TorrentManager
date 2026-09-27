@@ -390,7 +390,17 @@ void main() {
       final List<String> calls = <String>[];
       await pumpDetail(tester, calls: calls, torrents: () => <Map<String, dynamic>>[qbTorrentJson()]);
 
+      await tester.scrollUntilVisible(find.text('实时状态'), 160,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('实时状态'));
+      await tester.pump(const Duration(milliseconds: 200));
+
       expect(find.text('校验进度'), findsOneWidget);
+
+      await tester.scrollUntilVisible(find.text('时间信息'), 160,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('时间信息'));
+      await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('最近活动'), findsOneWidget,
           reason: '★ 原来这行取的是 last_activity，却叫「校验状态」，名实不符');
       expect(find.text('校验状态'), findsNothing);

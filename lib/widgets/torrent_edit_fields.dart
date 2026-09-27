@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../app/theme.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
+import 'path_dropdown.dart';
 
 class TorrentEditFields {
   TorrentEditFields._();
@@ -1128,6 +1129,7 @@ class EditDialogs {
     required String initial,
     required bool askMove,
     bool moveDefault = true,
+    List<PathCandidate> candidates = const <PathCandidate>[],
   }) async {
     final TextEditingController c = TextEditingController(text: initial);
     bool move = moveDefault;
@@ -1139,14 +1141,10 @@ class EditDialogs {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(
+            PathDropdownField(
               controller: c,
-              style: TextStyle(fontSize: af(context, 12)),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: S.fieldPath,
-                labelStyle: TextStyle(fontSize: af(context, 11)),
-              ),
+              candidates: candidates,
+              label: S.fieldPath,
             ),
             const SizedBox(height: 6),
 

@@ -159,9 +159,6 @@ void main() {
         }),
       ]);
       await tester.pump(const Duration(milliseconds: 400));
-
-      await tester.tap(find.byIcon(Icons.expand_more).first);
-      await tester.pump(const Duration(milliseconds: 400));
     } finally {
       FlutterError.onError = oldOnError;
     }

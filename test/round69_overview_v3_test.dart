@@ -66,6 +66,15 @@ void main() {
     Get.reset();
   });
 
+  Future<void> openFolds(WidgetTester tester) async {
+    for (final String title in <String>['实时状态', '限速与分享', '常规', '时间信息']) {
+      await tester.scrollUntilVisible(find.text(title), 160,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text(title));
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+  }
+
   Future<void> pump(
     WidgetTester tester, {
     double width = 400,
@@ -132,10 +141,14 @@ void main() {
           reason: 'v3 最终顺序：操作按钮 Wrap → 开关组 → 参数区');
     });
 
-    test('★ 开关压成同一行 chip（EditSwitchChip + Wrap），不再用整行 EditSwitchRow', () {
-      expect(src.contains('EditSwitchChip('), isTrue);
+    test('★ 第 101 轮：概览开关改大格 2×2（_bigSwitchCell），EditSwitchChip 概览退役', () {
+      expect(src.contains('_bigSwitchCell('), isTrue);
+      final int swGroup = src.indexOf('Widget _switchGroup(Torrent t)');
+      final String swBody = src.substring(swGroup, _nextTopDecl(src, swGroup));
+      expect(swBody.contains('EditSwitchChip('), isFalse,
+          reason: '第 101 轮：开关组本体改用大格（限速卡内的遵循全局限速 chip 保留）');
       expect(src.contains('EditSwitchRow('), isFalse,
-          reason: 'v3 排布规则第 4 条：4 个开关压成同一行');
+          reason: 'v3 排布规则第 4 条：不使用整行 Switch');
       expect(ef.contains('class EditSwitchChip'), isTrue);
 
       final int i = ef.indexOf('class EditSwitchChip');
@@ -199,6 +212,7 @@ void main() {
   group('第 69 轮 · v3 紧凑布局（渲染）', () {
     testWidgets('★ 宽屏（400dp）：只读参数两列并排', (WidgetTester tester) async {
       await pump(tester, width: 400);
+      await openFolds(tester);
 
       final double yState = tester.getCenter(find.text(S.fieldState)).dy;
       final double yCheck = tester.getCenter(find.text('校验进度')).dy;
@@ -212,6 +226,7 @@ void main() {
 
     testWidgets('★ 窄屏（320dp）：回退单列（B3）', (WidgetTester tester) async {
       await pump(tester, width: 320);
+      await openFolds(tester);
 
       final double yState = tester.getCenter(find.text(S.fieldState)).dy;
       final double yCheck = tester.getCenter(find.text('校验进度')).dy;
@@ -223,16 +238,16 @@ void main() {
         (WidgetTester tester) async {
       await pump(tester, width: 400, server: _qb());
 
-      expect(find.byType(EditSwitchChip), findsNWidgets(4),
-          reason: 'qB 支持 强制做种 / 顺序下载 / 首尾块优先 / 超级做种');
+      expect(find.byType(Switch), findsNWidgets(4),
+          reason: '第 101 轮：4 个开关改为大格 _bigSwitchCell（真实 Switch）');
 
       final double y1 = tester.getCenter(find.text(S.swForceStart)).dy;
       final double y2 = tester.getCenter(find.text(S.swSequential)).dy;
       final double y3 = tester.getCenter(find.text(S.swFirstLast)).dy;
       final double y4 = tester.getCenter(find.text(S.swSuperSeeding)).dy;
-      expect(y2, closeTo(y1, 0.6), reason: 'v3：4 个开关在**同一行**');
-      expect(y3, closeTo(y1, 0.6));
-      expect(y4, closeTo(y1, 0.6));
+      expect(y2, closeTo(y1, 0.6), reason: '第 101 轮：每行 2 个 —— 行 1 = 强制做种｜顺序下载');
+      expect(y3, greaterThan(y1), reason: '行 2 在行 1 下方');
+      expect(y4, closeTo(y3, 0.6));
 
       final double opY = tester.getCenter(find.text('继续')).dy;
       expect(y1, greaterThan(opY), reason: 'v3：开关组在操作按钮正下方');
@@ -241,6 +256,7 @@ void main() {
     testWidgets('★ qB：可编辑 4 项各独占一行（2026-09-24 用户整改）',
         (WidgetTester tester) async {
       await pump(tester, width: 400, server: _qb());
+      await openFolds(tester);
 
       final double yDl = tester.getCenter(find.text(S.fieldDlLimit)).dy;
       final double yUp = tester.getCenter(find.text(S.fieldUpLimit)).dy;
@@ -258,6 +274,7 @@ void main() {
     testWidgets('窄屏：可编辑 4 项同样是 4 行（不再有 2×2 可回退）',
         (WidgetTester tester) async {
       await pump(tester, width: 320, server: _qb());
+      await openFolds(tester);
 
       final double yDl = tester.getCenter(find.text(S.fieldDlLimit)).dy;
       final double yUp = tester.getCenter(find.text(S.fieldUpLimit)).dy;

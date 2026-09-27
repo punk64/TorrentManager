@@ -39,7 +39,6 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
     _TorrentSpecialEntry('LSD', 'LSD'),
   ];
 
-  /// qB 返回的 `** [DHT] **` 等特殊条目不算真实 Tracker
   static final RegExp _specialRe = RegExp(r'^\*\*\s*\[(\w+)\]\s*\*\*$');
 
   bool _isSpecial(Map<String, dynamic> t) {
@@ -87,6 +86,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       }
       final List<Map<String, dynamic>> trackers = _realTrackers;
       final Map<String, Map<String, dynamic>> specials = _specialMap;
+      final ColorScheme cs = Theme.of(context).colorScheme;
       if (trackers.isEmpty && specials.isEmpty) {
         return Center(
           child: Column(
@@ -106,10 +106,45 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
         );
       }
 
+      final bool priv = ctrl.current.value?.isPrivate == true;
       return ListView(
         padding: EdgeInsets.only(bottom: af(context, 24)),
         children: <Widget>[
           _summaryBar(trackers.length, specials),
+          if (priv) ...<Widget>[
+            SizedBox(height: af(context, 10)),
+            Container(
+              padding: EdgeInsets.all(af(context, 10)),
+              decoration: BoxDecoration(
+                color: cs.error.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                border: Border.all(
+                    color: cs.error.withValues(alpha: 0.55)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(Icons.gpp_bad_outlined,
+                      size: af(context, 18), color: cs.error),
+                  SizedBox(width: af(context, 8)),
+                  Expanded(
+                    child: Text(
+                      '这是私有种子（Private Torrent）\n'
+                      '请保持 DHT / PEX / LSD 关闭 —— 它们会绕过 Tracker 广播本种子，'
+                      '可能导致 passkey 泄露并被站点封禁账号。',
+                      style: TextStyle(
+                          fontSize: af(context, 10.5),
+                          height: 1.4,
+                          fontWeight: FontWeight.w600,
+                          color: cs.error),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          SizedBox(height: af(context, 10)),
+          _dhtCard(),
           if (trackers.isNotEmpty) ...<Widget>[
             SizedBox(height: af(context, 8)),
             _chartToggle(trackers),
@@ -139,7 +174,92 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
     });
   }
 
-  // ─────────────────────────── 汇总条 ───────────────────────────
+  Widget _dhtCard() {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    Widget tip(String name, String full, String desc, Color c) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: af(context, 4)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: c.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              ),
+              child: Text(name,
+                  style: TextStyle(
+                      fontSize: af(context, 10),
+                      fontWeight: FontWeight.w700,
+                      color: c)),
+            ),
+            SizedBox(width: af(context, 8)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(full,
+                      style: TextStyle(
+                          fontSize: af(context, 10.5),
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface)),
+                  SizedBox(height: af(context, 1)),
+                  Text(desc,
+                      style: TextStyle(
+                          fontSize: af(context, 9.5),
+                          height: 1.3,
+                          color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(af(context, 12), 0, af(context, 12), 0),
+      padding: EdgeInsets.all(af(context, 10)),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+        border:
+            Border.all(color: cs.outlineVariant.withValues(alpha: 0.75), width: 0.6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(children: <Widget>[
+            Container(width: 3, height: 12, color: cs.primary),
+            SizedBox(width: af(context, 6)),
+            Text('DHT / PEX / LSD 说明',
+                style: TextStyle(
+                    fontSize: af(context, 11),
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface)),
+            const Spacer(),
+            Text('仅 Transmission 显示为条目',
+                style: TextStyle(
+                    fontSize: af(context, 10),
+                    color: cs.onSurfaceVariant)),
+          ]),
+          SizedBox(height: af(context, 6)),
+          tip('DHT', 'DHT · 分布式哈希表',
+              '无 Tracker 时也能通过 DHT 网络找到 Peer；私有种子必须关闭。',
+              cs.secondary),
+          tip('PEX', 'PEX · Peer 交换',
+              '与已连接的 Peer 互相交换彼此的 Peer 列表；私有种子必须关闭。',
+              cs.tertiary),
+          tip('LSD', 'LSD · 本地发现',
+              '在局域网内广播发现同一资源的设备；私有种子必须关闭。',
+              cs.primary),
+        ],
+      ),
+    );
+  }
 
   Widget _summaryBar(int realCount, Map<String, Map<String, dynamic>> specials) {
     final ColorScheme cs = Theme.of(context).colorScheme;
@@ -167,9 +287,8 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
               '· ⚠ $_badCount 个异常',
               style: TextStyle(fontSize: af(context, 11), color: cs.error, fontWeight: FontWeight.w600),
             ),
-          if (isQb)
-            for (final _TorrentSpecialEntry e in _specials)
-              _specialBadge(e, specials[e.key]),
+          for (final _TorrentSpecialEntry e in _specials)
+            _specialBadge(e, specials[e.key]),
         ],
       ),
     );
@@ -178,6 +297,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
   Widget _specialBadge(_TorrentSpecialEntry e, Map<String, dynamic>? t) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool on = t != null;
+    final bool priv = ctrl.current.value?.isPrivate == true;
     final int nodes =
         ((t?['num_peers'] ?? t?['peers']) as num?)?.toInt() ?? 0;
     return Container(
@@ -202,10 +322,15 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           ),
           const SizedBox(width: 4),
           Text(
-            on && nodes > 0 ? '${e.label} $nodes' : e.label,
+            priv
+                ? '${e.label} · 建议关闭'
+                : on && nodes > 0
+                    ? '${e.label} $nodes'
+                    : e.label,
             style: TextStyle(
               fontSize: af(context, 10),
-              color: on ? cs.onSurface : cs.outline,
+              color: priv ? cs.error : (on ? cs.onSurface : cs.outline),
+              fontWeight: priv ? FontWeight.w600 : null,
             ),
           ),
         ],
@@ -246,9 +371,6 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
     );
   }
 
-  // ─────────────────────────── Tracker 卡片 ───────────────────────────
-
-  /// 返回 (颜色语义, 文案)：0 正常 1 进行中 2 异常 3 空闲
   (int, String) _statusOf(Map<String, dynamic> t, bool isQb) {
     if (isQb) {
       final int st = (t['status'] as num?)?.toInt() ?? -1;
@@ -486,8 +608,6 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       ],
     );
   }
-
-  // ─────────────────────────── 增删改（保留原逻辑） ───────────────────────────
 
   Future<void> _editTracker(
     BuildContext context,

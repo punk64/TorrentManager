@@ -7,6 +7,7 @@ import '../data/models/torrent.dart';
 import '../data/server_capabilities.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/path_dropdown.dart';
 import '../utils/strings.dart';
 import 'bottom_panel.dart';
 import 'torrent_edit_fields.dart';
@@ -107,11 +108,17 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     final String initial = _picked.isNotEmpty
         ? (_picked.first.savePath ?? '')
         : '';
+    final List<PathCandidate> cands = <PathCandidate>[
+      for (final FacetEntry e in _ctrl.facets(FilterDim.path))
+        if (e.value.trim().startsWith('/'))
+          PathCandidate(e.value.trim(), '种子 ×${e.count}'),
+    ];
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: initial,
 
       askMove: !isQb,
+      candidates: cands,
     );
     if (r == null) return;
     setState(() => _path = r);

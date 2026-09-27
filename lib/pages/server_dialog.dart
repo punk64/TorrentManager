@@ -250,7 +250,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
   bool get _isQb => _type == 'qbittorrent';
 
   static const EdgeInsets _fieldPadding =
-      EdgeInsets.fromLTRB(12, 10, 12, 10);
+      EdgeInsets.fromLTRB(12, 16, 12, 12);
 
   void _autoSplitPort(String value) {
     final _ParsedAddress? p = _parseAddress(value);
@@ -361,11 +361,28 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
             '${_draftSummary()}');
       },
       child: AlertDialog(
+        backgroundColor:
+            Theme.of(context).colorScheme.surface.withValues(alpha: 1.0),
+        insetPadding: EdgeInsets.symmetric(
+            horizontal: af(context, 16), vertical: 24),
+        contentPadding: EdgeInsets.fromLTRB(
+            af(context, 16), 20, af(context, 16), 24),
         title: Text(_isEdit ? S.srvEditing : S.srvAdd,
             style: TextStyle(fontSize: af(context, 15))),
       content: SizedBox(
-        width: af(context, 340),
-        child: AutofillGroup(
+        width: af(context, 380),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            inputDecorationTheme: InputDecorationTheme(
+              labelStyle: TextStyle(
+                  fontSize: af(context, 10.5),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+              floatingLabelStyle: TextStyle(
+                  fontSize: af(context, 10.5),
+                  color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          child: AutofillGroup(
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
@@ -381,14 +398,13 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     decoration: InputDecoration(
                       labelText: '名称',
                       hintText: S.srvEnterName,
-                      isDense: true,
                       contentPadding: _fieldPadding,
                     ),
                     validator: (String? v) => (v == null || v.trim().isEmpty)
                         ? S.srvEnterName
                         : null,
                   ),
-                  SizedBox(height: af(context, 8)),
+                  SizedBox(height: af(context, 12)),
                   Row(
                     children: <Widget>[
                       _typeCard(context, 'qbittorrent'),
@@ -396,7 +412,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       _typeCard(context, 'transmission'),
                     ],
                   ),
-                  SizedBox(height: af(context, 10)),
+                  SizedBox(height: af(context, 14)),
                   EditSectionCard(
                     title: '公网连接',
                     child: Column(
@@ -414,8 +430,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 decoration: InputDecoration(
                                   labelText: '公网地址',
                                   hintText: S.srvEnterAddress,
-                                  isDense: true,
-                                  contentPadding: _fieldPadding,
+                                              contentPadding: _fieldPadding,
                                 ),
 
                                 onChanged: _autoSplitPort,
@@ -439,9 +454,8 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: '公网端口',
-                                  isDense: true,
-                                  contentPadding: _fieldPadding,
+                                  labelText: '端口',
+                                              contentPadding: _fieldPadding,
                                 ),
                                 validator: (String? v) {
                                   final int? p = int.tryParse((v ?? '').trim());
@@ -468,8 +482,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 decoration: const InputDecoration(
                                   labelText: '局域网地址',
                                   hintText: '可选，留空则用公网地址',
-                                  isDense: true,
-                                  contentPadding: _fieldPadding,
+                                              contentPadding: _fieldPadding,
                                 ),
                               ),
                             ),
@@ -482,10 +495,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: '局域网端口',
+                                  labelText: '端口',
                                   hintText: '可选',
-                                  isDense: true,
-                                  contentPadding: _fieldPadding,
+                                              contentPadding: _fieldPadding,
                                 ),
                                 validator: (String? v) {
                                   final String t = (v ?? '').trim();
@@ -503,7 +515,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       ],
                     ),
                   ),
-                  SizedBox(height: af(context, 10)),
+                  SizedBox(height: af(context, 14)),
                   EditSectionCard(
                     title: '认证',
                     child: Row(
@@ -517,8 +529,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             autofillHints: const <String>[AutofillHints.username],
                             decoration: const InputDecoration(
                               labelText: '账号',
-                              isDense: true,
-                              contentPadding: _fieldPadding,
+                                      contentPadding: _fieldPadding,
                             ),
 
                             validator: (String? v) =>
@@ -537,8 +548,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             autofillHints: const <String>[AutofillHints.password],
                             decoration: InputDecoration(
                               labelText: '密码',
-                              isDense: true,
-                              contentPadding: _fieldPadding,
+                                      contentPadding: _fieldPadding,
 
                               hintText: _isEdit ? S.srvPassKeepHint : null,
                               hintStyle: TextStyle(fontSize: af(context, 12)),
@@ -580,7 +590,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                       ],
                     ),
                   ),
-                  SizedBox(height: af(context, 10)),
+                  SizedBox(height: af(context, 14)),
                   Wrap(
                     spacing: af(context, 8),
                     children: <Widget>[
@@ -621,6 +631,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
               ),
             ),
           ),
+        ),
         ),
       ),
         actions: <Widget>[

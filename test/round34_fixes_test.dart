@@ -104,19 +104,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('类型'), findsWidgets);
-
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    final Text item = tester
-        .widgetList<Text>(find.byType(Text))
-        .firstWhere((Text t) => t.data == 'transmission');
-    expect(item.style?.color, isNotNull,
-        reason: '菜单项必须显式给色 —— 不给色时 Overlay 里默认是浅色，'
-            '浅色主题下就是白字压白底');
-    expect(item.style!.color!.computeLuminance(), lessThan(0.5));
+    expect(find.text('qBittorrent'), findsOneWidget);
+    expect(find.text('Transmission'), findsOneWidget);
   });
 
   test('③ 用户目录不可写 → 自动回落到私有目录，且内容是本机加密信封', () async {

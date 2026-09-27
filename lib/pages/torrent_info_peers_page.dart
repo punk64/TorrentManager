@@ -39,8 +39,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
   PeerSort _sort = PeerSort.dlSpeed;
   bool _asc = false;
 
-  final Set<String> _expanded = <String>{};
-
   final Map<String, Rx<_Geo>> _geo = <String, Rx<_Geo>>{};
 
   int _num(dynamic v) => (v as num?)?.toInt() ?? 0;
@@ -243,8 +241,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     }
   }
 
-  // ─────────────────────────── 展示辅助 ───────────────────────────
-
   String? _flagOf(Map<String, dynamic> p, bool isQb) {
     if (!isQb) return null;
     final String cc = (p['country_code'] ?? '').toString().trim();
@@ -257,7 +253,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
         String.fromCharCode(base + b - 0x41);
   }
 
-  /// qB flags / TR flagStr → 徽章字符列表（最多 6 个）
   List<String> _flagChars(Map<String, dynamic> p, bool isQb) {
     final String raw = isQb
         ? (p['flags'] ?? '').toString()
@@ -473,8 +468,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final String target =
         port.isEmpty || port == '0' ? ip : '$ip:$port';
     final String key = _peerKey(p);
-    final bool expanded = _expanded.contains(key);
-
     final String? flag = _flagOf(p, isQb);
     final List<String> flagChars = _flagChars(p, isQb);
     final _Geo g = _geoOf(ip).value;
@@ -485,6 +478,21 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
         ? (p['connection'] ?? '').toString().toLowerCase().contains('utp')
         : p['isUTP'] == true;
     final bool incoming = !isQb && p['isIncoming'] == true;
+
+    final String peerId =
+        ((p['peer_id_client'] ?? p['peer_id']) ?? '').toString();
+    final String connection = (p['connection'] ?? '').toString();
+    final num ratio = (p['ratios'] as num?) ?? 0;
+    final double relevance = ((p['relevance'] ?? 0) as num?)?.toDouble() ?? 0;
+    final String files = (p['files'] ?? '').toString();
+    final bool hasDetail = peerId.isNotEmpty ||
+        connection.isNotEmpty ||
+        encrypted ||
+        utp ||
+        incoming ||
+        files.isNotEmpty ||
+        (!isQb && ratio > 0) ||
+        (isQb && relevance > 0);
 
     return Container(
       padding: EdgeInsets.fromLTRB(af(context, 10), af(context, 8), af(context, 6), af(context, 8)),
@@ -497,18 +505,10 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          InkWell(
-            onTap: () => setState(() {
-              if (expanded) {
-                _expanded.remove(key);
-              } else {
-                _expanded.add(key);
-              }
-            }),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
                 Row(
                   children: <Widget>[
                     if (flag != null) ...<Widget>[
@@ -569,12 +569,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                         onPressed: () => _ban(target),
                       ),
                     ],
-                    SizedBox(width: af(context, 4)),
-                    Icon(
-                      expanded ? Icons.expand_less : Icons.expand_more,
-                      size: af(context, 15),
-                      color: cs.outline,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 3),
@@ -647,13 +641,10 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                     style: TextStyle(fontSize: af(context, 9), color: cs.outline),
                   ),
                 ],
-              ],
-            ),
+          ],
           ),
-          if (expanded) ...<Widget>[
-            const SizedBox(height: 6),
-            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.6)),
-            const SizedBox(height: 6),
+          if (hasDetail) ...<Widget>[
+            const SizedBox(height: 5),
             _detailGrid(p, isQb: isQb, encrypted: encrypted, utp: utp, incoming: incoming),
           ],
         ],

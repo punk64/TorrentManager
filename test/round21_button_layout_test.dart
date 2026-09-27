@@ -83,7 +83,7 @@ void main() {
       final double opY = tester.getCenter(find.text('继续')).dy;
       final double progressY =
           tester.getCenter(find.textContaining(S.fieldProgress)).dy;
-      final double fieldY = tester.getCenter(find.text(S.fieldState)).dy;
+      final double fieldY = tester.getCenter(find.text('实时状态')).dy;
 
       expect(opY, greaterThan(progressY),
           reason: '按钮组应紧跟在「进度」之后（在进度下方、字段上方）');

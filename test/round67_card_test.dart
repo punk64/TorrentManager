@@ -145,48 +145,19 @@ void main() {
     });
   });
 
-  group('第 67 轮第四期 · 点击热区（D9 方案 C）', () {
-    test('整块点击 = 展开/收起，不再直接进详情', () {
+  group('第 67 轮第四期 · 点击热区（2026-09-26 第 99 轮：展开退役，点击直达详情）', () {
+    test('★ 整块点击 = 直接进详情（展开功能已删除）', () {
       final String src = _listPageSrc();
       expect(src.contains('void _onCardTap(Torrent t)'), isTrue);
 
-      expect(src.contains('onTap: () => _openDetail(t)'), isFalse,
-          reason: '方案 C 之后卡片点击不再是"进详情"');
-      expect(src.contains('onTap: () => _onCardTap(t)'), isTrue);
-    });
-
-    test('收起即丢弃草稿（D6），且只丢这一条', () {
-      final String src = _listPageSrc();
       final int i = src.indexOf('void _onCardTap(Torrent t)');
-      final String body = src.substring(i, i + 700);
-      expect(body.contains('ctrl.clearDraft(t.hash)'), isTrue,
-          reason: '主动收起要丢草稿');
-    });
-
-    test('展开区吞掉点击（否则点「修改」会顺手收起卡片）', () {
-      final String src = _listPageSrc();
-      final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, _nextDecl(src, i));
-      expect(body.contains('HitTestBehavior.opaque'), isTrue);
-      expect(body.contains('onTap: () {}'), isTrue,
-          reason: '展开区外层要空吞点击，阻断冒泡（清单 6.1 第 1 条）');
-    });
-
-    test('进详情只走展开区底部按钮', () {
-      final String src = _listPageSrc();
-      expect(src.contains('S.viewDetail'), isTrue);
-      expect(src.contains('_openDetail(t)'), isTrue);
-    });
-
-    test('展开时不在 build 里同步发请求（走 unawaited + 缓存）', () {
-      final String src = _listPageSrc();
-      expect(src.contains('unawaited(ctrl.ensureEditFields(t))'), isTrue,
-          reason: '展开时按需补字段，但不能阻塞 UI 帧');
-      final String ctrl =
-          File('lib/controllers/torrent_controller.dart').readAsStringSync();
-      expect(ctrl.contains('Future<void> ensureEditFields('), isTrue);
-      expect(ctrl.contains('kDeepCacheTtl'), isTrue,
-          reason: '必须有短缓存，否则每次展开都打网络');
+      final String body = src.substring(i, i + 400);
+      expect(body.contains('_openDetail(t)'), isTrue,
+          reason: '第 99 轮用户拍板：点卡片直接进详情');
+      expect(body.contains('ensureEditFields'), isFalse,
+          reason: '展开按需取数的旧通道一并退役');
+      expect(src.contains('Widget _detail(Torrent t, ColorScheme cs)'), isFalse,
+          reason: '展开区代码已删除');
     });
 
     test('多选态点卡片 = 勾选（与旧行为一致）', () {
@@ -304,45 +275,4 @@ void main() {
     });
   });
 
-  group('第 67 轮第四期 · 展开区字段接线', () {
-    test('路径/分类/标签/限速×2/分享率/做种时限 全部可编辑', () {
-      final String src = _listPageSrc();
-      final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, _nextDecl(src, i));
-      expect(body.contains('_editCardPath'), isTrue);
-      expect(body.contains('_editCardCategory'), isTrue);
-      expect(body.contains('_editCardTags'), isTrue);
-      expect(body.contains('EditNumberField'), isTrue);
-      expect(body.contains('EditRatioField'), isTrue);
-    });
-
-    test('开关组按服务器能力裁剪，而不是按服务器类型一刀切', () {
-      final String src = _listPageSrc();
-      final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String body = src.substring(i, _nextDecl(src, i));
-      expect(body.contains('cap.forceStart'), isTrue);
-      expect(body.contains('cap.sequentialDownload'), isTrue,
-          reason: 'V6：TR 4.1 支持顺序下载，不能"TR 就隐藏"');
-      expect(body.contains('cap.superSeeding'), isTrue);
-    });
-
-    test('提交成功后只清该字段草稿（不误伤别的未提交字段）', () {
-      final String src = _listPageSrc();
-      final int i = src.indexOf('Future<bool> _cardApply(');
-      final String body = src.substring(i, i + 1200);
-      expect(body.contains('clearDraftKey(t.hash, draftKey)'), isTrue);
-      expect(body.contains('_refreshCardAfter'), isTrue,
-          reason: 'qB 常"返回成功但状态没变"，要延迟再拉一次');
-    });
-
-    test('数字类字段把草稿写回 controller（列表回收后不丢输入）', () {
-      final String src = _listPageSrc();
-      expect(src.contains('ctrl.setDraft(t.hash, TorrentEditFields.kDlLimit'), isTrue);
-      expect(src.contains('int _draftInt(Torrent t, String key, int fallback)'),
-          isTrue);
-      expect(
-          src.contains('double _draftDouble(Torrent t, String key, double fallback)'),
-          isTrue);
-    });
-  });
 }

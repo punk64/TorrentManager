@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
+import '../controllers/torrent_controller.dart';
 import '../data/models/server_data.dart';
 import '../utils/add_batch.dart';
 import '../utils/app_log.dart';
@@ -17,6 +18,7 @@ import '../utils/formatter.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import '../widgets/torrent_edit_fields.dart';
+import '../widgets/path_dropdown.dart';
 
 class TorrentAddPage extends StatefulWidget {
   const TorrentAddPage({super.key});
@@ -86,7 +88,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
           ..addAll(tags);
       });
     } catch (_) {
-      // 目录拉取失败不阻塞添加，分类/标签仍可手输（标签选择器允许自由输入）
     }
   }
 
@@ -220,7 +221,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   double get _ratioOf => double.tryParse(_ratioLimit.text.trim()) ?? 0;
   int get _seedOf => _intOf(_seedTimeMin);
 
-
   @override
   void dispose() {
     _urls.dispose();
@@ -275,6 +275,16 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       _files.clear();
       _result = null;
     });
+  }
+
+  List<PathCandidate> _pathCandidates() {
+    final List<PathCandidate> out = <PathCandidate>[];
+    final TorrentController tc = Get.find<TorrentController>();
+    for (final FacetEntry e in tc.facets(FilterDim.path)) {
+      final String v = e.value.trim();
+      if (v.startsWith('/')) out.add(PathCandidate(v, '种子 ×${e.count}'));
+    }
+    return out;
   }
 
   Future<void> _submit() async {
@@ -453,19 +463,10 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      TextField(
+                      PathDropdownField(
                         controller: _savepath,
-                        maxLength: AppTheme.maxLenPath,
-                        buildCounter: AppTheme.noCounter,
-                        style: TextStyle(fontSize: af(context, 12)),
-                        decoration: InputDecoration(
-                          labelText: isQb ? '保存路径（可选）' : '下载目录（可选）',
-                          labelStyle: TextStyle(fontSize: af(context, 12)),
-                          helperText: S.setPickFromBelowPlain,
-                          helperStyle: TextStyle(fontSize: af(context, 10)),
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                        ),
+                        candidates: _pathCandidates(),
+                        label: isQb ? '保存路径（可选）' : '下载目录（可选）',
                       ),
                       SizedBox(height: af(context, 8)),
 
@@ -631,7 +632,8 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         controller: _urls,
         maxLength: AppTheme.maxLenUrls,
         buildCounter: AppTheme.noCounter,
-        maxLines: 6,
+        minLines: 2,
+        maxLines: null,
         style: TextStyle(fontSize: af(context, 12)),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
@@ -652,7 +654,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       title: '来源',
       tail: _files.isEmpty ? null : '已选 ${_files.length} 个',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           _dropzone(context),
           if (_files.isNotEmpty) ...<Widget>[

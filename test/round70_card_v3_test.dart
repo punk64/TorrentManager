@@ -20,62 +20,34 @@ int _nextDecl(String src, int from) {
 }
 
 void main() {
-  group('第 70 轮 · 展开区对齐 v3（源码结构）', () {
+  group('第 70 轮 · 展开区对齐 v3（2026-09-26 第 99 轮：展开区整体退役）', () {
     final String src = _listPageSrc();
     final String ef = _fieldSrc();
     final String ov = _overviewSrc();
 
-    String detailBody() {
-      final int i = src.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      return src.substring(i, _nextDecl(src, i));
-    }
+    test('★ 第 99 轮：卡片展开区已整体删除，点卡片直达详情', () {
+      expect(src.contains('Widget _detail(Torrent t, ColorScheme cs)'), isFalse,
+          reason: '展开区代码已随功能退役删除');
+      expect(src.contains('_expanded'), isFalse,
+          reason: '展开集合已删除');
+      expect(src.contains('ensureEditFields'), isFalse,
+          reason: '展开按需取数通道退役');
 
-    test('展开区开关 = 同一行 chip（EditSwitchChip + Wrap），旧整行 Switch 已拆', () {
-      final String body = detailBody();
-      expect(body.contains('EditSwitchChip('), isTrue);
-      expect(body.contains('Wrap('), isTrue);
-      expect(body.contains('EditSwitchRow('), isFalse,
-          reason: 'v3：4 个开关压成同一行，不再用整行 Switch');
+      final int i = src.indexOf('void _onCardTap(Torrent t)');
+      final String body = src.substring(i, i + 400);
+      expect(body.contains('_openDetail(t)'), isTrue,
+          reason: '点击种子卡片 = 直接进详情');
+      expect(body.contains('clearDraft'), isFalse,
+          reason: '卡片不再有草稿生命周期');
     });
 
-    test('展开区只读信息 = 两列网格（ReadonlyKvGrid），旧的单列拼接已拆', () {
-      final String body = detailBody();
-      expect(body.contains('ReadonlyKvGrid('), isTrue);
-      expect(body.contains('fullRows:'), isTrue);
-      expect(body.contains('pairs:'), isTrue);
-      expect(body.contains(r"kv('${S.fieldPath}：'"), isFalse,
-          reason: 'v3：只读信息改两列网格；长值（内容路径）走 fullRows 独占行');
-    });
-
-    test('★ v2.b：展开区限速改 2×2 紧凑框（2026-09-26 用户拍板，覆盖 09-24 各占一行）', () {
-      final String body = detailBody();
-      expect(body.contains('Expanded(child: dlField(compact: true))'), isTrue);
-      expect(body.contains('Expanded(child: upField(compact: true))'), isTrue);
-      expect(body.contains('Expanded(child: ratioField(compact: true))'), isTrue);
-      expect(body.contains('Expanded(child: seedTimeField(compact: true))'), isTrue);
-
-      expect(body.contains('EditLayout.gridOkOf(context)'), isFalse,
-          reason: '网格判据不下放：2×2 是固定布局，不再按屏宽回退');
-
-      expect('EditSectionCard('.allMatches(body).length, 0,
-          reason: 'v2：展开区用单一 inset 容器 + 分组标题，不再逐板块套分区卡片');
-    });
-
-    test('★ 与概览 Tab 共用同一套组件（不再各写一套排布）', () {
-
+    test('★ 编辑能力收敛到详情页（与概览 Tab 共用同一批组件）', () {
       expect(ov.contains('ReadonlyKvGrid(pairs:'), isTrue);
-      expect(src.contains('ReadonlyKvGrid('), isTrue);
-      // 2026-09-26 详情页重设计：概览 Tab 分组卡升级为可折叠 _foldCard
-      //（视觉沿用 EditSectionCard 规格：色条 + 分组标题 + 同款边框），
-      // KV 网格 / 限速输入 / 动作行仍与展开区共用同一批组件。
-      expect(ov.contains('_foldCard('), isTrue);
-      expect(src.contains('EditSectionCard('), isFalse,
-          reason: 'v2：卡片展开区不再套分区卡片（概览 Tab 改用 _foldCard 折叠卡）');
-      expect(src.contains('EditNumberField('), isTrue,
-          reason: '限速编辑仍与概览共用 EditNumberField/EditRatioField');
-      expect(src.contains('EditActionRow('), isTrue,
-          reason: '路径/分类/标签仍共用 EditActionRow');
-
+      expect(ov.contains('_foldCard('), isTrue,
+          reason: '2026-09-26 详情页重设计：概览分组卡为可折叠 _foldCard');
+      expect(src.contains('EditSectionCard('), isFalse);
+      expect(src.contains('EditNumberField('), isFalse,
+          reason: '限速编辑随展开区退役，收敛到详情页');
       expect(src.contains('Widget _kvGrid('), isFalse);
       expect(src.contains('Widget _kvHalf('), isFalse);
     });

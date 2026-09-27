@@ -13,7 +13,6 @@ import '../controllers/theme_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../data/models/server_data.dart';
 import '../data/models/torrent.dart';
-import '../data/server_capabilities.dart';
 import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
@@ -24,7 +23,6 @@ import '../widgets/disk_io_chip.dart';
 import '../widgets/draggable_fab.dart';
 import '../widgets/slidable_tile.dart';
 import '../widgets/sort_filter_panel.dart';
-import '../widgets/torrent_edit_fields.dart';
 import '../widgets/torrent_edit_sheet.dart';
 import 'drawer_page.dart';
 import '../app/adaptive.dart';
@@ -46,17 +44,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   Timer? _deleteArmTimer;
 
-  final Set<String> _expanded = <String>{};
-
-  bool _cardBusy = false;
-
   bool _drawerOpen = false;
 
   bool _cardOpen = false;
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  late final Worker _serverWorker;
 
   final ScrollController _scrollCtl = ScrollController();
 
@@ -75,17 +67,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
     ctrl.setListVisible(true);
 
-    _serverWorker = ever<ServerData?>(ctrl.serverCtrl.current, (ServerData? s) {
-      if (!mounted || _expanded.isEmpty) return;
-      setState(_expanded.clear);
-    });
-
     _scrollCtl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _serverWorker.dispose();
     _scrollIdleTimer?.cancel();
     _kwTimer?.cancel();
     _deleteArmTimer?.cancel();
@@ -1007,17 +993,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 1),
-                                  child: Icon(
-                                    _expanded.contains(t.hash)
-                                        ? Icons.expand_less
-                                        : Icons.expand_more,
-                                    size: af(context, 18),
-                                    color: cs.onSurfaceVariant,
-                                  ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 7),
@@ -1190,15 +1165,6 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 ],
                               ),
                             ],
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 160),
-                              curve: Curves.easeOut,
-                              alignment: Alignment.topCenter,
-                              child: _expanded.contains(t.hash)
-                                  ? _detail(t, cs)
-                                  : const SizedBox(
-                                      width: double.infinity, height: 0),
-                            ),
                           ],
                         ),
                       ),
@@ -1337,390 +1303,13 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   String _siteHost(Torrent t) => t.site;
 
-  Widget _detail(Torrent t, ColorScheme cs) {
-    final CapabilitySet cap = ctrl.capabilities;
-
-    Widget chip({
-      required String label,
-      required bool? value,
-      required Future<void> Function(bool v) run,
-    }) =>
-        EditSwitchChip(
-          label: label,
-          value: value ?? false,
-          enabled: !_cardBusy,
-          onChanged: (bool v) => _cardApply(t, label, () => run(v)),
-        );
-
-    Widget dlField({bool compact = false}) => EditNumberField(
-          label: S.fieldDlLimit,
-          initial:
-              _draftInt(t, TorrentEditFields.kDlLimit, t.newDlLimit ~/ 1024),
-          baseline: t.newDlLimit ~/ 1024,
-          unit: 'KB/s',
-          compact: compact,
-          zeroMeansUnlimited: true,
-          onChanged: (int v) =>
-              ctrl.setDraft(t.hash, TorrentEditFields.kDlLimit, v),
-          onSave: (int v) => _cardApply(
-            t,
-            S.fieldDlLimit,
-            () => ctrl.setLimitsOf(<String>[t.hash], dlKb: v),
-            draftKey: TorrentEditFields.kDlLimit,
-          ),
-        );
-
-    Widget upField({bool compact = false}) => EditNumberField(
-          label: S.fieldUpLimit,
-          initial:
-              _draftInt(t, TorrentEditFields.kUpLimit, t.newUpLimit ~/ 1024),
-          baseline: t.newUpLimit ~/ 1024,
-          unit: 'KB/s',
-          compact: compact,
-          zeroMeansUnlimited: true,
-          onChanged: (int v) =>
-              ctrl.setDraft(t.hash, TorrentEditFields.kUpLimit, v),
-          onSave: (int v) => _cardApply(
-            t,
-            S.fieldUpLimit,
-            () => ctrl.setLimitsOf(<String>[t.hash], upKb: v),
-            draftKey: TorrentEditFields.kUpLimit,
-          ),
-        );
-
-    Widget ratioField({bool compact = false}) => EditRatioField(
-          label: S.fieldRatioLimit,
-          initial:
-              _draftDouble(t, TorrentEditFields.kRatioLimit, t.ratioLimit),
-          baseline: t.ratioLimit,
-          compact: compact,
-          onChanged: (double v) =>
-              ctrl.setDraft(t.hash, TorrentEditFields.kRatioLimit, v),
-          onSave: (double v) => _cardApply(
-            t,
-            S.fieldRatioLimit,
-            () => ctrl.setShareLimitsOf(<String>[t.hash], ratioLimit: v),
-            draftKey: TorrentEditFields.kRatioLimit,
-          ),
-        );
-
-    Widget seedTimeField({bool compact = false}) => EditNumberField(
-          label: S.fieldSeedingTimeLimit,
-          initial: _draftInt(t, TorrentEditFields.kSeedingTime,
-              t.seedingTimeLimit < 0 ? 0 : t.seedingTimeLimit),
-          baseline: t.seedingTimeLimit < 0 ? 0 : t.seedingTimeLimit,
-          unit: S.editMinutesUnit,
-          compact: compact,
-          zeroMeansUnlimited: true,
-          onChanged: (int v) =>
-              ctrl.setDraft(t.hash, TorrentEditFields.kSeedingTime, v),
-          onSave: (int v) => _cardApply(
-            t,
-            S.fieldSeedingTimeLimit,
-            () => ctrl.setShareLimitsOf(<String>[t.hash],
-                seedingTimeMin: v <= 0 ? -1 : v),
-            draftKey: TorrentEditFields.kSeedingTime,
-          ),
-        );
-
-    Widget groupTitle(String text) => Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: af(context, 9.5),
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-        );
-
-    Widget quickCell(String label, String value, {Color? color}) => Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(label,
-                  style: TextStyle(
-                      fontSize: af(context, 8.5),
-                      color: cs.onSurfaceVariant)),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: af(context, 11),
-                    fontWeight: FontWeight.w700,
-                    color: color ?? cs.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-
-    final List<Widget> switchChips = <Widget>[
-      if (cap.forceStart)
-        chip(
-          label: S.swForceStart,
-          value: t.forceStart,
-          run: (bool v) => ctrl.setForceStartOf(<String>[t.hash], v),
-        ),
-      if (cap.sequentialDownload)
-        chip(
-          label: S.swSequential,
-          value: t.sequentialDownload,
-          run: (bool v) =>
-              ctrl.toggleSequentialOf(<String>[t.hash], target: v),
-        ),
-      if (cap.isQb)
-        chip(
-          label: S.swFirstLast,
-          value: t.firstLastPiecePrio,
-          run: (bool v) =>
-              ctrl.toggleFirstLastPrioOf(<String>[t.hash], target: v),
-        ),
-      if (cap.superSeeding)
-        chip(
-          label: S.swSuperSeeding,
-          value: t.superSeeding,
-          run: (bool v) => ctrl.setSuperSeedingOf(<String>[t.hash], v),
-        ),
-    ];
-
-    return GestureDetector(
-
-      behavior: HitTestBehavior.opaque,
-      onTap: () {},
-      child: RepaintBoundary(
-        child: Container(
-          margin: const EdgeInsets.only(top: 6),
-          padding: EdgeInsets.all(af(context, 9)),
-          decoration: BoxDecoration(
-            color: Color.alphaBlend(
-                cs.onSurface.withValues(alpha: 0.045), cs.surfaceContainerLow),
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  quickCell(S.fieldUploaded,
-                      Formatter.setSize(t.newUploaded),
-                      color: cs.primary),
-                  quickCell(S.fieldDownloaded,
-                      Formatter.setSize(t.downloaded)),
-                  quickCell(
-                      S.fieldAddedOn, Formatter.setDate(t.newAddedOn)),
-                  quickCell(S.fieldCompletionOn,
-                      Formatter.setDate(t.newCompletionOn)),
-                ],
-              ),
-              const SizedBox(height: 9),
-              groupTitle(S.editSectionLimits),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(child: dlField(compact: true)),
-                  const SizedBox(width: 6),
-                  Expanded(child: upField(compact: true)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(child: ratioField(compact: true)),
-                  const SizedBox(width: 6),
-                  Expanded(child: seedTimeField(compact: true)),
-                ],
-              ),
-              if (switchChips.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 8),
-                groupTitle(S.editSectionSwitches),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: switchChips,
-                ),
-              ],
-              const SizedBox(height: 8),
-              groupTitle(S.editSectionBasic),
-              EditActionRow(
-                label: S.fieldPath,
-                value: (t.savePath ?? '').isEmpty
-                    ? S.editCategoryNone
-                    : t.savePath!,
-                onTap: _cardBusy ? null : () => _editCardPath(t),
-              ),
-              if (cap.category)
-                EditActionRow(
-                  label: S.fieldCategory,
-                  value: t.categoryName,
-                  onTap: _cardBusy ? null : () => _editCardCategory(t),
-                ),
-              EditActionRow(
-                label: S.fieldTags,
-                value: t.tagList.isEmpty ? S.editCategoryNone : t.tagList.join('、'),
-                onTap: _cardBusy ? null : () => _editCardTags(t),
-              ),
-              const SizedBox(height: 8),
-              groupTitle(S.editSectionInfo),
-              ReadonlyKvGrid(
-                fullRows: <List<String>>[
-                  <String>[
-                    S.fieldPath,
-                    (t.contentPath ?? '').isEmpty ? '-' : t.contentPath!,
-                  ],
-                ],
-                pairs: <List<String>>[
-                  <String>[
-                    S.fieldActiveTime,
-                    Formatter.setLastActivity(t.newLastActivity),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  height: af(context, 30),
-                  child: FilledButton.tonalIcon(
-                    onPressed: () => _openDetail(t),
-                    icon: Icon(Icons.open_in_new, size: af(context, 14)),
-                    label: Text(S.viewDetail,
-                        style: TextStyle(fontSize: af(context, 11))),
-                    style: FilledButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: af(context, 12)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  int _draftInt(Torrent t, String key, int fallback) {
-    final dynamic v = ctrl.draftOf(t.hash, key);
-    return v is int ? v : fallback;
-  }
-
-  double _draftDouble(Torrent t, String key, double fallback) {
-    final dynamic v = ctrl.draftOf(t.hash, key);
-    return v is num ? v.toDouble() : fallback;
-  }
-
-  Future<bool> _cardApply(
-    Torrent t,
-    String what,
-    Future<void> Function() body, {
-    String? draftKey,
-  }) async {
-    if (_cardBusy) return false;
-    setState(() => _cardBusy = true);
-    AppLog.instance.act('种子列表', '卡片编辑[$what]', target: t.name);
-    try {
-      await body();
-    } catch (_) {
-
-    }
-    final bool ok = ctrl.lastActionOk.value != false;
-    if (!mounted) return ok;
-    setState(() => _cardBusy = false);
-    if (!ok) {
-      Formatter.showToast(
-        '${S.execFailed}: ${ctrl.error.value ?? ''}',
-        isError: true,
-      );
-      return false;
-    }
-    if (draftKey != null) ctrl.clearDraftKey(t.hash, draftKey);
-    Formatter.showToast('$what${S.editSaved}');
-    unawaited(_refreshCardAfter(t));
-    return true;
-  }
-
-  Future<void> _refreshCardAfter(Torrent t) async {
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    await ctrl.refresh();
-  }
-
-  Future<void> _editCardPath(Torrent t) async {
-    final bool isQb = ctrl.capabilities.isQb;
-    final PathEditResult? r = await EditDialogs.path(
-      context,
-      initial: t.savePath ?? '',
-
-      askMove: !isQb,
-    );
-    if (r == null) return;
-    await _cardApply(
-      t,
-      S.fieldPath,
-      () => ctrl.setLocationOf(<String>[t.hash], r.path, move: r.move),
-    );
-  }
-
-  Future<void> _editCardCategory(Torrent t) async {
-    final List<String> cats =
-        ctrl.facets(FilterDim.category).map((FacetEntry e) => e.value).toList();
-    final String? v = await EditDialogs.category(
-      context,
-      initial: t.category ?? '',
-      candidates: cats,
-    );
-    if (v == null) return;
-    await _cardApply(
-      t,
-      S.fieldCategory,
-      () => ctrl.setCategoryOf(<String>[t.hash], v),
-    );
-  }
-
-  Future<void> _editCardTags(Torrent t) async {
-    final List<String> cand =
-        ctrl.facets(FilterDim.tags).map((FacetEntry e) => e.value).toList();
-    final TagEditResult? r = await EditDialogs.tags(
-      context,
-      initial: t.tagList,
-      candidates: cand,
-    );
-    if (r == null) return;
-    await _cardApply(
-      t,
-      S.fieldTags,
-      () => ctrl.setTagsOf(<String>[t.hash], r.tags, append: r.append),
-    );
-  }
-
   void _onCardTap(Torrent t) {
     if (_selecting) {
       ctrl.toggleSelect(t.hash);
       return;
     }
-    final bool willExpand = !_expanded.contains(t.hash);
-    setState(() {
-      if (willExpand) {
-        _expanded.add(t.hash);
-      } else {
-        _expanded.remove(t.hash);
-
-        ctrl.clearDraft(t.hash);
-      }
-    });
-    AppLog.instance.act(
-        '种子列表', '卡片[${willExpand ? '展开' : '收起'}]', target: t.name);
-
-    if (willExpand) unawaited(ctrl.ensureEditFields(t));
+    AppLog.instance.act('种子列表', '卡片[打开详情]', target: t.name);
+    _openDetail(t);
   }
 
   void _openDetail(Torrent t) {

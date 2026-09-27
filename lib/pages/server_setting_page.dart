@@ -16,6 +16,8 @@ import '../utils/ip_geo.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
+import '../widgets/path_dropdown.dart';
+import '../controllers/torrent_controller.dart';
 import '../app/adaptive.dart';
 
 const int _kBanPreview = 30;
@@ -198,6 +200,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   bool get _isSupported => _server != null;
 
   bool get _isQb => _api.isQb;
+
+  String _okToast(String qbMsg) => _isQb ? qbMsg : S.editSaved;
+
+  String _failToast(String qbMsg) =>
+      _isQb ? qbMsg : '${S.execFailed}: ${Formatter.safeErr('')}';
 
   bool _supports(String key) => _api.supports(key);
 
@@ -470,8 +477,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         children: <Widget>[
           _sectionTitle('普通限速', onChange: () => _run(
             '全局限速[更改]',
-            S.qbSetServerLimit,
-            S.qbSetServerLimitFail,
+            _okToast(S.qbSetServerLimit),
+            _failToast(S.qbSetServerLimitFail),
             () => _api.write(<String, dynamic>{
               PrefKey.upLimit: _kb(_upLimit),
               PrefKey.dlLimit: _kb(_dlLimit),
@@ -493,8 +500,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           _sectionDivider(),
           _sectionTitle('备用限速', onChange: () => _run(
             '备用限速[更改]',
-            S.qbSetAltLimit,
-            S.qbSetAltLimitFail,
+            _okToast(S.qbSetAltLimit),
+            _failToast(S.qbSetAltLimitFail),
             () => _api.write(<String, dynamic>{
               PrefKey.altUpLimit: _kb(_altUpLimit),
               PrefKey.altDlLimit: _kb(_altDlLimit),
@@ -508,8 +515,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             _ssBool(PrefKey.altSpeedEnabled),
             (bool v) => _run(
               '开关[启用备用限速]${v ? ' → 开' : ' → 关'}',
-              S.qbSetAltLimit,
-              S.qbSetAltLimitFail,
+              _okToast(S.qbSetAltLimit),
+              _failToast(S.qbSetAltLimitFail),
               () async {
                 await _api.write(<String, dynamic>{
                   PrefKey.altSpeedEnabled: v,
@@ -729,13 +736,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         icon: Icons.save_outlined,
         title: '默认保存路径',
         summary: _savePath.text,
-        help: S.setPickFromBelowNoAutoTmm,
+        help: _isQb ? S.setPickFromBelowNoAutoTmm : S.setPickFromBelowPlain,
         children: <Widget>[
-          _pathField('保存路径', _savePath, prefKey: 'save_path'),
+          _pathDropdownField('默认保存路径', _savePath),
           _changeButton(
             '保存路径[更改]',
-            S.qbSetSavePath,
-            S.qbSetSavePathFail,
+            _okToast(S.qbSetSavePath),
+            _failToast(S.qbSetSavePathFail),
             () => _api.write(<String, dynamic>{
               PrefKey.savePath: _savePath.text.trim(),
             }),
@@ -756,17 +763,17 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             _prefBool('temp_path_enabled'),
             (bool v) => _run(
               '开关[启用临时保存路径]${v ? ' → 开' : ' → 关'}',
-              S.qbSetTempPath,
-              S.qbSetTempPathFail,
+              _okToast(S.qbSetTempPath),
+              _failToast(S.qbSetTempPathFail),
               () => _api.write(<String, dynamic>{PrefKey.tempPathEnabled: v}),
               after: () => _prefs['temp_path_enabled'] = v,
             ),
           ),
-          _pathField('临时路径', _tempPath, prefKey: 'temp_path'),
+          _pathDropdownField('临时路径', _tempPath),
           _changeButton(
             '临时路径[更改]',
-            S.qbSetTempPath,
-            S.qbSetTempPathFail,
+            _okToast(S.qbSetTempPath),
+            _failToast(S.qbSetTempPathFail),
             () => _api.write(<String, dynamic>{
               PrefKey.tempPath: _tempPath.text.trim(),
             }),
@@ -787,8 +794,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             _prefBool('queueing_enabled'),
             (bool v) => _run(
               '开关[启用队列限制]${v ? ' → 开' : ' → 关'}',
-              S.qbSetQueueing,
-              S.qbSetQueueingFail,
+              _okToast(S.qbSetQueueing),
+              _failToast(S.qbSetQueueingFail),
               () async {
                 await _api.write(<String, dynamic>{PrefKey.queueingEnabled: v});
                 _prefs['queueing_enabled'] = v;
@@ -819,17 +826,19 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ]),
           _changeButton(
             '队列限制[更改]',
-            S.qbSetQueueing,
-            S.qbSetQueueingFail,
+            _okToast(S.qbSetQueueing),
+            _failToast(S.qbSetQueueingFail),
             () => _api.write(<String, dynamic>{
               PrefKey.maxActiveUploads: int.tryParse(_maxActiveUp.text.trim()),
               PrefKey.maxActiveDownloads:
                   int.tryParse(_maxActiveDl.text.trim()),
-              PrefKey.maxActiveTorrents:
-                  int.tryParse(_maxActiveTorrents.text.trim()),
+              if (_supports(PrefKey.maxActiveTorrents))
+                PrefKey.maxActiveTorrents:
+                    int.tryParse(_maxActiveTorrents.text.trim()),
             }),
             detail: '上传 ${_kbText(_maxActiveUp)} / 下载 '
-                '${_kbText(_maxActiveDl)} / 种子 ${_kbText(_maxActiveTorrents)}',
+                '${_kbText(_maxActiveDl)}'
+                '${_supports(PrefKey.maxActiveTorrents) ? ' / 种子 ${_kbText(_maxActiveTorrents)}' : ''}',
           ),
         ],
       );
@@ -856,20 +865,21 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ]),
           _changeButton(
             '做种限制[更改]',
-            S.qbSetRatio,
-            S.qbSetRatioFail,
+            _okToast(S.qbSetRatio),
+            _failToast(S.qbSetRatioFail),
             () => _api.write(<String, dynamic>{
               PrefKey.maxRatio: double.tryParse(_maxRatio.text.trim()) ?? -1,
 
               PrefKey.maxRatioEnabled: true,
-              PrefKey.maxSeedingTime:
-                  int.tryParse(_maxSeedingTime.text.trim()) ?? -1,
+              if (_supports(PrefKey.maxSeedingTime))
+                PrefKey.maxSeedingTime:
+                    int.tryParse(_maxSeedingTime.text.trim()) ?? -1,
               PrefKey.maxInactiveSeedingTime:
                   int.tryParse(_maxInactiveSeedingTime.text.trim()) ?? -1,
             }),
-            detail: '比率 ${_kbText(_maxRatio)} · 做种 '
-                '${_kbText(_maxSeedingTime)} · 非活动 '
-                '${_kbText(_maxInactiveSeedingTime)}',
+            detail: '比率 ${_kbText(_maxRatio)} · 非活动 '
+                '${_kbText(_maxInactiveSeedingTime)}'
+                '${_supports(PrefKey.maxSeedingTime) ? ' · 做种 ${_kbText(_maxSeedingTime)}' : ''}',
           ),
         ],
       );
@@ -903,20 +913,21 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ]),
           _changeButton(
             '连接限制[更改]',
-            S.qbSetMaxConnec,
-            S.qbSetMaxConnecFail,
+            _okToast(S.qbSetMaxConnec),
+            _failToast(S.qbSetMaxConnecFail),
             () => _api.write(<String, dynamic>{
               PrefKey.maxConnec: int.tryParse(_maxConnec.text.trim()),
               PrefKey.maxConnecPerTorrent:
                   int.tryParse(_maxConnecPerTorrent.text.trim()),
-              PrefKey.maxUploads: int.tryParse(_maxUpConnec.text.trim()),
+              if (_supports(PrefKey.maxUploads))
+                PrefKey.maxUploads: int.tryParse(_maxUpConnec.text.trim()),
               PrefKey.maxUploadsPerTorrent:
                   int.tryParse(_maxUpConnecPerTorrent.text.trim()),
             }),
             detail: '全局 ${_kbText(_maxConnec)} / 单种 '
-                '${_kbText(_maxConnecPerTorrent)} / 连接 '
-                '${_kbText(_maxUpConnec)} / 单种连接 '
-                '${_kbText(_maxUpConnecPerTorrent)}',
+                '${_kbText(_maxConnecPerTorrent)} / 单种连接 '
+                '${_kbText(_maxUpConnecPerTorrent)}'
+                '${_supports(PrefKey.maxUploads) ? ' / 连接 ${_kbText(_maxUpConnec)}' : ''}',
           ),
         ],
       );
@@ -934,8 +945,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               _prefBool(PrefKey.autoTmmEnabled),
               (bool v) => _run(
                 '开关[自动种子管理]${v ? ' → 开' : ' → 关'}',
-                S.qbSetAutoTmm,
-                S.qbSetAutoTmmFail,
+                _okToast(S.qbSetAutoTmm),
+                _failToast(S.qbSetAutoTmmFail),
                 () => _api.write(<String, dynamic>{PrefKey.autoTmmEnabled: v}),
                 after: () => _prefs[PrefKey.autoTmmEnabled] = v,
               ),
@@ -948,8 +959,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               _prefBool(PrefKey.preallocateAll),
               (bool v) => _run(
                 '开关[预分配磁盘空间]${v ? ' → 开' : ' → 关'}',
-                S.qbSetPreallocate,
-                S.qbSetPreallocateFail,
+                _okToast(S.qbSetPreallocate),
+                _failToast(S.qbSetPreallocateFail),
                 () => _api.write(<String, dynamic>{PrefKey.preallocateAll: v}),
                 after: () => _prefs[PrefKey.preallocateAll] = v,
               ),
@@ -957,16 +968,20 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
 
           _switchRow(
-            S.setUnfinishedExtQb,
+            _isQb ? S.setUnfinishedExtQb : S.setUnfinishedExtPart,
             _prefBool('incomplete_files_ext'),
             (bool v) => _run(
               '开关[未完成文件加扩展名]${v ? ' → 开' : ' → 关'}',
-              S.qbSetIncompleteQb,
-              S.qbSetIncompleteQbFail,
+              _isQb
+                  ? S.qbSetIncompleteQb
+                  : S.setUnfinishedExtPart,
+              _isQb
+                  ? S.qbSetIncompleteQbFail
+                  : '${S.execFailed}',
               () => _api.write(<String, dynamic>{PrefKey.incompleteFilesExt: v}),
               after: () => _prefs['incomplete_files_ext'] = v,
             ),
-            sub: S.setIncompleteExtSub,
+            sub: _isQb ? S.setIncompleteExtSub : S.setUnfinishedExtPart,
           ),
         ],
       );
@@ -1813,6 +1828,45 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ],
       ),
     );
+  }
+
+  Widget _pathDropdownField(String label, TextEditingController c) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 8), vertical: af(context, 4)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(label,
+              style: TextStyle(
+                  fontSize: af(context, 13),
+                  color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: af(context, 4)),
+          PathDropdownField(
+            controller: c,
+            candidates: _pathCandidates(),
+            label: label,
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<PathCandidate> _pathCandidates() {
+    final List<PathCandidate> out = <PathCandidate>[];
+    if (_savePath.text.trim().isNotEmpty) {
+      out.add(PathCandidate(_savePath.text.trim(), '默认保存路径'));
+    }
+    if (_tempPath.text.trim().isNotEmpty) {
+      out.add(PathCandidate(_tempPath.text.trim(), '临时路径'));
+    }
+    final TorrentController tc = Get.find<TorrentController>();
+    for (final FacetEntry e in tc.facets(FilterDim.path)) {
+      final String v = e.value.trim();
+      if (v.startsWith('/')) out.add(PathCandidate(v, '种子 ×${e.count}'));
+    }
+    return out;
   }
 
   String _onOffLabel(bool v) => v ? S.stateEnabled : S.stateDisabled;

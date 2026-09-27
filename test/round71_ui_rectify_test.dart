@@ -93,37 +93,25 @@ void main() {
       expect(body.contains('AppTheme.radiusSmall'), isTrue);
     });
 
-    test('★ v2：展开区改单一 inset 容器 + 分组标题；详情页 5 栏目折叠卡（2026-09-26 重设计）', () {
+    test('★ 第 99 轮：卡片展开区退役（点击直达详情）；详情页 5 栏目折叠卡默认收起', () {
+      expect(listSrc.contains('Widget _detail(Torrent t, ColorScheme cs)'),
+          isFalse,
+          reason: '第 99 轮：展开区代码已随功能退役删除');
+      expect(listSrc.contains('ensureEditFields'), isFalse);
 
-      final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String detail =
-          listSrc.substring(a, _nextDecl(listSrc, a));
-      expect('EditSectionCard('.allMatches(detail).length, 0,
-          reason: 'v2：展开区不再逐板块套分区卡片');
-      expect(detail.contains('groupTitle('), isTrue,
-          reason: 'v2：栏目边界改由分组标题表达');
-      expect(detail.contains('Color.alphaBlend'), isTrue,
-          reason: 'v2：inset 底色由主题色派生');
-
-      // 2026-09-26 详情页重设计：7 张分区卡合并为 5 张可折叠卡（_foldCard）：
-      // 传输统计 / 限速与做种 / 位置与组织 / 时间信息 / 元数据。
       expect('_foldCard(S.'.allMatches(ovSrc).length, 5);
+      expect(ovSrc.contains('bool _openStats = false'), isTrue,
+          reason: '第 99 轮：折叠卡默认收起');
+      expect(ovSrc.contains('bool _openLimits = false'), isTrue);
+      expect(ovSrc.contains('bool _openPlace = false'), isTrue);
+      expect(ovSrc.contains('bool _openTimes = false'), isTrue);
     });
   });
 
-  group('第 71 轮 · ②⑦ 四个限速项改回独占一行', () {
-    test('★ v2.b：展开区限速 2×2 紧凑框（2026-09-26 用户拍板覆盖 09-24），wide 判据仍禁', () {
-      final int a = listSrc.indexOf('Widget _detail(Torrent t, ColorScheme cs)');
-      final String detail =
-          listSrc.substring(a, _nextDecl(listSrc, a));
-      expect(detail.contains('Expanded(child: dlField(compact: true))'), isTrue);
-      expect(detail.contains('Expanded(child: upField(compact: true))'), isTrue);
-      expect(detail.contains('Expanded(child: ratioField(compact: true))'), isTrue);
-      expect(detail.contains('Expanded(child: seedTimeField(compact: true))'), isTrue);
-      expect(detail.contains('final bool wide'), isFalse);
-    });
-
-    test('详情页：4 个字段直排，`_editGrid` 已拆', () {
+  group('第 71 轮 · ②⑦ 限速编辑（2026-09-26 第 99 轮起收敛到详情页）', () {
+    test('★ 卡片侧已无限速编辑（随展开区退役）；概览页四字段入口保留', () {
+      expect(listSrc.contains('dlField('), isFalse,
+          reason: '卡片展开区退役，限速编辑不再存在于列表页');
       expect(ovSrc.contains('Widget _editGrid('), isFalse);
       expect(ovSrc.contains('_dlLimitField(t)'), isTrue);
       expect(ovSrc.contains('_upLimitField(t)'), isTrue);
@@ -141,8 +129,14 @@ void main() {
       expect(S.fieldSeedingTimeLimit, '做种时限');
     });
 
-    testWidgets('渲染：详情页 4 项各占一行（y 递增）', (WidgetTester tester) async {
+    testWidgets('渲染：详情页 4 项各占一行（y 递增；先展开限速折叠卡）',
+        (WidgetTester tester) async {
       await pumpOverview(tester, server: qb());
+
+      await tester.scrollUntilVisible(find.text('限速与分享'), 160,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('限速与分享'));
+      await tester.pump(const Duration(milliseconds: 200));
 
       final double yDl = tester.getCenter(find.text(S.fieldDlLimit)).dy;
       final double yUp = tester.getCenter(find.text(S.fieldUpLimit)).dy;
@@ -291,7 +285,7 @@ void main() {
       expect(ovSrc.contains('final bool wide'), isFalse);
     });
 
-    testWidgets('渲染：行 1 = 继续｜暂停｜重新校验｜重新汇报，行 2 = 重命名｜删除｜导出',
+    testWidgets('渲染：行 1 = 继续｜暂停｜重新校验，行 2 = 重新汇报｜重命名｜删除，行 3 = 导出（第 99 轮 3+3）',
         (WidgetTester tester) async {
       await pumpOverview(tester, server: qb());
 
@@ -301,12 +295,14 @@ void main() {
       final double y4 = tester.getCenter(find.text('重新汇报')).dy;
       final double y5 = tester.getCenter(find.text(S.renameTorrent)).dy;
       final double y6 = tester.getCenter(find.text(S.delete)).dy;
+      final double y7 = tester.getCenter(find.text(S.btExportTorrent)).dy;
 
-      expect(y2, closeTo(y1, 0.6), reason: '行 1：继续｜暂停｜重新校验｜重新汇报');
+      expect(y2, closeTo(y1, 0.6), reason: '行 1：继续｜暂停｜重新校验');
       expect(y3, closeTo(y1, 0.6));
-      expect(y4, closeTo(y1, 0.6));
-      expect(y5, closeTo(y6, 0.6), reason: '行 2：重命名｜删除（+导出）');
-      expect(y5, greaterThan(y1), reason: '第二行在第一行下方');
+      expect(y4, closeTo(y5, 0.6), reason: '行 2：重新汇报｜重命名｜删除');
+      expect(y6, closeTo(y5, 0.6));
+      expect(y4, greaterThan(y1), reason: '第二行在第一行下方');
+      expect(y7, greaterThan(y4), reason: '导出独立一行（qB 能力）');
     });
   });
 
@@ -314,7 +310,6 @@ void main() {
     test('两处都改用 _kvCopy（带复制按钮），不再是两列网格', () {
       expect(ovSrc.contains('_kvCopy(S.fieldSiteName, site, maxLines: 2)'),
           isTrue);
-      // 2026-09-26 重设计：哈希行升级为 Info Hash（v1），v2 行另有独立条目
       expect(ovSrc.contains('S.fieldHash}（v1）\', t.hash, maxLines: 2)'),
           isTrue);
 
@@ -329,7 +324,6 @@ void main() {
         (WidgetTester tester) async {
       await pumpOverview(tester, server: qb());
 
-      // 2026-09-26 重设计：站点/哈希位于「元数据」折叠卡，先展开再断言
       await tester.tap(find.text(S.editSectionLinks));
       await tester.pump(const Duration(milliseconds: 300));
 

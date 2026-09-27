@@ -769,7 +769,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
 
-      await tester.tap(find.widgetWithText(TextButton, '添加'));
+      await tester.tap(find.widgetWithText(FilledButton, '添加'));
       await tester.pump();
 
       expect(find.text('请输入密码'), findsOneWidget,
