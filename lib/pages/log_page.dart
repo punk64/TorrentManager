@@ -7,6 +7,7 @@ import '../controllers/server_controller.dart';
 import '../data/models/server_data.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
 import '../widgets/log_selection.dart';
@@ -446,11 +447,11 @@ class _LogPageState extends State<LogPage> {
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
-                    icon: Icon(Icons.refresh, size: AppTheme.iconSize),
+                    icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
                     tooltip: S.logRefreshed,
                     onPressed: () {
                       log.info(S.logRefreshed);
-                      Formatter.showToast(S.logRefreshed);
+                      UiDialogs.showToast(S.logRefreshed);
                     },
                   ),
 
@@ -471,7 +472,7 @@ class _LogPageState extends State<LogPage> {
 
                   PopupMenuButton<String>(
                     tooltip: '',
-                    icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
+                    icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
                     onSelected: (String v) {
                       switch (v) {
                         case 'select':
@@ -537,7 +538,7 @@ class _LogPageState extends State<LogPage> {
                   style: TextStyle(fontSize: af(context, 10)),
                 ),
                 trailing:
-                    Icon(Icons.chevron_right, size: AppTheme.iconSize),
+                    const Icon(Icons.chevron_right, size: AppTheme.iconSize),
 
                 onTap: () => Get.toNamed(Routes.logQb,
                     arguments: sc.current.value),

@@ -1,20 +1,16 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import '../app/adaptive.dart';
 import '../data/local/secure_prefs.dart';
 import '../data/models/server_data.dart';
 import '../data/models/torrent.dart';
-import '../widgets/app_toast.dart';
-import '../widgets/bottom_panel.dart';
+import 'fmt_cache.dart';
 import 'net_error.dart';
 import 'strings.dart';
-import 'app_log.dart';
 import 'i18n.dart';
 
 class Formatter {
@@ -92,20 +88,12 @@ class Formatter {
 
   static const int fmtCacheSize = 2048;
 
-  static final _FmtCache<String> _cacheSize =
-      _FmtCache<String>(fmtCacheSize);
-  static final _FmtCache<String> _cacheSizeCompact =
-      _FmtCache<String>(fmtCacheSize);
-  static final _FmtCache<String> _cacheSpeed =
-      _FmtCache<String>(fmtCacheSize);
-  static final _FmtCache<String> _cacheRatio =
-      _FmtCache<String>(fmtCacheSize);
-  static final _FmtCache<String> _cacheProgress =
-      _FmtCache<String>(fmtCacheSize);
-  static final _FmtCache<IconData> _cacheIcon =
-      _FmtCache<IconData>(fmtCacheSize);
-  static final _FmtCache<int> _cacheColorKind =
-      _FmtCache<int>(fmtCacheSize);
+  static final FmtCache<String> _cacheSize = FmtCache<String>(fmtCacheSize);
+  static final FmtCache<String> _cacheSizeCompact =
+      FmtCache<String>(fmtCacheSize);
+  static final FmtCache<String> _cacheSpeed = FmtCache<String>(fmtCacheSize);
+  static final FmtCache<String> _cacheRatio = FmtCache<String>(fmtCacheSize);
+  static final FmtCache<String> _cacheProgress = FmtCache<String>(fmtCacheSize);
 
   @visibleForTesting
   static void clearFormatCache() {
@@ -114,8 +102,6 @@ class Formatter {
     _cacheSpeed.clear();
     _cacheRatio.clear();
     _cacheProgress.clear();
-    _cacheIcon.clear();
-    _cacheColorKind.clear();
   }
 
   static String setSize(num bytes) {
@@ -227,7 +213,9 @@ class Formatter {
       epochSeconds * 1000,
     ));
     if (diff.inMinutes < 1) return S.activeJustNow;
-    if (diff.inMinutes < 60) return '${diff.inMinutes}${S.unitMinute}${S.activeAgo}';
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}${S.unitMinute}${S.activeAgo}';
+    }
     if (diff.inHours < 24) return '${diff.inHours}${S.unitHour}${S.activeAgo}';
     return '${diff.inDays}${S.unitDay}${S.activeAgo}';
   }
@@ -289,118 +277,61 @@ class Formatter {
     return S.stUnknownState;
   }
 
-  static Color setStatusColor(String state, ColorScheme cs) {
-    switch (_statusColorKind(state)) {
-      case 0:
-        return cs.error;
-      case 1:
-        return cs.outline;
-      case 2:
-        return cs.tertiary;
-      case 3:
-        return cs.primary;
-      case 4:
-        return cs.secondary;
-      default:
-        return cs.onSurfaceVariant;
-    }
-  }
-
-  static int _statusColorKind(String state) {
-    final int? hit = _cacheColorKind.get(state);
-    if (hit != null) return hit;
-    final String s = state.toLowerCase();
-    final int out;
-    if (s.contains('error') || s.contains('missingfiles')) {
-      out = 0;
-    } else if (s.contains('paused') || s.contains('stop')) {
-      out = 1;
-    } else if (s.contains('check') ||
-        s.contains('moving') ||
-        s.contains('allocating')) {
-      out = 2;
-    } else if (s.contains('up') ||
-        s.contains('seed') ||
-        s.contains('upload')) {
-      out = 3;
-    } else if (s.contains('dl') ||
-        s.contains('download') ||
-        s.contains('meta')) {
-      out = 4;
-    } else {
-      out = 5;
-    }
-    _cacheColorKind.put(state, out);
-    return out;
-  }
-
-  static IconData statusIcon(String state) {
-    final IconData? hit = _cacheIcon.get(state);
-    if (hit != null) return hit;
-    final IconData out = _calcStatusIcon(state);
-    _cacheIcon.put(state, out);
-    return out;
-  }
-
-  static IconData _calcStatusIcon(String state) {
-    final String s = state.toLowerCase();
-    if (s.contains('error') || s.contains('missingfiles')) return Icons.error;
-
-    if (s.contains('paused') || s.contains('stop')) return Icons.pause;
-    if (s.contains('check')) return Icons.fact_check_outlined;
-    if (s.contains('moving') || s.contains('allocating')) return Icons.sync;
-    if (s.contains('queued')) return Icons.pending_outlined;
-    if (s.contains('meta')) return Icons.language;
-    if (s.contains('up') || s.contains('seed') || s.contains('upload')) {
-      return Icons.arrow_circle_up;
-    }
-    if (s.contains('dl') || s.contains('download')) {
-      return Icons.arrow_circle_down;
-    }
-    return Icons.help_outline;
-  }
-
-  static IconData iconExtension(String fileName) {
-    final String n = fileName.toLowerCase().trim();
-    if (n.isEmpty) return Icons.insert_drive_file;
-    if (!n.contains('.')) return Icons.folder;
-
-    final String ext = n.split('.').last;
-    const Set<String> image = <String>{
-      'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'heic', 'svg',
-    };
-    const Set<String> audio = <String>{
-      'mp3', 'flac', 'wav', 'aac', 'm4a', 'ogg', 'ape', 'wma', 'dsf',
-    };
-    const Set<String> video = <String>{
-      'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'rmvb', 'ts', 'm2ts', 'mpg',
-    };
-    const Set<String> archive = <String>{
-      'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'iso',
-    };
-    const Set<String> doc = <String>{
-      'pdf', 'doc', 'docx', 'txt', 'epub', 'mobi', 'azw3', 'chm', 'rtf', 'md',
-    };
-
-    if (image.contains(ext)) return Icons.image;
-    if (audio.contains(ext)) return Icons.audio_file;
-    if (video.contains(ext)) return Icons.local_movies;
-    if (archive.contains(ext)) return Icons.compress;
-    if (doc.contains(ext)) return Icons.description;
-    if (ext == 'exe' || ext == 'msi' || ext == 'apk') return Icons.memory;
-    return Icons.insert_drive_file;
-  }
-
   static String getSeederCount(int totalSeeds, int totalLeechs, int active) =>
       '$totalSeeds/$totalLeechs($active)';
 
   static const Set<String> _logFileExt = <String>{
-    'txt', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg',
-    'csv', 'dat', 'db', 'rar', 'zip', 'tar', 'gz', 'iso', 'img', 'bin',
-    'exe', 'dll', 'so', 'apk', 'sh', 'bat', 'py', 'dart', 'java',
-    'mp3', 'mp4', 'flac', 'wav', 'aac', 'm4a', 'ape', 'avi', 'mov', 'mkv',
-    'flv', 'wmv', 'srt', 'ass', 'nfo', 'torrent', 'jpg', 'jpeg', 'gif',
-    'webp', 'bmp', 'svg', 'png',
+    'txt',
+    'log',
+    'json',
+    'xml',
+    'yaml',
+    'yml',
+    'ini',
+    'conf',
+    'cfg',
+    'csv',
+    'dat',
+    'db',
+    'rar',
+    'zip',
+    'tar',
+    'gz',
+    'iso',
+    'img',
+    'bin',
+    'exe',
+    'dll',
+    'so',
+    'apk',
+    'sh',
+    'bat',
+    'py',
+    'dart',
+    'java',
+    'mp3',
+    'mp4',
+    'flac',
+    'wav',
+    'aac',
+    'm4a',
+    'ape',
+    'avi',
+    'mov',
+    'mkv',
+    'flv',
+    'wmv',
+    'srt',
+    'ass',
+    'nfo',
+    'torrent',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'bmp',
+    'svg',
+    'png',
   };
 
   static final RegExp _reLogIp =
@@ -597,9 +528,7 @@ class Formatter {
   }
 
   static String safeFileName(String raw) {
-    String s = raw
-        .replaceAll(RegExp(r'[\x00-\x1F\x7F/\\:*?"<>|]'), '_')
-        .trim();
+    String s = raw.replaceAll(RegExp(r'[\x00-\x1F\x7F/\\:*?"<>|]'), '_').trim();
 
     s = s.replaceAll(RegExp(r'[.\s]+$'), '');
     if (s.isEmpty || s == '.' || s == '..') s = 'torrent';
@@ -686,16 +615,50 @@ class Formatter {
   }
 
   static const Set<String> _twoLevelSuffixes = <String>{
-    'co.uk', 'org.uk', 'me.uk', 'ac.uk', 'gov.uk',
-    'com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'ac.cn',
-    'com.hk', 'net.hk', 'org.hk', 'edu.hk', 'gov.hk',
-    'com.tw', 'net.tw', 'org.tw', 'edu.tw',
-    'co.jp', 'or.jp', 'ne.jp', 'ac.jp', 'go.jp',
-    'co.kr', 'or.kr', 'ne.kr',
-    'com.au', 'net.au', 'org.au', 'edu.au',
-    'com.br', 'net.br', 'org.br',
-    'com.sg', 'net.sg', 'org.sg',
-    'com.mx', 'com.ar', 'com.tr', 'com.pl', 'com.ua', 'com.vn',
+    'co.uk',
+    'org.uk',
+    'me.uk',
+    'ac.uk',
+    'gov.uk',
+    'com.cn',
+    'net.cn',
+    'org.cn',
+    'gov.cn',
+    'edu.cn',
+    'ac.cn',
+    'com.hk',
+    'net.hk',
+    'org.hk',
+    'edu.hk',
+    'gov.hk',
+    'com.tw',
+    'net.tw',
+    'org.tw',
+    'edu.tw',
+    'co.jp',
+    'or.jp',
+    'ne.jp',
+    'ac.jp',
+    'go.jp',
+    'co.kr',
+    'or.kr',
+    'ne.kr',
+    'com.au',
+    'net.au',
+    'org.au',
+    'edu.au',
+    'com.br',
+    'net.br',
+    'org.br',
+    'com.sg',
+    'net.sg',
+    'org.sg',
+    'com.mx',
+    'com.ar',
+    'com.tr',
+    'com.pl',
+    'com.ua',
+    'com.vn',
   };
 
   static String registrableDomain(String? raw) {
@@ -729,7 +692,8 @@ class Formatter {
 
     if (parts.length == 4 && parts.every(_isDigits)) return host;
 
-    final String last2 = '${parts[parts.length - 2]}.${parts[parts.length - 1]}';
+    final String last2 =
+        '${parts[parts.length - 2]}.${parts[parts.length - 1]}';
     final int take = _twoLevelSuffixes.contains(last2) ? 3 : 2;
     if (parts.length <= take) return parts.join('.');
     return parts.sublist(parts.length - take).join('.');
@@ -871,248 +835,6 @@ class Formatter {
     }
     return out;
   }
-
-  static void showToast(
-    String message, {
-    bool isError = false,
-    bool isWarning = false,
-  }) {
-    AppLog.instance.ui(_oneLine(message), isError: isError);
-    AppToast.show(message, isError: isError, isWarning: isWarning);
-  }
-
-  static String _oneLine(String s) {
-    final String one = s.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return one.length <= NetError.maxFallbackLength
-        ? one
-        : '${one.substring(0, NetError.maxFallbackLength)}\u2026';
-  }
-
-  static Future<T?> showCustomBottomSheet<T>({
-    required Widget child,
-    String? title,
-    double? heightFactor,
-    BuildContext? context,
-  }) =>
-      BottomPanel.show<T>(
-        child: child,
-        title: title,
-        heightFactor: heightFactor,
-        context: context,
-      );
-
-  static Future<void> showTerms(BuildContext context) =>
-      _showLegal(context, S.termsTitle, S.termsBody);
-
-  static Future<void> showPrivacy(BuildContext context) =>
-      _showLegal(context, S.privacyTitle, S.privacyBody);
-
-  static Future<void> showOpenSource(BuildContext context) =>
-      _showLegal(context, S.openSourceTitle, S.openSourceBody);
-
-  static Future<void> _showLegal(
-    BuildContext context,
-    String title,
-    String body,
-  ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext ctx) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child:
-              Text(body, style: TextStyle(fontSize: af(ctx, 12), height: 1.5)),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(S.ok),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Future<DeleteOptions?> showDeleteTorrent(
-    BuildContext context, {
-    int count = 1,
-    bool defaultDeleteFiles = false,
-    bool defaultDeleteSub = false,
-    bool defaultNoSubDeleteFiles = false,
-  }) {
-    bool delFiles = defaultDeleteFiles;
-    bool delSub = defaultDeleteSub;
-    bool noSubDel = defaultNoSubDeleteFiles;
-
-    return showDialog<DeleteOptions>(
-      context: context,
-      builder: (BuildContext ctx) => StatefulBuilder(
-        builder: (BuildContext ctx, StateSetter setState) => AlertDialog(
-          title: Text('${S.delete}（${S.torrentCount(count)}）'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-
-              if (delFiles)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(
-                    S.deleteFilesWarn(count),
-                    style: TextStyle(
-                      fontSize: af(ctx, 11),
-                      height: 1.35,
-                      color: Colors.red,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              CheckboxListTile(
-                value: delFiles,
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                activeColor: Colors.red,
-                title: Text(
-                  S.setDelTorrentWithFiles,
-                  style: TextStyle(
-                    fontSize: af(ctx, 12),
-                    color: delFiles ? Colors.red : null,
-                    fontWeight: delFiles ? FontWeight.w600 : null,
-                  ),
-                ),
-                onChanged: (bool? v) => setState(() => delFiles = v ?? false),
-              ),
-              CheckboxListTile(
-                value: delSub,
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(S.setDelTorrentWithSub,
-                    style: TextStyle(fontSize: af(ctx, 12))),
-                onChanged: (bool? v) => setState(() => delSub = v ?? false),
-              ),
-              CheckboxListTile(
-                value: noSubDel,
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text(S.setDelTorrentNoSubDelFiles,
-                    style: TextStyle(fontSize: af(ctx, 12))),
-                onChanged: (bool? v) => setState(() => noSubDel = v ?? false),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(S.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(
-                DeleteOptions(
-                  deleteFiles: delFiles,
-                  deleteSub: delSub,
-                  noSubDeleteFiles: noSubDel,
-                ),
-              ),
-
-              style: delFiles
-                  ? TextButton.styleFrom(foregroundColor: Colors.red)
-                  : null,
-              child: Text(S.confirmExecute),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static const String _kBgKey = 'torrentmanager.theme.background';
-  static const String _kMenuBgKey = 'torrentmanager.theme.menuBackground';
-
-  static Future<String?> getBackgroundImage() async {
-    final String? local = await _readPath(_kBgKey);
-    if (local != null) return local;
-    return 'assets/images/drawer_menu_default.webp';
-  }
-
-  static Future<String?> getMenuBackgroundImage() => _readPath(_kMenuBgKey);
-
-  static Future<void> saveBackgroundImage(String path) =>
-      _writePath(_kBgKey, path);
-
-  static Future<void> saveMenuBackgroundImage(String path) =>
-      _writePath(_kMenuBgKey, path);
-
-  static Future<String?> _readPath(String key) async {
-    final Object? v = await SecurePrefs.get(key);
-    if (v is! String) return null;
-    return v.isEmpty ? null : v;
-  }
-
-  static Future<void> _writePath(String key, String path) =>
-      SecurePrefs.set(key, path);
-
-  static BoxDecoration? themeBackground({
-    String? path,
-    double brightness = 0,
-  }) {
-    if (path == null || path.isEmpty) return null;
-    final ImageProvider<Object> image = path.startsWith('assets/')
-        ? AssetImage(path) as ImageProvider<Object>
-        : FileImage(File(path));
-    return BoxDecoration(
-      image: DecorationImage(
-        image: image,
-        fit: BoxFit.cover,
-        colorFilter: brightness == 0
-            ? null
-            : ColorFilter.mode(
-                brightness > 0
-                    ? Colors.white.withValues(alpha: brightness * 0.6)
-                    : Colors.black.withValues(alpha: -brightness * 0.6),
-                BlendMode.srcOver,
-              ),
-      ),
-    );
-  }
-}
-
-class DeleteOptions {
-  const DeleteOptions({
-    this.deleteFiles = false,
-    this.deleteSub = false,
-    this.noSubDeleteFiles = false,
-  });
-
-  final bool deleteFiles;
-
-  final bool deleteSub;
-
-  final bool noSubDeleteFiles;
-
-  @override
-  String toString() =>
-      'DeleteOptions(files=$deleteFiles, sub=$deleteSub, noSub=$noSubDeleteFiles)';
 }
 
 String base64EncodeUtf8(String raw) => base64.encode(utf8.encode(raw));
-
-class _FmtCache<V> {
-  _FmtCache(this.limit);
-
-  final int limit;
-
-  final LinkedHashMap<Object, V> _map = LinkedHashMap<Object, V>();
-
-  V? get(Object key) => _map[key];
-
-  void put(Object key, V value) {
-    if (_map.length >= limit && !_map.containsKey(key)) {
-      _map.remove(_map.keys.first);
-    }
-    _map[key] = value;
-  }
-
-  int get length => _map.length;
-
-  void clear() => _map.clear();
-}

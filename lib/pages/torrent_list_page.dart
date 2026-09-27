@@ -16,6 +16,8 @@ import '../data/models/torrent.dart';
 import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
+import '../widgets/status_style.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/list_loading_placeholder.dart';
@@ -148,12 +150,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
             appBar: AppBar(
               leading: _selecting
                   ? IconButton(
-                      icon: Icon(Icons.close, size: AppTheme.iconSize),
+                      icon: const Icon(Icons.close, size: AppTheme.iconSize),
                       onPressed: _exitSelect,
                     )
                   : Builder(
                       builder: (BuildContext ctx) => IconButton(
-                        icon: Icon(Icons.menu, size: AppTheme.iconSize),
+                        icon: const Icon(Icons.menu, size: AppTheme.iconSize),
                         onPressed: () => Scaffold.of(ctx).openDrawer(),
                       ),
                     ),
@@ -334,11 +336,11 @@ class _TorrentListPageState extends State<TorrentListPage> {
         decoration: InputDecoration(
           filled: true,
           fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
-          prefixIcon: Icon(Icons.search, size: AppTheme.iconSize),
+          prefixIcon: const Icon(Icons.search, size: AppTheme.iconSize),
           suffixIcon: _search.text.isEmpty
               ? null
               : IconButton(
-                  icon: Icon(Icons.clear_all, size: AppTheme.iconSize),
+                  icon: const Icon(Icons.clear_all, size: AppTheme.iconSize),
                   onPressed: () {
                     _clearKeywordNow();
                     setState(() {});
@@ -422,7 +424,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                         AppLog.instance.act('种子列表', '筛选[清除]');
                         ctrl.clearStatus();
                         _clearKeywordNow();
-                        Formatter.showToast(S.filterCleared);
+                        UiDialogs.showToast(S.filterCleared);
                         setState(() {});
                       },
                     ),
@@ -643,7 +645,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     if (hashes.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: hashes.join('\n')));
     AppLog.instance.act('种子列表', '多选栏[复制哈希]', target: '${hashes.length} 个');
-    Formatter.showToast(S.batchCopied(hashes.length, S.fieldHash));
+    UiDialogs.showToast(S.batchCopied(hashes.length, S.fieldHash));
   }
 
   Future<void> _copyMagnets() async {
@@ -654,12 +656,12 @@ class _TorrentListPageState extends State<TorrentListPage> {
           Formatter.maskUrl(t.magnetUri!.trim()),
     ];
     if (magnets.isEmpty) {
-      Formatter.showToast(S.batchNoMagnet, isError: true);
+      UiDialogs.showToast(S.batchNoMagnet, isError: true);
       return;
     }
     await Clipboard.setData(ClipboardData(text: magnets.join('\n')));
     AppLog.instance.act('种子列表', '多选栏[复制磁力链]', target: '${magnets.length} 个');
-    Formatter.showToast(S.batchCopied(magnets.length, S.fieldMagnet));
+    UiDialogs.showToast(S.batchCopied(magnets.length, S.fieldMagnet));
   }
 
   Future<void> _batchExport() async {
@@ -668,7 +670,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
         .toList();
     if (list.isEmpty) return;
     if (!ctrl.capabilities.exportTorrent) {
-      Formatter.showToast(S.exportVersionTooOld, isError: true);
+      UiDialogs.showToast(S.exportVersionTooOld, isError: true);
       return;
     }
     AppLog.instance.act('种子列表', '多选栏[批量导出]', target: '${list.length} 个');
@@ -693,10 +695,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
       }
     }
     if (ok == 0 && fail > 0) {
-      Formatter.showToast(S.batchExportNothing, isError: true);
+      UiDialogs.showToast(S.batchExportNothing, isError: true);
       return;
     }
-    Formatter.showToast(
+    UiDialogs.showToast(
         fail == 0 ? S.batchExportDone(ok, 0) : S.batchExportDone(ok, fail),
         isError: fail > 0);
   }
@@ -969,7 +971,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 children: <Widget>[
                   Container(
                     width: 3.5,
-                    color: Formatter.setStatusColor(t.state, cs),
+                    color: StatusStyle.setStatusColor(t.state, cs),
                   ),
                   Expanded(
                     child: InkWell(
@@ -997,9 +999,9 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 1),
                                     child: Icon(
-                                      Formatter.statusIcon(t.state),
+                                      StatusStyle.statusIcon(t.state),
                                       size: af(context, 16),
-                                      color: Formatter.setStatusColor(t.state, cs),
+                                      color: StatusStyle.setStatusColor(t.state, cs),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -1029,7 +1031,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                         value: t.progress.clamp(0, 1),
                                         minHeight: 5,
                                         valueColor: AlwaysStoppedAnimation<Color>(
-                                            Formatter.setStatusColor(t.state, cs)),
+                                            StatusStyle.setStatusColor(t.state, cs)),
                                         backgroundColor:
                                             cs.surfaceContainerHighest,
                                       ),
@@ -1041,7 +1043,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                     style: TextStyle(
                                       fontSize: af(context, 12),
                                       fontWeight: FontWeight.w800,
-                                      color: Formatter.setStatusColor(t.state, cs),
+                                      color: StatusStyle.setStatusColor(t.state, cs),
                                     ),
                                   ),
                                 ],
@@ -1176,7 +1178,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                       fontSize: af(context, 10),
                                       fontWeight: FontWeight.w700,
                                       color:
-                                          Formatter.setStatusColor(t.state, cs),
+                                          StatusStyle.setStatusColor(t.state, cs),
                                     ),
                                   ),
                                 ],
@@ -1409,7 +1411,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     final List<Torrent> subs = ctrl.items
         .where((Torrent x) => TorrentController.isCrossSeed(t, x))
         .toList();
-    await Formatter.showCustomBottomSheet<void>(
+    await UiDialogs.showCustomBottomSheet<void>(
       title: '${S.querySubTorrents}（${subs.length}）',
       context: context,
       child: subs.isEmpty
@@ -1437,9 +1439,9 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 return ListTile(
                   dense: true,
                   leading: Icon(
-                    Formatter.statusIcon(s.state),
+                    StatusStyle.statusIcon(s.state),
                     size: AppTheme.iconSize,
-                    color: Formatter.setStatusColor(s.state, cs),
+                    color: StatusStyle.setStatusColor(s.state, cs),
                   ),
                   title: Text(
                     s.name,
@@ -1474,7 +1476,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   Future<void> _confirmDelete() async {
     if (ctrl.selected.isEmpty) return;
-    final DeleteOptions? opt = await Formatter.showDeleteTorrent(
+    final DeleteOptions? opt = await UiDialogs.showDeleteTorrent(
       context,
       count: ctrl.selected.length,
       defaultDeleteFiles: false,

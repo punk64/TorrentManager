@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +14,7 @@ import '../data/models/server_data.dart';
 import '../utils/add_batch.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import '../widgets/torrent_edit_fields.dart';
@@ -246,7 +246,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       withData: true,
     );
     if (res == null || res.files.isEmpty) {
-      Formatter.showToast(S.pleaseSelectFile, isError: true);
+      UiDialogs.showToast(S.pleaseSelectFile, isError: true);
       return;
     }
     int added = 0;
@@ -264,7 +264,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       _result = null;
     });
     if (added == 0) {
-      Formatter.showToast(S.noFileSelected, isError: true);
+      UiDialogs.showToast(S.noFileSelected, isError: true);
     }
   }
 
@@ -294,7 +294,6 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   }
 
   Widget _categoryRow(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
     final String cur = _category.text.trim();
     return Padding(
       padding: EdgeInsets.only(top: af(context, 8)),
@@ -336,7 +335,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   Future<void> _submit() async {
     final s = ctrl.current.value;
     if (s == null) {
-      Formatter.showToast(S.srvSelectToAddTorrent, isError: true);
+      UiDialogs.showToast(S.srvSelectToAddTorrent, isError: true);
       return;
     }
     final List<String> urls =
@@ -345,7 +344,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         ? List<_PickedFile>.unmodifiable(_files)
         : const <_PickedFile>[];
     if (urls.isEmpty && files.isEmpty) {
-      Formatter.showToast(S.tNoLinkOrFile, isError: true);
+      UiDialogs.showToast(S.tNoLinkOrFile, isError: true);
       return;
     }
 
@@ -433,7 +432,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     if (!mounted || r.isEmpty) return;
 
     if (r.allOk) {
-      Formatter.showToast('${S.tAdded}${r.succeeded.length} 个');
+      UiDialogs.showToast('${S.tAdded}${r.succeeded.length} 个');
 
       AppLog.instance.op(
           '${_mode == _AddMode.url ? '添加种子（链接' : '添加种子（文件'} ${r.succeeded.length} 条）：'
@@ -444,7 +443,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     }
 
     setState(() => _result = r);
-    Formatter.showToast(
+    UiDialogs.showToast(
       '${S.tAddBatchPartial}：${S.tAdded}${r.succeeded.length} 个，'
       '${S.tAddFailed} ${r.failed.length} 个',
       isError: true,
@@ -479,12 +478,12 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
             segments: <ButtonSegment<_AddMode>>[
               ButtonSegment<_AddMode>(
                 value: _AddMode.url,
-                icon: Icon(Icons.add_link, size: AppTheme.iconSize),
+                icon: const Icon(Icons.add_link, size: AppTheme.iconSize),
                 label: Text('种子链接', style: TextStyle(fontSize: af(context, 11))),
               ),
               ButtonSegment<_AddMode>(
                 value: _AddMode.file,
-                icon: Icon(Icons.upload_file, size: AppTheme.iconSize),
+                icon: const Icon(Icons.upload_file, size: AppTheme.iconSize),
                 label: Text('种子文件', style: TextStyle(fontSize: af(context, 11))),
               ),
             ],
@@ -855,9 +854,9 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                     ? SizedBox(
                         width: af(context, 16),
                         height: af(context, 16),
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: const CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon(Icons.add, size: AppTheme.iconSize),
+                    : const Icon(Icons.add, size: AppTheme.iconSize),
                 label: Text(
                     _busy ? '${S.fieldUpdating} $_done/$_total' : '添加',
                     style: TextStyle(fontSize: af(context, 13))),

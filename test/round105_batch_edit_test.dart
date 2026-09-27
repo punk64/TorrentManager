@@ -89,9 +89,9 @@ void main() {
         body: PathDropdownField(
           controller: c,
           label: '保存路径',
-          candidates: <PathCandidate>[
-            const PathCandidate(r'D:\Media\Downloads', '默认保存路径'),
-            const PathCandidate('/mnt/data', '种子 ×3'),
+          candidates: const <PathCandidate>[
+            PathCandidate(r'D:\Media\Downloads', '默认保存路径'),
+            PathCandidate('/mnt/data', '种子 ×3'),
           ],
         ),
       ),

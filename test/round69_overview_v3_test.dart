@@ -15,7 +15,6 @@ import 'package:torrent_manager/data/models/server_data.dart';
 import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/pages/torrent_info_overview_page.dart';
 import 'package:torrent_manager/utils/strings.dart';
-import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 
 const Torrent t = Torrent(
   hash: 'h1',
@@ -39,13 +38,6 @@ ServerData _qb() => ServerData(
       host: '1.2.3.4',
       port: 8080,
     );
-
-int _nextDecl(String src, int from) {
-  final RegExp re = RegExp(
-      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
-  final Match? m = re.firstMatch(src.substring(from + 1));
-  return m == null ? src.length : from + 1 + m.start;
-}
 
 int _nextTopDecl(String src, int from) {
   final RegExp re = RegExp(r'\nclass\s+[A-Z]');

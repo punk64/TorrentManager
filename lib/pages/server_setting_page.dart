@@ -12,6 +12,7 @@ import '../data/prefs/server_prefs.dart';
 import '../data/qbittorrent/qb_method.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/ip_geo.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
@@ -379,7 +380,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     setState(() => _busy = true);
     try {
       await act();
-      Formatter.showToast(okMsg);
+      UiDialogs.showToast(okMsg);
       after?.call();
       await _loadCategoriesAndTags();
 
@@ -392,7 +393,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     } catch (e) {
       AppLog.instance.op('$label 失败：${Formatter.safeErr(e)}',
           level: 'ERROR', scope: _server?.logScope);
-      Formatter.showToast('$failMsg ${Formatter.safeErr(e)}', isError: true);
+      UiDialogs.showToast('$failMsg ${Formatter.safeErr(e)}', isError: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -642,7 +643,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       help: S.setPickFromBelow,
     );
     if (name == null || name.trim().isEmpty) {
-      if (name != null) Formatter.showToast(S.catNameEmpty, isError: true);
+      if (name != null) UiDialogs.showToast(S.catNameEmpty, isError: true);
       return;
     }
     await _run(
@@ -656,7 +657,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Future<void> _removeSelectedCategories() async {
     if (_selectedCategories.isEmpty) {
-      Formatter.showToast(S.pleaseSelectCategory, isError: true);
+      UiDialogs.showToast(S.pleaseSelectCategory, isError: true);
       return;
     }
     final String joined = _selectedCategories.join('\n');
@@ -718,7 +719,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Future<void> _removeSelectedTags() async {
     if (_selectedTags.isEmpty) {
-      Formatter.showToast(S.pleaseSelectTag, isError: true);
+      UiDialogs.showToast(S.pleaseSelectTag, isError: true);
       return;
     }
     final String joined = _selectedTags.join('\n');
@@ -977,7 +978,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                   : S.setUnfinishedExtPart,
               _isQb
                   ? S.qbSetIncompleteQbFail
-                  : '${S.execFailed}',
+                  : S.execFailed,
               () => _api.write(<String, dynamic>{PrefKey.incompleteFilesExt: v}),
               after: () => _prefs['incomplete_files_ext'] = v,
             ),
@@ -1358,14 +1359,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     final String v = _banInput.text.trim();
     if (v.isEmpty) return;
     if (!QbIpFilter.isValidEntry(v)) {
-      Formatter.showToast('IP 或网段格式不对：$v', isError: true);
+      UiDialogs.showToast('IP 或网段格式不对：$v', isError: true);
       AppLog.instance.op('黑名单[添加]被拒：$v（格式不合法）',
           level: 'ERROR', scope: _server?.logScope);
       return;
     }
     final List<String> list = _banDraft.entries;
     if (list.contains(v)) {
-      Formatter.showToast('名单里已经有 $v');
+      UiDialogs.showToast('名单里已经有 $v');
       return;
     }
     setState(() {
@@ -1392,7 +1393,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     }
     final String nv = v.trim();
     if (!QbIpFilter.isValidEntry(nv)) {
-      Formatter.showToast('IP 或网段格式不对：$nv', isError: true);
+      UiDialogs.showToast('IP 或网段格式不对：$nv', isError: true);
       AppLog.instance.op('黑名单[编辑]被拒：$nv（格式不合法）',
           level: 'ERROR', scope: _server?.logScope);
       return;
@@ -1438,7 +1439,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     final List<String> bad =
         lines.where((String e) => !QbIpFilter.isValidEntry(e)).toList();
     if (bad.isNotEmpty) {
-      Formatter.showToast('有 ${bad.length} 行格式不对，例如 ${bad.first}',
+      UiDialogs.showToast('有 ${bad.length} 行格式不对，例如 ${bad.first}',
           isError: true);
       AppLog.instance.op(
           '黑名单[批量编辑]被拒：${bad.length} 行格式不合法（例 ${bad.first}）',
@@ -1447,7 +1448,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       return;
     }
     if (lines.length > QbIpFilter.maxEntries) {
-      Formatter.showToast('最多 ${QbIpFilter.maxEntries} 条', isError: true);
+      UiDialogs.showToast('最多 ${QbIpFilter.maxEntries} 条', isError: true);
       return;
     }
     setState(() {

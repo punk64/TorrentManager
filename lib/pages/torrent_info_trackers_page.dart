@@ -8,6 +8,7 @@ import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -263,7 +264,6 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
 
   Widget _summaryBar(int realCount, Map<String, Map<String, dynamic>> specials) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool isQb = sc.current.value?.isQbittorrent == true;
     return Container(
       width: double.infinity,
       margin: EdgeInsets.fromLTRB(af(context, 12), af(context, 10), af(context, 12), 0),
@@ -585,7 +585,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
             await Clipboard.setData(
               ClipboardData(text: Formatter.maskUrl(url)),
             );
-            Formatter.showToast('${S.trkCopied}（passkey 已打码）');
+            UiDialogs.showToast('${S.trkCopied}（passkey 已打码）');
             break;
           case 'edit':
             await _editTracker(context, ctrl, sc, url);
@@ -687,7 +687,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       final String v = line.trim();
       if (v.isEmpty) continue;
       if (!Formatter.isValidUrl(v) && !v.startsWith('udp://')) {
-        Formatter.showToast('${S.trkEditInvalidUrl}${t.name}', isError: true);
+        UiDialogs.showToast('${S.trkEditInvalidUrl}${t.name}', isError: true);
         return;
       }
       urls.add(v);
@@ -702,17 +702,17 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           AppLog.instance.op('修改 Tracker：$original → ${_oneLine(result)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
-          Formatter.showToast('${S.trkEditOk}${t.name}');
+          UiDialogs.showToast('${S.trkEditOk}${t.name}');
         } else {
           await sc.qb.addTracker(t.hash, result);
           AppLog.instance.op('添加 Tracker：${_oneLine(result)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
-          Formatter.showToast('${S.trkAddOk}${t.name}');
+          UiDialogs.showToast('${S.trkAddOk}${t.name}');
         }
       } else {
         if (t.trId == null) {
-          Formatter.showToast(S.noTrId, isError: true);
+          UiDialogs.showToast(S.noTrId, isError: true);
           return;
         }
 
@@ -720,7 +720,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
         if (editing) {
           final int? tid = _trackerIdOf(ctrl, original);
           if (tid == null) {
-            Formatter.showToast('${S.trkEditNotFound}$original', isError: true);
+            UiDialogs.showToast('${S.trkEditNotFound}$original', isError: true);
             return;
           }
           if (byList) {
@@ -731,7 +731,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           AppLog.instance.op('修改 Tracker：$original → ${_oneLine(urls.first)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
-          Formatter.showToast('${S.trkEditOk}${t.name}');
+          UiDialogs.showToast('${S.trkEditOk}${t.name}');
         } else {
           if (byList) {
             await sc.tr.addTrackersByList(t.trId!, urls);
@@ -741,7 +741,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           AppLog.instance.op('添加 Tracker：${_oneLine(result)}'
               '（${t.name} · ${s.name}）',
               scope: s.logScope);
-          Formatter.showToast('${S.trkAddOk}${t.name}');
+          UiDialogs.showToast('${S.trkAddOk}${t.name}');
         }
       }
       await ctrl.loadDetailData();
@@ -749,7 +749,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       AppLog.instance.error('Tracker 操作失败（${editing ? '修改' : '添加'}）：'
           '${_oneLine(result)} · ${Formatter.safeErr(e)}',
           scope: s.logScope);
-      Formatter.showToast('${S.trkParseFailed}${Formatter.safeErr(e)}', isError: true);
+      UiDialogs.showToast('${S.trkParseFailed}${Formatter.safeErr(e)}', isError: true);
     }
   }
 
@@ -803,7 +803,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       } else {
         final int? tid = _trackerIdOf(ctrl, url);
         if (tid == null || t.trId == null) {
-          Formatter.showToast('${S.trkDelNotFound}$url', isError: true);
+          UiDialogs.showToast('${S.trkDelNotFound}$url', isError: true);
           return;
         }
 
@@ -815,12 +815,12 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       }
       AppLog.instance.op('删除 Tracker：$url（${t.name} · ${s.name}）',
           scope: s.logScope);
-      Formatter.showToast('${S.trkDelOk}${t.name}');
+      UiDialogs.showToast('${S.trkDelOk}${t.name}');
       await ctrl.loadDetailData();
     } catch (e) {
       AppLog.instance.error('删除 Tracker 失败：$url · ${Formatter.safeErr(e)}',
           scope: s.logScope);
-      Formatter.showToast('${S.trkDelNotFound}$url', isError: true);
+      UiDialogs.showToast('${S.trkDelNotFound}$url', isError: true);
     }
   }
 

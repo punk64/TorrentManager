@@ -9,6 +9,7 @@ import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/ip_geo.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
@@ -117,12 +118,12 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
   Future<void> _copy(String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    Formatter.showToast(S.peerCopied(text));
+    UiDialogs.showToast(S.peerCopied(text));
   }
 
   Future<void> _ban(String target) async {
     if (sc.current.value?.isQbittorrent != true) {
-      Formatter.showToast('仅 qBittorrent 支持封禁 Peer', isError: true);
+      UiDialogs.showToast('仅 qBittorrent 支持封禁 Peer', isError: true);
       return;
     }
     final bool? ok = await showDialog<bool>(
@@ -161,11 +162,11 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       AppLog.instance.op('封禁 Peer：$target'
           '（${ctrl.current.value?.name ?? '-'} · ${sc.current.value?.name ?? '-'}）',
           scope: sc.current.value?.logScope);
-      Formatter.showToast('${S.peerBanOk}$target');
+      UiDialogs.showToast('${S.peerBanOk}$target');
     } catch (e) {
       AppLog.instance.error('封禁 Peer 失败：$target · ${Formatter.safeErr(e)}',
           scope: sc.current.value?.logScope);
-      Formatter.showToast('${S.peerBanFail}: ${Formatter.safeErr(e)}',
+      UiDialogs.showToast('${S.peerBanFail}: ${Formatter.safeErr(e)}',
           isError: true);
     }
   }
@@ -175,7 +176,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final t = ctrl.current.value;
     if (s == null || t == null) return;
     if (!s.isQbittorrent) {
-      Formatter.showToast('仅 qBittorrent 支持添加 Peer', isError: true);
+      UiDialogs.showToast('仅 qBittorrent 支持添加 Peer', isError: true);
       return;
     }
 
@@ -222,7 +223,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       final String v = line.trim();
       if (v.isEmpty) continue;
       if (!v.contains(':') && !v.contains(' ')) {
-        Formatter.showToast('格式无效：$v', isError: true);
+        UiDialogs.showToast('格式无效：$v', isError: true);
         return;
       }
       peers.add(v);
@@ -232,10 +233,10 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
 
     await ctrl.addPeersTo(t.hash, peers);
     if (ctrl.lastActionOk.value == true) {
-      if (mounted) Formatter.showToast('已添加 ${peers.length} 个 Peer');
+      if (mounted) UiDialogs.showToast('已添加 ${peers.length} 个 Peer');
     } else {
       if (mounted) {
-        Formatter.showToast('${S.execFailed}: ${ctrl.error.value ?? ''}',
+        UiDialogs.showToast('${S.execFailed}: ${ctrl.error.value ?? ''}',
             isError: true);
       }
     }
@@ -293,12 +294,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       }
     }
     return null;
-  }
-
-  String _peerKey(Map<String, dynamic> p) {
-    final String ip = ((p['ip'] ?? p['address']) ?? '').toString();
-    final String port = (p['port'] ?? '').toString();
-    return '$ip:$port';
   }
 
   @override
@@ -467,7 +462,6 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final int up = _num(p['up_speed'] ?? p['rateToPeer']);
     final String target =
         port.isEmpty || port == '0' ? ip : '$ip:$port';
-    final String key = _peerKey(p);
     final String? flag = _flagOf(p, isQb);
     final List<String> flagChars = _flagChars(p, isQb);
     final _Geo g = _geoOf(ip).value;

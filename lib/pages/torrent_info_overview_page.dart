@@ -13,6 +13,8 @@ import '../data/server_capabilities.dart';
 import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
+import '../widgets/status_style.dart';
 import '../utils/strings.dart';
 import '../widgets/piece_heatmap.dart';
 import '../widgets/progress_ring.dart';
@@ -179,7 +181,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   }
 
   Widget _heroCard(Torrent t, ColorScheme cs, {required bool checking}) {
-    final Color st = Formatter.setStatusColor(t.state, cs);
+    final Color st = StatusStyle.setStatusColor(t.state, cs);
     final double progress = t.progress.clamp(0.0, 1.0);
     return Container(
       padding: EdgeInsets.all(af(context, 12)),
@@ -231,11 +233,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.copy, size: AppTheme.iconSize),
+                icon: const Icon(Icons.copy, size: AppTheme.iconSize),
                 tooltip: S.nameCopied,
                 onPressed: () async {
                   await ClipboardSet.copy(t.name);
-                  Formatter.showToast(S.nameCopied);
+                  UiDialogs.showToast(S.nameCopied);
                 },
               ),
             ],
@@ -1038,7 +1040,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               onPressed: () async {
                 final String text = mask ? Formatter.maskUrl(v) : v;
                 await ClipboardSet.copy(text);
-                Formatter.showToast(S.nameCopied);
+                UiDialogs.showToast(S.nameCopied);
               },
             ),
           ),
@@ -1286,12 +1288,12 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return ok;
     setState(() => _busy = false);
     if (!ok) {
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.execFailed}: ${_ctrl.error.value ?? ''}',
         isError: true,
       );
     } else {
-      Formatter.showToast('$what${S.editSaved}');
+      UiDialogs.showToast('$what${S.editSaved}');
       unawaited(_refreshAfter(t));
     }
     return ok;
@@ -1403,9 +1405,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     }
     if (!mounted) return;
     if (_ctrl.lastActionOk.value == true) {
-      Formatter.showToast('$done ${t.name}');
+      UiDialogs.showToast('$done ${t.name}');
     } else {
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.execFailed}: ${_ctrl.error.value ?? ''}',
         isError: true,
       );
@@ -1430,9 +1432,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (err == null) {
-      Formatter.showToast('已开始校验 ${t.name}（进度见上方）');
+      UiDialogs.showToast('已开始校验 ${t.name}（进度见上方）');
     } else {
-      Formatter.showToast('${S.execFailed}: $err', isError: true);
+      UiDialogs.showToast('${S.execFailed}: $err', isError: true);
     }
   }
 
@@ -1454,14 +1456,14 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (err == null) {
-      Formatter.showToast('${S.tReannounceOk}${t.name}');
+      UiDialogs.showToast('${S.tReannounceOk}${t.name}');
     } else {
-      Formatter.showToast('${S.execFailed}: $err', isError: true);
+      UiDialogs.showToast('${S.execFailed}: $err', isError: true);
     }
   }
 
   Future<void> _delete(Torrent t) async {
-    final DeleteOptions? opt = await Formatter.showDeleteTorrent(
+    final DeleteOptions? opt = await UiDialogs.showDeleteTorrent(
       context,
       count: 1,
       defaultDeleteFiles: false,
@@ -1485,7 +1487,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     );
     if (_ctrl.lastActionOk.value == false) {
       if (mounted) {
-        Formatter.showToast(
+        UiDialogs.showToast(
           '${S.execFailed}: ${_ctrl.error.value ?? ''}',
           isError: true,
         );
@@ -1500,13 +1502,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     final ServerController sc = _serverCtrl;
     final s = sc.current.value;
     if (s == null) {
-      Formatter.showToast(S.noServer, isError: true);
+      UiDialogs.showToast(S.noServer, isError: true);
       return;
     }
     try {
       final List<int> bytes = await sc.qb.exportTorrent(t.hash);
       if (bytes.isEmpty) {
-        Formatter.showToast(S.btExportFail, isError: true);
+        UiDialogs.showToast(S.btExportFail, isError: true);
         return;
       }
 
@@ -1516,9 +1518,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         dialogTitle: S.btExportTorrent,
       );
       if (saved == null) return;
-      Formatter.showToast('${S.btExportOk} $saved');
+      UiDialogs.showToast('${S.btExportOk} $saved');
     } catch (e) {
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.btExportFailPrefix}${Formatter.safeErr(e)}',
         isError: true,
       );

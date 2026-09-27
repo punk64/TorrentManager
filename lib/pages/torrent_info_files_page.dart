@@ -6,6 +6,8 @@ import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
+import '../widgets/status_style.dart';
 import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
@@ -270,7 +272,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         await sc.qb.filePrio(t.hash, ids.join('|'), p.value);
       } else {
         if (t.trId == null) {
-          Formatter.showToast(S.noTrId, isError: true);
+          UiDialogs.showToast(S.noTrId, isError: true);
           return;
         }
         final int trId = t.trId!;
@@ -284,9 +286,9 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       AppLog.instance.op('设置文件优先级：${p.label} ｜ ${ids.length} 个文件'
           '（${t.name} · ${s.name}）',
           scope: s.logScope);
-      Formatter.showToast('${S.tFilePrioOk}${t.name}');
+      UiDialogs.showToast('${S.tFilePrioOk}${t.name}');
     } catch (e) {
-      Formatter.showToast('${S.execFailed}: ${Formatter.safeErr(e)}', isError: true);
+      UiDialogs.showToast('${S.execFailed}: ${Formatter.safeErr(e)}', isError: true);
     }
   }
 
@@ -368,7 +370,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     final t = ctrl.current.value;
     if (s == null || t == null) return;
     if (!ctrl.capabilities.renameFile) {
-      Formatter.showToast('当前服务器版本不支持文件重命名', isError: true);
+      UiDialogs.showToast('当前服务器版本不支持文件重命名', isError: true);
       return;
     }
 
@@ -420,13 +422,13 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
 
     await ctrl.renameInTorrent(t, n.path, result, isFolder: !n.isFile);
     if (ctrl.lastActionOk.value == true) {
-      if (mounted) Formatter.showToast('已重命名');
+      if (mounted) UiDialogs.showToast('已重命名');
       Future<void>.delayed(const Duration(milliseconds: 500), () {
         ctrl.loadDetailData();
       });
     } else {
       if (mounted) {
-        Formatter.showToast('${S.execFailed}: ${ctrl.error.value ?? ''}',
+        UiDialogs.showToast('${S.execFailed}: ${ctrl.error.value ?? ''}',
             isError: true);
       }
     }
@@ -473,7 +475,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(Formatter.iconExtension(n.name), size: AppTheme.iconSize),
+          Icon(StatusStyle.iconExtension(n.name), size: AppTheme.iconSize),
           Checkbox(
             value: checked,
             visualDensity: VisualDensity.compact,
@@ -561,7 +563,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(Icons.folder, size: AppTheme.iconSize),
+          const Icon(Icons.folder, size: AppTheme.iconSize),
           Checkbox(
             tristate: true,
             value: tri,

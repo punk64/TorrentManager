@@ -8,6 +8,7 @@ import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import 'torrent_info_files_page.dart';
@@ -42,17 +43,17 @@ class TorrentInfoPage extends StatelessWidget {
                   final s = sc.current.value;
                   final t = ctrl.current.value;
                   if (t == null) {
-                    Formatter.showToast(S.pleaseSelectTorrent, isError: true);
+                    UiDialogs.showToast(S.pleaseSelectTorrent, isError: true);
                     return;
                   }
                   if (s == null) {
-                    Formatter.showToast(S.noServer, isError: true);
+                    UiDialogs.showToast(S.noServer, isError: true);
                     return;
                   }
                   try {
                     final List<int> bytes = await sc.qb.exportTorrent(t.hash);
                     if (bytes.isEmpty) {
-                      Formatter.showToast(S.btExportFail, isError: true);
+                      UiDialogs.showToast(S.btExportFail, isError: true);
                       return;
                     }
 
@@ -62,9 +63,9 @@ class TorrentInfoPage extends StatelessWidget {
                       dialogTitle: S.btExportTorrent,
                     );
                     if (saved == null) return;
-                    Formatter.showToast('${S.btExportOk} $saved');
+                    UiDialogs.showToast('${S.btExportOk} $saved');
                   } catch (e) {
-                    Formatter.showToast(
+                    UiDialogs.showToast(
                         '${S.btExportFailPrefix}${Formatter.safeErr(e)}',
                         isError: true);
                   }

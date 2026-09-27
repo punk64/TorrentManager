@@ -12,13 +12,6 @@ String _fieldSrc() =>
 String _overviewSrc() =>
     File('lib/pages/torrent_info_overview_page.dart').readAsStringSync();
 
-int _nextDecl(String src, int from) {
-  final RegExp re = RegExp(
-      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
-  final Match? m = re.firstMatch(src.substring(from + 1));
-  return m == null ? src.length : from + 1 + m.start;
-}
-
 void main() {
   group('第 70 轮 · 展开区对齐 v3（2026-09-26 第 99 轮：展开区整体退役）', () {
     final String src = _listPageSrc();

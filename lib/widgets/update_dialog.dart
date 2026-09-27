@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../app/app_version.dart';
 import '../utils/app_update.dart';
 import '../utils/formatter.dart';
+import 'ui_dialogs.dart';
 import '../utils/strings.dart';
 import '../utils/update_check.dart';
 import '../app/adaptive.dart';
@@ -90,7 +91,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     if (ok || !mounted) return;
     await Clipboard.setData(ClipboardData(text: url));
     if (!mounted) return;
-    Formatter.showToast(S.updateUrlCopied);
+    UiDialogs.showToast(S.updateUrlCopied);
   }
 
   Future<void> _startDownload() async {
@@ -201,7 +202,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: af(context, 8)),
         child: Center(child: SizedBox(width: af(context, 22), height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2))),
+            child: const CircularProgressIndicator(strokeWidth: 2))),
       );
     }
 
@@ -232,7 +233,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         children: <Widget>[
           const SizedBox(height: 4),
           Center(child: SizedBox(width: af(context, 22), height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2))),
+              child: const CircularProgressIndicator(strokeWidth: 2))),
           SizedBox(height: af(context, 8)),
           Text(S.updateInstallingHint, style: TextStyle(fontSize: af(context, 12))),
         ],

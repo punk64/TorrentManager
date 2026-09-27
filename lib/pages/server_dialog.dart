@@ -10,7 +10,7 @@ import '../data/models/server_data.dart';
 import '../data/qbittorrent/qb_method.dart';
 import '../data/transmission/tr_method.dart';
 import '../utils/app_log.dart';
-import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
@@ -620,7 +620,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                           SizedBox(
                             width: af(context, 14),
                             height: af(context, 14),
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: const CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: af(context, 8)),
                           Text('正在连接服务器…', style: TextStyle(fontSize: af(context, 11))),
@@ -656,14 +656,14 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
           '添加服务器失败：缺少账号密码（${_isEdit ? '编辑' : '新增'}，'
           '地址 ${_host.text.trim().isEmpty ? '未填' : _host.text.trim()}）',
         );
-        Formatter.showToast(S.srvCredsRequired, isError: true);
+        UiDialogs.showToast(S.srvCredsRequired, isError: true);
       }
       return;
     }
 
     final _ParsedAddress? parsed = _parseAddress(_host.text);
     if (parsed == null) {
-      Formatter.showToast(S.srvAddrInvalid, isError: true);
+      UiDialogs.showToast(S.srvAddrInvalid, isError: true);
       return;
     }
 
@@ -757,7 +757,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
 
     _saved = true;
     Navigator.of(context).pop(true);
-    Formatter.showToast(
+    UiDialogs.showToast(
       '${_isEdit ? S.srvEdited : S.srvAdded}${s.name}',
     );
 

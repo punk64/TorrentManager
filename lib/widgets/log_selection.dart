@@ -6,6 +6,7 @@ import '../data/models/qb_log.dart';
 import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
+import 'ui_dialogs.dart';
 import '../utils/log_export.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
@@ -32,7 +33,7 @@ class LogSelectionAppBar extends StatelessWidget
   Widget build(BuildContext context) {
     return AppBar(
       leading: IconButton(
-        icon: Icon(Icons.close, size: AppTheme.iconSize),
+        icon: const Icon(Icons.close, size: AppTheme.iconSize),
         tooltip: S.cancel,
         onPressed: onClose,
       ),
@@ -117,7 +118,7 @@ class LogSelectionBar extends StatelessWidget {
                 ),
                 PopupMenuButton<String>(
                   tooltip: '',
-                  icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
+                  icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
                   onSelected: (String v) {
                     switch (v) {
                       case 'invert':
@@ -174,7 +175,7 @@ LogLine qbLogLine(QbLog l, String label, bool masked) => LogLine(
 Future<void> copyLogLines(List<LogLine> lines) async {
   if (lines.isEmpty) return;
   await Clipboard.setData(ClipboardData(text: LogExport.buildText(lines)));
-  Formatter.showToast(LogExport.copiedMessage(lines.length));
+  UiDialogs.showToast(LogExport.copiedMessage(lines.length));
 }
 
 Future<bool> exportLogLines(
@@ -184,7 +185,7 @@ Future<bool> exportLogLines(
   String kind = 'app',
 }) async {
   if (lines.isEmpty) {
-    Formatter.showToast('${S.logExportFailedPrefix}没有可导出的日志', isError: true);
+    UiDialogs.showToast('${S.logExportFailedPrefix}没有可导出的日志', isError: true);
     return false;
   }
   final String? name = await askExportFileName(
@@ -192,7 +193,7 @@ Future<bool> exportLogLines(
     LogExport.suggestedFileName(DateTime.now(), kind: kind),
   );
   if (name == null || name.trim().isEmpty) {
-    Formatter.showToast(S.logExportCancelled);
+    UiDialogs.showToast(S.logExportCancelled);
     return false;
   }
   final String name0 = name.trim();
@@ -203,19 +204,19 @@ Future<bool> exportLogLines(
       content: LogExport.buildText(lines),
     );
     if (saved == null || saved.isEmpty) {
-      Formatter.showToast(S.logExportCancelled);
+      UiDialogs.showToast(S.logExportCancelled);
       return false;
     }
     final int n = lines.length;
     if (masked) {
-      Formatter.showToast('${S.logExportOk(n)}$name0');
+      UiDialogs.showToast('${S.logExportOk(n)}$name0');
     } else {
-      Formatter.showToast(S.logExportPrivacyOff(n), isWarning: true);
+      UiDialogs.showToast(S.logExportPrivacyOff(n), isWarning: true);
     }
     AppLog.instance.op('导出日志：$name0（$n 条，${masked ? '已打码' : '未打码'}）');
     return true;
   } catch (e) {
-    Formatter.showToast(
+    UiDialogs.showToast(
       '${S.logExportFailedPrefix}${Formatter.safeErr(e)}',
       isError: true,
     );

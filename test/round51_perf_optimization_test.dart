@@ -19,6 +19,7 @@ import 'package:torrent_manager/data/models/torrent.dart';
 import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/utils/formatter.dart';
+import 'package:torrent_manager/widgets/status_style.dart';
 
 Torrent _t(
   String hash, {
@@ -350,12 +351,13 @@ void main() {
           Formatter.setRatio(1.23456),
           Formatter.setProgress(0.5),
           Formatter.setProgress(1.9),
-          Formatter.statusIcon('downloading').codePoint.toString(),
-          Formatter.statusIcon('stoppedDL').codePoint.toString(),
+          StatusStyle.statusIcon('downloading').codePoint.toString(),
+          StatusStyle.statusIcon('stoppedDL').codePoint.toString(),
         ];
 
     test('★ 缓存不影响正确性：冷 / 热两遍逐项一致', () {
       Formatter.clearFormatCache();
+      StatusStyle.clearCache();
       final List<String> cold = sample();
       final List<String> warm = sample();
       expect(warm, cold);
@@ -368,18 +370,20 @@ void main() {
 
     test('★ setStatusColor 不缓存 Color —— 换一套配色立刻跟着变', () {
       Formatter.clearFormatCache();
+      StatusStyle.clearCache();
       const ColorScheme light = ColorScheme.light();
       const ColorScheme dark = ColorScheme.dark();
 
-      Formatter.setStatusColor('uploading', light);
-      Formatter.setStatusColor('uploading', dark);
-      expect(Formatter.setStatusColor('uploading', light), light.primary);
-      expect(Formatter.setStatusColor('uploading', dark), dark.primary,
+      StatusStyle.setStatusColor('uploading', light);
+      StatusStyle.setStatusColor('uploading', dark);
+      expect(StatusStyle.setStatusColor('uploading', light), light.primary);
+      expect(StatusStyle.setStatusColor('uploading', dark), dark.primary,
           reason: '★ 若把 Color 也缓存了，主题改色将永远不生效');
     });
 
     test('★ 写满容量后淘汰最旧的，结果依然正确（不会串值）', () {
       Formatter.clearFormatCache();
+      StatusStyle.clearCache();
       const int n = Formatter.fmtCacheSize + 200;
       for (int i = 1; i <= n; i++) {
         expect(Formatter.setSize(i * 1024), isNotEmpty);

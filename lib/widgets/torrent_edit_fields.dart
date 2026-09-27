@@ -195,7 +195,7 @@ class _EditTextFieldState extends State<EditTextField> {
                   ? SizedBox(
                       width: af(context, 12),
                       height: af(context, 12),
-                      child: CircularProgressIndicator(strokeWidth: 1.6),
+                      child: const CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
             ),
@@ -397,7 +397,7 @@ class _EditNumberFieldState extends State<EditNumberField> {
                   ? SizedBox(
                       width: af(context, 12),
                       height: af(context, 12),
-                      child: CircularProgressIndicator(strokeWidth: 1.6),
+                      child: const CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
             ),
@@ -584,7 +584,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
                   ? SizedBox(
                       width: af(context, 12),
                       height: af(context, 12),
-                      child: CircularProgressIndicator(strokeWidth: 1.6),
+                      child: const CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
             ),
@@ -666,7 +666,7 @@ class _EditRatioFieldState extends State<EditRatioField> {
                   ? SizedBox(
                       width: af(context, 12),
                       height: af(context, 12),
-                      child: CircularProgressIndicator(strokeWidth: 1.6),
+                      child: const CircularProgressIndicator(strokeWidth: 1.6),
                     )
                   : Text(S.editModify),
             ),

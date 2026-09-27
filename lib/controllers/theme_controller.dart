@@ -8,6 +8,7 @@ import '../app/style_keys.dart';
 import '../app/theme.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/theme_background.dart';
 import '../utils/strings.dart';
 import '../utils/theme_backup.dart';
 
@@ -195,7 +196,7 @@ class ThemeController extends GetxController {
         );
       case 2:
 
-        return Formatter.themeBackground(path: _pageBgImage.value);
+        return ThemeBackground.build(path: _pageBgImage.value);
       default:
         return null;
     }
@@ -251,10 +252,10 @@ class ThemeController extends GetxController {
     panel1Alpha.value = defaultPanel1Alpha;
     panel2Alpha.value = defaultPanel2Alpha;
 
-    _pageBgImage.value = aliveAsset(await Formatter.getBackgroundImage()) ??
+    _pageBgImage.value = aliveAsset(await ThemeBackground.load()) ??
         defaultBackgroundImage;
     menuImagePath.value =
-        aliveAsset(await Formatter.getMenuBackgroundImage()) ?? defaultMenuImage;
+        aliveAsset(await ThemeBackground.loadMenu()) ?? defaultMenuImage;
 
     menuBgBrightness.value =
         (await Formatter.getGlobalData(_kMenuBgBrightness) as num?)
@@ -666,7 +667,7 @@ class ThemeController extends GetxController {
           ),
         );
       case 2:
-        return Formatter.themeBackground(path: _draft.value?.bgImage ?? _pageBgImage.value);
+        return ThemeBackground.build(path: _draft.value?.bgImage ?? _pageBgImage.value);
       default:
         return null;
     }
@@ -975,14 +976,14 @@ class ThemeController extends GetxController {
 
   void _setPageBgImage(String path) {
     _pageBgImage.value = path;
-    Formatter.saveBackgroundImage(path);
+    ThemeBackground.save(path);
 
     _markCustom();
   }
 
   void setMenuImage(String path) {
     menuImagePath.value = path;
-    Formatter.saveMenuBackgroundImage(path);
+    ThemeBackground.saveMenu(path);
 
     _markCustom();
   }

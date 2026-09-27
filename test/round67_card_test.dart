@@ -16,13 +16,6 @@ FilledButton _modifyButton(WidgetTester tester) => tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, S.editModify),
     );
 
-int _nextDecl(String src, int from) {
-  final RegExp re = RegExp(
-      r'\n(?:  )?(?:static\s+)?(?:class\s+\w|Widget\s+\w|void\s+\w|Future<[^>]*>\s+\w|List<[^>]*>\s+\w|Map<[^>]*>\s+\w|Set<[^>]*>\s+\w|String\s+\w|bool\s+\w|int\s+\w|double\s+\w|Color\s+\w)');
-  final Match? m = re.firstMatch(src.substring(from + 1));
-  return m == null ? src.length : from + 1 + m.start;
-}
-
 void main() {
   tearDown(Get.reset);
 
@@ -261,7 +254,7 @@ void main() {
 
   group('第 67 轮第四期 · 删除弹窗危险警示（D8）', () {
     test('勾了删本地文件 ⇒ 红字警告 + 红色开关 + 红色确认', () {
-      final String src = File('lib/utils/formatter.dart').readAsStringSync();
+      final String src = File('lib/widgets/ui_dialogs.dart').readAsStringSync();
       expect(src.contains('S.deleteFilesWarn(count)'), isTrue);
       expect(src.contains('activeColor: Colors.red'), isTrue);
       expect(src.contains('foregroundColor: Colors.red'), isTrue);

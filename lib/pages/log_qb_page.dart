@@ -8,6 +8,7 @@ import '../data/models/server_data.dart';
 import '../data/qbittorrent/qb_method.dart';
 import '../data/transmission/tr_method.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/log_export.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
@@ -395,17 +396,17 @@ class _LogQbPageState extends State<LogQbPage> {
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
-                    icon: Icon(Icons.refresh, size: AppTheme.iconSize),
+                    icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
                     tooltip: S.logRefreshed,
                     onPressed: () async {
                       await _load();
-                      Formatter.showToast(S.logRefreshed);
+                      UiDialogs.showToast(S.logRefreshed);
                     },
                   ),
 
                   PopupMenuButton<String>(
                     tooltip: '',
-                    icon: Icon(Icons.more_vert, size: AppTheme.iconSize),
+                    icon: const Icon(Icons.more_vert, size: AppTheme.iconSize),
                     onSelected: (String v) {
                       switch (v) {
                         case 'select':
@@ -496,7 +497,7 @@ class _LogQbPageState extends State<LogQbPage> {
               borderRadius: BorderRadius.circular(AppTheme.radius),
 
               icon: Padding(
-                padding: EdgeInsets.only(right: 4),
+                padding: const EdgeInsets.only(right: 4),
                 child: Icon(Icons.arrow_drop_down, size: af(context, 24)),
               ),
               decoration: InputDecoration(

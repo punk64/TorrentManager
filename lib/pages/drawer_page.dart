@@ -15,6 +15,7 @@ import '../utils/app_log.dart';
 import '../utils/file_export.dart';
 import '../utils/i18n.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/theme_backup.dart';
 import '../utils/update_check.dart';
 import '../utils/startup_update.dart';
@@ -170,18 +171,18 @@ class DrawerMenu extends StatelessWidget {
               icon: Icons.mark_as_unread,
               title: S.termsTitle,
 
-              onTap: () => Formatter.showTerms(context),
+              onTap: () => UiDialogs.showTerms(context),
             ),
             _button(context,
               icon: Icons.privacy_tip,
               title: S.privacyTitle,
-              onTap: () => Formatter.showPrivacy(context),
+              onTap: () => UiDialogs.showPrivacy(context),
             ),
             _button(context,
               icon: Icons.source_outlined,
               title: S.openSourceTitle,
               subtitle: kProjectUrl,
-              onTap: () => Formatter.showOpenSource(context),
+              onTap: () => UiDialogs.showOpenSource(context),
             ),
           ],
         ),
@@ -462,7 +463,7 @@ class DrawerMenu extends StatelessWidget {
     );
     if (picked == null || !context.mounted) return;
     await lc.setLang(picked);
-    if (context.mounted) Formatter.showToast(S.langSwitched);
+    if (context.mounted) UiDialogs.showToast(S.langSwitched);
   }
 
   static Widget _langRow(BuildContext ctx, bool selected, String label) {
@@ -540,7 +541,7 @@ class DrawerMenu extends StatelessWidget {
       );
       if (ok == true) {
         await tc.deleteCustomTheme(t.id);
-        if (context.mounted) Formatter.showToast(S.deletedToast(t.name));
+        if (context.mounted) UiDialogs.showToast(S.deletedToast(t.name));
       }
       return;
     }
@@ -570,7 +571,7 @@ class DrawerMenu extends StatelessWidget {
     );
     if (name != null && name.isNotEmpty) {
       await tc.renameCustomTheme(t.id, name);
-      if (context.mounted) Formatter.showToast(S.renamedToast(name));
+      if (context.mounted) UiDialogs.showToast(S.renamedToast(name));
     }
     ctrl.dispose();
   }
@@ -651,7 +652,7 @@ class DrawerMenu extends StatelessWidget {
               await Clipboard.setData(ClipboardData(text: url));
               if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
-              Formatter.showToast(S.copyUrlHint);
+              UiDialogs.showToast(S.copyUrlHint);
             },
             child: Text(S.copyDone),
           ),
@@ -717,7 +718,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
   Future<void> _export() async {
     final ThemeController tc = _tc;
     if (tc.customThemes.isEmpty) {
-      Formatter.showToast(S.themeExportEmpty, isError: true);
+      UiDialogs.showToast(S.themeExportEmpty, isError: true);
       return;
     }
     setState(() => _exporting = true);
@@ -729,12 +730,12 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       );
 
       final String name = path.split(RegExp(r'[/\\]')).last;
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.themeExportOkPrefix}$count${S.themeExportOkInfix}$name',
       );
       AppLog.instance.op('导出主题配置：$name（共 $count 套）');
     } catch (e) {
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.themeExportFailedPrefix}${Formatter.safeErr(e)}',
         isError: true,
       );
@@ -748,7 +749,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
     try {
       final PickedTextFile? file = await FileExport.pickText();
       if (file == null) {
-        Formatter.showToast(S.themeImportCancelled);
+        UiDialogs.showToast(S.themeImportCancelled);
         return;
       }
       if (!mounted) return;
@@ -769,7 +770,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       if (conflicts.isNotEmpty) {
         final String? action = await _askConflict(conflicts.length);
         if (action == null) {
-          Formatter.showToast(S.themeImportCancelled);
+          UiDialogs.showToast(S.themeImportCancelled);
           return;
         }
         overwrite = action == 'overwrite';
@@ -781,13 +782,13 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       final CustomTheme? first = out.first;
       if (first != null) _tc.applyCustomTheme(first);
 
-      Formatter.showToast(
+      UiDialogs.showToast(
         r.skipped.isEmpty
             ? S.themeImportOk(out.total)
             : S.themeImportPartial(out.total, r.skipped.length),
       );
     } catch (e) {
-      Formatter.showToast(
+      UiDialogs.showToast(
         '${S.themeImportReadFailed}：${Formatter.safeErr(e)}',
         isError: true,
       );

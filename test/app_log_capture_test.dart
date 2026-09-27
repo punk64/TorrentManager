@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:torrent_manager/data/dio/log_interceptor.dart';
 import 'package:torrent_manager/utils/app_log.dart';
-import 'package:torrent_manager/utils/formatter.dart';
+import 'package:torrent_manager/widgets/ui_dialogs.dart';
 
 RequestOptions _req(String method, String path) => RequestOptions(
       method: method,
@@ -17,18 +17,18 @@ void main() {
   setUp(() => AppLog.instance.clear());
 
   test('Toast 会写入应用日志，且标记来源 UI', () {
-    Formatter.showToast('已添加服务器');
+    UiDialogs.showToast('已添加服务器');
     expect(AppLog.instance.entries.length, 1);
     expect(AppLog.instance.entries.first.message, '已添加服务器');
     expect(AppLog.instance.entries.first.level, 'INFO');
     expect(AppLog.instance.entries.first.source, AppLog.srcUi);
 
-    Formatter.showToast('连接失败', isError: true);
+    UiDialogs.showToast('连接失败', isError: true);
     expect(AppLog.instance.entries.first.level, 'ERROR');
   });
 
   test('长消息压成一行并截断（日志条目不该带换行）', () {
-    Formatter.showToast('第一行\n第二行   空格很多');
+    UiDialogs.showToast('第一行\n第二行   空格很多');
     expect(AppLog.instance.entries.first.message.contains('\n'), isFalse);
   });
 

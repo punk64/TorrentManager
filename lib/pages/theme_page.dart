@@ -78,7 +78,7 @@ class _ThemePageState extends State<ThemePage> {
         clipBehavior: Clip.antiAlias,
               dense: true,
               tilePadding: EdgeInsets.zero,
-              leading: Icon(Icons.palette, size: AppTheme.iconSize),
+              leading: const Icon(Icons.palette, size: AppTheme.iconSize),
               title: Text(S.themeCustom, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
@@ -110,7 +110,7 @@ class _ThemePageState extends State<ThemePage> {
         clipBehavior: Clip.antiAlias,
               dense: true,
               tilePadding: EdgeInsets.zero,
-              leading: Icon(Icons.text_fields, size: AppTheme.iconSize),
+              leading: const Icon(Icons.text_fields, size: AppTheme.iconSize),
               title: Text(S.themeFontColor, style: TextStyle(fontSize: af(context, 12))),
               subtitle: Row(
                 children: <Widget>[
@@ -144,7 +144,7 @@ class _ThemePageState extends State<ThemePage> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    icon: Icon(Icons.auto_awesome,
+                    icon: const Icon(Icons.auto_awesome,
                         size: AppTheme.iconSize),
                     label: Text(S.themeFontColorAuto,
                         style: TextStyle(fontSize: af(context, 12))),
@@ -164,7 +164,7 @@ class _ThemePageState extends State<ThemePage> {
 
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 0, 0, af(context, 8)),
-                  child: PagePreview(page: AppPageKey.serverList),
+                  child: const PagePreview(page: AppPageKey.serverList),
                 ),
               ],
             ),

@@ -14,6 +14,7 @@ import '../data/models/server_state.dart';
 import '../data/models/torrent.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../utils/startup_update.dart';
@@ -210,7 +211,7 @@ class _ServerListPageState extends State<ServerListPage> {
                 onPressed: () async {
                   AppLog.instance.act('服务器列表', 'AppBar[刷新全部]');
                   await ctrl.refreshAllServers(showProgress: true);
-                  Formatter.showToast(S.srvRefreshedAll);
+                  UiDialogs.showToast(S.srvRefreshedAll);
                 },
               )),
 
@@ -499,7 +500,7 @@ class _ServerListPageState extends State<ServerListPage> {
             }
             AppLog.instance.act('服务器列表', '左滑[删除]', target: raw.name);
             await ctrl.deleteServer(raw.id);
-            Formatter.showToast('${S.srvDeleted}${raw.name}');
+            UiDialogs.showToast('${S.srvDeleted}${raw.name}');
           },
         ),
       ],

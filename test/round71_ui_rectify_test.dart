@@ -15,7 +15,6 @@ import 'package:torrent_manager/pages/torrent_info_overview_page.dart';
 import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/sort_filter_panel.dart';
-import 'package:torrent_manager/widgets/torrent_edit_fields.dart';
 
 String _read(String p) => File(p).readAsStringSync();
 
@@ -40,7 +39,7 @@ void main() {
     Get.reset();
   });
 
-  final Torrent t = Torrent(
+  const Torrent t = Torrent(
     hash: 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678',
     name: '示例种子',
     size: 5368709120,

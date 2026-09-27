@@ -335,7 +335,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
                       ? SizedBox(
                           width: af(context, 14),
                           height: af(context, 14),
-                          child: CircularProgressIndicator(strokeWidth: 1.8),
+                          child: const CircularProgressIndicator(strokeWidth: 1.8),
                         )
                       : const Icon(Icons.check, size: AppTheme.iconSize),
                   label: Text(

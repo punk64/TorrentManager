@@ -16,6 +16,7 @@ import 'package:torrent_manager/data/qbittorrent/qb_method.dart';
 import 'package:torrent_manager/pages/torrent_info_overview_page.dart';
 import 'package:torrent_manager/pages/torrent_list_page.dart';
 import 'package:torrent_manager/utils/formatter.dart';
+import 'package:torrent_manager/widgets/status_style.dart';
 import 'package:torrent_manager/utils/strings.dart';
 import 'package:torrent_manager/widgets/slidable_tile.dart';
 
@@ -520,18 +521,18 @@ void main() {
           reason: '★ 不认的话 5.x 上暂停的种子会显示成「下载中」');
       expect(Formatter.setStatus('stoppedUP'), S.stPausedUp,
           reason: '★ 不认的话会显示成「做种中」');
-      expect(Formatter.statusIcon('stoppedDL'), Icons.pause);
-      expect(Formatter.statusIcon('stoppedUP'), Icons.pause);
+      expect(StatusStyle.statusIcon('stoppedDL'), Icons.pause);
+      expect(StatusStyle.statusIcon('stoppedUP'), Icons.pause);
 
       expect(Formatter.setStatus('pausedDL'), S.stPausedDl);
       expect(Formatter.setStatus('pausedUP'), S.stPausedUp);
-      expect(Formatter.statusIcon('pausedDL'), Icons.pause);
+      expect(StatusStyle.statusIcon('pausedDL'), Icons.pause);
 
       expect(Formatter.setStatus('stopped'), S.stPaused);
-      expect(Formatter.statusIcon('stopped'), Icons.pause);
+      expect(StatusStyle.statusIcon('stopped'), Icons.pause);
 
-      expect(Formatter.statusIcon('downloading'), Icons.arrow_circle_down);
-      expect(Formatter.statusIcon('uploading'), Icons.arrow_circle_up);
+      expect(StatusStyle.statusIcon('downloading'), Icons.arrow_circle_down);
+      expect(StatusStyle.statusIcon('uploading'), Icons.arrow_circle_up);
     });
   });
 }

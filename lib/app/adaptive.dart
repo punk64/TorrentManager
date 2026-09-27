@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app/adaptive.dart';
 
 const double kDesignWidthDp = 445;
 

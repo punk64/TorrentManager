@@ -9,6 +9,7 @@ import '../utils/app_log.dart';
 import '../utils/crypto_box.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
+import '../widgets/ui_dialogs.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -125,14 +126,14 @@ class _SharePageState extends State<SharePage> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  icon: Icon(Icons.save, size: AppTheme.iconSize),
+                  icon: const Icon(Icons.save, size: AppTheme.iconSize),
                   label: Text(_busy ? S.fieldUpdating : '保存备份到本机',
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: (_busy || sc.servers.isEmpty)
                       ? null
                       : () => _run(() async {
                             final String path = await sc.saveBackup();
-                            Formatter.showToast(
+                            UiDialogs.showToast(
                                 '${S.bkExportOk}'
                                 '（${sc.servers.length} 个服务器）\n'
                                 '${_shortPath(path)}');
@@ -144,7 +145,7 @@ class _SharePageState extends State<SharePage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.drive_file_move_outline,
+                  icon: const Icon(Icons.drive_file_move_outline,
                       size: AppTheme.iconSize),
                   label: Text('导出备份副本到…',
                       style: TextStyle(fontSize: af(context, 12))),
@@ -153,7 +154,7 @@ class _SharePageState extends State<SharePage> {
                       : () => _run(() async {
                             final String? out = await sc.exportBackupCopy();
                             if (out == null) return;
-                            Formatter.showToast('${S.bkExportOk}\n${_shortPath(out)}');
+                            UiDialogs.showToast('${S.bkExportOk}\n${_shortPath(out)}');
                           }),
                 ),
               ),
@@ -161,7 +162,7 @@ class _SharePageState extends State<SharePage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.restore, size: AppTheme.iconSize),
+                  icon: const Icon(Icons.restore, size: AppTheme.iconSize),
                   label: Text('从本机备份恢复',
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: _busy
@@ -169,7 +170,7 @@ class _SharePageState extends State<SharePage> {
 
                       : () => _run(() async {
                             final int n = await sc.restoreBackup();
-                            Formatter.showToast(
+                            UiDialogs.showToast(
                               n == 0
                                   ? '${S.bkRestoreFail}未发现新的服务器'
                                   : '${S.bkRestoreOk}$n',
@@ -185,7 +186,7 @@ class _SharePageState extends State<SharePage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.enhanced_encryption,
+                  icon: const Icon(Icons.enhanced_encryption,
                       size: AppTheme.iconSize),
                   label: Text(S.bkPortableExport,
                       style: TextStyle(fontSize: af(context, 12))),
@@ -201,7 +202,7 @@ class _SharePageState extends State<SharePage> {
                             final String? out =
                                 await sc.exportPortableBackup(p);
                             if (out == null) return;
-                            Formatter.showToast(
+                            UiDialogs.showToast(
                                 '${S.bkPortableExportOk}\n${_shortPath(out)}');
                           }),
                 ),
@@ -210,7 +211,7 @@ class _SharePageState extends State<SharePage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.lock_open, size: AppTheme.iconSize),
+                  icon: const Icon(Icons.lock_open, size: AppTheme.iconSize),
                   label: Text(S.bkPortableImport,
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: _busy
@@ -232,7 +233,7 @@ class _SharePageState extends State<SharePage> {
                             if (p == null) return;
                             final int n =
                                 await sc.importPortableBackup(f.content, p);
-                            Formatter.showToast(S.bkPortableImportOk(n));
+                            UiDialogs.showToast(S.bkPortableImportOk(n));
                           }),
                 ),
               ),
@@ -242,7 +243,7 @@ class _SharePageState extends State<SharePage> {
                 children: <Widget>[
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.ios_share, size: AppTheme.iconSize),
+                      icon: const Icon(Icons.ios_share, size: AppTheme.iconSize),
                       label: Text('导出 JSON',
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: (_busy || sc.servers.isEmpty)
@@ -259,7 +260,7 @@ class _SharePageState extends State<SharePage> {
                                 await Clipboard.setData(
                                   ClipboardData(text: env),
                                 );
-                                Formatter.showToast(S.bkJsonExportNote);
+                                UiDialogs.showToast(S.bkJsonExportNote);
                                 AppLog.instance.op(
                                     '导出服务器 JSON 到剪贴板'
                                     '（口令加密，含密码）：${sc.servers.length} 台');
@@ -269,7 +270,7 @@ class _SharePageState extends State<SharePage> {
                   SizedBox(width: af(context, 8)),
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: Icon(Icons.download, size: AppTheme.iconSize),
+                      icon: const Icon(Icons.download, size: AppTheme.iconSize),
                       label: Text('导入 JSON',
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: _busy ? null : _importDialog,
@@ -299,7 +300,7 @@ class _SharePageState extends State<SharePage> {
     try {
       await action();
     } catch (e) {
-      Formatter.showToast(
+      UiDialogs.showToast(
         e is CryptoBoxException ? e.message : '${S.execFailed}: ${Formatter.safeErr(e)}',
         isError: true,
       );
@@ -347,11 +348,11 @@ class _SharePageState extends State<SharePage> {
               decoration: InputDecoration(
                 hintText: S.bkJsonCipherHint,
                 hintStyle: TextStyle(fontSize: af(context, 11)),
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
             ),
             TextButton.icon(
-              icon: Icon(Icons.content_paste, size: AppTheme.iconSize),
+              icon: const Icon(Icons.content_paste, size: AppTheme.iconSize),
               label: Text('从剪贴板粘贴',
                   style: TextStyle(fontSize: af(context, 12))),
               onPressed: () async {
@@ -390,7 +391,7 @@ class _SharePageState extends State<SharePage> {
       );
       if (p == null) return;
       final int added = await sc.importPortableBackup(text, p);
-      Formatter.showToast(S.bkPortableImportOk(added));
+      UiDialogs.showToast(S.bkPortableImportOk(added));
     });
   }
 }
