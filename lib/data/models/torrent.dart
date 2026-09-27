@@ -24,6 +24,10 @@ class Torrent {
   final int numSeeds;
   final int numLeechs;
 
+  final int connectedSeeds;
+
+  final int connectedLeechs;
+
   final int activePeers;
 
   final double ratio;
@@ -112,6 +116,8 @@ class Torrent {
     required this.upSpeed,
     required this.numSeeds,
     required this.numLeechs,
+    this.connectedSeeds = -1,
+    this.connectedLeechs = -1,
     required this.ratio,
     this.activePeers = -1,
     this.savePath,
@@ -165,6 +171,8 @@ class Torrent {
       upSpeed: Formatter.getInt(json, 'upspeed'),
       numSeeds: Formatter.getInt(json, 'num_seeds'),
       numLeechs: Formatter.getInt(json, 'num_leechs'),
+      connectedSeeds: Formatter.getInt(json, 'seeds', def: -1),
+      connectedLeechs: Formatter.getInt(json, 'peers', def: -1),
       ratio: Formatter.getDouble(json, 'ratio'),
       activePeers: Formatter.getInt(json, 'active_peers', def: -1),
       savePath: Formatter.getStringOrNull(json, 'save_path'),
@@ -224,6 +232,8 @@ class Torrent {
       'upspeed': Formatter.getInt(delta, 'upspeed', def: upSpeed),
       'num_seeds': Formatter.getInt(delta, 'num_seeds', def: numSeeds),
       'num_leechs': Formatter.getInt(delta, 'num_leechs', def: numLeechs),
+      'seeds': Formatter.getInt(delta, 'seeds', def: connectedSeeds),
+      'peers': Formatter.getInt(delta, 'peers', def: connectedLeechs),
       'ratio': Formatter.getDouble(delta, 'ratio', def: ratio),
       'active_peers': Formatter.getInt(delta, 'active_peers', def: activePeers),
       'save_path': Formatter.getStringOrNull(delta, 'save_path') ?? savePath,
@@ -344,6 +354,8 @@ class Torrent {
         'upspeed': upSpeed,
         'num_seeds': numSeeds,
         'num_leechs': numLeechs,
+        'seeds': connectedSeeds,
+        'peers': connectedLeechs,
         'ratio': ratio,
         'active_peers': activePeers,
         'save_path': savePath,
@@ -487,6 +499,16 @@ class Torrent {
     if (activePeers >= 0) return activePeers;
     return (dlSpeed > 0 || upSpeed > 0) ? numSeeds + numLeechs : 0;
   }
+
+  bool get _isTrSource => trId != null;
+
+  String get seederPair => _isTrSource
+      ? '$numComplete($numSeeds)'
+      : '$numSeeds(${connectedSeeds < 0 ? '-' : connectedSeeds})';
+
+  String get leecherPair => _isTrSource
+      ? '$numIncomplete($numLeechs)'
+      : '$numLeechs(${connectedLeechs < 0 ? '-' : connectedLeechs})';
 
   bool get isUploading => upSpeed > 0;
 

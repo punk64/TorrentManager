@@ -106,6 +106,7 @@ Widget _badgeStrip(double maxWidth, List<_BadgeEntry> badges) {
 }
 
 const String _kTotalExpandedKey = 'totalStatsExpanded';
+const String _kServerCardsKey = 'serverCardsCollapsed';
 
 class ServerListPage extends StatefulWidget {
   const ServerListPage({super.key});
@@ -120,12 +121,15 @@ class _ServerListPageState extends State<ServerListPage> {
 
   final RxBool _totalExpanded = true.obs;
 
+  final serverCardsCollapsed = false.obs;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     unawaited(_loadTotalExpanded());
+    unawaited(_loadServerCards());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(StartupUpdatePrompt.runOnce());
@@ -135,6 +139,17 @@ class _ServerListPageState extends State<ServerListPage> {
   Future<void> _loadTotalExpanded() async {
     final bool v = await Formatter.getGlobalBool(_kTotalExpandedKey, def: true);
     _totalExpanded.value = v;
+  }
+
+  Future<void> _loadServerCards() async {
+    serverCardsCollapsed.value =
+        await Formatter.getGlobalBool(_kServerCardsKey);
+  }
+
+  void _toggleServerCards() {
+    serverCardsCollapsed.value = !serverCardsCollapsed.value;
+    unawaited(
+        Formatter.saveGlobalData(_kServerCardsKey, serverCardsCollapsed.value));
   }
 
   void _toggleTotalExpanded() {
@@ -177,6 +192,18 @@ class _ServerListPageState extends State<ServerListPage> {
 
         title: Obx(() => Text('服务器（${ctrl.servers.length}）')),
         actions: <Widget>[
+
+          Obx(
+            () => IconButton(
+              icon: Icon(
+                  serverCardsCollapsed.value
+                      ? Icons.unfold_more
+                      : Icons.unfold_less,
+                  size: AppTheme.iconSize),
+              tooltip: serverCardsCollapsed.value ? '展开卡片' : '折叠卡片',
+              onPressed: _toggleServerCards,
+            ),
+          ),
 
           Obx(() => _SpinningRefreshIcon(
                 spinning: ctrl.isManualRefreshing,
@@ -535,7 +562,8 @@ class _ServerListPageState extends State<ServerListPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
 
-                    MetricRow(
+                    if (!serverCardsCollapsed.value)
+                      MetricRow(
                       gap: 6,
                       inline: true,
                       fitRow: statsPending,
@@ -573,11 +601,11 @@ class _ServerListPageState extends State<ServerListPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-
-                    MetricRow(
-                      gap: 6,
-                      inline: true,
+                    if (!serverCardsCollapsed.value) ...<Widget>[
+                      const SizedBox(height: 6),
+                      MetricRow(
+                        gap: 6,
+                        inline: true,
                       fitRow: statsPending,
                       valueSize: 13,
                       labelSize: 8.5,
@@ -613,6 +641,7 @@ class _ServerListPageState extends State<ServerListPage> {
                         ),
                       ],
                     ),
+                    ],
                     const SizedBox(height: 7),
 
                     Container(

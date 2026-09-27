@@ -11,6 +11,48 @@ class PathCandidate {
   final String source;
 }
 
+class PathCandidates {
+  PathCandidates._();
+
+  static const String srcDefault = '默认保存路径';
+
+  static const String srcTemp = '临时路径';
+
+  static const String srcCurrent = '当前';
+
+  static const String unknown = '未指定';
+
+  static List<PathCandidate> build({
+    String? defaultPath,
+    String? tempPath,
+    Map<String, String>? categoryPaths,
+    String? current,
+    Map<String, int> seedPaths = const <String, int>{},
+  }) {
+    final List<PathCandidate> out = <PathCandidate>[];
+    final Set<String> seen = <String>{};
+
+    void add(String? raw, String source) {
+      final String v = (raw ?? '').trim();
+      if (v.isEmpty || v == unknown) return;
+      if (!seen.add(v.toLowerCase())) return;
+      out.add(PathCandidate(v, source));
+    }
+
+    add(defaultPath, srcDefault);
+    add(tempPath, srcTemp);
+    categoryPaths?.forEach((String name, String p) => add(p, '分类：$name'));
+    add(current, srcCurrent);
+    final List<MapEntry<String, int>> seeds = seedPaths.entries.toList()
+      ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
+          b.value.compareTo(a.value));
+    for (final MapEntry<String, int> e in seeds) {
+      add(e.key, '种子 ×${e.value}');
+    }
+    return out;
+  }
+}
+
 class PathDropdownField extends StatefulWidget {
   const PathDropdownField({
     super.key,

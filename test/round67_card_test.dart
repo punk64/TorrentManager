@@ -172,10 +172,10 @@ void main() {
     test('★ v2 重设计：底部左右栏取消，改为单列信息带（Text.rich 流量行）', () {
       final String src = _listPageSrc();
 
-      expect(src.contains('flex: 2,'), isFalse,
-          reason: '4.1 要求底部区从 2:1 改成 1:1，v2 进一步取消左右栏');
-      expect(src.contains('flex: 1,'), isFalse,
-          reason: 'v2 卡片不再有左右栏结构');
+      expect(RegExp(r'Expanded\(\s*flex:').hasMatch(src), isFalse,
+          reason: '4.1 要求底部区从 2:1 改成 1:1，v2 进一步取消左右栏；'
+              '第 108 轮折叠态速度行徽章区用 Flexible(flex:) 做行内自适应，'
+              '不属于左右栏结构，不在此限');
       expect(src.contains('Text.rich'), isTrue,
           reason: 'v2：已下载/总量 · 比率 · 剩余量 走 Text.rich 流量行');
     });

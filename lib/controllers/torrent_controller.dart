@@ -550,6 +550,80 @@ class TorrentController extends GetxController {
   final Map<FilterDim, List<FacetEntry>> _facetCache =
       <FilterDim, List<FacetEntry>>{};
 
+  static const Duration kCatalogTtl = Duration(minutes: 5);
+
+  final catalogCategories = <String>[].obs;
+
+  final catalogTags = <String>[].obs;
+
+  final categoryPaths = <String, String>{}.obs;
+
+  String? _catalogId;
+
+  DateTime? _catalogAt;
+
+  Future<void> loadCatalog({bool force = false}) async {
+    final ServerData? s = serverCtrl.current.value;
+    if (s == null) return;
+    if (!force &&
+        _catalogId == s.id &&
+        _catalogAt != null &&
+        DateTime.now().difference(_catalogAt!) < kCatalogTtl) {
+      return;
+    }
+    _catalogId = s.id;
+    _catalogAt = DateTime.now();
+    List<String> cats = const <String>[];
+    List<String> tags = const <String>[];
+    final Map<String, String> paths = <String, String>{};
+    final ServerPrefsSnap? snap = serverCtrl.prefsSnapOf(s.id);
+    if (snap != null && DateTime.now().difference(snap.at) < kCatalogTtl) {
+      cats = snap.categories;
+      tags = snap.tags;
+    } else if (s.isQbittorrent) {
+      try {
+        final Map<String, dynamic> m = await serverCtrl.qb.getCategories();
+        cats = m.keys.map((dynamic k) => k.toString()).toList();
+        for (final MapEntry<String, dynamic> e in m.entries) {
+          final dynamic v = e.value;
+          if (v is Map) {
+            final String p = (v['savePath'] ?? '').toString().trim();
+            if (p.isNotEmpty) paths[e.key] = p;
+          }
+        }
+        tags = await serverCtrl.qb.getTags();
+      } catch (_) {
+        return;
+      }
+    }
+    catalogCategories.assignAll(cats);
+    catalogTags.assignAll(tags);
+    categoryPaths.assignAll(paths);
+  }
+
+  String? get defaultSavePath {
+    final ServerData? s = serverCtrl.current.value;
+    if (s == null) return null;
+    return serverCtrl.prefOf(
+        s.id, s.isQbittorrent ? 'save_path' : 'download-dir');
+  }
+
+  String? get tempSavePath {
+    final ServerData? s = serverCtrl.current.value;
+    if (s == null || !s.isQbittorrent) return null;
+    if (!serverCtrl.prefFlagOf(s.id, 'temp_path_enabled')) return null;
+    return serverCtrl.prefOf(s.id, 'temp_path');
+  }
+
+  Map<String, int> get seedPathCounts {
+    final Map<String, int> out = <String, int>{};
+    for (final FacetEntry e in facets(FilterDim.path)) {
+      final String v = e.value.trim();
+      if (v.isNotEmpty && v != '未指定') out[v] = e.count;
+    }
+    return out;
+  }
+
   String _facetTokenOf() {
     final StringBuffer b = StringBuffer();
     for (final Torrent t in items) {
@@ -1017,6 +1091,8 @@ class TorrentController extends GetxController {
           upSpeed: Formatter.getInt(m, 'rateUpload'),
           numSeeds: sending,
           numLeechs: getting,
+          connectedSeeds: sending,
+          connectedLeechs: getting,
           numComplete:
               Formatter.sumSeederCount(m['trackerStats'], true) ?? 0,
           numIncomplete:

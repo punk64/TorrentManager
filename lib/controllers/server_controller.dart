@@ -1060,6 +1060,19 @@ class ServerController extends GetxController with WidgetsBindingObserver {
 
   ServerPrefsSnap? prefsSnapOf(String id) => _prefsCache[id];
 
+  String? prefOf(String id, String key) {
+    final dynamic v = _prefsCache[id]?.prefs[key];
+    final String s = (v ?? '').toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  bool prefFlagOf(String id, String key) {
+    final dynamic v = _prefsCache[id]?.prefs[key];
+    return v is bool
+        ? v
+        : (v is num ? v != 0 : (v is String ? v == 'true' : false));
+  }
+
   void putPrefsSnap(String id, ServerPrefsSnap snap) => _prefsCache[id] = snap;
 
   void dropPrefsSnap(String id) => _prefsCache.remove(id);

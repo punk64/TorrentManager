@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -314,7 +315,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ),
           SizedBox(height: af(context, 6)),
           Text(
-            '${Formatter.getSeederCount(t.numComplete, t.numIncomplete, t.transferPeers)}'
+            '${S.swarmSeedsLabel} ${t.seederPair}'
+            ' ${S.swarmUsersLabel} ${t.leecherPair}'
             ' · ${S.fieldProgress} ${Formatter.setProgress(t.progress)}',
             style: TextStyle(fontSize: af(context, 9.5), color: cs.onSurfaceVariant),
           ),
@@ -590,10 +592,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           ],
           <String>[S.fieldSize, Formatter.setSize(t.newSize)],
           <String>[S.fieldRatio, Formatter.setRatio(t.ratio)],
-          <String>[
-            S.fieldSeeders,
-            Formatter.getSeederCount(t.numComplete, t.numIncomplete, t.transferPeers),
-          ],
+          <String>[S.swarmSeedsLabel, t.seederPair],
+          <String>[S.swarmUsersLabel, t.leecherPair],
           <String>[S.fieldEta, Formatter.setEta(t.newEta)],
           <String>[S.fieldDlSpeed, Formatter.setSpeed(t.newDownSpeed)],
           <String>[S.fieldUpSpeed, Formatter.setSpeed(t.newUpspeed)],
@@ -1132,10 +1132,10 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ),
         SizedBox(
           width: af(context, 46),
-          height: af(context, 26),
+          height: af(context, 28),
           child: FittedBox(
             fit: BoxFit.fill,
-            child: Switch(value: value, onChanged: onChanged),
+            child: CupertinoSwitch(value: value, onChanged: onChanged),
           ),
         ),
       ]),
@@ -1304,11 +1304,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   Future<void> _editPath(Torrent t) async {
     final bool isQb = _ctrl.capabilities.isQb;
-    final List<PathCandidate> cands = <PathCandidate>[
-      for (final FacetEntry e in _ctrl.facets(FilterDim.path))
-        if (e.value.trim().startsWith('/'))
-          PathCandidate(e.value.trim(), '种子 ×${e.count}'),
-    ];
+    final List<PathCandidate> cands = PathCandidates.build(
+      defaultPath: _ctrl.defaultSavePath,
+      tempPath: _ctrl.tempSavePath,
+      categoryPaths: _ctrl.categoryPaths,
+      current: t.savePath,
+      seedPaths: _ctrl.seedPathCounts,
+    );
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: t.savePath ?? '',
@@ -1325,14 +1327,22 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   }
 
   Future<void> _editCategory(Torrent t) async {
-    final List<String> cats = _ctrl
-        .facets(FilterDim.category)
-        .map((FacetEntry e) => e.value)
-        .toList();
+    await _ctrl.loadCatalog();
+    if (!mounted) return;
+    final List<String> cats = List<String>.of(_ctrl.catalogCategories);
+    final Map<String, int> counts = <String, int>{};
+    for (final FacetEntry e in _ctrl.facets(FilterDim.category)) {
+      final String v = e.value.trim();
+      if (v.isEmpty) continue;
+      counts[v] = e.count;
+      if (!cats.contains(v)) cats.add(v);
+    }
     final String? v = await EditDialogs.category(
       context,
       initial: t.category ?? '',
       candidates: cats,
+      serverCandidates: List<String>.of(_ctrl.catalogCategories),
+      counts: counts,
     );
     if (v == null) return;
     AppLog.instance.act('种子详情', '编辑[${S.fieldCategory}]', target: t.name);
@@ -1344,8 +1354,12 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   }
 
   Future<void> _editTags(Torrent t) async {
-    final List<String> cand =
-        _ctrl.facets(FilterDim.tags).map((FacetEntry e) => e.value).toList();
+    await _ctrl.loadCatalog();
+    if (!mounted) return;
+    final List<String> cand = List<String>.of(_ctrl.catalogTags);
+    for (final FacetEntry e in _ctrl.facets(FilterDim.tags)) {
+      if (e.value != '未标记' && !cand.contains(e.value)) cand.add(e.value);
+    }
     final TagEditResult? r = await EditDialogs.tags(
       context,
       initial: t.tagList,

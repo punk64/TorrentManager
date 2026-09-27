@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -238,8 +239,8 @@ void main() {
         (WidgetTester tester) async {
       await pump(tester, width: 400, server: _qb());
 
-      expect(find.byType(Switch), findsNWidgets(4),
-          reason: '第 101 轮：4 个开关改为大格 _bigSwitchCell（真实 Switch）');
+      expect(find.byType(CupertinoSwitch), findsNWidgets(4),
+          reason: '第 107 轮：开关改 CupertinoSwitch（圆润，不再拉伸变形）');
 
       final double y1 = tester.getCenter(find.text(S.swForceStart)).dy;
       final double y2 = tester.getCenter(find.text(S.swSequential)).dy;

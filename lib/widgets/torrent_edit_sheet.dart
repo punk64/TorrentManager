@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -55,6 +57,12 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
   bool _submitting = false;
   String? _result;
 
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_ctrl.loadCatalog());
+  }
+
   List<Torrent> get _picked => _ctrl.items
       .where((Torrent t) => widget.hashes.contains(t.hash))
       .toList();
@@ -74,26 +82,39 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
   }
 
   Future<void> _pickCategory() async {
-    final List<String> cats =
-        _ctrl.facets(FilterDim.category).map((FacetEntry e) => e.value).toList();
+    final List<String> cats = List<String>.of(_ctrl.catalogCategories);
+    final Map<String, int> counts = <String, int>{};
+    for (final FacetEntry e in _ctrl.facets(FilterDim.category)) {
+      final String v = e.value.trim();
+      if (v.isEmpty) continue;
+      counts[v] = e.count;
+      if (!cats.contains(v)) cats.add(v);
+    }
     final String? v = await EditDialogs.category(
       context,
       initial: '',
       candidates: cats,
+      serverCandidates: List<String>.of(_ctrl.catalogCategories),
+      counts: counts,
     );
     if (v == null) return;
     setState(() => _category = v);
   }
 
   Future<void> _pickTags() async {
-    final Set<String> cand = <String>{};
+    final List<String> cand = List<String>.of(_ctrl.catalogTags);
+    for (final FacetEntry e in _ctrl.facets(FilterDim.tags)) {
+      if (e.value != '未标记' && !cand.contains(e.value)) cand.add(e.value);
+    }
     for (final Torrent t in _picked) {
-      cand.addAll(t.tagList);
+      for (final String g in t.tagList) {
+        if (!cand.contains(g)) cand.add(g);
+      }
     }
     final TagEditResult? r = await EditDialogs.tags(
       context,
       initial: <String>[],
-      candidates: cand.toList(),
+      candidates: cand,
       showAppendSwitch: true,
     );
     if (r == null) return;
@@ -108,11 +129,13 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     final String initial = _picked.isNotEmpty
         ? (_picked.first.savePath ?? '')
         : '';
-    final List<PathCandidate> cands = <PathCandidate>[
-      for (final FacetEntry e in _ctrl.facets(FilterDim.path))
-        if (e.value.trim().startsWith('/'))
-          PathCandidate(e.value.trim(), '种子 ×${e.count}'),
-    ];
+    final List<PathCandidate> cands = PathCandidates.build(
+      defaultPath: _ctrl.defaultSavePath,
+      tempPath: _ctrl.tempSavePath,
+      categoryPaths: _ctrl.categoryPaths,
+      current: initial,
+      seedPaths: _ctrl.seedPathCounts,
+    );
     final PathEditResult? r = await EditDialogs.path(
       context,
       initial: initial,

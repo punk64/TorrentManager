@@ -1854,19 +1854,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   }
 
   List<PathCandidate> _pathCandidates() {
-    final List<PathCandidate> out = <PathCandidate>[];
-    if (_savePath.text.trim().isNotEmpty) {
-      out.add(PathCandidate(_savePath.text.trim(), '默认保存路径'));
-    }
-    if (_tempPath.text.trim().isNotEmpty) {
-      out.add(PathCandidate(_tempPath.text.trim(), '临时路径'));
-    }
     final TorrentController tc = Get.find<TorrentController>();
-    for (final FacetEntry e in tc.facets(FilterDim.path)) {
-      final String v = e.value.trim();
-      if (v.startsWith('/')) out.add(PathCandidate(v, '种子 ×${e.count}'));
-    }
-    return out;
+    return PathCandidates.build(
+      defaultPath: _savePath.text,
+      tempPath: _tempPath.text,
+      categoryPaths: tc.categoryPaths,
+      seedPaths: tc.seedPathCounts,
+    );
   }
 
   String _onOffLabel(bool v) => v ? S.stateEnabled : S.stateDisabled;

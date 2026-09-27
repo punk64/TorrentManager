@@ -898,6 +898,8 @@ class EditActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 首行对齐：文字加统一顶距、按钮 30 高顶对齐 ⇒ 单行时三者中线一致，
+    // 值换到 2 行时「修改」按钮仍与首行文字平齐（center 方案会悬在两行中间）
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -905,10 +907,23 @@ class EditActionRow extends StatelessWidget {
         children: <Widget>[
           SizedBox(
             width: af(context, 88),
-            child: Text(label, style: TextStyle(fontSize: af(context, 11))),
+            child: Padding(
+              padding: EdgeInsets.only(top: af(context, 7)),
+              child: Text(label, style: TextStyle(fontSize: af(context, 11))),
+            ),
           ),
           Expanded(
-            child: SelectableText(value, style: TextStyle(fontSize: af(context, 11))),
+            child: Padding(
+              padding: EdgeInsets.only(top: af(context, 7)),
+              child: SelectableText(
+                value,
+                // minLines 必须显式给 1：RenderEditable 的高度按 maxLines 计算，
+                // 只给 maxLines:2 时单行值也占 2 行高，文字下坠半行与按钮错位
+                minLines: 1,
+                maxLines: 2,
+                style: TextStyle(fontSize: af(context, 11)),
+              ),
+            ),
           ),
           const SizedBox(width: 6),
           SizedBox(
@@ -948,6 +963,7 @@ class TagEditor extends StatefulWidget {
 class _TagEditorState extends State<TagEditor> {
   late final TextEditingController _c;
   late List<String> _tags;
+  String _query = '';
 
   @override
   void initState() {
@@ -1000,9 +1016,10 @@ class _TagEditorState extends State<TagEditor> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final String q = _query.trim().toLowerCase();
     final List<String> spare = widget.candidates
         .where((String e) => !_tags.contains(e))
-        .take(12)
+        .where((String e) => q.isEmpty || e.toLowerCase().contains(q))
         .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1040,6 +1057,7 @@ class _TagEditorState extends State<TagEditor> {
                     borderSide: BorderSide(color: cs.outlineVariant),
                   ),
                 ),
+                onChanged: (String v) => setState(() => _query = v),
                 onSubmitted: _add,
               ),
             ),
@@ -1054,19 +1072,55 @@ class _TagEditorState extends State<TagEditor> {
             ),
           ],
         ),
+        SizedBox(height: af(context, 6)),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                '${S.tagCatalogCount(widget.candidates.length)}'
+                ' · ${S.selectedCount(_tags.length)}',
+                style: TextStyle(
+                    fontSize: af(context, 9.5), color: cs.onSurfaceVariant),
+              ),
+            ),
+            if (_tags.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  setState(_tags.clear);
+                  _emit();
+                },
+                child: Text(S.logFilterReset,
+                    style:
+                        TextStyle(fontSize: af(context, 10), color: cs.error)),
+              ),
+          ],
+        ),
         if (spare.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            children: <Widget>[
-              for (final String t in spare)
-                ActionChip(
-                  label: Text(t, style: TextStyle(fontSize: af(context, 10))),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onPressed: () => _add(t),
-                ),
-            ],
+          SizedBox(height: af(context, 4)),
+          Container(
+            constraints: BoxConstraints(maxHeight: af(context, 220)),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+              border:
+                  Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(af(context, 8)),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: <Widget>[
+                  for (final String t in spare)
+                    ActionChip(
+                      label: Text(t, style: TextStyle(fontSize: af(context, 10))),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onPressed: () => _add(t),
+                    ),
+                ],
+              ),
+            ),
           ),
         ],
       ],
@@ -1190,49 +1244,23 @@ class EditDialogs {
     BuildContext context, {
     required String initial,
     required List<String> candidates,
+    List<String> serverCandidates = const <String>[],
+    Map<String, int> counts = const <String, int>{},
   }) async {
-    final TextEditingController c = TextEditingController();
     String? picked = initial;
     bool ok = false;
     await showDialog<void>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text(S.editCategoryTitle, style: TextStyle(fontSize: af(context, 14))),
-        content: StatefulBuilder(
-          builder: (BuildContext ctx2, StateSetter set) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Wrap(
-                spacing: 6,
-                children: <Widget>[
-                  for (final String name in <String>['', ...candidates])
-                    ChoiceChip(
-                      label: Text(
-                        name.isEmpty ? S.editCategoryNone : name,
-                        style: TextStyle(fontSize: af(context, 10)),
-                      ),
-                      selected: picked == name,
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      onSelected: (_) => set(() => picked = name),
-                    ),
-                ],
-              ),
-              SizedBox(height: af(context, 8)),
-              TextField(
-                controller: c,
-                style: TextStyle(fontSize: af(context, 12)),
-                decoration: InputDecoration(
-                  isDense: true,
-                  labelText: S.editCategoryNew,
-                  labelStyle: TextStyle(fontSize: af(context, 11)),
-                ),
-                onChanged: (String v) {
-                  final String t = v.trim();
-                  if (t.isNotEmpty) set(() => picked = t);
-                },
-              ),
-            ],
+        content: SizedBox(
+          width: double.maxFinite,
+          child: _CategoryPicker(
+            initial: initial,
+            candidates: candidates,
+            serverCandidates: serverCandidates,
+            counts: counts,
+            onPicked: (String v) => picked = v,
           ),
         ),
         actions: <Widget>[
@@ -1329,6 +1357,185 @@ class TagEditResult {
   final List<String> tags;
 
   final bool append;
+}
+
+class _CategoryPicker extends StatefulWidget {
+  const _CategoryPicker({
+    required this.initial,
+    required this.candidates,
+    required this.serverCandidates,
+    required this.counts,
+    required this.onPicked,
+  });
+
+  final String initial;
+
+  final List<String> candidates;
+
+  final List<String> serverCandidates;
+
+  final Map<String, int> counts;
+
+  final ValueChanged<String> onPicked;
+
+  @override
+  State<_CategoryPicker> createState() => _CategoryPickerState();
+}
+
+class _CategoryPickerState extends State<_CategoryPicker> {
+  late final TextEditingController _c;
+  late String _picked;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _c = TextEditingController();
+    _picked = widget.initial;
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  List<String> get _visible {
+    final String q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.candidates;
+    return widget.candidates
+        .where((String e) => e.toLowerCase().contains(q))
+        .toList();
+  }
+
+  Widget _badge(String text, Color color) => Container(
+        padding:
+            EdgeInsets.symmetric(horizontal: af(context, 6), vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child:
+            Text(text, style: TextStyle(fontSize: af(context, 9), color: color)),
+      );
+
+  Widget _row(String name) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final bool on = _picked == name;
+    final int? n = widget.counts[name];
+    final bool fromServer = widget.serverCandidates.contains(name);
+    return InkWell(
+      onTap: () {
+        setState(() => _picked = name);
+        widget.onPicked(name);
+      },
+      child: Container(
+        padding:
+            EdgeInsets.symmetric(horizontal: af(context, 10), vertical: af(context, 8)),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom:
+                BorderSide(color: cs.outlineVariant.withValues(alpha: 0.35)),
+          ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                name.isEmpty ? S.editCategoryNone : name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: af(context, 11.5),
+                  color: on ? cs.primary : cs.onSurface,
+                  fontWeight: on ? FontWeight.w700 : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (name.isNotEmpty) ...<Widget>[
+              SizedBox(width: af(context, 6)),
+              _badge(fromServer ? '下载器' : '列表',
+                  fromServer ? cs.tertiary : cs.outline),
+            ],
+            if (n != null) ...<Widget>[
+              SizedBox(width: af(context, 6)),
+              Text('种子 ×$n',
+                  style: TextStyle(
+                      fontSize: af(context, 9), color: cs.onSurfaceVariant)),
+            ],
+            if (on) ...<Widget>[
+              SizedBox(width: af(context, 6)),
+              Icon(Icons.check, size: af(context, 16), color: cs.primary),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String q = _query.trim();
+    final bool canCreate = q.isNotEmpty && !widget.candidates.contains(q);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        TextField(
+          controller: _c,
+          style: TextStyle(fontSize: af(context, 12)),
+          decoration: InputDecoration(
+            isDense: true,
+            prefixIcon: Icon(Icons.search, size: af(context, 16)),
+            labelText: S.editCategoryNew,
+            hintText: S.search,
+            labelStyle: TextStyle(fontSize: af(context, 11)),
+            hintStyle: TextStyle(fontSize: af(context, 11)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: cs.outlineVariant),
+            ),
+          ),
+          onChanged: (String v) {
+            setState(() {
+              _query = v;
+              if (v.trim().isNotEmpty) _picked = v.trim();
+            });
+            if (v.trim().isNotEmpty) widget.onPicked(v.trim());
+          },
+        ),
+        if (canCreate) ...<Widget>[
+          SizedBox(height: af(context, 6)),
+          Chip(
+            label: Text('新建「$q」',
+                style:
+                    TextStyle(fontSize: af(context, 10), color: cs.onPrimary)),
+            backgroundColor: cs.primary,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ],
+        SizedBox(height: af(context, 8)),
+        Container(
+          height: af(context, 264),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(AppTheme.radiusTiny),
+            border:
+                Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
+          ),
+          child: ListView(
+            children: <Widget>[
+              _row(''),
+              for (final String name in _visible)
+                if (name.isNotEmpty) _row(name),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class EditLayout {

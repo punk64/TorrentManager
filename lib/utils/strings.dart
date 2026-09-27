@@ -51,10 +51,16 @@ class S {
   static String get fieldCount => L.t('种子数量');
   static String get statsLoading => L.t('数据加载中...');
   static String get fieldTags => L.t('种子标签');
+
+  static String tagCatalogCount(int n) => L.pick('共 $n 个标签', '$n tags');
   static String get fieldCategory => L.t('种子分类');
   static String get fieldSiteName => L.t('站点名称');
   static String get fieldRatio => L.t('分享比率');
   static String get fieldSeeders => L.t('做种人数');
+
+  static String get swarmSeedsLabel => L.pick('种子', 'Seeds');
+
+  static String get swarmUsersLabel => L.pick('用户', 'Users');
   static String get fieldLeechers => L.t('下载人数');
   static String get fieldEta => L.t('剩余时间');
   static String get fieldActiveTime => L.t('活动时间');

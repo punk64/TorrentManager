@@ -281,9 +281,9 @@ void main() {
       expect(row1, isNot(contains('hdcity.com')),
           reason: '★ 列表里只列**其它**辅种，当前这条不该出现');
 
-      expect(row1, contains(S.fieldSeeders), reason: '★ 做种人数与站点同行');
-      expect(row1, contains('88/7'),
-          reason: '★ 人数口径与卡片一致（`做种/下载(连接)`）');
+      expect(row1, contains('种子 12(-)'), reason: '★ 第 106 轮：种子口径 = 总做种(连接做种)');
+      expect(row1, contains('用户 3(-)'),
+          reason: '★ 第 106 轮：用户口径 = 总下载(连接下载)，与站点同行');
       expect(row1, contains(Formatter.setStatus('seeding')),
           reason: '★ 种子状态与站点同行');
 

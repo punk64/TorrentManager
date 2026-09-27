@@ -40,6 +40,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
   bool _selecting = false;
 
+  bool _cardsCollapsed = false;
+
   bool _deleteArmed = false;
 
   Timer? _deleteArmTimer;
@@ -64,6 +66,13 @@ class _TorrentListPageState extends State<TorrentListPage> {
   @override
   void initState() {
     super.initState();
+
+    Formatter.getGlobalData('torrentmanager.torrentCardsCollapsed')
+        .then((Object? v) {
+      if (!mounted) return;
+      _cardsCollapsed = v == true;
+      setState(() {});
+    });
 
     ctrl.setListVisible(true);
 
@@ -188,6 +197,20 @@ class _TorrentListPageState extends State<TorrentListPage> {
 
               actions: <Widget>[
                 if (!_selecting) ...<Widget>[
+                  IconButton(
+                    icon: Icon(
+                        _cardsCollapsed
+                            ? Icons.unfold_more
+                            : Icons.unfold_less,
+                        size: AppTheme.iconSize),
+                    tooltip: _cardsCollapsed ? '展开卡片' : '折叠卡片',
+                    onPressed: () {
+                      setState(() => _cardsCollapsed = !_cardsCollapsed);
+                      Formatter.saveGlobalData(
+                          'torrentmanager.torrentCardsCollapsed',
+                          _cardsCollapsed);
+                    },
+                  ),
                   Obx(
                     () => IconButton(
                       icon: Icon(
@@ -984,7 +1007,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 Expanded(
                                   child: Text(
                                     t.name,
-                                    maxLines: 2,
+                                    maxLines: _cardsCollapsed ? 1 : 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: af(context, 13),
@@ -995,33 +1018,35 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 7),
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(2.5),
-                                    child: LinearProgressIndicator(
-                                      value: t.progress.clamp(0, 1),
-                                      minHeight: 5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Formatter.setStatusColor(t.state, cs)),
-                                      backgroundColor:
-                                          cs.surfaceContainerHighest,
+                            if (!_cardsCollapsed) ...<Widget>[
+                              const SizedBox(height: 7),
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(2.5),
+                                      child: LinearProgressIndicator(
+                                        value: t.progress.clamp(0, 1),
+                                        minHeight: 5,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                            Formatter.setStatusColor(t.state, cs)),
+                                        backgroundColor:
+                                            cs.surfaceContainerHighest,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  Formatter.setProgress(t.progress),
-                                  style: TextStyle(
-                                    fontSize: af(context, 12),
-                                    fontWeight: FontWeight.w800,
-                                    color: Formatter.setStatusColor(t.state, cs),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    Formatter.setProgress(t.progress),
+                                    style: TextStyle(
+                                      fontSize: af(context, 12),
+                                      fontWeight: FontWeight.w800,
+                                      color: Formatter.setStatusColor(t.state, cs),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 7),
                             Row(
                               children: <Widget>[
@@ -1054,6 +1079,14 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                         color: cs.secondary),
                                   ),
                                 ),
+                                if (_cardsCollapsed &&
+                                    _tagChips(t).isNotEmpty) ...<Widget>[
+                                  SizedBox(width: af(context, 8)),
+                                  Flexible(
+                                    flex: 2,
+                                    child: _collapsedTagChips(t),
+                                  ),
+                                ],
                                 const Spacer(),
                                 Icon(Icons.hourglass_bottom,
                                     size: af(context, 11),
@@ -1067,100 +1100,107 @@ class _TorrentListPageState extends State<TorrentListPage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Text.rich(
-                              TextSpan(
-                                style: TextStyle(
-                                    fontSize: af(context, 10),
-                                    color: cs.onSurfaceVariant),
-                                children: <InlineSpan>[
-                                  TextSpan(
-                                    text:
-                                        '${Formatter.setSize(t.downloaded)} / ${Formatter.setSize(t.newSize)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          cs.onSurface.withValues(alpha: 0.92),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text:
-                                        '　·　${S.fieldRatio} ${Formatter.setRatio(t.ratio)}'
-                                        '　·　${S.fieldRemaining} ${Formatter.setSize(t.amountLeft)}',
-                                  ),
-                                ],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: <Widget>[
-                                Icon(Icons.groups,
-                                    size: af(context, 11),
-                                    color: cs.onSurfaceVariant),
-                                const SizedBox(width: 3),
-                                Flexible(
-                                  child: Text(
-                                    '${S.fieldSeeders} '
-                                    '${Formatter.getSeederCount(t.numSeeds, t.numLeechs, t.transferPeers)}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        fontSize: af(context, 10),
+                            if (!_cardsCollapsed) ...<Widget>[
+                              const SizedBox(height: 6),
+                              Text.rich(
+                                TextSpan(
+                                  style: TextStyle(
+                                      fontSize: af(context, 10),
+                                      color: cs.onSurfaceVariant),
+                                  children: <InlineSpan>[
+                                    TextSpan(
+                                      text:
+                                          '${Formatter.setSize(t.downloaded)} / ${Formatter.setSize(t.newSize)}',
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        color: cs.onSurfaceVariant),
-                                  ),
+                                        color: cs.onSurface
+                                            .withValues(alpha: 0.92),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text:
+                                          '　·　${S.fieldRatio} ${Formatter.setRatio(t.ratio)}'
+                                          '　·　${S.fieldRemaining} ${Formatter.setSize(t.amountLeft)}',
+                                    ),
+                                  ],
                                 ),
-                                if (_siteHost(t).isNotEmpty) ...<Widget>[
-                                  const SizedBox(width: 8),
-                                  Icon(Icons.language,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                            if (!_cardsCollapsed) ...<Widget>[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: <Widget>[
+                                  Icon(Icons.groups,
                                       size: af(context, 11),
                                       color: cs.onSurfaceVariant),
                                   const SizedBox(width: 3),
                                   Flexible(
                                     child: Text(
-                                      ctrl.siteMasked.value
-                                          ? Formatter.maskSite(_siteHost(t))
-                                          : _siteHost(t),
+                                      '${S.swarmSeedsLabel} ${t.seederPair}'
+                                      ' ${S.swarmUsersLabel} ${t.leecherPair}',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                           fontSize: af(context, 10),
+                                          fontWeight: FontWeight.w600,
                                           color: cs.onSurfaceVariant),
                                     ),
                                   ),
-                                ],
-                                const Spacer(),
-                                Text(
-                                  Formatter.setStatus(t.state),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: af(context, 10),
-                                    fontWeight: FontWeight.w700,
-                                    color: Formatter.setStatusColor(t.state, cs),
+                                  if (_siteHost(t).isNotEmpty) ...<Widget>[
+                                    const SizedBox(width: 8),
+                                    Icon(Icons.language,
+                                        size: af(context, 11),
+                                        color: cs.onSurfaceVariant),
+                                    const SizedBox(width: 3),
+                                    Flexible(
+                                      child: Text(
+                                        ctrl.siteMasked.value
+                                            ? Formatter.maskSite(_siteHost(t))
+                                            : _siteHost(t),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: af(context, 10),
+                                            color: cs.onSurfaceVariant),
+                                      ),
+                                    ),
+                                  ],
+                                  const Spacer(),
+                                  Text(
+                                    Formatter.setStatus(t.state),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: af(context, 10),
+                                      fontWeight: FontWeight.w700,
+                                      color:
+                                          Formatter.setStatusColor(t.state, cs),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            if (t.downloaded > 0 ||
-                                t.uploaded > 0 ||
-                                _catChips(t).isNotEmpty ||
-                                _tagChips(t).isNotEmpty) ...<Widget>[
+                                ],
+                              ),
+                            ],
+                            if (!_cardsCollapsed &&
+                                (t.downloaded > 0 ||
+                                    t.uploaded > 0 ||
+                                    _catChips(t).isNotEmpty ||
+                                    _tagChips(t).isNotEmpty)) ...<Widget>[
                               const SizedBox(height: 7),
                               Wrap(
                                 spacing: 4,
                                 runSpacing: 3,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: <Widget>[
-                                  if (t.downloaded > 0 || t.uploaded > 0)
+                                  if (!_cardsCollapsed &&
+                                      (t.downloaded > 0 || t.uploaded > 0))
                                     DiskIoChip(
                                       written: t.downloaded,
                                       read: t.uploaded,
                                       compact: true,
                                     ),
-                                  ..._catChips(t),
+                                  if (!_cardsCollapsed) ..._catChips(t),
                                   ..._tagChips(t),
                                 ],
                               ),
@@ -1269,6 +1309,27 @@ class _TorrentListPageState extends State<TorrentListPage> {
           bg: cs.tertiaryContainer.withValues(alpha: 0.55),
         ),
     ];
+  }
+
+  /// 折叠态：标签徽章并入速度行（速度之后、剩余时间之前），单行放不下的
+  /// 徽章整枚掉出裁剪窗口，不做半枚竖切
+  Widget _collapsedTagChips(Torrent t) {
+    final List<Widget> chips = _tagChips(t);
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return ClipRect(
+      child: SizedBox(
+        height: af(context, 16),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 3,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: chips,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _chip({
@@ -1391,8 +1452,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       line('${S.fieldSiteShort} ${site.isEmpty ? '-' : site}'
-                          ' · ${S.fieldSeeders} '
-                          '${Formatter.getSeederCount(s.numComplete, s.numIncomplete, s.transferPeers)}'
+                          ' · ${S.swarmSeedsLabel} ${s.seederPair}'
+                          ' ${S.swarmUsersLabel} ${s.leecherPair}'
                           ' · ${Formatter.setStatus(s.state)}'),
                       line('${Formatter.setSize(s.size)}'
                           ' · ${S.fieldRatioShort} ${Formatter.setRatio(s.ratio)}'

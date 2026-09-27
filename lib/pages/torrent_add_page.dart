@@ -96,18 +96,23 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       context: context,
       showDragHandle: true,
       builder: (BuildContext ctx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: <Widget>[
-            for (final String c in _categories)
-              ListTile(
-                dense: true,
-                title: Text(c, style: TextStyle(fontSize: af(ctx, 12.5))),
-                trailing:
-                    c == _category.text ? Icon(Icons.check, size: af(ctx, 16)) : null,
-                onTap: () => Navigator.of(ctx).pop(c),
-              ),
-          ],
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+              af(ctx, 14), af(ctx, 4), af(ctx, 14), af(ctx, 14)),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: <Widget>[
+              for (final String c in _categories)
+                ChoiceChip(
+                  label: Text(c, style: TextStyle(fontSize: af(ctx, 11))),
+                  selected: c == _category.text.trim(),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onSelected: (bool v) => Navigator.of(ctx).pop(v ? c : ''),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -278,13 +283,54 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   }
 
   List<PathCandidate> _pathCandidates() {
-    final List<PathCandidate> out = <PathCandidate>[];
     final TorrentController tc = Get.find<TorrentController>();
-    for (final FacetEntry e in tc.facets(FilterDim.path)) {
-      final String v = e.value.trim();
-      if (v.startsWith('/')) out.add(PathCandidate(v, '种子 ×${e.count}'));
-    }
-    return out;
+    return PathCandidates.build(
+      defaultPath: tc.defaultSavePath,
+      tempPath: tc.tempSavePath,
+      categoryPaths: tc.categoryPaths,
+      current: _savepath.text,
+      seedPaths: tc.seedPathCounts,
+    );
+  }
+
+  Widget _categoryRow(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final String cur = _category.text.trim();
+    return Padding(
+      padding: EdgeInsets.only(top: af(context, 8)),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: <Widget>[
+          for (final String c in _categories)
+            ChoiceChip(
+              label: Text(c, style: TextStyle(fontSize: af(context, 10.5))),
+              selected: cur == c,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onSelected: _busy
+                  ? null
+                  : (bool v) => setState(() => _category.text = v ? c : ''),
+            ),
+          OutlinedButton.icon(
+            icon: Icon(Icons.label_outline, size: af(context, 14)),
+            label: Text(
+              cur.isEmpty ? S.fieldCategory : '${S.fieldCategory} · $cur',
+              style: TextStyle(fontSize: af(context, 10.5)),
+            ),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.symmetric(horizontal: af(context, 8)),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: TextStyle(fontSize: af(context, 10.5)),
+            ),
+            onPressed: _busy ? null : _pickCategory,
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -482,16 +528,10 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                           helperStyle: TextStyle(fontSize: af(context, 10)),
                           border: const OutlineInputBorder(),
                           isDense: true,
-                          suffixIcon: (isQb && _categories.isNotEmpty)
-                              ? IconButton(
-                                  icon: Icon(Icons.arrow_drop_down,
-                                      size: af(context, 20)),
-                                  tooltip: S.fieldCategory,
-                                  onPressed: _busy ? null : _pickCategory,
-                                )
-                              : null,
                         ),
                       ),
+
+                      if (isQb) _categoryRow(context),
 
                       if (isQb) _tagRow(context),
 
