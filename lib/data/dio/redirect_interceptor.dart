@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-
 import '../../utils/strings.dart';
+
 
 class RedirectInterceptor extends Interceptor {
   RedirectInterceptor({this.dio, this.maxHops = 3});
@@ -51,8 +51,7 @@ class RedirectInterceptor extends Interceptor {
           requestOptions: ro,
           response: response,
           type: DioExceptionType.badResponse,
-          message: '拒绝跨主机重定向（${from.host} → ${to.host}）：'
-              '会话凭据不会转发到其它主机',
+          message: S.redirectRejected(from.host, to.host),
         ),
         true,
       );

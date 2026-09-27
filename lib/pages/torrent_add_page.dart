@@ -14,6 +14,7 @@ import '../utils/add_batch.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import '../widgets/torrent_edit_fields.dart';
@@ -77,7 +78,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     if (!mounted) return;
     final List<String> tags = List<String>.of(tc.catalogTags);
     for (final FacetEntry e in tc.facets(FilterDim.tags)) {
-      if (e.value != '未标记' && !tags.contains(e.value)) tags.add(e.value);
+      if (e.value != L.t('未标记') && !tags.contains(e.value)) tags.add(e.value);
     }
     setState(() {
       _categories
@@ -444,10 +445,10 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     if (!mounted || r.isEmpty) return;
 
     if (r.allOk) {
-      UiDialogs.showToast('${S.tAdded}${r.succeeded.length} 个');
+      UiDialogs.showToast('${S.tAdded}${L.pick('${r.succeeded.length} 个', '${r.succeeded.length}')}');
 
       AppLog.instance.op(
-          '${_mode == _AddMode.url ? '添加种子（链接' : '添加种子（文件'} ${r.succeeded.length} 条）：'
+          '${_mode == _AddMode.url ? L.pick('添加种子（链接', 'Torrents added (URL'): L.pick('添加种子（文件', 'Torrents added (file')} ${L.pick('${r.succeeded.length} 条', '${r.succeeded.length}')}）：'
           '${r.succeeded.map(shortLabel).join(' / ')}',
           scope: ctrl.current.value?.logScope);
       Get.back<void>();
@@ -456,12 +457,13 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
 
     setState(() => _result = r);
     UiDialogs.showToast(
-      '${S.tAddBatchPartial}：${S.tAdded}${r.succeeded.length} 个，'
-      '${S.tAddFailed} ${r.failed.length} 个',
+      '${S.tAddBatchPartial}：${S.tAdded}${L.pick('${r.succeeded.length} 个', '${r.succeeded.length}')}，'
+      '${S.tAddFailed} ${L.pick('${r.failed.length} 个', '${r.failed.length}')}',
       isError: true,
     );
-    AppLog.instance.op('添加种子部分失败：成功 ${r.succeeded.length} 条，'
-        '失败 ${r.failed.length} 条 —— '
+    AppLog.instance.op(
+        '${L.pick('添加种子部分失败：成功 ${r.succeeded.length} 条，失败 ${r.failed.length} 条 —— ', 'Partial add failure: ${r.succeeded.length} ok, ${r.failed.length} failed — ')}'
+        ''
         '${r.failed.map((AddBatchFailure f) => '${shortLabel(f.label)}(${f.reason})').join(' / ')}',
         scope: ctrl.current.value?.logScope);
   }
@@ -478,7 +480,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('添加种子', style: TextStyle(fontSize: af(context, 15))),
+        title: Text(L.t('添加种子'), style: TextStyle(fontSize: af(context, 15))),
       ),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
@@ -491,12 +493,12 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               ButtonSegment<_AddMode>(
                 value: _AddMode.url,
                 icon: const Icon(Icons.add_link, size: AppTheme.iconSize),
-                label: Text('种子链接', style: TextStyle(fontSize: af(context, 11))),
+                label: Text(L.t('种子链接'), style: TextStyle(fontSize: af(context, 11))),
               ),
               ButtonSegment<_AddMode>(
                 value: _AddMode.file,
                 icon: const Icon(Icons.upload_file, size: AppTheme.iconSize),
-                label: Text('种子文件', style: TextStyle(fontSize: af(context, 11))),
+                label: Text(L.t('种子文件'), style: TextStyle(fontSize: af(context, 11))),
               ),
             ],
             selected: <_AddMode>{_mode},
@@ -516,14 +518,14 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 EditSectionCard(
-                  title: '目标',
+                  title: L.t('目标'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       PathDropdownField(
                         controller: _savepath,
                         candidates: _pathCandidates(),
-                        label: isQb ? '保存路径（可选）' : '下载目录（可选）',
+                        label: isQb ? L.t('保存路径（可选）') : L.t('下载目录（可选）'),
                       ),
                       SizedBox(height: af(context, 8)),
 
@@ -533,7 +535,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                         buildCounter: AppTheme.noCounter,
                         style: TextStyle(fontSize: af(context, 12)),
                         decoration: InputDecoration(
-                          labelText: isQb ? '分类（可选）' : S.addLabelOptional,
+                          labelText: isQb ? L.t('分类（可选）') : S.addLabelOptional,
                           labelStyle: TextStyle(fontSize: af(context, 12)),
                           helperText: isQb ? S.setCategoryHelp : S.addLabelHelp,
                           helperStyle: TextStyle(fontSize: af(context, 10)),
@@ -677,8 +679,8 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   Widget _urlsCard(BuildContext context) {
     final int count = parseUrlLines(_urls.text).length;
     return EditSectionCard(
-      title: '来源',
-      tail: count > 0 ? '已识别 $count 条' : null,
+      title: L.t('来源'),
+      tail: count > 0 ? L.pick('已识别 $count 条', '$count recognized') : null,
       child: TextField(
         controller: _urls,
         maxLength: AppTheme.maxLenUrls,
@@ -688,7 +690,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         style: TextStyle(fontSize: af(context, 12)),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
-          labelText: '磁力链接 / 种子链接',
+          labelText: L.t('磁力链接 / 种子链接'),
           labelStyle: TextStyle(fontSize: af(context, 12)),
           hintText: 'magnet:?xt=urn:btih:...',
           helperText: S.setAddNewLineHelp,
@@ -702,8 +704,8 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
 
   Widget _filesCard(BuildContext context) {
     return EditSectionCard(
-      title: '来源',
-      tail: _files.isEmpty ? null : '已选 ${_files.length} 个',
+      title: L.t('来源'),
+      tail: _files.isEmpty ? null : L.pick('已选 ${_files.length} 个', '${_files.length} selected'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -720,7 +722,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   minimumSize: Size(0, af(context, 28)),
                 ),
                 child:
-                    Text('清空', style: TextStyle(fontSize: af(context, 11))),
+                    Text(L.t('清空'), style: TextStyle(fontSize: af(context, 11))),
               ),
             ),
             _fileList(context),
@@ -750,7 +752,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                   size: af(context, 22), color: cs.primary),
               SizedBox(height: af(context, 5)),
               Text(
-                '点击选择 .torrent 文件',
+                L.t('点击选择 .torrent 文件'),
                 style: TextStyle(
                   fontSize: af(context, 12),
                   fontWeight: FontWeight.w600,
@@ -759,7 +761,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
               ),
               SizedBox(height: af(context, 2)),
               Text(
-                '支持一次多选，自动去重',
+                L.t('支持一次多选，自动去重'),
                 style: TextStyle(
                     fontSize: af(context, 10), color: cs.onSurfaceVariant),
               ),
@@ -870,7 +872,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
                       )
                     : const Icon(Icons.add, size: AppTheme.iconSize),
                 label: Text(
-                    _busy ? '${S.fieldUpdating} $_done/$_total' : '添加',
+                    _busy ? '${S.fieldUpdating} $_done/$_total' : L.t('添加'),
                     style: TextStyle(fontSize: af(context, 13))),
                 onPressed: _busy ? null : _submit,
               ),

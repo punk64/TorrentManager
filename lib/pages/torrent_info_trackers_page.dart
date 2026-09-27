@@ -9,6 +9,7 @@ import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -130,9 +131,9 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
                   SizedBox(width: af(context, 8)),
                   Expanded(
                     child: Text(
-                      '这是私有种子（Private Torrent）\n'
+                      L.t('这是私有种子（Private Torrent）\n'
                       '请保持 DHT / PEX / LSD 关闭 —— 它们会绕过 Tracker 广播本种子，'
-                      '可能导致 passkey 泄露并被站点封禁账号。',
+                      '可能导致 passkey 泄露并被站点封禁账号。'),
                       style: TextStyle(
                           fontSize: af(context, 10.5),
                           height: 1.4,
@@ -236,26 +237,26 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           Row(children: <Widget>[
             Container(width: 3, height: 12, color: cs.primary),
             SizedBox(width: af(context, 6)),
-            Text('DHT / PEX / LSD 说明',
+            Text(L.t('DHT / PEX / LSD 说明'),
                 style: TextStyle(
                     fontSize: af(context, 11),
                     fontWeight: FontWeight.w600,
                     color: cs.onSurface)),
             const Spacer(),
-            Text('仅 Transmission 显示为条目',
+            Text(L.t('仅 Transmission 显示为条目'),
                 style: TextStyle(
                     fontSize: af(context, 10),
                     color: cs.onSurfaceVariant)),
           ]),
           SizedBox(height: af(context, 6)),
-          tip('DHT', 'DHT · 分布式哈希表',
-              '无 Tracker 时也能通过 DHT 网络找到 Peer；私有种子必须关闭。',
+          tip('DHT', L.t('DHT · 分布式哈希表'),
+              L.t('无 Tracker 时也能通过 DHT 网络找到 Peer；私有种子必须关闭。'),
               cs.secondary),
-          tip('PEX', 'PEX · Peer 交换',
-              '与已连接的 Peer 互相交换彼此的 Peer 列表；私有种子必须关闭。',
+          tip('PEX', L.t('PEX · Peer 交换'),
+              L.t('与已连接的 Peer 互相交换彼此的 Peer 列表；私有种子必须关闭。'),
               cs.tertiary),
-          tip('LSD', 'LSD · 本地发现',
-              '在局域网内广播发现同一资源的设备；私有种子必须关闭。',
+          tip('LSD', L.t('LSD · 本地发现'),
+              L.t('在局域网内广播发现同一资源的设备；私有种子必须关闭。'),
               cs.primary),
         ],
       ),
@@ -279,12 +280,12 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
           Text(
-            '$realCount 个 Tracker',
+            L.pick('$realCount 个 Tracker', '$realCount trackers'),
             style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600),
           ),
           if (_badCount > 0)
             Text(
-              '· ⚠ $_badCount 个异常',
+              L.pick('· ⚠ $_badCount 个异常', '· ⚠ $_badCount errors'),
               style: TextStyle(fontSize: af(context, 11), color: cs.error, fontWeight: FontWeight.w600),
             ),
           for (final _TorrentSpecialEntry e in _specials)
@@ -323,7 +324,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           const SizedBox(width: 4),
           Text(
             priv
-                ? '${e.label} · 建议关闭'
+                ? L.pick('${e.label} · 建议关闭', '${e.label} · disable recommended')
                 : on && nodes > 0
                     ? '${e.label} $nodes'
                     : e.label,
@@ -361,7 +362,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
             const SizedBox(width: 4),
             Expanded(
               child: Text(
-                _showChart ? '收起分布图' : 'Tracker 分布图（做种 / 下载者对比）',
+                _showChart ? L.t('收起分布图') : L.t('Tracker 分布图（做种 / 下载者对比）'),
                 style: TextStyle(fontSize: af(context, 10.5), color: cs.onSurfaceVariant),
               ),
             ),
@@ -376,30 +377,30 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       final int st = (t['status'] as num?)?.toInt() ?? -1;
       switch (st) {
         case 2:
-          return (0, '工作中');
+          return (0, L.t('工作中'));
         case 3:
-          return (1, '更新中');
+          return (1, L.t('更新中'));
         case 4:
-          return (2, '不可用');
+          return (2, L.t('不可用'));
         case 1:
-          return (3, '未联系');
+          return (3, L.t('未联系'));
         case 0:
-          return (3, '未启用');
+          return (3, L.t('未启用'));
         default:
-          return (3, '未知');
+          return (3, L.t('未知'));
       }
     }
-    if (t['isBackup'] == true) return (3, '备用');
+    if (t['isBackup'] == true) return (3, L.t('备用'));
     final int st = (t['announceState'] as num?)?.toInt() ?? 0;
     switch (st) {
       case 3:
-        return (0, '活动中');
+        return (0, L.t('活动中'));
       case 2:
-        return (1, '排队');
+        return (1, L.t('排队'));
       case 1:
-        return (1, '等待');
+        return (1, L.t('等待'));
       default:
-        return (3, '未活动');
+        return (3, L.t('未活动'));
     }
   }
 
@@ -456,7 +457,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       final int next = (t['nextAnnounceTime'] as num?)?.toInt() ?? 0;
       if (next > 0 && level != 3 && t['isBackup'] != true) {
         final int diff = next - DateTime.now().millisecondsSinceEpoch ~/ 1000;
-        nextAnnounce = diff > 0 ? '下次汇报 $diff 秒后' : '下次汇报 等待中';
+        nextAnnounce = diff > 0 ? L.pick('下次汇报 $diff 秒后', 'Next announce in ${diff}s') : L.pick('下次汇报 等待中', 'Next announce pending');
       }
     }
 
@@ -507,10 +508,10 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
               spacing: 10,
               runSpacing: 3,
               children: <Widget>[
-                _stat('做种', '$seeds'),
-                _stat('下载者', '$leechs'),
-                _stat('已完成', '$downloaded'),
-                _stat('层级', '$tier'),
+                _stat(L.t('做种'), '$seeds'),
+                _stat(L.t('下载者'), '$leechs'),
+                _stat(L.t('已完成'), '$downloaded'),
+                _stat(L.t('层级'), '$tier'),
               ],
             ),
           ),
@@ -526,7 +527,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
                 const Spacer(),
                 if (errMsg == null && level == 0)
                   Text(
-                    isQb ? (t['msg']?.toString().isNotEmpty == true ? t['msg'].toString() : '成功 ✓') : '成功 ✓',
+                    isQb ? (t['msg']?.toString().isNotEmpty == true ? t['msg'].toString() : L.t('成功 ✓')) : L.t('成功 ✓'),
                     style: TextStyle(fontSize: af(context, 10), color: cs.outline),
                   ),
               ],
@@ -585,7 +586,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
             await Clipboard.setData(
               ClipboardData(text: Formatter.maskUrl(url)),
             );
-            UiDialogs.showToast('${S.trkCopied}（passkey 已打码）');
+            UiDialogs.showToast('${S.trkCopied}${L.pick('（passkey 已打码）', ' (passkey masked)')}');
             break;
           case 'edit':
             await _editTracker(context, ctrl, sc, url);
@@ -699,14 +700,12 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
         if (editing) {
           await sc.qb.editTracker(t.hash, original, result);
 
-          AppLog.instance.op('修改 Tracker：$original → ${_oneLine(result)}'
-              '（${t.name} · ${s.name}）',
+          AppLog.instance.op('${L.pick('修改 Tracker：$original → ${_oneLine(result)}', 'Tracker edited: $original → ${_oneLine(result)}')}（${t.name} · ${s.name}）',
               scope: s.logScope);
           UiDialogs.showToast('${S.trkEditOk}${t.name}');
         } else {
           await sc.qb.addTracker(t.hash, result);
-          AppLog.instance.op('添加 Tracker：${_oneLine(result)}'
-              '（${t.name} · ${s.name}）',
+          AppLog.instance.op('${L.pick('添加 Tracker：${_oneLine(result)}', 'Tracker added: ${_oneLine(result)}')}（${t.name} · ${s.name}）',
               scope: s.logScope);
           UiDialogs.showToast('${S.trkAddOk}${t.name}');
         }
@@ -728,8 +727,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           } else {
             await sc.tr.editTracker(<int>[t.trId!], tid, urls.first);
           }
-          AppLog.instance.op('修改 Tracker：$original → ${_oneLine(urls.first)}'
-              '（${t.name} · ${s.name}）',
+          AppLog.instance.op('${L.pick('修改 Tracker：$original → ${_oneLine(urls.first)}', 'Tracker edited: $original → ${_oneLine(urls.first)}')}（${t.name} · ${s.name}）',
               scope: s.logScope);
           UiDialogs.showToast('${S.trkEditOk}${t.name}');
         } else {
@@ -738,15 +736,15 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           } else {
             await sc.tr.addTrackers(<int>[t.trId!], urls);
           }
-          AppLog.instance.op('添加 Tracker：${_oneLine(result)}'
-              '（${t.name} · ${s.name}）',
+          AppLog.instance.op('${L.pick('添加 Tracker：${_oneLine(result)}', 'Tracker added: ${_oneLine(result)}')}（${t.name} · ${s.name}）',
               scope: s.logScope);
           UiDialogs.showToast('${S.trkAddOk}${t.name}');
         }
       }
       await ctrl.loadDetailData();
     } catch (e) {
-      AppLog.instance.error('Tracker 操作失败（${editing ? '修改' : '添加'}）：'
+      AppLog.instance.error(
+          '${L.pick('Tracker 操作失败（${editing ? '修改' : '添加'}）：', 'Tracker operation failed (${editing ? 'edit' : 'add'}): ')}'
           '${_oneLine(result)} · ${Formatter.safeErr(e)}',
           scope: s.logScope);
       UiDialogs.showToast('${S.trkParseFailed}${Formatter.safeErr(e)}', isError: true);
@@ -813,12 +811,12 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           await sc.tr.removeTracker(<int>[t.trId!], <int>[tid]);
         }
       }
-      AppLog.instance.op('删除 Tracker：$url（${t.name} · ${s.name}）',
+      AppLog.instance.op(L.pick('删除 Tracker：$url（${t.name} · ${s.name}）', 'Tracker removed: $url (${t.name} · ${s.name})'),
           scope: s.logScope);
       UiDialogs.showToast('${S.trkDelOk}${t.name}');
       await ctrl.loadDetailData();
     } catch (e) {
-      AppLog.instance.error('删除 Tracker 失败：$url · ${Formatter.safeErr(e)}',
+      AppLog.instance.error(L.pick('删除 Tracker 失败：$url · ${Formatter.safeErr(e)}', 'Failed to remove tracker $url · ${Formatter.safeErr(e)}'),
           scope: s.logScope);
       UiDialogs.showToast('${S.trkDelNotFound}$url', isError: true);
     }

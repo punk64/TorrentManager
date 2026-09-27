@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../utils/i18n.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -103,7 +104,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
   static const Color _dlBlue = Color(0xFF1A73E8);
   static const Color _ulGreen = Color(0xFF0F9D58);
 
-  static const String _kChecking = '校验中';
+  static String get _kChecking => L.t('校验中');
 
   @override
   Widget build(BuildContext context) {
@@ -307,9 +308,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           SizedBox(height: af(context, 10)),
           Row(
             children: <Widget>[
-              _metric('连接', t.activePeers < 0 ? '-' : '${t.activePeers}'),
-              _metric('做种', '${t.numComplete}'),
-              _metric('下载', '${t.numIncomplete}'),
+              _metric(L.t('连接'), t.activePeers < 0 ? '-' : '${t.activePeers}'),
+              _metric(L.t('做种'), '${t.numComplete}'),
+              _metric(L.t('下载'), '${t.numIncomplete}'),
               if (_ctrl.capabilities.isQb && t.availability > 0)
                 _metric(S.fieldHealth, '${(t.availability * 100).toStringAsFixed(0)}%',
                     valueColor: _ulGreen),
@@ -393,10 +394,10 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   String _syncHint() {
     final DateTime? at = _ctrl.detailSyncedAt.value;
-    if (at == null) return '正在获取…';
+    if (at == null) return L.t('正在获取…');
     final int sec = DateTime.now().difference(at).inSeconds;
-    if (sec <= 1) return '刚刚更新 · 每 3 秒自动刷新';
-    return '$sec 秒前更新 · 每 3 秒自动刷新';
+    if (sec <= 1) return L.pick('刚刚更新 · 每 3 秒自动刷新', 'Just updated · auto-refresh every 3s');
+    return L.pick('$sec 秒前更新 · 每 3 秒自动刷新', 'Updated ${sec}s ago · auto-refresh every 3s');
   }
 
   Widget _actionArea(Torrent t, {required bool running, required bool checking}) {
@@ -437,33 +438,33 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         Row(
           children: <Widget>[
             btn(
-              label: '继续',
+              label: L.t('继续'),
               icon: Icons.play_arrow,
               filled: true,
               onTap: (!running && !checking && !_busy)
                   ? () {
                       AppLog.instance
-                          .act('种子详情', '按钮[继续]', target: t.name);
-                      _run(t, _ctrl.resumeSelected, '已继续');
+                          .act('种子详情', L.t('按钮[继续]'), target: t.name);
+                      _run(t, _ctrl.resumeSelected, L.t('已继续'));
                     }
                   : null,
             ),
             gap(),
             btn(
-              label: '暂停',
+              label: L.t('暂停'),
               icon: Icons.pause,
               filled: true,
               onTap: (running && !checking && !_busy)
                   ? () {
                       AppLog.instance
-                          .act('种子详情', '按钮[暂停]', target: t.name);
-                      _run(t, _ctrl.pauseSelected, '已暂停');
+                          .act('种子详情', L.t('按钮[暂停]'), target: t.name);
+                      _run(t, _ctrl.pauseSelected, L.t('已暂停'));
                     }
                   : null,
             ),
             gap(),
             btn(
-              label: checking ? '$_kChecking…' : '重新校验',
+              label: checking ? '${L.t('校验中')}…' : L.t('重新校验'),
               icon: Icons.fact_check_outlined,
               onTap: (!checking && !_busy) ? () => _recheck(t) : null,
             ),
@@ -473,7 +474,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         Row(
           children: <Widget>[
             btn(
-              label: '重新汇报',
+              label: L.t('重新汇报'),
               icon: Icons.sync,
               onTap: _busy ? null : () => _reannounce(t),
             ),
@@ -589,7 +590,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         ReadonlyKvGrid(pairs: <List<String>>[
           <String>[S.fieldState, Formatter.setStatus(t.newState)],
           <String>[
-            '校验进度',
+            L.t('校验进度'),
             t.isChecking ? Formatter.setProgress(t.progress) : '—',
           ],
           <String>[S.fieldSize, Formatter.setSize(t.newSize)],
@@ -602,9 +603,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           <String>[S.fieldDownloaded, Formatter.setSize(t.downloaded)],
           <String>[S.fieldUploaded, Formatter.setSize(t.newUploaded)],
           if (sessionDl != null && sessionDl > 0)
-            <String>['本次会话 ↓', Formatter.setSize(sessionDl)],
+            <String>[L.t('本次会话 ↓'), Formatter.setSize(sessionDl)],
           if (sessionUp != null && sessionUp > 0)
-            <String>['本次会话 ↑', Formatter.setSize(sessionUp)],
+            <String>[L.t('本次会话 ↑'), Formatter.setSize(sessionUp)],
           <String>[
             S.fieldRemaining,
             t.amountLeft > 0 ? Formatter.setSize(t.amountLeft) : '—',
@@ -614,9 +615,9 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             t.wasted > 0 ? Formatter.setSize(t.wasted) : '—',
           ],
           if (desired != null && desired > 0)
-            <String>['可获取量', Formatter.setSize(desired)],
+            <String>[L.t('可获取量'), Formatter.setSize(desired)],
           if (webSeeds != null && webSeeds > 0)
-            <String>['Web 做种', '$webSeeds'],
+            <String>[L.t('Web 做种'), '$webSeeds'],
         ]),
         if (states != null) ...<Widget>[
           SizedBox(height: af(context, 10)),
@@ -625,16 +626,16 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           Row(
             children: <Widget>[
               Text(
-                '分块 ${pieceCount ?? states.length}'
+                '${L.pick('分块 ${pieceCount ?? states.length}', 'Pieces ${pieceCount ?? states.length}')}'
                 '${pieceSize != null && pieceSize > 0 ? ' × ${Formatter.setSize(pieceSize)}' : ''}',
                 style: TextStyle(fontSize: af(context, 9.5), fontWeight: FontWeight.w600),
               ),
               const Spacer(),
-              _legendCell(PieceHeatmap.cDone, '已完成'),
+              _legendCell(PieceHeatmap.cDone, L.t('已完成')),
               const SizedBox(width: 8),
-              _legendCell(PieceHeatmap.cActive, '下载中'),
+              _legendCell(PieceHeatmap.cActive, L.t('下载中')),
               const SizedBox(width: 8),
-              _legendCell(PieceHeatmap.cMissing, '空缺'),
+              _legendCell(PieceHeatmap.cMissing, L.t('空缺')),
             ],
           ),
         ],
@@ -704,11 +705,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
         if (trHonors) ...<Widget>[
           SizedBox(height: af(context, 4)),
           EditSwitchChip(
-            label: '遵循全局限速',
+            label: L.t('遵循全局限速'),
             value: _extraBool('honorsSessionLimits', true),
             onChanged: (bool v) => _apply(
               t,
-              '遵循全局限速',
+              L.t('遵循全局限速'),
               () => _ctrl.setHonorsLimitsOf(<String>[t.hash], v),
             ),
           ),
@@ -759,11 +760,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           child: Text(label, style: TextStyle(fontSize: af(context, 11))),
         ),
         const SizedBox(width: 4),
-        chip('跟随全局', -2, current < -1),
+        chip(L.t('跟随全局'), -2, current < -1),
         const SizedBox(width: 5),
-        chip('自定义', 0, customShown),
+        chip(L.t('自定义'), 0, customShown),
         const SizedBox(width: 5),
-        chip('不限制', -1, current == -1 && !customShown),
+        chip(L.t('不限制'), -1, current == -1 && !customShown),
         if (current >= 0 && !customShown) ...<Widget>[
           const SizedBox(width: 6),
           Expanded(
@@ -801,7 +802,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               children: <Widget>[
                 SizedBox(
                   width: af(context, 88),
-                  child: Text('内容路径', style: TextStyle(fontSize: af(context, 11))),
+                  child: Text(L.t('内容路径'), style: TextStyle(fontSize: af(context, 11))),
                 ),
                 Expanded(
                   child: SelectableText(t.contentPath!, style: TextStyle(fontSize: af(context, 11))),
@@ -826,10 +827,10 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             children: <Widget>[
               SizedBox(
                 width: af(context, 88),
-                child: Text('队列位置', style: TextStyle(fontSize: af(context, 11))),
+                child: Text(L.t('队列位置'), style: TextStyle(fontSize: af(context, 11))),
               ),
               Text(
-                cap.isQb ? '第 ${t.priority} 位' : '第 ${t.priority + 1} 位',
+                cap.isQb ? L.pick('第 ${t.priority} 位', '#${t.priority}') : L.pick('第 ${t.priority + 1} 位', '#${t.priority + 1}'),
                 style: TextStyle(
                   fontSize: af(context, 11.5),
                   fontWeight: FontWeight.w600,
@@ -837,13 +838,13 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
                 ),
               ),
               const Spacer(),
-              _queueBtn(context, cs, Icons.vertical_align_top, '置顶', 'top'),
+              _queueBtn(context, cs, Icons.vertical_align_top, L.t('置顶'), 'top'),
               const SizedBox(width: 4),
-              _queueBtn(context, cs, Icons.arrow_upward, '上移', 'up'),
+              _queueBtn(context, cs, Icons.arrow_upward, L.t('上移'), 'up'),
               const SizedBox(width: 4),
-              _queueBtn(context, cs, Icons.arrow_downward, '下移', 'down'),
+              _queueBtn(context, cs, Icons.arrow_downward, L.t('下移'), 'down'),
               const SizedBox(width: 4),
-              _queueBtn(context, cs, Icons.vertical_align_bottom, '沉底', 'bottom'),
+              _queueBtn(context, cs, Icons.vertical_align_bottom, L.t('沉底'), 'bottom'),
             ],
           ),
         ],
@@ -872,8 +873,8 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
               : () {
                   final Torrent? t = _ctrl.current.value;
                   if (t == null) return;
-                  AppLog.instance.act('种子详情', '队列[$tip]', target: t.name);
-                  _run(t, () => _ctrl.queueMoveSelected(where), '已$tip');
+                  AppLog.instance.act('种子详情', L.pick('队列[$tip]', 'Queue[$tip]'), target: t.name);
+                  _run(t, () => _ctrl.queueMoveSelected(where), L.pick('已$tip', '$tip done'));
                 },
         ),
       ),
@@ -892,7 +893,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
             : () {
                 _apply(
                   t,
-                  '带宽优先级',
+                  L.t('带宽优先级'),
                   () => _ctrl.setBandwidthPriorityOf(<String>[t.hash], value),
                 );
               },
@@ -923,14 +924,14 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       children: <Widget>[
         SizedBox(
           width: af(context, 88),
-          child: Text('带宽优先级', style: TextStyle(fontSize: af(context, 11))),
+          child: Text(L.t('带宽优先级'), style: TextStyle(fontSize: af(context, 11))),
         ),
         const SizedBox(width: 4),
-        chip('高', 1),
+        chip(L.t('高'), 1),
         const SizedBox(width: 5),
-        chip('普通', 0),
+        chip(L.t('普通'), 0),
         const SizedBox(width: 5),
-        chip('低', -1),
+        chip(L.t('低'), -1),
       ],
     );
   }
@@ -942,12 +943,12 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       <String>[S.fieldAddedOn, Formatter.setDate(t.newAddedOn)],
       <String>[S.fieldCompletionOn, Formatter.setDate(t.newCompletionOn)],
       if (createdOn != null && createdOn > 0)
-        <String>['创建时间', Formatter.setDate(createdOn)],
+        <String>[L.t('创建时间'), Formatter.setDate(createdOn)],
       if (lastSeen != null && lastSeen > 0)
-        <String>['最后见到', Formatter.setDate(lastSeen)],
+        <String>[L.t('最后见到'), Formatter.setDate(lastSeen)],
       <String>[S.fieldActiveTime, Formatter.setTime(t.newTimeActive)],
-      <String>['做种时长', Formatter.setTime(t.newSeedingTime)],
-      <String>['最近活动', Formatter.setLastActivity(t.newLastActivity)],
+      <String>[L.t('做种时长'), Formatter.setTime(t.newSeedingTime)],
+      <String>[L.t('最近活动'), Formatter.setLastActivity(t.newLastActivity)],
       <String>[
         S.fieldTrackerShort,
         _badTrackerCount > 0
@@ -987,11 +988,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
           _kvCopy(S.fieldMagnet, t.magnetUri!, mask: true, maxLines: 3),
         if ((t.comment ?? '').isNotEmpty)
           _kvCopy(S.fieldComment, t.comment!, maxLines: 3),
-        if (createdBy != null) _kvCopy('创建工具', createdBy, maxLines: 2),
+        if (createdBy != null) _kvCopy(L.t('创建工具'), createdBy, maxLines: 2),
         if (nbConn != null && nbConn > 0)
-          _kv('连接数', nbLimit != null && nbLimit > 0 ? '$nbConn / 上限 $nbLimit' : '$nbConn'),
+          _kv(L.t('连接数'), nbLimit != null && nbLimit > 0 ? L.pick('$nbConn / 上限 $nbLimit', '$nbConn / limit $nbLimit') : '$nbConn'),
         if (trMaxPeers != null && trMaxPeers > 0)
-          _kv('连接上限', '$trMaxPeers'),
+          _kv(L.t('连接上限'), '$trMaxPeers'),
       ],
     );
   }
@@ -1370,7 +1371,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return;
     final List<String> cand = List<String>.of(_ctrl.catalogTags);
     for (final FacetEntry e in _ctrl.facets(FilterDim.tags)) {
-      if (e.value != '未标记' && !cand.contains(e.value)) cand.add(e.value);
+      if (e.value != L.t('未标记') && !cand.contains(e.value)) cand.add(e.value);
     }
     final TagEditResult? r = await EditDialogs.tags(
       context,
@@ -1426,7 +1427,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   Future<void> _recheck(Torrent t) async {
     if (_busy) return;
-    AppLog.instance.act('种子详情', '按钮[重新校验]', target: t.name);
+    AppLog.instance.act('种子详情', L.t('按钮[重新校验]'), target: t.name);
     setState(() => _busy = true);
     final s = _serverCtrl.current.value;
     final String? err = await _write(() async {
@@ -1442,7 +1443,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
     if (!mounted) return;
     setState(() => _busy = false);
     if (err == null) {
-      UiDialogs.showToast('已开始校验 ${t.name}（进度见上方）');
+      UiDialogs.showToast(L.pick('已开始校验 ${t.name}（进度见上方）', 'Recheck started for ${t.name} (see progress above)'));
     } else {
       UiDialogs.showToast('${S.execFailed}: $err', isError: true);
     }
@@ -1450,7 +1451,7 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
 
   Future<void> _reannounce(Torrent t) async {
     if (_busy) return;
-    AppLog.instance.act('种子详情', '按钮[重新汇报]', target: t.name);
+    AppLog.instance.act('种子详情', L.t('按钮[重新汇报]'), target: t.name);
     setState(() => _busy = true);
     final s = _serverCtrl.current.value;
     final String? err = await _write(() async {
@@ -1481,11 +1482,11 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       defaultNoSubDeleteFiles: false,
     );
     if (opt == null) {
-      AppLog.instance.act('种子详情', '按钮[删除]·取消', target: t.name);
+      AppLog.instance.act('种子详情', L.t('按钮[删除]·取消'), target: t.name);
       return;
     }
-    AppLog.instance.act('种子详情', '按钮[删除]',
-        target: '${t.name}（含文件 ${opt.deleteFiles ? '是' : '否'}）');
+    AppLog.instance.act('种子详情', L.t('按钮[删除]'),
+        target: '${t.name}（${L.pick('含文件', 'with files')} ${opt.deleteFiles ? L.t('是') : L.t('否')}）');
     _ctrl
       ..clearSelection()
       ..toggleSelect(t.hash);

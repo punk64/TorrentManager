@@ -12,6 +12,7 @@ import '../data/transmission/tr_method.dart';
 import '../utils/app_log.dart';
 import '../widgets/ui_dialogs.dart';
 import '../utils/net_error.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import '../widgets/torrent_edit_fields.dart';
@@ -67,11 +68,11 @@ Future<String?> showConnectionErrorDialog(
             Text(S.srvConnFail, style: TextStyle(fontSize: af(context, 12))),
             if (reason != null && reason.isNotEmpty) ...<Widget>[
               SizedBox(height: af(context, 10)),
-              Text('原因：$reason', style: TextStyle(fontSize: af(context, 12))),
+              Text(L.pick('原因：$reason', 'Reason: $reason'), style: TextStyle(fontSize: af(context, 12))),
             ],
             if (address != null && address.isNotEmpty) ...<Widget>[
               const SizedBox(height: 4),
-              SelectableText('地址：$address',
+              SelectableText(L.pick('地址：$address', 'Address: $address'),
                   style: TextStyle(fontSize: af(context, 12))),
             ],
             if (raw != null && raw.isNotEmpty)
@@ -84,7 +85,7 @@ Future<String?> showConnectionErrorDialog(
         clipBehavior: Clip.antiAlias,
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: const EdgeInsets.only(bottom: 4),
-                  title: Text('详情', style: TextStyle(fontSize: af(context, 12))),
+                  title: Text(L.t('详情'), style: TextStyle(fontSize: af(context, 12))),
                   children: <Widget>[
                     SelectableText(
                       raw,
@@ -325,7 +326,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                 Padding(
                   padding: EdgeInsets.only(left: af(context, 22)),
                   child: Text(
-                    isQb ? 'WebUI 接口' : 'RPC 接口',
+                    isQb ? L.t('WebUI 接口') : L.t('RPC 接口'),
                     style: TextStyle(
                       fontSize: af(context, 10),
                       color: cs.onSurfaceVariant,
@@ -357,7 +358,8 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       canPop: true,
       onPopInvokedWithResult: (bool didPop, Object? result) {
         if (!didPop || result == true || _saved) return;
-        AppLog.instance.op('取消${_isEdit ? '编辑' : '添加'}服务器（未保存）：'
+        AppLog.instance.op(
+            '${L.pick('取消${_isEdit ? '编辑' : '添加'}服务器（未保存）：', 'Cancelled ${_isEdit ? 'editing' : 'adding'} server (unsaved): ')}'
             '${_draftSummary()}');
       },
       child: AlertDialog(
@@ -396,7 +398,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                     buildCounter: AppTheme.noCounter,
                     style: TextStyle(fontSize: af(context, 13)),
                     decoration: InputDecoration(
-                      labelText: '名称',
+                      labelText: L.t('名称'),
                       hintText: S.srvEnterName,
                       contentPadding: _fieldPadding,
                     ),
@@ -414,7 +416,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                   ),
                   SizedBox(height: af(context, 14)),
                   EditSectionCard(
-                    title: '公网连接',
+                    title: L.t('公网连接'),
                     child: Column(
                       children: <Widget>[
                         Row(
@@ -428,7 +430,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.url,
                                 decoration: InputDecoration(
-                                  labelText: '公网地址',
+                                  labelText: L.t('公网地址'),
                                   hintText: S.srvEnterAddress,
                                               contentPadding: _fieldPadding,
                                 ),
@@ -453,8 +455,8 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 buildCounter: AppTheme.noCounter,
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: '端口',
+                                decoration: InputDecoration(
+                                  labelText: L.t('端口'),
                                               contentPadding: _fieldPadding,
                                 ),
                                 validator: (String? v) {
@@ -479,9 +481,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 buildCounter: AppTheme.noCounter,
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.url,
-                                decoration: const InputDecoration(
-                                  labelText: '局域网地址',
-                                  hintText: '可选，留空则用公网地址',
+                                decoration: InputDecoration(
+                                  labelText: L.t('局域网地址'),
+                                  hintText: L.t('可选，留空则用公网地址'),
                                               contentPadding: _fieldPadding,
                                 ),
                               ),
@@ -494,9 +496,9 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                                 buildCounter: AppTheme.noCounter,
                                 style: TextStyle(fontSize: af(context, 13)),
                                 keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: '端口',
-                                  hintText: '可选',
+                                decoration: InputDecoration(
+                                  labelText: L.t('端口'),
+                                  hintText: L.t('可选'),
                                               contentPadding: _fieldPadding,
                                 ),
                                 validator: (String? v) {
@@ -517,7 +519,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                   ),
                   SizedBox(height: af(context, 14)),
                   EditSectionCard(
-                    title: '认证',
+                    title: L.t('认证'),
                     child: Row(
                       children: <Widget>[
                         Expanded(
@@ -527,8 +529,8 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             buildCounter: AppTheme.noCounter,
                             style: TextStyle(fontSize: af(context, 13)),
                             autofillHints: const <String>[AutofillHints.username],
-                            decoration: const InputDecoration(
-                              labelText: '账号',
+                            decoration: InputDecoration(
+                              labelText: L.t('账号'),
                                       contentPadding: _fieldPadding,
                             ),
 
@@ -547,7 +549,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             obscureText: _obscurePassword,
                             autofillHints: const <String>[AutofillHints.password],
                             decoration: InputDecoration(
-                              labelText: '密码',
+                              labelText: L.t('密码'),
                                       contentPadding: _fieldPadding,
 
                               hintText: _isEdit ? S.srvPassKeepHint : null,
@@ -623,7 +625,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
                             child: const CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: af(context, 8)),
-                          Text('正在连接服务器…', style: TextStyle(fontSize: af(context, 11))),
+                          Text(L.t('正在连接服务器…'), style: TextStyle(fontSize: af(context, 11))),
                         ],
                       ),
                     ),
@@ -653,8 +655,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       if (_user.text.trim().isEmpty ||
           (!_isEdit && _pass.text.trim().isEmpty)) {
         AppLog.instance.net(
-          '添加服务器失败：缺少账号密码（${_isEdit ? '编辑' : '新增'}，'
-          '地址 ${_host.text.trim().isEmpty ? '未填' : _host.text.trim()}）',
+          L.pick('添加服务器失败：缺少账号密码（${_isEdit ? '编辑' : '新增'}，地址 ${_host.text.trim().isEmpty ? '未填' : _host.text.trim()}）', 'Add server failed: missing credentials (${_isEdit ? 'edit' : 'add'}, address ${_host.text.trim().isEmpty ? 'empty' : _host.text.trim()})'),
         );
         UiDialogs.showToast(S.srvCredsRequired, isError: true);
       }
@@ -740,7 +741,7 @@ class _ServerFormDialogState extends State<_ServerFormDialog> {
       final String? action = await showConnectionErrorDialog(
         context,
         reason: failReason ??
-            (error == null ? '服务器未按预期响应' : NetError.describe(error)),
+            (error == null ? L.t('服务器未按预期响应') : NetError.describe(error)),
         address: s.baseUrl,
         raw: error?.toString(),
       );

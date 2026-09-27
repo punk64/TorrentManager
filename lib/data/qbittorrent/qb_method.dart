@@ -9,6 +9,9 @@ import 'package:cookie_jar/cookie_jar.dart';
 import '../dio/log_interceptor.dart';
 import '../dio/redirect_interceptor.dart';
 import '../../utils/app_log.dart';
+import '../../utils/i18n.dart';
+import '../../utils/log_text.dart';
+import '../../utils/strings.dart';
 import '../../utils/net_error.dart';
 import '../models/qb_ip_filter.dart';
 import '../models/qb_log.dart';
@@ -128,7 +131,7 @@ class QbMethod {
       requestOptions: resp.requestOptions,
       response: resp,
       type: DioExceptionType.badResponse,
-      error: '服务端拒绝了这次操作（HTTP $code）',
+      error: S.qbRejected(code),
     );
   }
 
@@ -154,7 +157,8 @@ class QbMethod {
       return _dio.post<dynamic>(path, data: data, queryParameters: params);
     }
     if (params == null || params.isEmpty) {
-      AppLog.instance.net('写请求 POST ${_shortPath(path)}（无参数）',
+      AppLog.instance.net(
+          LogT.writeNoParams(_shortPath(path)),
           scope: _server?.logScope);
       return _dio.post<dynamic>(path);
     }
@@ -162,7 +166,7 @@ class QbMethod {
     final String brief = '${_paramsBrief(params)} ｜ Referer ${_dio.options.baseUrl}';
     final bool firstAsBody = _paramInBody;
     AppLog.instance.net(
-      '写请求 POST ${_shortPath(path)} ｜ 参数=${firstAsBody ? 'form body' : 'query string'}'
+      '${LogT.writePost(_shortPath(path), firstAsBody ? 'form body' : 'query string')}'
       ' ｜ $brief',
       scope: _server?.logScope,
     );
@@ -173,9 +177,8 @@ class QbMethod {
     if (r1.statusCode != 400) return r1;
     final bool retryAsBody = !firstAsBody;
     AppLog.instance.net(
-      '写请求参数位置回退：${_shortPath(path)} 不接受'
-      '${firstAsBody ? 'form body' : 'query string'}（400）'
-      ' → 改用${retryAsBody ? 'form body' : 'query string'}重试',
+      '${LogT.writeFallback(_shortPath(path), firstAsBody ? 'form body' : 'query string')}'
+      '（400）',
       scope: _server?.logScope,
     );
     final Response<dynamic> r2 = retryAsBody
@@ -184,8 +187,7 @@ class QbMethod {
     if (r2.statusCode != 400) {
       _paramInBody = retryAsBody;
       AppLog.instance.net(
-        '写请求参数位置自适应：此后本服务器按'
-        '${_paramInBody ? 'form body' : 'query string'}发送写参数',
+        LogT.writeAdaptive(_paramInBody ? 'form body' : 'query string'),
         scope: _server?.logScope,
       );
     }
@@ -216,8 +218,8 @@ class QbMethod {
       if (key == 'hashes') {
         final List<String> items =
             s.split('|').where((String e) => e.trim().isNotEmpty).toList();
-        parts.add('hashes=${items.length}项'
-            '${items.isEmpty ? '' : '（首 ${_head(items.first)}）'}');
+        parts.add(LogT.hashes(
+            items.length, items.isEmpty ? '' : _head(items.first)));
         return;
       }
       parts.add('$k=${s.length <= 24 ? s : '${s.substring(0, 24)}…'}');
@@ -262,8 +264,8 @@ class QbMethod {
       requestOptions: resp.requestOptions,
       response: resp,
       type: DioExceptionType.badResponse,
-      error: '$endpoint 返回非 JSON（HTTP ${resp.statusCode}）：'
-          '${brief.isEmpty ? '空响应' : brief} —— 多半是未登录或账号密码错误',
+      error: S.qbNonJson(endpoint, resp.statusCode ?? 0,
+          brief.isEmpty ? L.t('空响应') : brief),
     );
   }
 
@@ -301,9 +303,8 @@ class QbMethod {
 
     if (_missingCreds(s)) {
       lastLoginMissingCreds = true;
-      lastLoginError = '账号或密码为空，已跳过登录以避免触发服务端封禁';
-      AppLog.instance.net('qBittorrent 登录已跳过：账号或密码为空（${s.name}）',
-          scope: s.logScope);
+      lastLoginError = S.qbEmptyCreds;
+      AppLog.instance.net(LogT.qbSkipLogin(s.name), scope: s.logScope);
       return false;
     }
     if (routeGen == null || routeGen == _routeGen) setServer(s);
@@ -320,18 +321,19 @@ class QbMethod {
 
     if (_isBannedBody(body)) {
       lastLoginBanned = true;
-      lastLoginError = 'IP 已被服务器封禁';
+      lastLoginError = S.qbIpBanned;
       AppLog.instance.net(
-          'qBittorrent 已封禁本机 IP（HTTP ${resp.statusCode}）：${body.isEmpty ? '空响应' : body}',
+          LogT.qbBanned(resp.statusCode ?? 0, body.isEmpty ? L.t('空响应') : body),
           scope: s.logScope);
       return false;
     }
 
     final bool ok = resp.statusCode == 200 && (body == 'Ok.' || body.isEmpty);
     if (!ok) {
-      lastLoginError = '服务器拒绝了登录（HTTP ${resp.statusCode}）';
+      lastLoginError = S.qbLoginRejected(resp.statusCode ?? 0);
       AppLog.instance.net(
-          'qBittorrent 登录失败（HTTP ${resp.statusCode}）：${body.isEmpty ? '空响应' : body}',
+          LogT.qbLoginFail(resp.statusCode ?? 0,
+              body.isEmpty ? L.t('空响应') : body),
           scope: s.logScope);
     }
     return ok;
@@ -357,8 +359,8 @@ class QbMethod {
 
       if (_isBannedBody(resp.data?.toString() ?? '')) {
         lastLoginBanned = true;
-        lastLoginError = 'IP 已被服务器封禁';
-        AppLog.instance.net('qBittorrent 已封禁本机 IP（探测接口返回 403）',
+        lastLoginError = S.qbIpBanned;
+        AppLog.instance.net(L.t('qBittorrent 已封禁本机 IP（探测接口返回 403）'),
             scope: target.logScope);
         return false;
       }
@@ -368,7 +370,7 @@ class QbMethod {
       lastLoginKind = NetError.classify(e);
       lastLoginError = NetError.describe(e);
       AppLog.instance.net(
-        'qBittorrent 探测失败（${lastLoginKind?.name ?? 'unknown'}）：$lastLoginError',
+        LogT.qbProbeFail(lastLoginKind?.name ?? 'unknown', lastLoginError),
         scope: target.logScope,
       );
     }
@@ -378,7 +380,7 @@ class QbMethod {
       final ServerData? now = _server;
       if (now == null) return false;
       AppLog.instance.net(
-          '探测期间路由已切换（${target.baseUrl} → ${now.baseUrl}），改用新路由重新建立会话',
+          LogT.routeSwitched(target.baseUrl, now.baseUrl),
           scope: target.logScope);
       return checkQbServerCookie(now, true);
     }
@@ -530,8 +532,8 @@ class QbMethod {
         _apiProbeServerId = _server?.id;
 
         AppLog.instance.net(
-          '暂停端点自适应：${_endpointName(first)} 不可用（${r1.statusCode}）'
-          ' → 改用 ${_endpointName(second)}，此后按 qB v${_apiV5 ? '5' : '4'} 风格',
+          LogT.pauseAdaptive(_endpointName(first), r1.statusCode ?? 0,
+              _endpointName(second), _apiV5 ? '5' : '4'),
           scope: _server?.logScope,
         );
       }
@@ -539,8 +541,7 @@ class QbMethod {
     _ensureWriteOk(r);
 
     AppLog.instance.net(
-      '${pause ? '暂停' : '继续'}种子：${_endpointName(used)}'
-      '（qB v${_apiV5 ? '5' : '4'} 风格）',
+      LogT.pauseStyle(pause, _endpointName(used), _apiV5 ? '5' : '4'),
       scope: _server?.logScope,
     );
   }
@@ -1098,7 +1099,7 @@ class QbMethod {
           }
         : filter.diffFrom(base);
     if (patch.isEmpty) {
-      AppLog.instance.net('IP 过滤无变化，跳过写入', scope: _server?.logScope);
+      AppLog.instance.net(L.t('IP 过滤无变化，跳过写入'), scope: _server?.logScope);
       return;
     }
     await _setAppPreferences(patch);

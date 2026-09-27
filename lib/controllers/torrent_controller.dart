@@ -9,6 +9,8 @@ import '../data/server_capabilities.dart';
 
 import '../data/transmission/tr_method.dart';
 import '../utils/app_log.dart';
+import '../utils/i18n.dart';
+import '../utils/log_text.dart';
 import '../utils/formatter.dart';
 import '../utils/net_error.dart';
 import '../utils/strings.dart';
@@ -34,31 +36,31 @@ extension TorrentSortKeyExt on TorrentSortKey {
   String get label {
     switch (this) {
       case TorrentSortKey.size:
-        return '种子大小';
+        return L.t('种子大小');
       case TorrentSortKey.ratio:
-        return '分享比率';
+        return L.t('分享比率');
       case TorrentSortKey.seeds:
-        return '做种人数';
+        return L.t('做种人数');
       case TorrentSortKey.dlSpeed:
-        return '下载速度';
+        return L.t('下载速度');
       case TorrentSortKey.upSpeed:
-        return '上传速度';
+        return L.t('上传速度');
       case TorrentSortKey.downloaded:
-        return '下载总量';
+        return L.t('下载总量');
       case TorrentSortKey.uploaded:
-        return '上传总量';
+        return L.t('上传总量');
       case TorrentSortKey.addedOn:
-        return '添加时间';
+        return L.t('添加时间');
       case TorrentSortKey.completionOn:
-        return '完成时间';
+        return L.t('完成时间');
       case TorrentSortKey.seedingTime:
-        return '做种时长';
+        return L.t('做种时长');
       case TorrentSortKey.name:
-        return '种子名称';
+        return L.t('种子名称');
       case TorrentSortKey.progress:
-        return '种子进度';
+        return L.t('种子进度');
       case TorrentSortKey.state:
-        return '种子状态';
+        return L.t('种子状态');
     }
   }
 }
@@ -280,13 +282,13 @@ extension FilterDimExt on FilterDim {
   String get title {
     switch (this) {
       case FilterDim.category:
-        return '分类';
+        return L.t('分类');
       case FilterDim.tags:
-        return '标签';
+        return L.t('标签');
       case FilterDim.path:
-        return '路径';
+        return L.t('路径');
       case FilterDim.site:
-        return '站点';
+        return L.t('站点');
     }
   }
 }
@@ -376,7 +378,7 @@ class TorrentController extends GetxController {
     if (_listVisible == v) return;
     _listVisible = v;
     AppLog.instance.view(
-      '种子列表页 ${v ? '进入前台 → 恢复自动取数' : '退到后台 → 停止自动取数'}',
+      LogT.listVisible(v),
       key: '列表:visible',
     );
     if (v) unawaited(refreshAuto());
@@ -488,11 +490,11 @@ class TorrentController extends GetxController {
       case FilterDim.category:
         return <String>[t.categoryName];
       case FilterDim.tags:
-        return t.tagList.isEmpty ? const <String>['未标记'] : t.tagList;
+        return t.tagList.isEmpty ? <String>[L.t('未标记')] : t.tagList;
       case FilterDim.path:
         return <String>[t.pathName];
       case FilterDim.site:
-        return <String>[t.site.isEmpty ? '未知站点' : t.site];
+        return <String>[t.site.isEmpty ? L.t('未知站点') : t.site];
     }
   }
 
@@ -615,7 +617,7 @@ class TorrentController extends GetxController {
       if (p != null) categoryPaths[n] = p;
     } catch (e) {
       AppLog.instance.op(
-          '创建分类「$n」${p == null ? '' : ' → $p'}：${NetError.describe(e)}',
+          LogT.catCreateFail(n, p ?? '', NetError.describe(e)),
           level: 'WARN',
           scope: s.logScope);
       bool exists = catalogCategories.contains(n);
@@ -649,7 +651,7 @@ class TorrentController extends GetxController {
     final Map<String, int> out = <String, int>{};
     for (final FacetEntry e in facets(FilterDim.path)) {
       final String v = e.value.trim();
-      if (v.isNotEmpty && v != '未指定') out[v] = e.count;
+      if (v.isNotEmpty && v != L.t('未指定')) out[v] = e.count;
     }
     return out;
   }
@@ -781,7 +783,7 @@ class TorrentController extends GetxController {
       if (cached.isNotEmpty) {
         _setItems(cached.toList());
         AppLog.instance.view(
-          '种子列表[${s.name}] 先用缓存渲染 ${cached.length} 条（真实数据随后覆盖）',
+          LogT.listCacheRender(s.name, cached.length),
           key: '列表:${s.id}:cache',
           scope: s.logScope,
         );
@@ -797,7 +799,7 @@ class TorrentController extends GetxController {
       isLoading.value = true;
       error.value = null;
       AppLog.instance.view(
-        '种子列表[${s.name}] 开始加载（全量）',
+        LogT.listStart(s.name),
         key: '列表:${s.id}:start',
         scope: s.logScope,
       );
@@ -838,7 +840,7 @@ class TorrentController extends GetxController {
             }
             rethrow;
           }
-          AppLog.instance.net('列表请求 403，已重新登录并重试',
+          AppLog.instance.net(L.t('列表请求 403，已重新登录并重试'),
               scope: s.logScope);
           list = await serverCtrl.qb.getTorrentList();
         }
@@ -861,7 +863,7 @@ class TorrentController extends GetxController {
             s.id, () => serverCtrl.tr.checkTrServerCookie());
         if (_isStale(targetId, seq)) return;
         if (!r.ok) {
-          final String why = r.reason ?? '登录失败';
+          final String why = r.reason ?? S.loginFailed;
           error.value = why;
 
           if (r.missingCreds) {
@@ -954,7 +956,7 @@ class TorrentController extends GetxController {
   Future<void> refreshAuto() async {
     if (_scrollPaused) {
       AppLog.instance.view(
-        '自动取数被跳过：列表正在滚动（防抖中）',
+        L.t('自动取数被跳过：列表正在滚动（防抖中）'),
         key: '列表:auto:paused',
       );
       return;
@@ -1030,7 +1032,7 @@ class TorrentController extends GetxController {
           } catch (e) {
             incomplete.add(hash);
             AppLog.instance
-                .error('增量合并失败（$hash）：${NetError.describe(e)}');
+                .error(LogT.mergeFail(hash, NetError.describe(e)));
           }
         });
         if (incomplete.isNotEmpty) {
@@ -1175,7 +1177,7 @@ class TorrentController extends GetxController {
         ));
       } catch (e) {
         AppLog.instance.error(
-            'TR 种子解析失败（${m['hashString']}）：${NetError.describe(e)}',
+            LogT.trParseFail(m['hashString']?.toString() ?? '', NetError.describe(e)),
             scope: scope);
       }
     }
@@ -1265,12 +1267,12 @@ class TorrentController extends GetxController {
     filter.value = f;
 
     subStates.clear();
-    AppLog.instance.act('种子列表', '筛选[${f.label}]');
+    AppLog.instance.act('种子列表', LogT.filterApplied(f.label));
   }
 
   void toggleSubState(String v) {
     if (!subStates.remove(v)) subStates.add(v);
-    AppLog.instance.act('种子列表', '细分筛选[${subStateLabel(v)}]');
+    AppLog.instance.act('种子列表', LogT.subFilterApplied(subStateLabel(v)));
   }
 
   void clearSubStates() => subStates.clear();
@@ -1305,13 +1307,13 @@ class TorrentController extends GetxController {
   void setSortKey(TorrentSortKey key) {
     sortKey.value = key;
     _saveSort();
-    AppLog.instance.op('排序：${key.name} · ${sortDesc.value ? '降序' : '升序'}');
+    AppLog.instance.op(LogT.sortChanged(key.name, sortDesc.value));
   }
 
   void setSortDesc(bool desc) {
     sortDesc.value = desc;
     _saveSort();
-    AppLog.instance.op('排序方向：${desc ? '降序' : '升序'}');
+    AppLog.instance.op(LogT.sortDirChanged(desc));
   }
 
   static const String _kSortKey = 'sort.key';
@@ -1339,7 +1341,7 @@ class TorrentController extends GetxController {
   void setSiteMasked(bool v) {
     siteMasked.value = v;
     Formatter.saveGlobalData(_kSiteMasked, v);
-    AppLog.instance.op('站点打码：${v ? '开启' : '关闭'}');
+    AppLog.instance.op(LogT.siteMaskChanged(v));
   }
 
   Future<void> loadSiteMasked() async {
@@ -1377,8 +1379,7 @@ class TorrentController extends GetxController {
   List<int> _trIdsOrThrow() {
     final List<int> ids = _selectedTrIds;
     if (ids.isEmpty) {
-      throw StateError('选中的种子里没有可用的 Transmission 任务 ID'
-          '（共选中 ${selected.length} 个，都没有 trId）');
+      throw StateError(S.trNoTaskSelected(selected.length));
     }
     return ids;
   }
@@ -1410,8 +1411,7 @@ class TorrentController extends GetxController {
       if (rollback != null) _rollbackOptimistic(rollback, serverIdAtStart);
 
       AppLog.instance.op(
-        '操作失败：${_selectedNames()}'
-        ' ｜ 服务器 ${serverCtrl.current.value?.name ?? '-'}'
+        '${LogT.opFail(_selectedNames(), serverCtrl.current.value?.name ?? '-')}'
         ' ｜ ${error.value}',
         level: 'ERROR',
         scope: scopeAtStart,
@@ -1513,7 +1513,7 @@ class TorrentController extends GetxController {
         .toList();
     if (names.isEmpty) return '';
     if (names.length <= limit) return names.join('、');
-    return '${names.take(limit).join('、')} 等 ${names.length} 个';
+    return S.namesAndMore(names.take(limit).join('、'), names.length);
   }
 
   Future<void> pauseSelected() {
@@ -1530,8 +1530,8 @@ class TorrentController extends GetxController {
         await serverCtrl.tr.torrentStop(_trIdsOrThrow());
       }
 
-      AppLog.instance.op('暂停 $n 个种子：${_selectedNames()}'
-          '（服务器：${s.name} · ${s.isQbittorrent ? 'qB' : 'TR'}）',
+      AppLog.instance.op(
+          LogT.opPauseResume(true, n, _selectedNames(), s.name, s.isQbittorrent),
           scope: s.logScope);
     }, rollback: before);
   }
@@ -1548,8 +1548,8 @@ class TorrentController extends GetxController {
       } else {
         await serverCtrl.tr.torrentStart(_trIdsOrThrow());
       }
-      AppLog.instance.op('恢复 $n 个种子：${_selectedNames()}'
-          '（服务器：${s.name} · ${s.isQbittorrent ? 'qB' : 'TR'}）',
+      AppLog.instance.op(
+          LogT.opPauseResume(false, n, _selectedNames(), s.name, s.isQbittorrent),
           scope: s.logScope);
     }, rollback: before);
   }
@@ -1600,8 +1600,7 @@ class TorrentController extends GetxController {
 
             if (ids.isEmpty) {
               if (i == 0) {
-                throw StateError('没有可删除的 Transmission 任务 ID'
-                    '（${b.items.length} 个种子都缺少 trId）');
+                throw StateError(S.trNothingDeletable(b.items.length));
               }
               continue;
             }
@@ -1610,14 +1609,13 @@ class TorrentController extends GetxController {
             deleted += ids.length;
           }
           if (skipped > 0) {
-            AppLog.instance.op('删除种子：有 $skipped 个缺少 Transmission '
-                '任务 ID，已跳过（实际删除 $deleted 个）',
+            AppLog.instance.op(
+                LogT.deleteSkipTrId(skipped, deleted),
                 scope: s.logScope);
           }
         }
-        AppLog.instance.op('删除种子 ${chosen.length} 个'
-            '${plan.subs.isEmpty ? '' : ' + 辅种 ${plan.subs.length} 个'}'
-            '${plan.deleteFiles ? '（同时删除本地文件）' : '（仅移除任务）'}',
+        AppLog.instance.op(
+            LogT.deleteDone(chosen.length, plan.subs.isEmpty ? '' : ' + 辅种 ${plan.subs.length} 个', plan.deleteFiles),
             scope: s.logScope);
       });
 
@@ -1802,7 +1800,7 @@ class TorrentController extends GetxController {
     }
     if (ids.isEmpty) {
       throw StateError(
-          '所选 ${hashes.length} 个种子都没有可用的 Transmission 任务 ID');
+          S.trNoneUsable(hashes.length));
     }
     return ids;
   }
@@ -1830,7 +1828,7 @@ class TorrentController extends GetxController {
       lastActionOk.value = false;
       if (rollback != null) _rollbackOptimistic(rollback, serverIdAtStart);
       AppLog.instance.op(
-        '编辑失败（${hashes.length} 个种子）：${NetError.describe(e)}',
+        LogT.editFail(hashes.length, NetError.describe(e)),
         level: 'ERROR',
         scope: scopeAtStart,
       );
@@ -1846,8 +1844,8 @@ class TorrentController extends GetxController {
         if (category.isNotEmpty) await ensureCategory(category);
         await serverCtrl.qb.setCategory(hashes.join('|'), category);
         AppLog.instance.op(
-            '设置分类 → ${category.isEmpty ? '（空=未分类）' : category}'
-            '（${hashes.length} 个种子）',
+            LogT.setCategory(
+                category.isEmpty ? L.t('（空=未分类）') : category, hashes.length),
             scope: s.logScope);
       });
 
@@ -1874,8 +1872,8 @@ class TorrentController extends GetxController {
           await serverCtrl.tr.setTags(_trIdsOf(hashes), tags);
         }
         AppLog.instance.op(
-            '${append ? '追加' : '设置'}标签 → ${tags.isEmpty ? '（清空）' : tags.join(',')}'
-            '（${hashes.length} 个种子）',
+            LogT.setTags(append,
+                tags.isEmpty ? L.t('（清空）') : tags.join(','), hashes.length),
             scope: s.logScope);
       });
 
@@ -1919,8 +1917,7 @@ class TorrentController extends GetxController {
           );
         }
         AppLog.instance.op(
-            '设置限速 → 下载 ${dlKb ?? '-'} KB/s · 上传 ${upKb ?? '-'} KB/s'
-            '（${hashes.length} 个种子）',
+            LogT.setLimits('${dlKb ?? '-'}', '${upKb ?? '-'}', hashes.length),
             scope: s.logScope);
       });
 
@@ -1938,8 +1935,7 @@ class TorrentController extends GetxController {
           await serverCtrl.tr.setLocation(_trIdsOf(hashes), path, move: move);
         }
         AppLog.instance.op(
-            '修改保存路径 → $path（${move ? '同时移动文件' : '仅改指向'}'
-            ' · ${hashes.length} 个种子）',
+            LogT.setPath(path, move, hashes.length),
             scope: s.logScope);
       });
 
@@ -1949,7 +1945,7 @@ class TorrentController extends GetxController {
         if (s == null || !s.isQbittorrent) return;
         await serverCtrl.qb.setForceStart(hashes.join('|'), value);
         AppLog.instance.op(
-            '${value ? '开启' : '关闭'}强制做种（${hashes.length} 个种子）',
+            LogT.toggleForceSeed(value, hashes.length),
             scope: s.logScope);
       });
 
@@ -1966,7 +1962,7 @@ class TorrentController extends GetxController {
         }
         await serverCtrl.qb.toggleSequentialDownload(hashes.join('|'));
         AppLog.instance.op(
-            '${target ? '开启' : '关闭'}顺序下载（${hashes.length} 个种子）',
+            LogT.toggleSequential(target, hashes.length),
             scope: s.logScope);
       });
 
@@ -1983,7 +1979,7 @@ class TorrentController extends GetxController {
         }
         await serverCtrl.qb.toggleFirstLastPiecePrio(hashes.join('|'));
         AppLog.instance.op(
-            '${target ? '开启' : '关闭'}首尾块优先（${hashes.length} 个种子）',
+            LogT.toggleFirstLast(target, hashes.length),
             scope: s.logScope);
       });
 
@@ -2007,7 +2003,7 @@ class TorrentController extends GetxController {
         if (s == null || !s.isQbittorrent) return;
         await serverCtrl.qb.setSuperSeeding(hashes.join('|'), value);
         AppLog.instance.op(
-            '${value ? '开启' : '关闭'}超级做种（${hashes.length} 个种子）',
+            LogT.toggleSuperSeed(value, hashes.length),
             scope: s.logScope);
       });
 
@@ -2044,8 +2040,7 @@ class TorrentController extends GetxController {
           }
         }
         AppLog.instance.op(
-            '设置分享限制 → 分享率 ${ratioLimit ?? '-'} · 做种时限 '
-            '${seedingTimeMin ?? '-'} 分钟（${hashes.length} 个种子）',
+            LogT.setShareLimits('${ratioLimit ?? '-'}', '${seedingTimeMin ?? '-'}', hashes.length),
             scope: s.logScope);
       });
 
@@ -2055,7 +2050,7 @@ class TorrentController extends GetxController {
         if (s == null || !s.isTransmission) return;
         await serverCtrl.tr.setQueuePosition(_trIdsOf(hashes), position);
         AppLog.instance.op(
-            '设置队列位置 → $position（${hashes.length} 个种子）',
+            LogT.setQueuePos('$position', hashes.length),
             scope: s.logScope);
       });
 
@@ -2068,7 +2063,7 @@ class TorrentController extends GetxController {
     try {
       await serverCtrl.qb.addPeers(hash, peers.join(','));
       lastActionOk.value = true;
-      AppLog.instance.op('添加 Peer：${peers.join(' | ')}',
+      AppLog.instance.op(LogT.addPeers(peers.join(' | ')),
           scope: s.logScope);
       await refresh();
     } catch (e) {
@@ -2096,12 +2091,12 @@ class TorrentController extends GetxController {
         }
       } else {
         if (t.trId == null) {
-          throw StateError('该种子缺少 Transmission 任务 ID，无法重命名');
+          throw StateError(S.trNoTaskRename);
         }
         await serverCtrl.tr.renamePath(t.trId!, oldPath, newName);
       }
       lastActionOk.value = true;
-      AppLog.instance.op('重命名文件：$oldPath → $newName（${t.name}）',
+      AppLog.instance.op(LogT.renameFile(oldPath, newName, t.name),
           scope: s.logScope);
       unawaited(_refreshAfterWrite(t));
     } catch (e) {
@@ -2129,7 +2124,7 @@ class TorrentController extends GetxController {
     await _runEdit(hashes, () async {
       await serverCtrl.tr.setHonorsSessionLimits(_trIdsOf(hashes), value);
       AppLog.instance.op(
-          '${value ? '开启' : '关闭'}遵循全局限速（${hashes.length} 个种子）',
+          LogT.toggleHonorLimits(value, hashes.length),
           scope: s.logScope);
     });
   }
@@ -2140,7 +2135,7 @@ class TorrentController extends GetxController {
         if (s == null || !s.isTransmission) return;
         await serverCtrl.tr.setBandwidthPriority(_trIdsOf(hashes), priority);
         AppLog.instance.op(
-            '设置带宽优先级 → $priority（${hashes.length} 个种子）',
+            LogT.setPriority('$priority', hashes.length),
             scope: s.logScope);
       });
 
@@ -2152,11 +2147,11 @@ class TorrentController extends GetxController {
           await serverCtrl.qb.setName(t.hash, name);
         } else {
           if (t.trId == null) {
-            throw StateError('该种子缺少 Transmission 任务 ID，无法重命名');
+            throw StateError(S.trNoTaskRename);
           }
           await serverCtrl.tr.setName(t.trId!, name);
         }
-        AppLog.instance.op('重命名种子 → $name', scope: s.logScope);
+        AppLog.instance.op(LogT.renameTorrent(name), scope: s.logScope);
       });
 
   void openDetail(Torrent t) {
@@ -2296,7 +2291,8 @@ class TorrentController extends GetxController {
 
         fresh = await fetchOne(t, deep: _needDeepProperties(targetHash));
       } catch (e) {
-        AppLog.instance.error('详情定点刷新失败：${NetError.describe(e)}',
+        AppLog.instance.error(
+            LogT.detailRefreshFail(NetError.describe(e)),
             scope: serverCtrl.current.value?.logScope);
       }
       if (_detailStale(targetId, targetHash, seq)) return;
@@ -2318,9 +2314,8 @@ class TorrentController extends GetxController {
         _pushSample(fresh);
       }
       AppLog.instance.view(
-        '种子详情[${t.name}] 已刷新：文件 ${f.length} · 用户 ${p.length} · Tracker ${tk.length}'
-        '${fresh == null ? '（未取到新状态，沿用列表快照）' : ''}'
-        ' ｜ 用时 ${ServerController.secs(sw.elapsed)}',
+        '${LogT.detailRefreshed(t.name, f.length, p.length, tk.length, ServerController.secs(sw.elapsed))}'
+        '${fresh == null ? L.t('（未取到新状态，沿用列表快照）') : ''}',
         key: '详情:$targetHash:refresh',
         scope: serverCtrl.current.value?.logScope,
       );

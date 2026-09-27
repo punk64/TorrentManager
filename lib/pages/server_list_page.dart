@@ -191,7 +191,7 @@ class _ServerListPageState extends State<ServerListPage> {
       },
       appBar: AppBar(
 
-        title: Obx(() => Text('服务器（${ctrl.servers.length}）')),
+        title: Obx(() => Text(L.pick('服务器（${ctrl.servers.length}）', 'Servers (${ctrl.servers.length})'))),
         actions: <Widget>[
 
           Obx(
@@ -201,7 +201,7 @@ class _ServerListPageState extends State<ServerListPage> {
                       ? Icons.unfold_more
                       : Icons.unfold_less,
                   size: AppTheme.iconSize),
-              tooltip: serverCardsCollapsed.value ? '展开卡片' : '折叠卡片',
+              tooltip: serverCardsCollapsed.value ? L.t('展开卡片') : L.t('折叠卡片'),
               onPressed: _toggleServerCards,
             ),
           ),
@@ -209,7 +209,7 @@ class _ServerListPageState extends State<ServerListPage> {
           Obx(() => _SpinningRefreshIcon(
                 spinning: ctrl.isManualRefreshing,
                 onPressed: () async {
-                  AppLog.instance.act('服务器列表', 'AppBar[刷新全部]');
+                  AppLog.instance.act('服务器列表', L.t('AppBar[刷新全部]'));
                   await ctrl.refreshAllServers(showProgress: true);
                   UiDialogs.showToast(S.srvRefreshedAll);
                 },
@@ -266,10 +266,10 @@ class _ServerListPageState extends State<ServerListPage> {
                 children: <Widget>[
                   Image.asset('assets/images/empty.webp', width: af(context, 96)),
                   SizedBox(height: af(context, 12)),
-                  Text('暂无服务器', style: TextStyle(fontSize: af(context, 12))),
+                  Text(L.t('暂无服务器'), style: TextStyle(fontSize: af(context, 12))),
                   const SizedBox(height: 4),
                   Text(
-                    '点击 + 添加；无需登录',
+                    L.t('点击 + 添加；无需登录'),
                     style: TextStyle(fontSize: af(context, 10)),
                   ),
                 ],
@@ -303,7 +303,7 @@ class _ServerListPageState extends State<ServerListPage> {
 
               initialYRatio: DraggableFab.listPageInitialYRatio,
               onPressed: () async {
-                AppLog.instance.act('服务器列表', '悬浮按钮[添加服务器]');
+                AppLog.instance.act('服务器列表', L.t('悬浮按钮[添加服务器]'));
                 if (ctrl.servers.length >= ServerController.kMaxServers) {
                   await showServerLimitDialog(context);
                   return;
@@ -485,7 +485,7 @@ class _ServerListPageState extends State<ServerListPage> {
           badgeColor: Colors.indigoAccent,
           tooltip: S.edit,
           onPressed: () {
-            AppLog.instance.act('服务器列表', '左滑[编辑]', target: raw.name);
+            AppLog.instance.act('服务器列表', L.t('左滑[编辑]'), target: raw.name);
             showServerDialog(context, editing: raw);
           },
         ),
@@ -495,10 +495,10 @@ class _ServerListPageState extends State<ServerListPage> {
           tooltip: S.delete,
           onPressed: () async {
             if (!await confirmDeleteServer(context, raw)) {
-              AppLog.instance.act('服务器列表', '左滑[删除]·取消', target: raw.name);
+              AppLog.instance.act('服务器列表', L.t('左滑[删除]·取消'), target: raw.name);
               return;
             }
-            AppLog.instance.act('服务器列表', '左滑[删除]', target: raw.name);
+            AppLog.instance.act('服务器列表', L.t('左滑[删除]'), target: raw.name);
             await ctrl.deleteServer(raw.id);
             UiDialogs.showToast('${S.srvDeleted}${raw.name}');
           },
@@ -514,7 +514,7 @@ class _ServerListPageState extends State<ServerListPage> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
         onTap: () {
-          AppLog.instance.act('服务器列表', '卡片[进入种子列表]', target: raw.name);
+          AppLog.instance.act('服务器列表', L.t('卡片[进入种子列表]'), target: raw.name);
           ctrl.select(raw);
           Get.toNamed(Routes.torrents);
         },
@@ -783,7 +783,7 @@ class _ServerListPageState extends State<ServerListPage> {
                           if (busy)
                             _BadgeEntry(
                               widget: _refreshingChip(context),
-                              width: _chipWidth('刷新中', lead: 13),
+                              width: _chipWidth(L.t('刷新中'), lead: 13),
                             ),
                           if (showBadge)
                             _BadgeEntry(
@@ -865,9 +865,9 @@ class _ServerListPageState extends State<ServerListPage> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () async {
-                  AppLog.instance.act('服务器列表', '卡片[隐私]',
+                  AppLog.instance.act('服务器列表', L.t('卡片[隐私]'),
                       target: raw.name,
-                      detail: allHidden ? '显示地址与端口' : '隐藏地址与端口');
+                      detail: allHidden ? L.t('显示地址与端口') : L.t('隐藏地址与端口'));
                   await ctrl.toggleHideAddressPort(
                     raw.id,
                     hide: ServerController.nextPrivacyHidden(
@@ -1006,7 +1006,7 @@ class _ServerListPageState extends State<ServerListPage> {
             ),
           ),
           const SizedBox(width: 4),
-          Text('刷新中', style: TextStyle(fontSize: af(context, 9), color: cs.primary)),
+          Text(L.t('刷新中'), style: TextStyle(fontSize: af(context, 9), color: cs.primary)),
         ],
       ),
     );
@@ -1039,10 +1039,13 @@ class _ServerListPageState extends State<ServerListPage> {
 
   static String _failureLine(String error, {bool isFinal = false}) {
     if (isFinal) return error;
-    const List<String> prefixed = <String>[
-      '刷新失败：',
-      '登录失败：',
-      '连接失败：',
+    final List<String> prefixed = <String>[
+      L.t('刷新失败：'),
+      L.t('登录失败：'),
+      L.t('连接失败：'),
+      'Refresh failed: ',
+      'Sign-in failed: ',
+      'Connection failed: ',
     ];
     for (final String p in prefixed) {
       if (error.startsWith(p)) return error;
@@ -1054,7 +1057,7 @@ class _ServerListPageState extends State<ServerListPage> {
     ]) {
       if (error.startsWith(full)) return error;
     }
-    return '刷新失败：$error';
+    return '${L.pick('刷新失败：', 'Refresh failed: ')}$error';
   }
 
   Widget _statsRefreshingPlaceholder(

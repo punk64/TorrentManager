@@ -18,6 +18,7 @@ import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
 import '../widgets/status_style.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/list_loading_placeholder.dart';
@@ -205,7 +206,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                             ? Icons.unfold_more
                             : Icons.unfold_less,
                         size: AppTheme.iconSize),
-                    tooltip: _cardsCollapsed ? '展开卡片' : '折叠卡片',
+                    tooltip: _cardsCollapsed ? L.t('展开卡片') : L.t('折叠卡片'),
                     onPressed: () {
                       setState(() => _cardsCollapsed = !_cardsCollapsed);
                       Formatter.saveGlobalData(
@@ -221,7 +222,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                             : Icons.visibility,
                         size: AppTheme.iconSize,
                       ),
-                      tooltip: '站点打码',
+                      tooltip: L.t('站点打码'),
                       onPressed: () {
                         final bool v = ctrl.siteMasked.value;
                         ctrl.setSiteMasked(!v);
@@ -253,7 +254,8 @@ class _TorrentListPageState extends State<TorrentListPage> {
                         ctrl.error.value != null || (suspended && why != null);
                     if (hasError) {
                       final bool authFailed =
-                          why != null && why.startsWith('登录失败');
+                          why != null &&
+        (why.startsWith(L.t('登录失败')) || why.startsWith('Sign-in failed'));
                       return Center(
                         child: Padding(
                           padding: EdgeInsets.all(af(context, 24)),
@@ -418,10 +420,10 @@ class _TorrentListPageState extends State<TorrentListPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 3),
                     child: ActionChip(
                       avatar: Icon(Icons.clear_all, size: af(context, 14)),
-                      label: Text('清除', style: TextStyle(fontSize: af(context, 11))),
+                      label: Text(L.t('清除'), style: TextStyle(fontSize: af(context, 11))),
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
-                        AppLog.instance.act('种子列表', '筛选[清除]');
+                        AppLog.instance.act('种子列表', L.t('筛选[清除]'));
                         ctrl.clearStatus();
                         _clearKeywordNow();
                         UiDialogs.showToast(S.filterCleared);
@@ -525,7 +527,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   icon: Icons.play_arrow,
                   label: S.actStart,
                   tint: cs.primary,
-                  onTap: () => _runSelected(ctrl.resumeSelected, '开始'),
+                  onTap: () => _runSelected(ctrl.resumeSelected, L.t('开始')),
                 ),
               ),
               gap(),
@@ -533,7 +535,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                 child: _gridButton(
                   icon: Icons.pause,
                   label: S.actPause,
-                  onTap: () => _runSelected(ctrl.pauseSelected, '暂停'),
+                  onTap: () => _runSelected(ctrl.pauseSelected, L.t('暂停')),
                 ),
               ),
               gap(),
@@ -542,7 +544,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
                   icon: Icons.fact_check_outlined,
                   label: S.fieldVerifyState,
                   tint: cs.tertiary,
-                  onTap: () => _runSelected(ctrl.recheckSelected, '重新校验'),
+                  onTap: () => _runSelected(ctrl.recheckSelected, L.t('重新校验')),
                 ),
               ),
               gap(),
@@ -636,7 +638,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
   Future<void> _batchEdit() async {
     final List<String> hashes = ctrl.selected.toList();
     if (hashes.isEmpty) return;
-    AppLog.instance.act('种子列表', '多选栏[批量编辑]', target: '${hashes.length} 个');
+    AppLog.instance.act('种子列表', L.t('多选栏[批量编辑]'), target: '${hashes.length} 个');
     await TorrentEditSheet.show(hashes);
   }
 
@@ -644,7 +646,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
     final List<String> hashes = ctrl.selected.toList();
     if (hashes.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: hashes.join('\n')));
-    AppLog.instance.act('种子列表', '多选栏[复制哈希]', target: '${hashes.length} 个');
+    AppLog.instance.act('种子列表', L.t('多选栏[复制哈希]'), target: '${hashes.length} 个');
     UiDialogs.showToast(S.batchCopied(hashes.length, S.fieldHash));
   }
 
@@ -660,7 +662,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
       return;
     }
     await Clipboard.setData(ClipboardData(text: magnets.join('\n')));
-    AppLog.instance.act('种子列表', '多选栏[复制磁力链]', target: '${magnets.length} 个');
+    AppLog.instance.act('种子列表', L.t('多选栏[复制磁力链]'), target: '${magnets.length} 个');
     UiDialogs.showToast(S.batchCopied(magnets.length, S.fieldMagnet));
   }
 
@@ -673,7 +675,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
       UiDialogs.showToast(S.exportVersionTooOld, isError: true);
       return;
     }
-    AppLog.instance.act('种子列表', '多选栏[批量导出]', target: '${list.length} 个');
+    AppLog.instance.act('种子列表', L.t('多选栏[批量导出]'), target: '${list.length} 个');
     final ServerController sc = Get.find<ServerController>();
     int ok = 0;
     int fail = 0;
@@ -706,7 +708,7 @@ class _TorrentListPageState extends State<TorrentListPage> {
   Widget _queueMoveButton() {
     return PopupMenuButton<String>(
       onSelected: (String v) =>
-          _runSelected(() => ctrl.queueMoveSelected(v), '队列移动:$v'),
+          _runSelected(() => ctrl.queueMoveSelected(v), L.pick('队列移动:$v', 'Queue move:$v')),
       itemBuilder: (_) => <PopupMenuEntry<String>>[
         PopupMenuItem<String>(
           value: 'top',

@@ -1,5 +1,7 @@
 # TorrentManager
 
+English | **简体中文**
+
 > Flutter + GetX 实现的 **qBittorrent / Transmission 远程种子管理器**（Android）。
 >
 > 用手机管理局域网或公网上的下载服务器：查看种子列表与实时速度、增删种子、

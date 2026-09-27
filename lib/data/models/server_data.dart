@@ -1,4 +1,5 @@
 import '../../utils/formatter.dart';
+import '../../utils/i18n.dart';
 import 'torrent.dart';
 
 class ServerData {
@@ -151,7 +152,7 @@ class ServerData {
   bool get isTransmission => type.toLowerCase() == 'transmission';
 
   String get groupName =>
-      (group == null || group!.trim().isEmpty) ? '未分类' : group!.trim();
+      (group == null || group!.trim().isEmpty) ? L.t('未分类') : group!.trim();
 
   String get scheme => useHttps ? 'https' : 'http';
 

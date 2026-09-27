@@ -733,7 +733,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
       UiDialogs.showToast(
         '${S.themeExportOkPrefix}$count${S.themeExportOkInfix}$name',
       );
-      AppLog.instance.op('导出主题配置：$name（共 $count 套）');
+      AppLog.instance.op(L.pick('导出主题配置：$name（共 $count 套）', 'Theme config exported: $name ($count themes)'));
     } catch (e) {
       UiDialogs.showToast(
         '${S.themeExportFailedPrefix}${Formatter.safeErr(e)}',
@@ -800,7 +800,7 @@ class _ThemeBackupButtonsState extends State<_ThemeBackupButtons> {
   Future<String?> _askConflict(int n) => showDialog<String>(
         context: context,
         builder: (BuildContext ctx) => AlertDialog(
-          title: Text('主题同名', style: TextStyle(fontSize: af(context, 14))),
+          title: Text(L.t('主题同名'), style: TextStyle(fontSize: af(context, 14))),
           content: Text(
             S.themeImportConflictBody(n),
             style: TextStyle(fontSize: af(context, 12)),

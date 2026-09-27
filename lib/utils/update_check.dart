@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 
 import '../app/app_version.dart';
 import 'formatter.dart';
+import 'i18n.dart';
+import 'strings.dart';
 
 class UpdateAsset {
   const UpdateAsset({
@@ -66,19 +68,19 @@ class UpdateChecker {
 
     if (!u.toLowerCase().startsWith('https://')) {
       return UpdateCheckResult.failed(
-          '更新检查地址不是 https（已按"查不到"处理，不发请求）');
+          L.t('更新检查地址不是 https（已按"查不到"处理，不发请求）'));
     }
 
     String body;
     try {
       body = await _fetch(u);
     } catch (e) {
-      return UpdateCheckResult.failed('请求失败：$e');
+      return UpdateCheckResult.failed(S.updateReqFailed(e.toString()));
     }
 
     final ReleaseInfo? info = parseRelease(body);
     if (info == null) {
-      return UpdateCheckResult.failed('响应里解析不出版本号');
+      return UpdateCheckResult.failed(L.t('响应里解析不出版本号'));
     }
 
     if (Formatter.compareVersions(info.version, local) <= 0) {
@@ -289,8 +291,8 @@ class UpdateCheckResult {
 
   bool get hasInstaller => apk != null;
 
-  static const UpdateCheckResult disabled =
-      UpdateCheckResult._(UpdateCheckStatus.disabled, reason: '未配置检查地址');
+  static UpdateCheckResult get disabled => UpdateCheckResult._(
+      UpdateCheckStatus.disabled, reason: L.t('未配置检查地址'));
 
   static UpdateCheckResult failed(String reason) =>
       UpdateCheckResult._(UpdateCheckStatus.failed, reason: reason);
@@ -304,7 +306,7 @@ class UpdateCheckResult {
           {String? releaseUrl, String? notes}) =>
       UpdateCheckResult._(UpdateCheckStatus.noUpdate,
           latest: latest,
-          reason: '最新 Release 未附带适配本机的安装包',
+          reason: L.t('最新 Release 未附带适配本机的安装包'),
           releaseUrl: releaseUrl,
           notes: notes);
 

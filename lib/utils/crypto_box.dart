@@ -12,6 +12,8 @@ import 'package:pointycastle/key_derivators/pbkdf2.dart';
 import 'package:pointycastle/macs/hmac.dart';
 
 import '../data/local/secure_prefs.dart';
+import 'i18n.dart';
+import 'strings.dart';
 
 class CryptoBox {
   CryptoBox._();
@@ -130,8 +132,8 @@ class CryptoBox {
     if (m == null) return null;
 
     if (_isPortableMap(m)) {
-      throw const CryptoBoxException(
-          '这是便携备份（口令加密），请用「导入便携备份」并输入口令');
+      throw CryptoBoxException(L.t(
+      '这是便携备份（口令加密），请用「导入便携备份」并输入口令'));
     }
     final Uint8List key = await _fileKey();
     final Uint8List nonce;
@@ -140,18 +142,18 @@ class CryptoBox {
       nonce = base64Decode(m['nonce'] as String);
       data = base64Decode(m['data'] as String);
     } catch (_) {
-      throw const CryptoBoxException('备份文件格式损坏（base64 解不开）');
+      throw CryptoBoxException(L.t('备份文件格式损坏（base64 解不开）'));
     }
     if (nonce.length != _nonceLen || data.length <= _tagBits ~/ 8) {
-      throw const CryptoBoxException('备份文件格式损坏（长度不合法）');
+      throw CryptoBoxException(L.t('备份文件格式损坏（长度不合法）'));
     }
     try {
       final Uint8List plain = _gcm(false, key: key, nonce: nonce, input: data);
       return utf8.decode(plain);
     } on InvalidCipherTextException {
-      throw const CryptoBoxException('备份文件解密失败（密钥不匹配或文件已损坏）');
+      throw CryptoBoxException(L.t('备份文件解密失败（密钥不匹配或文件已损坏）'));
     } catch (_) {
-      throw const CryptoBoxException('备份文件解密失败');
+      throw CryptoBoxException(L.t('备份文件解密失败'));
     }
   }
 
@@ -171,7 +173,7 @@ class CryptoBox {
     String passphrase,
   ) async {
     if (passphrase.isEmpty) {
-      throw const CryptoBoxException('口令不能为空');
+      throw CryptoBoxException(L.t('口令不能为空'));
     }
     final Uint8List salt = _randomBytes(_saltLen);
     final Uint8List nonce = _randomBytes(_nonceLen);
@@ -201,11 +203,10 @@ class CryptoBox {
   ) async {
     final Map<String, dynamic>? m = _parseEnvelope(text);
     if (m == null || !_isPortableMap(m)) {
-      throw const CryptoBoxException(
-          '这不是便携备份文件（缺少 portable 标识）');
+      throw CryptoBoxException(L.t('这不是便携备份文件（缺少 portable 标识）'));
     }
     if (passphrase.isEmpty) {
-      throw const CryptoBoxException('口令不能为空');
+      throw CryptoBoxException(L.t('口令不能为空'));
     }
     final Uint8List salt;
     final Uint8List nonce;
@@ -215,7 +216,7 @@ class CryptoBox {
       nonce = base64Decode(m['nonce'] as String);
       data = base64Decode(m['data'] as String);
     } catch (_) {
-      throw const CryptoBoxException('便携备份文件格式损坏（base64 解不开）');
+      throw CryptoBoxException(L.t('便携备份文件格式损坏（base64 解不开）'));
     }
 
     final int iter = (m['iter'] is int) ? m['iter'] as int : 0;
@@ -223,22 +224,20 @@ class CryptoBox {
         nonce.length != _nonceLen ||
         data.length <= _tagBits ~/ 8 ||
         iter <= 0) {
-      throw const CryptoBoxException('便携备份文件格式损坏（参数不合法）');
+      throw CryptoBoxException(L.t('便携备份文件格式损坏（参数不合法）'));
     }
 
     if (iter < minIterations) {
-      throw CryptoBoxException(
-          '便携备份的加密强度不足（迭代次数 $iter，低于下限 $minIterations）：'
-          '该文件可能已被篡改，已拒绝导入');
+      throw CryptoBoxException(S.cryptoWeakIterations(iter, minIterations));
     }
     final Uint8List key = _deriveKey(passphrase, salt, iter);
     try {
       final Uint8List plain = _gcm(false, key: key, nonce: nonce, input: data);
       return utf8.decode(plain);
     } on InvalidCipherTextException {
-      throw const CryptoBoxException('口令不正确，或文件已被修改/损坏');
+      throw CryptoBoxException(L.t('口令不正确，或文件已被修改/损坏'));
     } catch (_) {
-      throw const CryptoBoxException('便携备份解密失败');
+      throw CryptoBoxException(L.t('便携备份解密失败'));
     }
   }
 }

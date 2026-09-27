@@ -948,6 +948,147 @@ class S {
       L.pick('创建分类失败：$e', 'Failed to create category: $e');
   static String get categoryEmptyList =>
       L.pick('未读取到分类，点右侧按钮可新建', 'No categories yet; tap the button to create one');
+  static String netBadStatus(String code) => L.pick(
+      '服务器返回异常状态 HTTP $code', 'Server returned unexpected HTTP status $code');
+  static String themeImportMissing(String fields) =>
+      L.pick('缺 $fields', 'Missing $fields');
+  static String cryptoWeakIterations(int iter, int min) => L.pick(
+      '便携备份的加密强度不足（迭代次数 $iter，低于下限 $min）：'
+          '该文件可能已被篡改，已拒绝导入',
+      'Portable backup encryption is too weak ($iter iterations, below the $min minimum): '
+          'the file may have been tampered with; import refused');
+  static String updateReqFailed(String e) =>
+      L.pick('请求失败：$e', 'Request failed: $e');
+  static String filterPicked(int n) => L.pick('$n 个已选', '$n selected');
+  static String filterOfTotal(int total) =>
+      L.pick(' / 共 $total 个', ' / $total total');
+  static String previewInpad(int pct) =>
+      L.pick('组件底衬：透明度 $pct%', 'Surface opacity: $pct%');
+  static String qbRejected(int code) => L.pick(
+      '服务端拒绝了这次操作（HTTP $code）',
+      'Server rejected the operation (HTTP $code)');
+  static String qbNonJson(String endpoint, int code, String brief) => L.pick(
+      '$endpoint 返回非 JSON（HTTP $code）：$brief —— 多半是未登录或账号密码错误',
+      '$endpoint returned non-JSON (HTTP $code): $brief — likely not signed in, or wrong credentials');
+  static String get qbEmptyCreds => L.t('账号或密码为空，已跳过登录以避免触发服务端封禁');
+  static String get qbIpBanned => L.t('IP 已被服务器封禁');
+  static String qbLoginRejected(int status) => L.pick(
+      '服务器拒绝了登录（HTTP $status）', 'Server rejected sign-in (HTTP $status)');
+  static String trNeedCreds(int? code) => L.pick(
+      '服务端要求账号密码，但本机未填写账号（HTTP $code）',
+      'The server requires credentials but none are configured (HTTP $code)');
+  static String trRedirectMissing(int code) => L.pick(
+      'Transmission: 重定向缺少 Location（HTTP $code）',
+      'Transmission: redirect missing Location (HTTP $code)');
+  static String trRedirectCrossHost(String from, String to) => L.pick(
+      'Transmission: 拒绝跨主机重定向 $from → $to（避免泄露会话 id）',
+      'Transmission: cross-host redirect refused $from → $to (session id leak protection)');
+  static String get trTooManyRedirects => L.t('Transmission: 重定向次数过多');
+  static String trHandshakeFail(int n) => L.pick(
+      'Transmission: 会话握手失败（连续 $n 次 409）',
+      'Transmission: session handshake failed ($n consecutive 409s)');
+  static String trLoginBadCreds(int sc) => L.pick(
+      'Transmission 登录失败：账号或密码错误（HTTP $sc）',
+      'Transmission sign-in failed: wrong username or password (HTTP $sc)');
+  static String trLoginNeedCreds(int sc) => L.pick(
+      'Transmission 登录失败：服务端要求账号密码，但本机未填写账号（HTTP $sc）',
+      'Transmission sign-in failed: server requires credentials but none are configured (HTTP $sc)');
+  static String trNonJson(String method, int code) => L.pick(
+      'Transmission RPC $method 返回非 JSON（HTTP $code）',
+      'Transmission RPC $method returned non-JSON (HTTP $code)');
+  static String ipFilterDelta(int a, int added, int removed) => L.pick(
+      '$a 条（+$added / -$removed）', '$a entries (+$added / -$removed)');
+  static String redirectRejected(String from, String to) => L.pick(
+      '拒绝跨主机重定向（$from → $to）：会话凭据不会转发到其它主机',
+      'Cross-host redirect refused ($from → $to): session credentials are never forwarded to another host');
+  static String loginFailedWith(String reason) =>
+      L.pick('登录失败：$reason', 'Sign-in failed: $reason');
+  static String get loginRejectedHint => L.t('登录失败：服务器拒绝了登录，请检查账号与密码');
+  static String get loginFailed => L.t('登录失败');
+  static String get offlineNoNetwork => L.t('网络已断开（设备当前没有可用网络）');
+  static String get sessionNotEstablished => L.t('未能在服务器上建立会话');
+  static String serverSettingsTitle(String name) => L.pick(
+      name.isEmpty ? '服务器设置' : '$name · 服务器设置',
+      name.isEmpty ? 'Server settings' : '$name · Server settings');
+  static String kbPair(String up, String down) => L.pick(
+      '上行 $up KB/s · 下行 $down KB/s', 'Up $up KB/s · Down $down KB/s');
+  static String queueDetail(String up, String dl, String? torrents) => L.pick(
+      torrents == null
+          ? '上传 $up / 下载 $dl'
+          : '上传 $up / 下载 $dl / 种子 $torrents',
+      torrents == null
+          ? 'up $up / down $dl'
+          : 'up $up / down $dl / torrents $torrents');
+  static String seedDetail(String ratio, String inactive, String? seeding) =>
+      L.pick(seeding == null
+              ? '比率 $ratio · 非活动 $inactive'
+              : '比率 $ratio · 非活动 $inactive · 做种 $seeding',
+          seeding == null
+              ? 'ratio $ratio · inactive $inactive'
+              : 'ratio $ratio · inactive $inactive · seeding $seeding');
+  static String connDetail(String g, String per, String upPer, String? uploads) =>
+      L.pick(uploads == null
+              ? '全局 $g / 单种 $per / 单种连接 $upPer'
+              : '全局 $g / 单种 $per / 单种连接 $upPer / 连接 $uploads',
+          uploads == null
+              ? 'global $g / per-torrent $per / per-torrent uploads $upPer'
+              : 'global $g / per-torrent $per / per-torrent uploads $upPer / uploads $uploads');
+  static String entriesCount(int n) => L.pick('$n 条', '$n entries');
+  static String currentBlocked(int n) =>
+      L.pick('当前屏蔽 $n 条', 'currently blocking $n');
+  static String get currentBlockedDash => L.t('当前屏蔽 —');
+  static String ipFilterOn(bool on) => L.pick(
+      on ? '已启用 IP 过滤' : '已关闭 IP 过滤',
+      on ? 'IP filtering enabled' : 'IP filtering disabled');
+  static String get setIpFilterFail => L.t('设置 IP 过滤失败');
+  static String trackerFilterOn(bool both) => L.pick(
+      both ? '已同时过滤 Tracker 连接' : '已只过滤普通连接',
+      both ? 'Tracker connections now filtered too' : 'Now filtering regular connections only');
+  static String get blocklistSubUpdated => L.t('黑名单订阅已更新');
+  static String get setBlocklistSubFail => L.t('设置黑名单订阅失败');
+  static String get dirtyUnsaved => L.t('名单有改动，未保存');
+  static String dirtyCount(int d) => L.pick(
+      '名单有改动（${d > 0 ? '+' : ''}$d 条），未保存',
+      'List modified (${d > 0 ? '+' : ''}$d entries), unsaved');
+  static String bannedCount(int n) => L.pick('已封禁 $n 条', '$n banned');
+  static String get bannedDash => L.t('已封禁 —');
+  static String get geoSearching => L.t('查询归属地…');
+  static String get geoUnknown => L.t('归属地未知');
+  static String geoRange(String geo, int n) => L.pick(
+      '$geo · 网段内 $n 个地址', '$geo · $n addresses in range');
+  static String badIpFormat(String v) => L.pick(
+      'IP 或网段格式不对：$v', 'Invalid IP or CIDR: $v');
+  static String dupIp(String v) => L.pick('名单里已经有 $v', 'Already in the list: $v');
+  static String banRowsBad(int n, String first) => L.pick(
+      '有 $n 行格式不对，例如 $first', '$n rows have invalid format, e.g. $first');
+  static String banMaxRows(int n) => L.pick('最多 $n 条', 'At most $n entries');
+  static String rowsTransition(int before, int after) => L.pick(
+      '$before 条 → $after 条（未保存）', '$before → $after entries (unsaved)');
+  static String banSaveDetail(int n) => L.pick('$n 条', '$n entries');
+  static String blacklistSaved(int n) => L.pick(
+      '黑名单已保存（$n 条）', 'Blocklist saved ($n entries)');
+  static String loadFailHint(String err) => L.pick(
+      '没能读取这台服务器的设置，下面的数字与开关暂不可信'
+          '（$err）。点右上角刷新重试。',
+      'Could not load this server\'s settings; the numbers and switches below may be '
+          'stale ($err). Tap refresh (top-right) to retry.');
+  static String banSummary(int n, int? diff) => L.pick(
+      diff == null || diff == 0 ? '$n 条' : '$n 条 · ${diff > 0 ? '+' : ''}$diff',
+      diff == null || diff == 0 ? '$n entries' : '$n entries · ${diff > 0 ? '+' : ''}$diff');
+  static String get colorFollowTheme => L.t('字色跟随主题');
+  static String colorHex(String hex) => L.pick('字色 #$hex', 'Text color #$hex');
+  static String namesAndMore(String names, int n) =>
+      L.pick('$names 等 $n 个', '$names and $n more');
+  static String trNoTaskSelected(int n) => L.pick(
+      '选中的种子里没有可用的 Transmission 任务 ID（共选中 $n 个，都没有 trId）',
+      'No usable Transmission task ids among the selection ($n selected, none has a trId)');
+  static String trNothingDeletable(int n) => L.pick(
+      '没有可删除的 Transmission 任务 ID（$n 个种子都缺少 trId）',
+      'No deletable Transmission task ids ($n torrents all lack a trId)');
+  static String trNoneUsable(int n) => L.pick(
+      '所选 $n 个种子都没有可用的 Transmission 任务 ID',
+      'None of the $n selected torrents has a usable Transmission task id');
+  static String get trNoTaskRename => L.t('该种子缺少 Transmission 任务 ID，无法重命名');
 
   static String get editTagsTitle => L.pick('修改标签', 'Edit tags');
   static String get editTagsAppend => L.pick('追加（保留原有）', 'Append (keep existing)');

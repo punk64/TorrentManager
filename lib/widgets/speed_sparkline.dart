@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../utils/i18n.dart';
 import '../app/adaptive.dart';
 
 class SpeedSparkline extends StatelessWidget {
@@ -28,7 +30,7 @@ class SpeedSparkline extends StatelessWidget {
       child: empty
           ? Center(
               child: Text(
-                '等待采样…',
+                L.t('等待采样…'),
                 style: TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant),
               ),
             )

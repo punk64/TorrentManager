@@ -8,9 +8,11 @@ import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
+
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
 import '../utils/ip_geo.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -123,7 +125,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
 
   Future<void> _ban(String target) async {
     if (sc.current.value?.isQbittorrent != true) {
-      UiDialogs.showToast('仅 qBittorrent 支持封禁 Peer', isError: true);
+      UiDialogs.showToast(L.t('仅 qBittorrent 支持封禁 Peer'), isError: true);
       return;
     }
     final bool? ok = await showDialog<bool>(
@@ -159,12 +161,13 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     try {
       await sc.qb.showBanPeers(target);
 
-      AppLog.instance.op('封禁 Peer：$target'
+      AppLog.instance.op(
+          '${L.pick('封禁 Peer：$target', 'Peer banned: $target')}'
           '（${ctrl.current.value?.name ?? '-'} · ${sc.current.value?.name ?? '-'}）',
           scope: sc.current.value?.logScope);
       UiDialogs.showToast('${S.peerBanOk}$target');
     } catch (e) {
-      AppLog.instance.error('封禁 Peer 失败：$target · ${Formatter.safeErr(e)}',
+      AppLog.instance.error(L.pick('封禁 Peer 失败：$target · ${Formatter.safeErr(e)}', 'Failed to ban peer $target · ${Formatter.safeErr(e)}'),
           scope: sc.current.value?.logScope);
       UiDialogs.showToast('${S.peerBanFail}: ${Formatter.safeErr(e)}',
           isError: true);
@@ -176,7 +179,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final t = ctrl.current.value;
     if (s == null || t == null) return;
     if (!s.isQbittorrent) {
-      UiDialogs.showToast('仅 qBittorrent 支持添加 Peer', isError: true);
+      UiDialogs.showToast(L.t('仅 qBittorrent 支持添加 Peer'), isError: true);
       return;
     }
 
@@ -184,12 +187,12 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
     final String? result = await showDialog<String>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text('添加 Peer', style: TextStyle(fontSize: af(context, 14))),
+        title: Text(L.t('添加 Peer'), style: TextStyle(fontSize: af(context, 14))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('每行一个，格式 IP:端口（最多 10 个）',
+            Text(L.t('每行一个，格式 IP:端口（最多 10 个）'),
                 style: TextStyle(fontSize: af(context, 10), color: Theme.of(ctx).hintColor)),
             SizedBox(height: af(context, 8)),
             TextField(
@@ -223,7 +226,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
       final String v = line.trim();
       if (v.isEmpty) continue;
       if (!v.contains(':') && !v.contains(' ')) {
-        UiDialogs.showToast('格式无效：$v', isError: true);
+        UiDialogs.showToast(L.pick('格式无效：$v', 'Invalid format: $v'), isError: true);
         return;
       }
       peers.add(v);
@@ -233,7 +236,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
 
     await ctrl.addPeersTo(t.hash, peers);
     if (ctrl.lastActionOk.value == true) {
-      if (mounted) UiDialogs.showToast('已添加 ${peers.length} 个 Peer');
+      if (mounted) UiDialogs.showToast(L.pick('已添加 ${peers.length} 个 Peer', '${peers.length} peers added'));
     } else {
       if (mounted) {
         UiDialogs.showToast('${S.execFailed}: ${ctrl.error.value ?? ''}',
@@ -312,7 +315,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
               final List<Map<String, dynamic>> peers = _sorted;
               if (peers.isEmpty) {
                 return Center(
-                  child: Text('暂无 Peer 数据', style: TextStyle(fontSize: af(context, 12))),
+                  child: Text(L.t('暂无 Peer 数据'), style: TextStyle(fontSize: af(context, 12))),
                 );
               }
 
@@ -353,11 +356,11 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
           Expanded(
             child: Text.rich(
               TextSpan(
-                text: '${ctrl.peers.length} 个 Peer',
+                text: L.pick('${ctrl.peers.length} 个 Peer', '${ctrl.peers.length} peers'),
                 style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600),
                 children: <TextSpan>[
                   TextSpan(
-                    text: ' · 下载中 ',
+                    text: L.t(' · 下载中 '),
                     style: TextStyle(
                         fontSize: af(context, 10),
                         fontWeight: FontWeight.w400,
@@ -371,7 +374,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
                         fontWeight: FontWeight.w600),
                   ),
                   TextSpan(
-                    text: ' · 对其上传 ',
+                    text: L.t(' · 对其上传 '),
                     style: TextStyle(
                         fontSize: af(context, 10),
                         fontWeight: FontWeight.w400,
@@ -395,7 +398,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
               height: af(context, 26),
               child: OutlinedButton.icon(
                 icon: Icon(Icons.add, size: af(context, 13)),
-                label: Text('添加 Peer', style: TextStyle(fontSize: af(context, 10))),
+                label: Text(L.t('添加 Peer'), style: TextStyle(fontSize: af(context, 10))),
                 onPressed: _addPeer,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -434,7 +437,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
               ),
             ),
           Tooltip(
-            message: '切换升序 / 降序',
+            message: L.t('切换升序 / 降序'),
             child: ActionChip(
               avatar: Icon(
                 _asc ? Icons.arrow_upward : Icons.arrow_downward,
@@ -724,14 +727,14 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
 
     final List<Widget> cells = <Widget>[
       if (peerId.isNotEmpty) _dCell('PeerID', peerId),
-      if (connection.isNotEmpty) _dCell('连接', connection),
-      if (encrypted) _dCell('加密', '✓'),
-      if (utp) _dCell('传输', 'uTP'),
-      if (incoming) _dCell('方向', '入站'),
+      if (connection.isNotEmpty) _dCell(L.t('连接'), connection),
+      if (encrypted) _dCell(L.t('加密'), '✓'),
+      if (utp) _dCell(L.t('传输'), 'uTP'),
+      if (incoming) _dCell(L.t('方向'), L.t('入站')),
       if (!isQb && ratio > 0)
-        _dCell('对其分享率', ratio.toStringAsFixed(2)),
+        _dCell(L.t('对其分享率'), ratio.toStringAsFixed(2)),
       if (isQb && relevance > 0)
-        _dCell('相关度', '${(relevance * 100).toStringAsFixed(0)}%'),
+        _dCell(L.t('相关度'), '${(relevance * 100).toStringAsFixed(0)}%'),
     ];
 
     return Column(
@@ -743,7 +746,7 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
         if (files.isNotEmpty) ...<Widget>[
           const SizedBox(height: 4),
           Text(
-            '正在提供 $files',
+            L.pick('正在提供 $files', 'offering $files'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: af(context, 10), color: cs.onSurfaceVariant),
@@ -805,26 +808,26 @@ class _TorrentInfoPeersPageState extends State<TorrentInfoPeersPage> {
   String _sortTip(PeerSort s) {
     switch (s) {
       case PeerSort.progress:
-        return '按${S.fieldProgress}排序';
+        return L.pick('按${S.fieldProgress}排序', 'By ${S.fieldProgress}');
       case PeerSort.dlSpeed:
-        return '按${S.fieldDlSpeed}排序';
+        return L.pick('按${S.fieldDlSpeed}排序', 'By ${S.fieldDlSpeed}');
       case PeerSort.upSpeed:
-        return '按${S.fieldUpSpeed}排序';
+        return L.pick('按${S.fieldUpSpeed}排序', 'By ${S.fieldUpSpeed}');
       case PeerSort.ip:
-        return '按${S.fieldIp}排序';
+        return L.pick('按${S.fieldIp}排序', 'By ${S.fieldIp}');
     }
   }
 
   String get _dirLabel {
     switch (_sort) {
       case PeerSort.dlSpeed:
-        return _asc ? '从慢到快' : '从快到慢';
+        return _asc ? L.t('从慢到快') : L.t('从快到慢');
       case PeerSort.upSpeed:
-        return _asc ? '从慢到快' : '从快到慢';
+        return _asc ? L.t('从慢到快') : L.t('从快到慢');
       case PeerSort.progress:
-        return _asc ? '从少到多' : '从多到少';
+        return _asc ? L.t('从少到多') : L.t('从多到少');
       case PeerSort.ip:
-        return _asc ? '正序' : '倒序';
+        return _asc ? L.t('正序') : L.t('倒序');
     }
   }
 }

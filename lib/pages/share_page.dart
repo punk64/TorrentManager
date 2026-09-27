@@ -10,6 +10,7 @@ import '../utils/crypto_box.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -29,7 +30,7 @@ class _SharePageState extends State<SharePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('备份与恢复', style: TextStyle(fontSize: af(context, 15))),
+        title: Text(L.t('备份与恢复'), style: TextStyle(fontSize: af(context, 15))),
       ),
       body: Obx(
         () => Padding(
@@ -39,15 +40,15 @@ class _SharePageState extends State<SharePage> {
             children: <Widget>[
 
               Text(
-                '本构建为纯本地版：备份保存在本机，'
-                '如需迁移到其他设备请使用「导出 / 导入 JSON」。',
+                L.t('本构建为纯本地版：备份保存在本机，'
+                '如需迁移到其他设备请使用「导出 / 导入 JSON」。'),
                 style: TextStyle(fontSize: af(context, 11), height: 1.5),
               ),
               const SizedBox(height: 6),
               Text(
                 sc.backupAt.value == null
-                    ? '暂无本地备份'
-                    : '最近备份：${Formatter.setDate(sc.backupAt.value!.millisecondsSinceEpoch ~/ 1000)}',
+                    ? L.t('暂无本地备份')
+                    : L.pick('最近备份：${Formatter.setDate(sc.backupAt.value!.millisecondsSinceEpoch ~/ 1000)}', 'Last backup: ${Formatter.setDate(sc.backupAt.value!.millisecondsSinceEpoch ~/ 1000)}'),
                 style: TextStyle(fontSize: af(context, 10)),
               ),
               SizedBox(height: af(context, 10)),
@@ -59,9 +60,9 @@ class _SharePageState extends State<SharePage> {
                     child: Text(
 
                       sc.backupDir.value == null
-                          ? '备份位置：应用私有目录（未指定文件夹时的默认位置）'
-                          : '备份文件夹：${sc.backupDir.value}'
-                              '（写入失败会自动改存应用私有目录）',
+                          ? L.t('备份位置：应用私有目录（未指定文件夹时的默认位置）')
+                          : '${L.pick('备份文件夹：', 'Backup folder: ')}${sc.backupDir.value}'
+                              '${L.t('（写入失败会自动改存应用私有目录）')}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: af(context, 10)),
@@ -69,15 +70,15 @@ class _SharePageState extends State<SharePage> {
                   ),
                   TextButton.icon(
                     icon: Icon(Icons.folder_open, size: af(context, 16)),
-                    label: Text('选择', style: TextStyle(fontSize: af(context, 11))),
+                    label: Text(L.t('选择'), style: TextStyle(fontSize: af(context, 11))),
                     onPressed: _busy ? null : () => sc.pickBackupDir(),
                   ),
                 ],
               ),
 
               Text(
-                '备份文件已加密（AES-256-GCM，密钥由本机 Keystore 托管），'
-                '因此只能在本机恢复；换设备请用「导出 / 导入 JSON」。',
+                L.t('备份文件已加密（AES-256-GCM，密钥由本机 Keystore 托管），'
+                '因此只能在本机恢复；换设备请用「导出 / 导入 JSON」。'),
                 style: TextStyle(fontSize: af(context, 10)),
               ),
 
@@ -92,7 +93,7 @@ class _SharePageState extends State<SharePage> {
                             children: <Widget>[
                               Image.asset('assets/images/empty.webp', width: af(context, 80)),
                               SizedBox(height: af(context, 10)),
-                              Text('尚未配置服务器',
+                              Text(L.t('尚未配置服务器'),
                                   style: TextStyle(fontSize: af(context, 12))),
                             ],
                           ),
@@ -127,7 +128,7 @@ class _SharePageState extends State<SharePage> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.save, size: AppTheme.iconSize),
-                  label: Text(_busy ? S.fieldUpdating : '保存备份到本机',
+                  label: Text(_busy ? S.fieldUpdating : L.t('保存备份到本机'),
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: (_busy || sc.servers.isEmpty)
                       ? null
@@ -135,7 +136,7 @@ class _SharePageState extends State<SharePage> {
                             final String path = await sc.saveBackup();
                             UiDialogs.showToast(
                                 '${S.bkExportOk}'
-                                '（${sc.servers.length} 个服务器）\n'
+                                '${L.pick('（${sc.servers.length} 个服务器）\n', '(${sc.servers.length} servers)\n')}'
                                 '${_shortPath(path)}');
                           }),
                 ),
@@ -147,7 +148,7 @@ class _SharePageState extends State<SharePage> {
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.drive_file_move_outline,
                       size: AppTheme.iconSize),
-                  label: Text('导出备份副本到…',
+                  label: Text(L.t('导出备份副本到…'),
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: (_busy || sc.servers.isEmpty)
                       ? null
@@ -163,7 +164,7 @@ class _SharePageState extends State<SharePage> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.restore, size: AppTheme.iconSize),
-                  label: Text('从本机备份恢复',
+                  label: Text(L.t('从本机备份恢复'),
                       style: TextStyle(fontSize: af(context, 12))),
                   onPressed: _busy
                       ? null
@@ -172,7 +173,7 @@ class _SharePageState extends State<SharePage> {
                             final int n = await sc.restoreBackup();
                             UiDialogs.showToast(
                               n == 0
-                                  ? '${S.bkRestoreFail}未发现新的服务器'
+                                  ? '${S.bkRestoreFail}${L.pick('未发现新的服务器', 'no new servers found')}'
                                   : '${S.bkRestoreOk}$n',
                             );
                           }),
@@ -244,7 +245,7 @@ class _SharePageState extends State<SharePage> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.ios_share, size: AppTheme.iconSize),
-                      label: Text('导出 JSON',
+                      label: Text(L.t('导出 JSON'),
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: (_busy || sc.servers.isEmpty)
                           ? null
@@ -262,8 +263,8 @@ class _SharePageState extends State<SharePage> {
                                 );
                                 UiDialogs.showToast(S.bkJsonExportNote);
                                 AppLog.instance.op(
-                                    '导出服务器 JSON 到剪贴板'
-                                    '（口令加密，含密码）：${sc.servers.length} 台');
+                                    L.pick('导出服务器 JSON 到剪贴板'
+                                    '（口令加密，含密码）：${sc.servers.length} 台', 'Server JSON exported to clipboard (passphrase-encrypted, with passwords): ${sc.servers.length} servers'));
                               }),
                     ),
                   ),
@@ -271,7 +272,7 @@ class _SharePageState extends State<SharePage> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.download, size: AppTheme.iconSize),
-                      label: Text('导入 JSON',
+                      label: Text(L.t('导入 JSON'),
                           style: TextStyle(fontSize: af(context, 11))),
                       onPressed: _busy ? null : _importDialog,
                     ),
@@ -329,7 +330,7 @@ class _SharePageState extends State<SharePage> {
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
-        title: Text('导入服务器配置', style: TextStyle(fontSize: af(context, 14))),
+        title: Text(L.t('导入服务器配置'), style: TextStyle(fontSize: af(context, 14))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -353,7 +354,7 @@ class _SharePageState extends State<SharePage> {
             ),
             TextButton.icon(
               icon: const Icon(Icons.content_paste, size: AppTheme.iconSize),
-              label: Text('从剪贴板粘贴',
+              label: Text(L.t('从剪贴板粘贴'),
                   style: TextStyle(fontSize: af(context, 12))),
               onPressed: () async {
                 final ClipboardData? d =
@@ -370,7 +371,7 @@ class _SharePageState extends State<SharePage> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('导入'),
+            child: Text(L.t('导入')),
           ),
         ],
       ),

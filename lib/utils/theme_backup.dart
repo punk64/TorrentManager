@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../app/theme.dart';
+import 'i18n.dart';
 import 'strings.dart';
 
 class ThemePack {
@@ -89,9 +90,9 @@ class ThemeBackup {
     try {
       decoded = jsonDecode(raw);
     } catch (_) {
-      return const ThemePackResult.fail(
-        '导入失败：文件不是合法的 JSON',
-        hint: '文件可能已损坏、被截断，或根本不是 JSON 文本（例如误选了图片）。',
+      return ThemePackResult.fail(
+        L.t('导入失败：文件不是合法的 JSON'),
+        hint: L.t('文件可能已损坏、被截断，或根本不是 JSON 文本（例如误选了图片）。'),
       );
     }
     if (decoded is! Map) {
@@ -131,7 +132,7 @@ class ThemeBackup {
     for (int i = 0; i < rawThemes.length; i++) {
       final Object? e = rawThemes[i];
       if (e is! Map) {
-        skipped.add(S.themeImportItemSkipped(i + 1, '不是对象'));
+        skipped.add(S.themeImportItemSkipped(i + 1, L.t('不是对象')));
         continue;
       }
       final Map<String, dynamic> m = e.cast<String, dynamic>();
@@ -168,6 +169,6 @@ class ThemeBackup {
       if (m['name'] is! String) 'name',
       if (m['seed'] is! int) 'seed',
     ];
-    return miss.isEmpty ? '字段类型不符' : '缺 ${miss.join('、')}';
+    return miss.isEmpty ? L.t('字段类型不符') : S.themeImportMissing(miss.join('、'));
   }
 }

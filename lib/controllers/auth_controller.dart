@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../data/local/local_store.dart';
 import '../utils/app_log.dart';
+import '../utils/log_text.dart';
 
 class AuthController extends GetxController {
   final isLoading = false.obs;
@@ -38,7 +39,7 @@ class AuthController extends GetxController {
       );
       await LocalStore.saveAccount(a);
       account.value = a;
-      AppLog.instance.op('建立本地账户：$display（$providerName）');
+      AppLog.instance.op(LogT.accountCreated(display, providerName));
       return true;
     } catch (e) {
       error.value = e.toString();
@@ -60,12 +61,12 @@ class AuthController extends GetxController {
     final LocalAccount updated = a.copyWith(displayName: name.trim());
     await LocalStore.saveAccount(updated);
     account.value = updated;
-    AppLog.instance.op('重命名本地账户：${a.displayName} → ${updated.displayName}');
+    AppLog.instance.op(LogT.accountRenamed(a.displayName, updated.displayName));
   }
 
   Future<void> signOut() async {
     await LocalStore.clearAccount();
     account.value = null;
-    AppLog.instance.op('退出本地账户（服务器配置与备份文件保留）');
+    AppLog.instance.op(LogT.accountSignedOut());
   }
 }

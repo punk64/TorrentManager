@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/i18n.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -10,7 +11,7 @@ import 'bottom_panel.dart';
 
 Future<void> showSortFilterPanel([BuildContext? context]) =>
     BottomPanel.show<void>(
-      title: '排序与筛选',
+      title: L.t('排序与筛选'),
       heightFactor: 0.85,
       child: const SortFilterPanel(),
       context: context,
@@ -109,7 +110,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
 
   String get _statusSummary {
     if (ctrl.filter.value == TorrentFilter.all && ctrl.subStates.isEmpty) {
-      return '未筛选';
+      return L.t('未筛选');
     }
     final int n = ctrl.subStates.length;
     return '${ctrl.filter.value.label}${n > 0 ? ' · $n' : ''}';
@@ -117,12 +118,12 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
 
   String _facetSummary(FilterDim d) {
     final int n = ctrl.selection(d).length;
-    return n == 0 ? '未筛选' : '$n 个已选';
+    return n == 0 ? L.t('未筛选') : S.filterPicked(n);
   }
 
   Widget _sortSection() {
     return _card(
-      title: '排序方式',
+      title: L.t('排序方式'),
       open: _sortOpen,
       summary: _sortSummary,
       onToggle: () => setState(() => _sortOpen = !_sortOpen),
@@ -135,13 +136,13 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _btn(
-                text: '升序',
+                text: L.t('升序'),
                 selected: !ctrl.sortDesc.value,
                 onTap: () => ctrl.setSortDesc(false),
               ),
               SizedBox(width: af(context, 8)),
               _btn(
-                text: '降序',
+                text: L.t('降序'),
                 selected: ctrl.sortDesc.value,
                 onTap: () => ctrl.setSortDesc(true),
               ),
@@ -312,14 +313,14 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
               onPressed: ctrl.hasFacet(d) ? () => ctrl.clearFacet(d) : null,
               icon: Icon(Icons.filter_alt_off, size: af(context, 16)),
               label: Text(
-                '清除筛选',
+                L.t('清除筛选'),
                 style: TextStyle(fontSize: _m.fontSize),
               ),
             ),
           ),
           const SizedBox(height: 2),
           list.isEmpty
-              ? Text('（暂无数据）', style: TextStyle(fontSize: _m.fontSize))
+              ? Text(L.t('（暂无数据）'), style: TextStyle(fontSize: _m.fontSize))
               : Wrap(
                   alignment: center ? WrapAlignment.center : WrapAlignment.start,
                   spacing: 8,
@@ -379,7 +380,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
           ),
           SizedBox(width: af(context, 8)),
           Text(
-            '筛选后',
+            L.t('筛选后'),
             style: TextStyle(
               fontSize: af(context, 12),
               color: label,
@@ -397,7 +398,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
           ),
           Expanded(
             child: Text(
-              ' / 共 $total 个',
+              S.filterOfTotal(total),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -415,7 +416,7 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                 vertical: af(context, 5),
               ),
               child: Text(
-                '重置',
+                L.t('重置'),
                 style: TextStyle(
                   fontSize: af(context, 13),
                   color: active ? cs.onPrimary : cs.primary,

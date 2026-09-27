@@ -7,6 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pointycastle/digests/sha1.dart';
 
 import 'app_log.dart';
+import 'i18n.dart';
+import 'log_text.dart';
 import 'formatter.dart';
 import 'update_check.dart';
 
@@ -57,7 +59,7 @@ class UpdateInstaller {
     final String? v = await _call<String>('getAbi');
     if (v != null && v.isNotEmpty) {
       _abiCache = v;
-      _log('更新检查：本机 ABI=$v', level: 'INFO');
+      _log(LogT.updateAbi(v), level: 'INFO');
     }
     return _abiCache;
   }
@@ -86,13 +88,13 @@ class UpdateInstaller {
       return await _ch.invokeMethod<T>(method, args);
     } on MissingPluginException catch (_) {
       _nativeMissing = true;
-      _log('更新通道未实现（$method），功能降级为复制链接');
+      _log(LogT.updateChannelMissing(method));
       return null;
     } on PlatformException catch (e) {
-      _log('更新通道 $method 失败：${e.message}');
+      _log(LogT.updateChannelFail(method, e.message ?? ''));
       return null;
     } catch (e) {
-      _log('更新通道 $method 异常：${Formatter.safeErr(e)}');
+      _log(LogT.updateChannelErr(method, Formatter.safeErr(e)));
       return null;
     }
   }
@@ -137,21 +139,21 @@ class UpdateInstaller {
 
       final Object? data = r.data;
       if (data is! List<int> || data.isEmpty) {
-        return UpdateDownloadResult.fail('下载内容为空');
+        return UpdateDownloadResult.fail(L.t('下载内容为空'));
       }
 
       final String? expect = await _fetchSha1(apk.sha1Url, dio);
       if (expect != null) {
         final String actual = sha1Hex(data);
         if (actual != expect) {
-          _log('更新包 SHA-1 校验失败：$actual ≠ $expect', level: 'ERROR');
-          return UpdateDownloadResult.fail('安装包校验不一致，已放弃安装');
+          _log(LogT.updateShaMismatch(actual, expect), level: 'ERROR');
+          return UpdateDownloadResult.fail(L.t('安装包校验不一致，已放弃安装'));
         }
-        _log('更新包 SHA-1 校验通过', level: 'INFO');
+        _log(L.t('更新包 SHA-1 校验通过'), level: 'INFO');
       }
 
       await f.writeAsBytes(data, flush: true);
-      _log('更新包已下载：${apk.name}（${data.length} 字节）', level: 'INFO');
+      _log(LogT.updateDownloaded(apk.name, data.length), level: 'INFO');
       return UpdateDownloadResult.success(f.path);
     } catch (e) {
       return UpdateDownloadResult.fail(Formatter.safeErr(e));

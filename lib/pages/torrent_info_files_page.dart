@@ -62,7 +62,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       }
       if (ctrl.files.isEmpty) {
         return Center(
-          child: Text('暂无文件', style: TextStyle(fontSize: af(context, 12))),
+          child: Text(L.t('暂无文件'), style: TextStyle(fontSize: af(context, 12))),
         );
       }
       final List<FileNode> tree = _sortedTree;
@@ -110,11 +110,11 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       ),
       child: Text.rich(
         TextSpan(
-          text: '$count 个文件',
+          text: L.pick('$count 个文件', '$count files'),
           style: TextStyle(fontSize: af(context, 11), fontWeight: FontWeight.w600),
           children: <TextSpan>[
             TextSpan(
-              text: ' · ${Formatter.setSize(total)} · 已完成 ',
+              text: ' · ${Formatter.setSize(total)} · ${L.t('已完成')} ',
               style: TextStyle(
                   fontSize: af(context, 10.5),
                   fontWeight: FontWeight.w400,
@@ -146,7 +146,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
           Text(
-            '排序',
+            L.t('排序'),
             style: TextStyle(fontSize: af(context, 10), color: cs.outline),
           ),
           for (final FileSort s in FileSort.values)
@@ -164,11 +164,11 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
   String _sortLabel(FileSort s) {
     switch (s) {
       case FileSort.tree:
-        return '默认';
+        return L.t('默认');
       case FileSort.size:
-        return '按大小';
+        return L.t('按大小');
       case FileSort.progress:
-        return '按进度';
+        return L.t('按进度');
     }
   }
 
@@ -240,7 +240,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
                         ),
                     ActionChip(
                       avatar: Icon(Icons.clear_all, size: af(context, 14)),
-                      label: Text('取消选择',
+                      label: Text(L.t('取消选择'),
                           style: TextStyle(fontSize: af(context, 10))),
                       visualDensity: VisualDensity.compact,
                       onPressed: () => setState(_selected.clear),
@@ -283,8 +283,8 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
           await sc.tr.filePrio(<int>[trId], indexes, p.trValue);
         }
       }
-      AppLog.instance.op('设置文件优先级：${p.label} ｜ ${ids.length} 个文件'
-          '（${t.name} · ${s.name}）',
+      AppLog.instance.op(
+          '${L.pick('设置文件优先级：${p.label} ｜ ${ids.length} 个文件', 'File priority set: ${p.label} | ${ids.length} files')}（${t.name} · ${s.name}）',
           scope: s.logScope);
       UiDialogs.showToast('${S.tFilePrioOk}${t.name}');
     } catch (e) {
@@ -308,37 +308,31 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       final int pr = (f['priority'] as num?)?.toInt() ?? 1;
       switch (pr) {
         case 0:
-          return '跳过';
+          return L.t('跳过');
         case 6:
-          return '高';
+          return L.t('高');
         case 7:
-          return '最高';
+          return L.t('最高');
         default:
           return null;
       }
     }
-    if (f['wanted'] == false) return '跳过';
+    if (f['wanted'] == false) return L.t('跳过');
     final int pr = (f['priority'] as num?)?.toInt() ?? 0;
     switch (pr) {
       case 1:
-        return '高';
+        return L.t('高');
       case -1:
-        return '低';
+        return L.t('低');
       default:
         return null;
     }
   }
 
   Color _prioBadgeColor(String badge, ColorScheme cs) {
-    switch (badge) {
-      case '跳过':
-        return cs.outline;
-      case '高':
-      case '最高':
-        return cs.primary;
-      default:
-        return cs.onSurfaceVariant;
-    }
+    if (badge == L.t('跳过')) return cs.outline;
+    if (badge == L.t('高') || badge == L.t('最高')) return cs.primary;
+    return cs.onSurfaceVariant;
   }
 
   Widget _prioBadge(Map<String, dynamic> f, ColorScheme cs) {
@@ -370,7 +364,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     final t = ctrl.current.value;
     if (s == null || t == null) return;
     if (!ctrl.capabilities.renameFile) {
-      UiDialogs.showToast('当前服务器版本不支持文件重命名', isError: true);
+      UiDialogs.showToast(L.t('当前服务器版本不支持文件重命名'), isError: true);
       return;
     }
 
@@ -379,7 +373,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text(
-          n.isFile ? '重命名文件' : '重命名文件夹',
+          n.isFile ? L.t('重命名文件') : L.t('重命名文件夹'),
           style: TextStyle(fontSize: af(context, 14)),
         ),
         content: Column(
@@ -396,9 +390,9 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
             TextField(
               controller: input,
               style: TextStyle(fontSize: af(context, 11)),
-              decoration: const InputDecoration(
-                labelText: '新名称',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: L.t('新名称'),
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -422,7 +416,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
 
     await ctrl.renameInTorrent(t, n.path, result, isFolder: !n.isFile);
     if (ctrl.lastActionOk.value == true) {
-      if (mounted) UiDialogs.showToast('已重命名');
+      if (mounted) UiDialogs.showToast(L.t('已重命名'));
       Future<void>.delayed(const Duration(milliseconds: 500), () {
         ctrl.loadDetailData();
       });
@@ -447,7 +441,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
         PopupMenuItem<String>(
           value: 'rename',
           height: af(context, 36),
-          child: Text('重命名', style: TextStyle(fontSize: af(context, 11))),
+          child: Text(L.t('重命名'), style: TextStyle(fontSize: af(context, 11))),
         ),
       ],
     );
@@ -524,7 +518,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
                   if (avail <= 0) return const SizedBox.shrink();
                   return Expanded(
                     child: Text(
-                      '副本 $avail',
+                      L.pick('副本 $avail', '$avail copies'),
                       textAlign: TextAlign.right,
                       style: TextStyle(
                           fontSize: af(context, 9), color: cs.outline),
@@ -596,7 +590,7 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
           Text(
             '${agg.$1 == 0 ? '' : Formatter.setSize(agg.$1)} · '
             '${Formatter.setProgress(agg.$2)} · '
-            '${n.children.length} 项',
+            '${L.pick('${n.children.length} 项', '${n.children.length} items')}',
             style: TextStyle(fontSize: af(context, 9)),
           ),
         ],

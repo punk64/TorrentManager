@@ -8,6 +8,9 @@ import '../dio/log_interceptor.dart';
 import '../dio/redirect_interceptor.dart';
 import '../models/server_data.dart';
 import '../../utils/app_log.dart';
+import '../../utils/i18n.dart';
+import '../../utils/log_text.dart';
+import '../../utils/strings.dart';
 import '../../utils/formatter.dart';
 import '../../utils/net_error.dart';
 
@@ -112,7 +115,7 @@ class TrMethod {
       await _rpc('session-get', <String, dynamic>{},
           baseUrl: s.baseUrl, authHeader: _authOf(s));
       AppLog.instance.net(
-          'TR 登录成功（已带 Basic 鉴权=${_authOf(s) != null}）',
+          LogT.trLoginOk(_authOf(s) != null),
           scope: s.logScope);
       return const TrLoginResult.ok();
     } catch (e) {
@@ -124,12 +127,12 @@ class TrMethod {
       if (e is DioException && _authOf(s) == null) {
         final int? code = e.response?.statusCode;
         if (code == 401 || code == 403) {
-          why = '服务端要求账号密码，但本机未填写账号（HTTP $code）';
+          why = S.trNeedCreds(code);
 
           noCreds = true;
         }
       }
-      AppLog.instance.net('TR 登录失败：$why', scope: s.logScope);
+      AppLog.instance.net(LogT.trLoginFail(why), scope: s.logScope);
       return noCreds ? TrLoginResult.noCreds(why) : TrLoginResult.fail(why);
     }
   }
@@ -140,7 +143,7 @@ class TrMethod {
       [ServerData? s, bool retriedRoute = false]) async {
     final ServerData? target = s ?? _server;
     if (target == null) {
-      return const TrLoginResult.fail('未选择服务器');
+      return TrLoginResult.fail(L.t('未选择服务器'));
     }
     setServer(target);
 
@@ -151,14 +154,14 @@ class TrMethod {
     } catch (_) {
       if (gen != _routeGen) {
         if (retriedRoute) {
-          return const TrLoginResult.routeSwitch('服务器地址已切换，已放弃本次重登');
+          return TrLoginResult.routeSwitch(L.t('服务器地址已切换，已放弃本次重登'));
         }
         final ServerData? now = _server;
         if (now == null) {
-          return const TrLoginResult.fail('未选择服务器');
+          return TrLoginResult.fail(L.t('未选择服务器'));
         }
-        AppLog.instance.net('探测期间路由已切换'
-            '（${target.baseUrl} → ${now.baseUrl}），改用新路由重新建立会话',
+        AppLog.instance.net(
+            LogT.routeSwitched(target.baseUrl, now.baseUrl),
             scope: target.logScope);
         return checkTrServerCookie(now, true);
       }
@@ -204,14 +207,13 @@ class TrMethod {
       final Uri? from = Uri.tryParse(targetBase);
       final Uri? to = (loc == null || from == null) ? null : from.resolve(loc);
       if (to == null) {
-        throw Exception('Transmission: 重定向缺少 Location（HTTP $code）');
+        throw Exception(S.trRedirectMissing(code));
       }
       if (to.host != from!.host) {
-        throw Exception('Transmission: 拒绝跨主机重定向 '
-            '${from.host} → ${to.host}（避免泄露会话 id）');
+        throw Exception(S.trRedirectCrossHost(from.host, to.host));
       }
       if (depth >= 3) {
-        throw Exception('Transmission: 重定向次数过多');
+        throw Exception(S.trTooManyRedirects);
       }
 
       final String nextBase =
@@ -223,11 +225,10 @@ class TrMethod {
       final String? sid = resp.headers.value('X-Transmission-Session-Id');
       if (sid != null) {
         if (depth >= 2) {
-          throw Exception(
-              'Transmission: 会话握手失败（连续 ${depth + 1} 次 409）');
+          throw Exception(S.trHandshakeFail(depth + 1));
         }
 
-        AppLog.instance.net('TR 握手：收到 409，更新 session id（depth=$depth）',
+        AppLog.instance.net(LogT.trHandshake409(depth),
             scope: _server?.logScope);
         _sessionId = sid;
         return _rpc(method, arguments,
@@ -240,10 +241,10 @@ class TrMethod {
     if (sc == 401 || sc == 403) {
       final bool hadAuth = auth != null;
       final String why = hadAuth
-          ? 'Transmission 登录失败：账号或密码错误（HTTP $sc）'
-          : 'Transmission 登录失败：服务端要求账号密码，但本机未填写账号（HTTP $sc）';
+          ? S.trLoginBadCreds(sc)
+          : S.trLoginNeedCreds(sc);
 
-      AppLog.instance.net('TR 收到 $sc：已带 Basic 鉴权=$hadAuth',
+      AppLog.instance.net(LogT.trBasic(sc, hadAuth),
           scope: _server?.logScope);
       throw DioException(
         requestOptions: resp.requestOptions,
@@ -259,7 +260,7 @@ class TrMethod {
         requestOptions: resp.requestOptions,
         response: resp,
         type: DioExceptionType.badResponse,
-        error: 'Transmission RPC $method 返回非 JSON（HTTP ${resp.statusCode}）',
+        error: S.trNonJson(method, resp.statusCode ?? 0),
       );
     }
     final Map<String, dynamic> data = Map<String, dynamic>.from(raw);

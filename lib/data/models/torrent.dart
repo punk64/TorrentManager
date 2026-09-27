@@ -1,4 +1,5 @@
 import '../../utils/formatter.dart';
+import '../../utils/i18n.dart';
 
 enum TorrentStatusGroup {
   downloading,
@@ -521,10 +522,10 @@ class Torrent {
       .toList();
 
   String get categoryName =>
-      (category == null || category!.isEmpty) ? '未分类' : category!;
+      (category == null || category!.isEmpty) ? L.t('未分类') : category!;
 
   String get pathName =>
-      (savePath == null || savePath!.isEmpty) ? '未指定' : savePath!;
+      (savePath == null || savePath!.isEmpty) ? L.t('未指定') : savePath!;
 
   String get site =>
       Formatter.trackerHost(comment) ?? Formatter.trackerHost(magnetUri) ?? '';

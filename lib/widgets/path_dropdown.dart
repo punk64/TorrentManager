@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/adaptive.dart';
+import '../utils/i18n.dart';
 import '../app/theme.dart';
 
 class PathCandidate {
@@ -14,13 +15,13 @@ class PathCandidate {
 class PathCandidates {
   PathCandidates._();
 
-  static const String srcDefault = '默认保存路径';
+  static String get srcDefault => L.t('默认保存路径');
 
-  static const String srcTemp = '临时路径';
+  static String get srcTemp => L.t('临时路径');
 
-  static const String srcCurrent = '当前';
+  static String get srcCurrent => L.t('当前');
 
-  static const String unknown = '未指定';
+  static String get unknown => L.t('未指定');
 
   static List<PathCandidate> build({
     String? defaultPath,
@@ -41,13 +42,14 @@ class PathCandidates {
 
     add(defaultPath, srcDefault);
     add(tempPath, srcTemp);
-    categoryPaths?.forEach((String name, String p) => add(p, '分类：$name'));
+    categoryPaths?.forEach((String name, String p) =>
+        add(p, L.pick('分类：$name', 'Category: $name')));
     add(current, srcCurrent);
     final List<MapEntry<String, int>> seeds = seedPaths.entries.toList()
       ..sort((MapEntry<String, int> a, MapEntry<String, int> b) =>
           b.value.compareTo(a.value));
     for (final MapEntry<String, int> e in seeds) {
-      add(e.key, '种子 ×${e.value}');
+      add(e.key, L.pick('种子 ×${e.value}', 'Torrents ×${e.value}'));
     }
     return out;
   }
@@ -194,7 +196,7 @@ class _PathDropdownFieldState extends State<PathDropdownField> {
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  child: Text('服务器识别到的路径 · 按输入过滤',
+                  child: Text(L.t('服务器识别到的路径 · 按输入过滤'),
                       style: TextStyle(
                           fontSize: af(context, 10),
                           color: cs.onSurfaceVariant)),

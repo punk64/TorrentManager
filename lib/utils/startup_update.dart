@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/app_version.dart';
 import '../widgets/update_dialog.dart';
 import 'app_log.dart';
+import 'log_text.dart';
 import 'app_update.dart';
 import 'update_check.dart';
 
@@ -32,14 +33,15 @@ class StartupUpdatePrompt {
         await UpdateChecker(fetcher: fetcher, deviceAbi: abi).check();
 
     if (r.hasUpdate) {
-      AppLog.instance.net('启动检查更新：发现新版本 V${r.latest}'
-          '（本地 V$kAppVersion，安装包 ${r.apk?.name ?? '-'}）');
+      AppLog.instance.net(LogT.startupFound(
+          r.latest, kAppVersion, r.apk?.name ?? '-'));
       pendingNotifier.value = r;
     } else if (r.status == UpdateCheckStatus.failed) {
-      AppLog.instance.net('启动检查更新失败（按已是最新处理）：${r.reason}',
-          level: 'WARN');
+      AppLog.instance.net(
+          LogT.startupCheckFailed(r.reason), level: 'WARN');
     } else if (r.reason != null) {
-      AppLog.instance.net('启动检查更新：远端 V${r.latest} —— ${r.reason}');
+      AppLog.instance.net(
+          LogT.startupRemote(r.latest, r.reason));
     }
     return r;
   }

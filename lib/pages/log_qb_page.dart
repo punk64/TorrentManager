@@ -11,6 +11,7 @@ import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
 import '../utils/log_export.dart';
 import '../utils/net_error.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/log_selection.dart';
@@ -137,7 +138,7 @@ class _LogQbPageState extends State<LogQbPage> {
       if (!logged) {
         if (!mounted || seq != _reqSeq) return;
         setState(() {
-          _error = '${S.logQbFetchFailed}登录失败，请检查账号与密码';
+          _error = '${S.logQbFetchFailed}${L.t('登录失败，请检查账号与密码')}';
           _loading = false;
 
           _dropStale();
@@ -207,17 +208,17 @@ class _LogQbPageState extends State<LogQbPage> {
         : const <String, dynamic>{};
     final String version = Formatter.getString(session, 'version');
     return <(String, String)>[
-      ('Transmission 版本', version.isEmpty ? '—' : version),
-      ('RPC 版本', Formatter.getString(session, 'rpc-version', def: '—')),
+      (L.t('Transmission 版本'), version.isEmpty ? '—' : version),
+      (L.t('RPC 版本'), Formatter.getString(session, 'rpc-version', def: '—')),
 
-      ('种子总数', '${Formatter.getInt(stats, 'torrentCount')}'),
-      ('活动种子', '${Formatter.getInt(stats, 'activeTorrentCount')}'),
-      ('当前下行', Formatter.setSpeed(Formatter.getInt(stats, 'downloadSpeed'))),
-      ('当前上行', Formatter.setSpeed(Formatter.getInt(stats, 'uploadSpeed'))),
-      ('累计下载', Formatter.setSize(Formatter.getInt(cum, 'downloadedBytes'))),
-      ('累计上传', Formatter.setSize(Formatter.getInt(cum, 'uploadedBytes'))),
+      (L.t('种子总数'), '${Formatter.getInt(stats, 'torrentCount')}'),
+      (L.t('活动种子'), '${Formatter.getInt(stats, 'activeTorrentCount')}'),
+      (L.t('当前下行'), Formatter.setSpeed(Formatter.getInt(stats, 'downloadSpeed'))),
+      (L.t('当前上行'), Formatter.setSpeed(Formatter.getInt(stats, 'uploadSpeed'))),
+      (L.t('累计下载'), Formatter.setSize(Formatter.getInt(cum, 'downloadedBytes'))),
+      (L.t('累计上传'), Formatter.setSize(Formatter.getInt(cum, 'uploadedBytes'))),
       (
-        '下载目录',
+        L.t('下载目录'),
         _display(Formatter.getString(session, 'download-dir', def: '—'))
       ),
     ];
@@ -383,7 +384,7 @@ class _LogQbPageState extends State<LogQbPage> {
                 onToggleAll: _toggleAll,
               )
             : AppBar(
-                title: Text('服务器日志',
+                title: Text(L.t('服务器日志'),
                     style: TextStyle(fontSize: af(context, 15))),
                 actions: <Widget>[
 
@@ -392,7 +393,7 @@ class _LogQbPageState extends State<LogQbPage> {
                       _privacy ? Icons.visibility_off : Icons.visibility,
                       size: AppTheme.iconSize,
                     ),
-                    tooltip: '隐私模式（隐藏域名 / IP / 端口）',
+                    tooltip: L.t('隐私模式（隐藏域名 / IP / 端口）'),
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
@@ -501,7 +502,7 @@ class _LogQbPageState extends State<LogQbPage> {
                 child: Icon(Icons.arrow_drop_down, size: af(context, 24)),
               ),
               decoration: InputDecoration(
-                labelText: '服务器',
+                labelText: L.t('服务器'),
                 hintText: S.logPickServer,
                 isDense: true,
                 contentPadding:
@@ -600,9 +601,9 @@ class _LogQbPageState extends State<LogQbPage> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Transmission 的 RPC 不提供服务器日志接口（服务端日志只能去读 '
+                  L.t('Transmission 的 RPC 不提供服务器日志接口（服务端日志只能去读 '
                   'daemon 的日志文件）。这里显示的是它当前能查到的会话诊断信息，'
-                  '每 10 秒随页面刷新。',
+                  '每 10 秒随页面刷新。'),
                   style: TextStyle(fontSize: af(context, 11), height: 1.4),
                 ),
               ),

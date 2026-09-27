@@ -10,6 +10,7 @@ import '../data/server_capabilities.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../widgets/path_dropdown.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import 'bottom_panel.dart';
 import 'torrent_edit_fields.dart';
@@ -114,7 +115,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
   Future<void> _pickTags() async {
     final List<String> cand = List<String>.of(_ctrl.catalogTags);
     for (final FacetEntry e in _ctrl.facets(FilterDim.tags)) {
-      if (e.value != '未标记' && !cand.contains(e.value)) cand.add(e.value);
+      if (e.value != L.t('未标记') && !cand.contains(e.value)) cand.add(e.value);
     }
     for (final Torrent t in _picked) {
       for (final String g in t.tagList) {
@@ -161,7 +162,9 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
     if (_submitting || _opCount == 0) return;
     setState(() => _submitting = true);
     AppLog.instance.act(
-        '批量编辑', '提交 $_opCount 项 × ${widget.hashes.length} 个种子');
+        L.t('批量编辑'),
+        L.pick('提交 $_opCount 项 × ${widget.hashes.length} 个种子',
+            'Commit $_opCount items × ${widget.hashes.length} torrents'));
 
     int ok = 0;
     final List<String> failed = <String>[];
@@ -321,7 +324,7 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
               _result!,
               style: TextStyle(
                 fontSize: af(context, 11),
-                color: _result!.contains('失败 0') ? cs.primary : cs.error,
+                color: _result!.contains(L.pick('失败 0', '0 failed')) ? cs.primary : cs.error,
               ),
             ),
           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../app/theme.dart';
+import '../utils/i18n.dart';
+import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
 class ThemePreview extends StatelessWidget {
@@ -22,15 +24,15 @@ class ThemePreview extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text('效果预览',
+            Text(L.t('效果预览'),
                 style: TextStyle(fontSize: af(context, 12), fontWeight: FontWeight.w500)),
             const Spacer(),
             Text(
               transparency <= 0
-                  ? '组件底衬：完全不透明'
+                  ? L.t('组件底衬：完全不透明')
                   : (transparency >= 1
-                      ? '组件底衬：完全透明'
-                      : '组件底衬：透明度 ${(transparency * 100).round()}%'),
+                      ? L.t('组件底衬：完全透明')
+                      : S.previewInpad((transparency * 100).round())),
               style: TextStyle(fontSize: af(context, 10)),
             ),
           ],
@@ -65,7 +67,7 @@ class ThemePreview extends StatelessWidget {
                             Icon(Icons.folder_open,
                                 size: AppTheme.iconSize, color: cs.primary),
                             const SizedBox(width: 6),
-                            Text('示例卡片',
+                            Text(L.t('示例卡片'),
                                 style: TextStyle(
                                     fontSize: af(context, 11), color: cs.onSurface)),
                             const Spacer(),
@@ -78,7 +80,7 @@ class ThemePreview extends StatelessWidget {
                           ],
                         ),
 
-                        Text('示例文本',
+                        Text(L.t('示例文本'),
                             style: TextStyle(fontSize: af(context, 9), color: cs.onSurfaceVariant)),
                         Slider(value: 0.62, onChanged: (_) {}),
                       ],

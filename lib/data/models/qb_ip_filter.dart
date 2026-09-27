@@ -1,3 +1,5 @@
+import '../../utils/strings.dart';
+
 class QbIpFilter {
   const QbIpFilter({
     required this.enabled,
@@ -58,7 +60,7 @@ class QbIpFilter {
         a.where((String e) => !b.contains(e)).toList(growable: false);
     final List<String> removed =
         b.where((String e) => !a.contains(e)).toList(growable: false);
-    return '${a.length} 条（+${added.length} / -${removed.length}）';
+    return S.ipFilterDelta(a.length, added.length, removed.length);
   }
 
   static bool asBool(dynamic v) {

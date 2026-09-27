@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app/theme.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import 'path_dropdown.dart';
@@ -1481,13 +1482,13 @@ class _CategoryPickerState extends State<_CategoryPicker> {
             if (name.isNotEmpty) ...<Widget>[
               SizedBox(width: af(context, 6)),
               isNew
-                  ? _badge('新建', cs.primary)
-                  : _badge(fromServer ? '下载器' : '列表',
+                  ? _badge(L.t('新建'), cs.primary)
+                  : _badge(fromServer ? L.t('下载器') : L.t('列表'),
                       fromServer ? cs.tertiary : cs.outline),
             ],
             if (n != null) ...<Widget>[
               SizedBox(width: af(context, 6)),
-              Text('种子 ×$n',
+              Text(L.pick('种子 ×$n', 'Torrents ×$n'),
                   style: TextStyle(
                       fontSize: af(context, 9), color: cs.onSurfaceVariant)),
             ],
@@ -1598,7 +1599,7 @@ class _CategoryPickerState extends State<_CategoryPicker> {
             onTap: widget.onCreate == null ? null : _create,
             borderRadius: BorderRadius.circular(8),
             child: Chip(
-              label: Text('新建「$q」',
+              label: Text(L.pick('新建「$q」', 'Create "$q"'),
                   style: TextStyle(
                       fontSize: af(context, 10), color: cs.onPrimary)),
               backgroundColor: cs.primary,

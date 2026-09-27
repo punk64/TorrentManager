@@ -9,6 +9,7 @@ import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
 import '../utils/log_export.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../widgets/log_selection.dart';
 import '../app/adaptive.dart';
@@ -391,7 +392,7 @@ class _LogPageState extends State<LogPage> {
               if (!ctx.mounted) return;
               Navigator.of(ctx).pop();
             },
-            child: Text('复制全文', style: TextStyle(fontSize: af(context, 13))),
+            child: Text(L.t('复制全文'), style: TextStyle(fontSize: af(context, 13))),
           ),
         ],
       ),
@@ -403,7 +404,7 @@ class _LogPageState extends State<LogPage> {
     log.clear();
     _maskCache.clear();
 
-    log.op('清空应用日志');
+    log.op(L.t('清空应用日志'));
     _exitSelection();
   }
 
@@ -435,7 +436,7 @@ class _LogPageState extends State<LogPage> {
                 onToggleAll: () => _toggleAll(vis),
               )
             : AppBar(
-                title: Text('日志', style: TextStyle(fontSize: af(context, 15))),
+                title: Text(L.t('日志'), style: TextStyle(fontSize: af(context, 15))),
                 actions: <Widget>[
 
                   IconButton(
@@ -443,7 +444,7 @@ class _LogPageState extends State<LogPage> {
                       _privacy ? Icons.visibility_off : Icons.visibility,
                       size: AppTheme.iconSize,
                     ),
-                    tooltip: '隐私模式（隐藏域名 / IP / 端口）',
+                    tooltip: L.t('隐私模式（隐藏域名 / IP / 端口）'),
                     onPressed: () => setState(() => _privacy = !_privacy),
                   ),
                   IconButton(
@@ -528,12 +529,12 @@ class _LogPageState extends State<LogPage> {
                   width: af(context, 22),
                   height: af(context, 22),
                 ),
-                title: Text('服务器日志', style: TextStyle(fontSize: af(context, 12))),
+                title: Text(L.t('服务器日志'), style: TextStyle(fontSize: af(context, 12))),
                 subtitle: Text(
                   sc.current.value == null
-                      ? '选择一台服务器后查看它的服务器日志'
+                      ? L.t('选择一台服务器后查看它的服务器日志')
                       : sc.current.value!.isTransmission
-                          ? 'Transmission 会话诊断（RPC 不提供日志接口）'
+                          ? L.t('Transmission 会话诊断（RPC 不提供日志接口）')
                           : 'GET /api/v2/log/main',
                   style: TextStyle(fontSize: af(context, 10)),
                 ),
@@ -550,7 +551,7 @@ class _LogPageState extends State<LogPage> {
               padding: EdgeInsets.fromLTRB(af(context, 14), af(context, 10), af(context, 14), 3),
               child: Row(
                 children: <Widget>[
-                  Text('应用日志', style: TextStyle(fontSize: af(context, 11))),
+                  Text(L.t('应用日志'), style: TextStyle(fontSize: af(context, 11))),
                   const SizedBox(width: 6),
                   Obx(() => Text(
 
@@ -576,8 +577,8 @@ class _LogPageState extends State<LogPage> {
                     padding: EdgeInsets.all(af(context, 24)),
                     child: Center(
                       child: Text(
-                        '暂无日志记录。应用内的操作提示、网络请求与异常'
-                        '会自动记在这里（服务器日志见上方入口）。',
+                        L.t('暂无日志记录。应用内的操作提示、网络请求与异常'
+                        '会自动记在这里（服务器日志见上方入口）。'),
                         style: TextStyle(fontSize: af(context, 12)),
                         textAlign: TextAlign.center,
                       ),

@@ -9,6 +9,7 @@ import '../controllers/torrent_controller.dart';
 import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import 'torrent_info_files_page.dart';
@@ -28,7 +29,7 @@ class TorrentInfoPage extends StatelessWidget {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('种子详情', style: TextStyle(fontSize: af(context, 15))),
+          title: Text(L.t('种子详情'), style: TextStyle(fontSize: af(context, 15))),
           actions: <Widget>[
 
             Obx(() {
@@ -81,10 +82,10 @@ class TorrentInfoPage extends StatelessWidget {
             labelStyle: TextStyle(fontSize: af(context, 12)),
 
             tabs: <Widget>[
-              Tab(text: '概览', height: af(context, 38)),
+              Tab(text: L.t('概览'), height: af(context, 38)),
               Tab(text: 'Tracker', height: af(context, 38)),
               Tab(text: 'Peers', height: af(context, 38)),
-              Tab(text: '文件', height: af(context, 38)),
+              Tab(text: L.t('文件'), height: af(context, 38)),
             ],
           ),
         ),

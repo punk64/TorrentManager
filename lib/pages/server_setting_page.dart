@@ -15,6 +15,8 @@ import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
 import '../utils/ip_geo.dart';
 import '../utils/net_error.dart';
+import '../utils/i18n.dart';
+import '../utils/log_text.dart';
 import '../utils/strings.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/path_dropdown.dart';
@@ -148,7 +150,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     if (_api.lastBanned) return S.srvIpBanned;
     if (_api.lastMissingCreds) return S.srvCredsMissing;
     final String? e = _api.lastError;
-    return (e == null || e.isEmpty) ? '未能在服务器上建立会话' : e;
+    return (e == null || e.isEmpty) ? S.sessionNotEstablished : e;
   }
 
   Future<void> _loadPreferences() async {
@@ -161,7 +163,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           _prefsLoaded = false;
           _prefsError = reason;
         });
-        AppLog.instance.net('服务器设置：未能建立会话 —— $reason',
+        AppLog.instance.net(LogT.sessionFail(reason),
         scope: _server?.logScope);
         return;
       }
@@ -193,7 +195,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         _prefsLoaded = false;
         _prefsError = NetError.describe(e);
       });
-      AppLog.instance.net('读取服务器偏好失败：${NetError.describe(e)}',
+      AppLog.instance.net(LogT.prefsLoadFail(NetError.describe(e)),
         scope: _server?.logScope);
     }
   }
@@ -415,15 +417,15 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     final String name = _server?.name ?? '';
     return Scaffold(
       appBar: AppBar(
-        title: Text(name.isEmpty ? '服务器设置' : '$name · 服务器设置'),
+        title: Text(S.serverSettingsTitle(name)),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.refresh, size: AppTheme.iconSize),
             tooltip: S.fieldUpdating,
 
             onPressed: () async {
-              AppLog.instance.act('服务器设置', 'AppBar[刷新]',
-                  target: _server?.name, detail: '重开会话 + 重拉偏好 + 分类标签');
+              AppLog.instance.act('服务器设置', L.t('AppBar[刷新]'),
+                  target: _server?.name, detail: LogT.appbarRefreshDetail());
 
               _reopenSession();
 
@@ -472,50 +474,48 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _limitGroup() => _group(
         icon: Icons.speed_rounded,
-        title: '限速设置',
+        title: L.t('限速设置'),
         summary: '↑ ${_kbText(_upLimit)} · ↓ ${_kbText(_dlLimit)} KB/s',
         help: '${S.setNoLimitZero}\n${S.setSwitchToEnable}',
         children: <Widget>[
-          _sectionTitle('普通限速', onChange: () => _run(
-            '全局限速[更改]',
+          _sectionTitle(L.t('普通限速'), onChange: () => _run(
+            LogT.prefChanged(L.t('全局限速')),
             _okToast(S.qbSetServerLimit),
             _failToast(S.qbSetServerLimitFail),
             () => _api.write(<String, dynamic>{
               PrefKey.upLimit: _kb(_upLimit),
               PrefKey.dlLimit: _kb(_dlLimit),
             }),
-            detail:
-                '上行 ${_kbText(_upLimit)} KB/s · 下行 ${_kbText(_dlLimit)} KB/s',
+            detail: S.kbPair(_kbText(_upLimit), _kbText(_dlLimit)),
             refreshLimit: true,
           )),
           _gridRow(<Widget>[
             Expanded(
-              child: _numCell('上传限速', _upLimit,
+              child: _numCell(L.t('上传限速'), _upLimit,
                   prefKey: PrefKey.upLimit, unit: 'KB/S'),
             ),
             Expanded(
-              child: _numCell('下载限速', _dlLimit,
+              child: _numCell(L.t('下载限速'), _dlLimit,
                   prefKey: PrefKey.dlLimit, unit: 'KB/S'),
             ),
           ]),
           _sectionDivider(),
-          _sectionTitle('备用限速', onChange: () => _run(
-            '备用限速[更改]',
+          _sectionTitle(L.t('备用限速'), onChange: () => _run(
+            LogT.prefChanged(L.t('备用限速')),
             _okToast(S.qbSetAltLimit),
             _failToast(S.qbSetAltLimitFail),
             () => _api.write(<String, dynamic>{
               PrefKey.altUpLimit: _kb(_altUpLimit),
               PrefKey.altDlLimit: _kb(_altDlLimit),
             }),
-            detail:
-                '上行 ${_kbText(_altUpLimit)} KB/s · 下行 ${_kbText(_altDlLimit)} KB/s',
+            detail: S.kbPair(_kbText(_altUpLimit), _kbText(_altDlLimit)),
             refreshLimit: true,
           )),
           _switchRow(
             S.setEnableAltLimit,
             _ssBool(PrefKey.altSpeedEnabled),
             (bool v) => _run(
-              '开关[启用备用限速]${v ? ' → 开' : ' → 关'}',
+              LogT.prefSwitch(S.setEnableAltLimit, v),
               _okToast(S.qbSetAltLimit),
               _failToast(S.qbSetAltLimitFail),
               () async {
@@ -534,11 +534,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
           _gridRow(<Widget>[
             Expanded(
-              child: _numCell('上传限速', _altUpLimit,
+              child: _numCell(L.t('上传限速'), _altUpLimit,
                   prefKey: 'alt_up_limit', unit: 'KB/S'),
             ),
             Expanded(
-              child: _numCell('下载限速', _altDlLimit,
+              child: _numCell(L.t('下载限速'), _altDlLimit,
                   prefKey: 'alt_dl_limit', unit: 'KB/S'),
             ),
           ]),
@@ -600,7 +600,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Widget _categoryGroup() => _group(
         icon: Icons.folder_open_rounded,
-        title: '管理分类',
+        title: L.t('管理分类'),
         summary: S.countLabel(_categories.length),
         help: S.setCategoryEditHelp,
         children: <Widget>[
@@ -609,7 +609,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
               child: SizedBox(
                 width: double.infinity,
-                child: Text('未分类', style: TextStyle(fontSize: af(context, 12))),
+                child: Text(L.t('未分类'), style: TextStyle(fontSize: af(context, 12))),
               ),
             ),
           Wrap(
@@ -639,7 +639,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
   Future<void> _addCategory() async {
     final String? name = await _promptText(
       title: S.add,
-      label: '类别名称',
+      label: L.t('类别名称'),
       help: S.setPickFromBelow,
     );
     if (name == null || name.trim().isEmpty) {
@@ -647,11 +647,11 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       return;
     }
     await _run(
-      '分类[新增]：${name.trim()}',
+      LogT.prefAdded(L.t('分类'), name.trim()),
       '${S.catCreatedPlain}: $name',
       S.execFailed,
       () => _qb!.createCategory(name.trim()),
-      detail: '改前 ${_categories.length} 个（点「更改」才提交）',
+      detail: LogT.countBeforeCommit(_categories.length),
     );
   }
 
@@ -662,18 +662,18 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     }
     final String joined = _selectedCategories.join('\n');
     await _run(
-      '分类[删除]：${_selectedCategories.join('、')}',
+      LogT.prefRemoved(L.t('分类'), _selectedCategories.join('、')),
       '${S.catRemovedPlain}: $joined',
       S.execFailed,
       () => _qb!.removeCategories(joined),
       after: () => _selectedCategories.clear(),
-      detail: '改前 ${_categories.length} 个',
+      detail: LogT.countBefore(_categories.length),
     );
   }
 
   Widget _tagGroup() => _group(
         icon: Icons.label_outline_rounded,
-        title: '管理标签',
+        title: L.t('管理标签'),
         summary: S.countLabel(_tags.length),
         help: S.setTagDeleteHelp,
         children: <Widget>[
@@ -682,7 +682,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
               child: SizedBox(
                 width: double.infinity,
-                child: Text('无标签', style: TextStyle(fontSize: af(context, 12))),
+                child: Text(L.t('无标签'), style: TextStyle(fontSize: af(context, 12))),
               ),
             ),
           Wrap(
@@ -706,14 +706,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
   Future<void> _addTag() async {
     final String? name =
-        await _promptText(title: S.add, label: '标签名称', help: S.setAddNewLineHelp);
+        await _promptText(title: S.add, label: L.t('标签名称'), help: S.setAddNewLineHelp);
     if (name == null || name.trim().isEmpty) return;
     await _run(
-      '标签[新增]：${name.trim()}',
+      LogT.prefAdded(L.t('标签'), name.trim()),
       '${S.tagCreatedPlain}: ${name.trim()}',
       S.execFailed,
       () => _qb!.createTags(name.trim()),
-      detail: '改前 ${_tags.length} 个',
+      detail: LogT.countBefore(_tags.length),
     );
   }
 
@@ -724,37 +724,37 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     }
     final String joined = _selectedTags.join('\n');
     await _run(
-      '标签[删除]：${_selectedTags.join('、')}',
+      LogT.prefRemoved(L.t('标签'), _selectedTags.join('、')),
       '${S.tagRemovedPlain}: $joined',
       S.execFailed,
       () => _qb!.deleteTags(joined),
       after: () => _selectedTags.clear(),
-      detail: '改前 ${_tags.length} 个',
+      detail: LogT.countBefore(_tags.length),
     );
   }
 
   Widget _savePathGroup() => _group(
         icon: Icons.save_outlined,
-        title: '默认保存路径',
+        title: L.t('默认保存路径'),
         summary: _savePath.text,
         help: _isQb ? S.setPickFromBelowNoAutoTmm : S.setPickFromBelowPlain,
         children: <Widget>[
-          _pathDropdownField('默认保存路径', _savePath),
+          _pathDropdownField(L.t('默认保存路径'), _savePath),
           _changeButton(
-            '保存路径[更改]',
+            LogT.prefChanged(L.t('保存路径')),
             _okToast(S.qbSetSavePath),
             _failToast(S.qbSetSavePathFail),
             () => _api.write(<String, dynamic>{
               PrefKey.savePath: _savePath.text.trim(),
             }),
-            detail: '路径 ${_savePath.text.trim()}',
+            detail: LogT.detailPath(_savePath.text.trim()),
           ),
         ],
       );
 
   Widget _tempPathGroup() => _group(
         icon: Icons.timelapse_rounded,
-        title: '临时保存路径',
+        title: L.t('临时保存路径'),
         summary: _onOffLabel(_prefBool('temp_path_enabled')),
         help: S.setTempPathHelp,
         children: <Widget>[
@@ -763,29 +763,29 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             S.setEnableTempPath,
             _prefBool('temp_path_enabled'),
             (bool v) => _run(
-              '开关[启用临时保存路径]${v ? ' → 开' : ' → 关'}',
+              LogT.prefSwitch(S.setEnableTempPath, v),
               _okToast(S.qbSetTempPath),
               _failToast(S.qbSetTempPathFail),
               () => _api.write(<String, dynamic>{PrefKey.tempPathEnabled: v}),
               after: () => _prefs['temp_path_enabled'] = v,
             ),
           ),
-          _pathDropdownField('临时路径', _tempPath),
+          _pathDropdownField(L.t('临时路径'), _tempPath),
           _changeButton(
-            '临时路径[更改]',
+            LogT.prefChanged(L.t('临时路径')),
             _okToast(S.qbSetTempPath),
             _failToast(S.qbSetTempPathFail),
             () => _api.write(<String, dynamic>{
               PrefKey.tempPath: _tempPath.text.trim(),
             }),
-            detail: '路径 ${_tempPath.text.trim()}',
+            detail: LogT.detailPath(_tempPath.text.trim()),
           ),
         ],
       );
 
   Widget _queueGroup() => _group(
         icon: Icons.low_priority_rounded,
-        title: '设置队列限制',
+        title: L.t('设置队列限制'),
         summary: _onOffLabel(_prefBool('queueing_enabled')),
         help: S.setQueueSwitchHelp,
         children: <Widget>[
@@ -794,7 +794,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
 
             _prefBool('queueing_enabled'),
             (bool v) => _run(
-              '开关[启用队列限制]${v ? ' → 开' : ' → 关'}',
+              LogT.prefSwitch(S.setEnableQueueLimit, v),
               _okToast(S.qbSetQueueing),
               _failToast(S.qbSetQueueingFail),
               () async {
@@ -811,22 +811,22 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           _gridRow(<Widget>[
             if (_supports(PrefKey.maxActiveUploads))
               Expanded(
-                child: _numCell('最大活动上传数', _maxActiveUp,
+                child: _numCell(L.t('最大活动上传数'), _maxActiveUp,
                     prefKey: PrefKey.maxActiveUploads),
               ),
             if (_supports(PrefKey.maxActiveDownloads))
               Expanded(
-                child: _numCell('最大活动下载数', _maxActiveDl,
+                child: _numCell(L.t('最大活动下载数'), _maxActiveDl,
                     prefKey: PrefKey.maxActiveDownloads),
               ),
             if (_supports(PrefKey.maxActiveTorrents))
               Expanded(
-                child: _numCell('最大活动种子数', _maxActiveTorrents,
+                child: _numCell(L.t('最大活动种子数'), _maxActiveTorrents,
                     prefKey: PrefKey.maxActiveTorrents),
               ),
           ]),
           _changeButton(
-            '队列限制[更改]',
+            LogT.prefChanged(L.t('队列限制')),
             _okToast(S.qbSetQueueing),
             _failToast(S.qbSetQueueingFail),
             () => _api.write(<String, dynamic>{
@@ -837,35 +837,38 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                 PrefKey.maxActiveTorrents:
                     int.tryParse(_maxActiveTorrents.text.trim()),
             }),
-            detail: '上传 ${_kbText(_maxActiveUp)} / 下载 '
-                '${_kbText(_maxActiveDl)}'
-                '${_supports(PrefKey.maxActiveTorrents) ? ' / 种子 ${_kbText(_maxActiveTorrents)}' : ''}',
+            detail: S.queueDetail(
+                _kbText(_maxActiveUp),
+                _kbText(_maxActiveDl),
+                _supports(PrefKey.maxActiveTorrents)
+                    ? _kbText(_maxActiveTorrents)
+                    : null),
           ),
         ],
       );
 
   Widget _seedingGroup() => _group(
         icon: Icons.trending_up_rounded,
-        title: '设置做种限制',
-        summary: '比率 ${_kbText(_maxRatio)}',
+        title: L.t('设置做种限制'),
+        summary: L.pick('比率 ${_kbText(_maxRatio)}', 'Ratio ${_kbText(_maxRatio)}'),
         help: S.setRatioHelp,
         children: <Widget>[
           _gridRow(<Widget>[
             Expanded(
-              child: _numCell('最大分享比率', _maxRatio, prefKey: PrefKey.maxRatio),
+              child: _numCell(L.t('最大分享比率'), _maxRatio, prefKey: PrefKey.maxRatio),
             ),
             if (_supports(PrefKey.maxSeedingTime))
               Expanded(
-                child: _numCell('最长做种时间', _maxSeedingTime,
-                    prefKey: PrefKey.maxSeedingTime, unit: '分'),
+                child: _numCell(L.t('最长做种时间'), _maxSeedingTime,
+                    prefKey: PrefKey.maxSeedingTime, unit: L.t('分')),
               ),
             Expanded(
-              child: _numCell('非活动做种时间', _maxInactiveSeedingTime,
-                  prefKey: PrefKey.maxInactiveSeedingTime, unit: '分'),
+              child: _numCell(L.t('非活动做种时间'), _maxInactiveSeedingTime,
+                  prefKey: PrefKey.maxInactiveSeedingTime, unit: L.t('分')),
             ),
           ]),
           _changeButton(
-            '做种限制[更改]',
+            LogT.prefChanged(L.t('做种限制')),
             _okToast(S.qbSetRatio),
             _failToast(S.qbSetRatioFail),
             () => _api.write(<String, dynamic>{
@@ -878,42 +881,45 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               PrefKey.maxInactiveSeedingTime:
                   int.tryParse(_maxInactiveSeedingTime.text.trim()) ?? -1,
             }),
-            detail: '比率 ${_kbText(_maxRatio)} · 非活动 '
-                '${_kbText(_maxInactiveSeedingTime)}'
-                '${_supports(PrefKey.maxSeedingTime) ? ' · 做种 ${_kbText(_maxSeedingTime)}' : ''}',
+            detail: S.seedDetail(
+                _kbText(_maxRatio),
+                _kbText(_maxInactiveSeedingTime),
+                _supports(PrefKey.maxSeedingTime)
+                    ? _kbText(_maxSeedingTime)
+                    : null),
           ),
         ],
       );
 
   Widget _connectionGroup() => _group(
         icon: Icons.lan_rounded,
-        title: '设置连接限制',
-        summary: '全局 ${_kbText(_maxConnec)} · 单种 ${_kbText(_maxConnecPerTorrent)}',
+        title: L.t('设置连接限制'),
+        summary: L.pick('全局 ${_kbText(_maxConnec)} · 单种 ${_kbText(_maxConnecPerTorrent)}', 'Global ${_kbText(_maxConnec)} · per-torrent ${_kbText(_maxConnecPerTorrent)}'),
         help: S.setQueueSwitchHelp,
         children: <Widget>[
           _gridRow(<Widget>[
             Expanded(
-              child: _numCell('全局最大连接数', _maxConnec,
+              child: _numCell(L.t('全局最大连接数'), _maxConnec,
                   prefKey: PrefKey.maxConnec),
             ),
             Expanded(
-              child: _numCell('单种最大连接数', _maxConnecPerTorrent,
+              child: _numCell(L.t('单种最大连接数'), _maxConnecPerTorrent,
                   prefKey: PrefKey.maxConnecPerTorrent),
             ),
           ]),
           _gridRow(<Widget>[
             if (_supports(PrefKey.maxUploads))
               Expanded(
-                child: _numCell('全局上传连接数', _maxUpConnec,
+                child: _numCell(L.t('全局上传连接数'), _maxUpConnec,
                     prefKey: PrefKey.maxUploads),
               ),
             Expanded(
-              child: _numCell('单种上传连接数', _maxUpConnecPerTorrent,
+              child: _numCell(L.t('单种上传连接数'), _maxUpConnecPerTorrent,
                   prefKey: PrefKey.maxUploadsPerTorrent),
             ),
           ]),
           _changeButton(
-            '连接限制[更改]',
+            LogT.prefChanged(L.t('连接限制')),
             _okToast(S.qbSetMaxConnec),
             _failToast(S.qbSetMaxConnecFail),
             () => _api.write(<String, dynamic>{
@@ -925,17 +931,18 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               PrefKey.maxUploadsPerTorrent:
                   int.tryParse(_maxUpConnecPerTorrent.text.trim()),
             }),
-            detail: '全局 ${_kbText(_maxConnec)} / 单种 '
-                '${_kbText(_maxConnecPerTorrent)} / 单种连接 '
-                '${_kbText(_maxUpConnecPerTorrent)}'
-                '${_supports(PrefKey.maxUploads) ? ' / 连接 ${_kbText(_maxUpConnec)}' : ''}',
+            detail: S.connDetail(
+                _kbText(_maxConnec),
+                _kbText(_maxConnecPerTorrent),
+                _kbText(_maxUpConnecPerTorrent),
+                _supports(PrefKey.maxUploads) ? _kbText(_maxUpConnec) : null),
           ),
         ],
       );
 
   Widget _miscGroup() => _group(
         icon: Icons.auto_mode_rounded,
-        title: '自动种子管理',
+        title: L.t('自动种子管理'),
         summary: _autoMgrSummary(),
         help: S.setCategoryAutoTmmHelp,
         children: <Widget>[
@@ -945,7 +952,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               S.setEnableAutoTmm,
               _prefBool(PrefKey.autoTmmEnabled),
               (bool v) => _run(
-                '开关[自动种子管理]${v ? ' → 开' : ' → 关'}',
+                LogT.prefSwitch(L.t('自动种子管理'), v),
                 _okToast(S.qbSetAutoTmm),
                 _failToast(S.qbSetAutoTmmFail),
                 () => _api.write(<String, dynamic>{PrefKey.autoTmmEnabled: v}),
@@ -959,7 +966,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               S.setPreallocate,
               _prefBool(PrefKey.preallocateAll),
               (bool v) => _run(
-                '开关[预分配磁盘空间]${v ? ' → 开' : ' → 关'}',
+                LogT.prefSwitch(L.t('预分配磁盘空间'), v),
                 _okToast(S.qbSetPreallocate),
                 _failToast(S.qbSetPreallocateFail),
                 () => _api.write(<String, dynamic>{PrefKey.preallocateAll: v}),
@@ -972,7 +979,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             _isQb ? S.setUnfinishedExtQb : S.setUnfinishedExtPart,
             _prefBool('incomplete_files_ext'),
             (bool v) => _run(
-              '开关[未完成文件加扩展名]${v ? ' → 开' : ' → 关'}',
+              LogT.prefSwitch(L.t('未完成文件加扩展名'), v),
               _isQb
                   ? S.qbSetIncompleteQb
                   : S.setUnfinishedExtPart,
@@ -1007,32 +1014,32 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         icon: Icons.block_rounded,
         title: '黑名单 / IP 过滤',
         summary: _prefsLoaded
-            ? '${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
+            ? S.entriesCount(_prefInt(PrefKey.blocklistSize) ?? 0)
             : '',
-        help: 'Transmission 只能整份**订阅**黑名单文件（blocklist-url），\n'
-            '由服务端自行下载解析；它没有逐条增删的接口。',
+        help: L.t('Transmission 只能整份**订阅**黑名单文件（blocklist-url），\n'
+            '由服务端自行下载解析；它没有逐条增删的接口。'),
         children: <Widget>[
           _switchRow(
-            '启用 IP 过滤',
+            L.t('启用 IP 过滤'),
             _prefBool(PrefKey.ipFilterEnabled),
             (bool v) => _run(
-              '开关[启用 IP 过滤]${v ? ' → 开' : ' → 关'}',
-              v ? '已启用 IP 过滤' : '已关闭 IP 过滤',
-              '设置 IP 过滤失败',
+              LogT.prefSwitch(L.t('启用 IP 过滤'), v),
+              S.ipFilterOn(v),
+              S.setIpFilterFail,
               () => _api.write(<String, dynamic>{PrefKey.ipFilterEnabled: v}),
               after: () => _prefs[PrefKey.ipFilterEnabled] = v,
             ),
-            sub: '关掉后订阅来的黑名单不再生效',
+            sub: L.t('关掉后订阅来的黑名单不再生效'),
           ),
-          _pathField('订阅地址', _blocklistUrl, prefKey: PrefKey.blocklistUrl),
+          _pathField(L.t('订阅地址'), _blocklistUrl, prefKey: PrefKey.blocklistUrl),
           _changeButton(
-            '黑名单订阅[更改]',
-            '黑名单订阅已更新',
-            '设置黑名单订阅失败',
+            LogT.prefChanged(L.t('黑名单订阅')),
+            S.blocklistSubUpdated,
+            S.setBlocklistSubFail,
             () => _api.write(<String, dynamic>{
               PrefKey.blocklistUrl: _blocklistUrl.text.trim(),
             }),
-            detail: '地址 ${_blocklistUrl.text.trim()}',
+            detail: LogT.detailAddr(_blocklistUrl.text.trim()),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(af(context, 16), 2, af(context, 16), 6),
@@ -1040,8 +1047,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               width: double.infinity,
               child: Text(
                 _prefsLoaded
-                    ? '当前屏蔽 ${_prefInt(PrefKey.blocklistSize) ?? 0} 条'
-                    : '当前屏蔽 —',
+                    ? S.currentBlocked(_prefInt(PrefKey.blocklistSize) ?? 0)
+                    : S.currentBlockedDash,
                 style: TextStyle(fontSize: af(context, 12)),
               ),
             ),
@@ -1053,38 +1060,38 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         icon: Icons.block_rounded,
         title: '黑名单 / IP 过滤',
         summary: _banSummary(),
-        help: '服务器（qBittorrent）上被封禁的来源 IP / 网段，每行一条、支持 CIDR。\n'
-            '上面两个开关即时生效；名单改动点「保存黑名单」后一次性下发。',
+        help: L.t('服务器（qBittorrent）上被封禁的来源 IP / 网段，每行一条、支持 CIDR。\n'
+            '上面两个开关即时生效；名单改动点「保存黑名单」后一次性下发。'),
         children: <Widget>[
           _switchRow(
-            '启用 IP 过滤',
+            L.t('启用 IP 过滤'),
             _banDraft.enabled,
             (bool v) => _run(
-              '开关[启用 IP 过滤]${v ? ' → 开' : ' → 关'}',
-              v ? '已启用 IP 过滤' : '已关闭 IP 过滤',
-              '设置 IP 过滤失败',
+              LogT.prefSwitch(L.t('启用 IP 过滤'), v),
+              S.ipFilterOn(v),
+              S.setIpFilterFail,
               () => _qb!.setIpFilter(
                 _banDraft.copyWith(enabled: v),
                 base: _banLoaded,
               ),
               after: () => _banDraft = _banDraft.copyWith(enabled: v),
             ),
-            sub: '关掉后这份名单不再生效（内容保留）',
+            sub: L.t('关掉后这份名单不再生效（内容保留）'),
           ),
           _switchRow(
-            '同时过滤 Tracker 连接',
+            L.t('同时过滤 Tracker 连接'),
             _banDraft.filterTrackers,
             (bool v) => _run(
-              '开关[过滤 Tracker 连接]${v ? ' → 开' : ' → 关'}',
-              v ? '已同时过滤 Tracker 连接' : '已只过滤普通连接',
-              '设置 IP 过滤失败',
+              LogT.prefSwitch(L.t('过滤 Tracker 连接'), v),
+              S.trackerFilterOn(v),
+              S.setIpFilterFail,
               () => _qb!.setIpFilter(
                 _banDraft.copyWith(filterTrackers: v),
                 base: _banLoaded,
               ),
               after: () => _banDraft = _banDraft.copyWith(filterTrackers: v),
             ),
-            sub: '连 tracker 也走同一份名单',
+            sub: L.t('连 tracker 也走同一份名单'),
           ),
           const Divider(height: 16, thickness: 0.6),
           _banAddRow(),
@@ -1137,7 +1144,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             ),
           ),
           _pillButton(
-            '保存黑名单',
+            L.t('保存黑名单'),
             _banDirtyHint == null ? null : Theme.of(context).colorScheme.primary,
             (_busy || !_prefsLoaded || _banDirtyHint == null)
                 ? null
@@ -1155,8 +1162,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     if (_banDraft.bannedIps == base.bannedIps) return null;
     final int d = _banDraft.count - base.count;
     return d == 0
-        ? '名单有改动，未保存'
-        : '名单有改动（${d > 0 ? '+' : ''}$d 条），未保存';
+        ? S.dirtyUnsaved
+        : S.dirtyCount(d);
   }
 
   Widget _banListHeader() {
@@ -1177,7 +1184,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 6),
             ),
-            child: Text('批量编辑', style: TextStyle(fontSize: af(context, 11.5))),
+            child: Text(L.t('批量编辑'), style: TextStyle(fontSize: af(context, 11.5))),
           ),
         ],
       ),
@@ -1191,7 +1198,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
           child: SizedBox(
             width: double.infinity,
-            child: Text('未读取到服务器设置', style: TextStyle(fontSize: af(context, 12))),
+            child: Text(L.t('未读取到服务器设置'), style: TextStyle(fontSize: af(context, 12))),
           ),
         ),
       ];
@@ -1203,7 +1210,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           padding: EdgeInsets.symmetric(horizontal: af(context, 16), vertical: 6),
           child: SizedBox(
             width: double.infinity,
-            child: Text('名单为空', style: TextStyle(fontSize: af(context, 12))),
+            child: Text(L.t('名单为空'), style: TextStyle(fontSize: af(context, 12))),
           ),
         ),
       ];
@@ -1222,7 +1229,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
             child: TextButton(
               onPressed: () => setState(() => _banShowAll = true),
               style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-              child: Text('显示全部（还有 ${list.length - shown} 条）',
+              child: Text(L.pick('显示全部（还有 ${list.length - shown} 条）', 'Show all (${list.length - shown} more)'),
                   style: TextStyle(fontSize: af(context, 11.5))),
             ),
           ),
@@ -1242,22 +1249,22 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     _geo[entry] = null;
     _geoLoading.add(entry);
     unawaited(_fetchGeo(entry));
-    return '查询归属地…';
+    return S.geoSearching;
   }
 
   Future<void> _fetchGeo(String entry) async {
     final String? text = await IpGeo.instance.lookup(_ipPart(entry));
     if (!mounted) return;
     setState(() {
-      _geo[entry] = (text == null || text.isEmpty) ? '归属地未知' : text;
+      _geo[entry] = (text == null || text.isEmpty) ? S.geoUnknown : text;
       _geoLoading.remove(entry);
     });
   }
 
   String _decorate(String entry, String? geo) {
-    if (geo == null) return '查询归属地…';
+    if (geo == null) return S.geoSearching;
     final int? n = _cidrCount(entry);
-    return n == null ? geo : '$geo · 网段内 $n 个地址';
+    return n == null ? geo : S.geoRange(geo, n);
   }
 
   static String _ipPart(String entry) {
@@ -1305,7 +1312,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
                             borderRadius:
                                 BorderRadius.circular(AppTheme.radiusTiny),
                           ),
-                          child: Text('网段',
+                          child: Text(L.t('网段'),
                               style: TextStyle(
                                   fontSize: af(context, 9.5), color: cs.onSurfaceVariant)),
                         ),
@@ -1341,13 +1348,13 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           IconButton(
             icon: Icon(Icons.edit_outlined, size: af(context, 15)),
             visualDensity: VisualDensity.compact,
-            tooltip: '编辑',
+            tooltip: L.t('编辑'),
             onPressed: _busy ? null : () => _editBanEntry(index, ip),
           ),
           IconButton(
             icon: Icon(Icons.delete_outline, size: af(context, 15)),
             visualDensity: VisualDensity.compact,
-            tooltip: '删除',
+            tooltip: L.t('删除'),
             onPressed: _busy ? null : () => _removeBanEntry(index, ip),
           ),
         ],
@@ -1359,14 +1366,14 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
     final String v = _banInput.text.trim();
     if (v.isEmpty) return;
     if (!QbIpFilter.isValidEntry(v)) {
-      UiDialogs.showToast('IP 或网段格式不对：$v', isError: true);
-      AppLog.instance.op('黑名单[添加]被拒：$v（格式不合法）',
+      UiDialogs.showToast(S.badIpFormat(v), isError: true);
+      AppLog.instance.op(LogT.prefRejected(L.t('黑名单'), v),
           level: 'ERROR', scope: _server?.logScope);
       return;
     }
     final List<String> list = _banDraft.entries;
     if (list.contains(v)) {
-      UiDialogs.showToast('名单里已经有 $v');
+      UiDialogs.showToast(S.dupIp(v));
       return;
     }
     setState(() {
@@ -1376,25 +1383,27 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       );
       _banInput.clear();
     });
-    AppLog.instance.act('服务器设置', '黑名单[添加]：$v',
-        target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
+    AppLog.instance.act('服务器设置', LogT.blacklistAdded(v, _banDraft.count),
+        target: _server?.name, detail: LogT.banDraftDetail(_banDraft.count));
   }
 
   Future<void> _editBanEntry(int index, String old) async {
     final String? v = await _promptText(
-      title: '编辑黑名单条目',
-      label: 'IP 或网段',
-      help: '支持单个 IP（1.2.3.4）与网段（1.2.3.0/24）。\n'
+      title: L.t('编辑黑名单条目'),
+      label: L.t('IP 或网段'),
+      help: L.pick('支持单个 IP（1.2.3.4）与网段（1.2.3.0/24）。\n'
           '确定后只改本地草稿，点「保存黑名单」才下发。当前值：$old',
+          'Supports a single IP (1.2.3.4) or CIDR range (1.2.3.0/24).\n'
+          'OK updates the local draft only; it goes live when you tap "Save blocklist". Current: $old'),
     );
     if (v == null) {
-      AppLog.instance.act('服务器设置', '黑名单[编辑]·取消', target: old);
+      AppLog.instance.act('服务器设置', L.t('黑名单[编辑]·取消'), target: old);
       return;
     }
     final String nv = v.trim();
     if (!QbIpFilter.isValidEntry(nv)) {
-      UiDialogs.showToast('IP 或网段格式不对：$nv', isError: true);
-      AppLog.instance.op('黑名单[编辑]被拒：$nv（格式不合法）',
+      UiDialogs.showToast(S.badIpFormat(nv), isError: true);
+      AppLog.instance.op(LogT.prefRejected(L.t('黑名单'), nv),
           level: 'ERROR', scope: _server?.logScope);
       return;
     }
@@ -1406,8 +1415,8 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ),
       );
     });
-    AppLog.instance.act('服务器设置', '黑名单[编辑]：$old → $nv',
-        target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
+    AppLog.instance.act('服务器设置', LogT.blacklistEdited(old, nv),
+        target: _server?.name, detail: LogT.banDraftDetail(_banDraft.count));
   }
 
   void _removeBanEntry(int index, String ip) {
@@ -1419,36 +1428,39 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         ),
       );
     });
-    AppLog.instance.act('服务器设置', '黑名单[删除]：$ip',
-        target: _server?.name, detail: '草稿 ${_banDraft.count} 条（未保存）');
+    AppLog.instance.act('服务器设置', LogT.blacklistDeleted(ip),
+        target: _server?.name, detail: LogT.banDraftDetail(_banDraft.count));
   }
 
   Future<void> _bulkEditBanList() async {
     final int before = _banDraft.count;
     final String? text = await _promptMultiline(
-      title: '批量编辑黑名单',
+      title: L.t('批量编辑黑名单'),
       initial: _banDraft.bannedIps,
-      help: '每行一条，支持单个 IP（1.2.3.4）与网段（1.2.3.0/24）。\n'
+      help: L.pick('每行一条，支持单个 IP（1.2.3.4）与网段（1.2.3.0/24）。\n'
           '确定后整份替换本地草稿，再点「保存黑名单」下发。',
+          'One entry per line; a single IP (1.2.3.4) or CIDR range (1.2.3.0/24).\n'
+          'OK replaces the whole local draft; tap "Save blocklist" to apply.'),
     );
     if (text == null) {
-      AppLog.instance.act('服务器设置', '黑名单[批量编辑]·取消');
+      AppLog.instance.act('服务器设置', L.t('黑名单[批量编辑]·取消'));
       return;
     }
     final List<String> lines = QbIpFilter.splitEntries(text);
     final List<String> bad =
         lines.where((String e) => !QbIpFilter.isValidEntry(e)).toList();
     if (bad.isNotEmpty) {
-      UiDialogs.showToast('有 ${bad.length} 行格式不对，例如 ${bad.first}',
+      UiDialogs.showToast(S.banRowsBad(bad.length, bad.first),
           isError: true);
       AppLog.instance.op(
-          '黑名单[批量编辑]被拒：${bad.length} 行格式不合法（例 ${bad.first}）',
+          LogT.prefRejected(L.t('黑名单批量编辑'),
+              '${bad.length} 行（例 ${bad.first}）'),
           level: 'ERROR',
           scope: _server?.logScope);
       return;
     }
     if (lines.length > QbIpFilter.maxEntries) {
-      UiDialogs.showToast('最多 ${QbIpFilter.maxEntries} 条', isError: true);
+      UiDialogs.showToast(S.banMaxRows(QbIpFilter.maxEntries), isError: true);
       return;
     }
     setState(() {
@@ -1456,20 +1468,20 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       _banDraft = _banDraft.copyWith(bannedIps: QbIpFilter.joinEntries(lines));
       _banShowAll = false;
     });
-    AppLog.instance.act('服务器设置', '黑名单[批量编辑]',
-        target: _server?.name, detail: '$before 条 → ${lines.length} 条（未保存）');
+    AppLog.instance.act('服务器设置', L.t('黑名单[批量编辑]'),
+        target: _server?.name, detail: S.rowsTransition(before, lines.length));
   }
 
   Future<void> _saveBanList() async {
     final QbIpFilter? base = _banLoaded;
     final QbIpFilter next = _banDraft;
     await _run(
-      '黑名单[保存]',
-      '黑名单已保存（${next.count} 条）',
-      '保存黑名单失败',
+      LogT.prefChanged(L.t('黑名单')),
+      S.blacklistSaved(next.count),
+      L.t('保存黑名单失败'),
       () => _qb!.setIpFilter(next, base: base),
       after: () => _banTouched = false,
-      detail: base == null ? '${next.count} 条' : next.diffSummary(base),
+      detail: base == null ? S.banSaveDetail(next.count) : next.diffSummary(base),
     );
   }
 
@@ -1484,8 +1496,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           SizedBox(width: af(context, 8)),
           Expanded(
             child: Text(
-              '没能读取这台服务器的设置，下面的数字与开关暂不可信'
-              '（${_prefsError ?? ''}）。点右上角刷新重试。',
+              S.loadFailHint(_prefsError ?? ''),
               style: TextStyle(fontSize: af(context, 12), color: cs.error),
             ),
           ),
@@ -1876,7 +1887,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
       final int d = _banDraft.count - base.count;
       if (d != 0) extra = ' · ${d > 0 ? '+' : ''}$d';
     }
-    return '${_banDraft.count} 条$extra';
+    return '${_banDraft.count}${L.t(' 条')}$extra';
   }
 
   Widget _pillButton(

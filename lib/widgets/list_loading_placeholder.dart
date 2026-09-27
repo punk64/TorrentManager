@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../utils/app_log.dart';
+import '../utils/i18n.dart';
 import '../app/adaptive.dart';
 
 class ListLoadingPlaceholder extends StatefulWidget {
@@ -18,7 +19,7 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
   void initState() {
     super.initState();
     AppLog.instance.view(
-      '种子列表 骨架屏已显示（等待首屏数据）',
+      L.t('种子列表 骨架屏已显示（等待首屏数据）'),
       key: '骨架屏:显示',
     );
   }
@@ -26,7 +27,7 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
   @override
   void dispose() {
     AppLog.instance.view(
-      '种子列表 骨架屏已撤下（首屏数据到达）',
+      L.t('种子列表 骨架屏已撤下（首屏数据到达）'),
       key: '骨架屏:撤下',
     );
     super.dispose();
@@ -40,7 +41,7 @@ class _ListLoadingPlaceholderState extends State<ListLoadingPlaceholder> {
       final ServerController sc = Get.find<ServerController>();
       final String? id = sc.current.value?.id;
       final String text =
-          (id == null ? null : sc.stageTextOf(id)) ?? '正在连接服务器…';
+          (id == null ? null : sc.stageTextOf(id)) ?? L.t('正在连接服务器…');
       return Column(
         children: <Widget>[
           Padding(

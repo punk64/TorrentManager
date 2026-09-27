@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 import '../app/style_keys.dart';
 import '../app/theme.dart';
 import '../utils/app_log.dart';
+import '../utils/i18n.dart';
+import '../utils/log_text.dart';
 import '../utils/formatter.dart';
 import '../widgets/theme_background.dart';
 import '../utils/strings.dart';
@@ -401,7 +403,7 @@ class ThemeController extends GetxController {
       _applyingPreset = false;
     }
     _apply();
-    AppLog.instance.op('恢复默认外观（参数复位为出厂明亮档）');
+    AppLog.instance.op(LogT.appearanceReset());
   }
 
   static const String _kMigrFreeTheme = 'torrentmanager.theme.mig.freeToLight';
@@ -425,7 +427,7 @@ class ThemeController extends GetxController {
       } finally {
         _applyingPreset = false;
       }
-      AppLog.instance.info('主题迁移：已清理内置三档下残留的预设外观参数');
+      AppLog.instance.info(LogT.themeMigrated());
     }
     await Formatter.saveGlobalData(_kMigrFreeTheme, true);
   }
@@ -471,13 +473,14 @@ class ThemeController extends GetxController {
   String get _fontColorDesc {
     final Color? c = fontColor.value;
     return c == null
-        ? '字色跟随主题'
-        : '字色 #${c.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+        ? S.colorFollowTheme
+        : S.colorHex(
+            c.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase());
   }
 
   void applyBuiltinMode(int mode) {
     applySpec(mode == 2 ? builtinDark : builtinLight);
-    AppLog.instance.op('切换主题：${mode == 2 ? '黑暗模式' : '明亮模式'}'
+    AppLog.instance.op('${LogT.modeSwitched(mode == 2)}'
         '（seed $_seedHex · $_fontColorDesc）');
   }
 
@@ -504,8 +507,8 @@ class ThemeController extends GetxController {
 
   void applyPreset(ThemePreset p) {
     applySpec(p);
-    AppLog.instance.op('应用主题：${p.name}'
-        '（${themeMode.value == 2 ? '暗' : '亮'} · seed $_seedHex）');
+    AppLog.instance.op('${LogT.themeApplied(p.name, '')}'
+        '（${themeMode.value == 2 ? L.t('暗') : L.t('亮')} · seed $_seedHex）');
   }
 
   final _draft = Rxn<_ThemeDraft>();
@@ -715,7 +718,7 @@ class ThemeController extends GetxController {
     Formatter.saveGlobalData(_kUseCustom, true);
     _persistCurrentCustomId();
     await _persistCustomThemes();
-    AppLog.instance.op('保存自定义主题：$name');
+    AppLog.instance.op(LogT.customSaved(name));
     return t;
   }
 
@@ -745,7 +748,7 @@ class ThemeController extends GetxController {
     Formatter.saveGlobalData(_kUseCustom, true);
     _persistCurrentCustomId();
     await _persistCustomThemes();
-    AppLog.instance.op('覆盖更新自定义主题：${fresh.name}');
+    AppLog.instance.op(LogT.customOverwritten(fresh.name));
   }
 
   Future<void> updateCustomTheme(String id) => overwriteCustomTheme(id);
@@ -774,7 +777,7 @@ class ThemeController extends GetxController {
     customThemes[i] = customThemes[i].copyWith(name: name);
     customThemes.refresh();
     await _persistCustomThemes();
-    AppLog.instance.op('重命名自定义主题：$old → $name');
+    AppLog.instance.op(LogT.customRenamed(old, name));
   }
 
   Future<void> deleteCustomTheme(String id) async {
@@ -787,7 +790,7 @@ class ThemeController extends GetxController {
     }
     if (_editingCustomId == id) _editingCustomId = null;
     await _persistCustomThemes();
-    AppLog.instance.op('删除自定义主题：$name');
+    AppLog.instance.op(LogT.customDeleted(name));
   }
 
   void _writeAppearance(CustomTheme t) {
@@ -828,7 +831,7 @@ class ThemeController extends GetxController {
 
     Formatter.saveGlobalData(_kUseCustom, true);
     _persistCurrentCustomId();
-    AppLog.instance.op('应用自定义主题：${t.name}（seed $_seedHex）');
+    AppLog.instance.op(LogT.customApplied(t.name, _seedHex));
   }
 
   void _persistCurrentCustomId() =>
@@ -905,7 +908,7 @@ class ThemeController extends GetxController {
     customThemes.refresh();
     await _persistCustomThemes();
     AppLog.instance.op(
-      '导入自定义主题：新增 $added 套、覆盖 $replaced 套',
+      LogT.customImported(added, replaced),
     );
     return ThemeImportOutcome(
       added: added,

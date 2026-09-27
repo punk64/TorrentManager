@@ -1,0 +1,12 @@
+HTTPS 证书校验失败：请为服务端配置受信任的证书，
+Transmission 只能整份**订阅**黑名单文件（blocklist-url），\n
+Transmission 的 RPC 不提供服务器日志接口（服务端日志只能去读 
+「跟随主题」时字色随明暗自动切换：明亮模式近黑，黑暗模式近白。
+地址不对：请填主机名或完整 URL（例：192.168.1.5 或 https:
+  static String get srvSelectToAddTorrent => L.t(
+地址或端口不对，接口未找到（HTTP 404）
+备份文件已加密（AES-256-GCM，密钥由本机 Keystore 托管），
+暂无日志记录。应用内的操作提示、网络请求与异常
+服务器（qBittorrent）上被封禁的来源 IP / 网段，每行一条、支持 CIDR。\n
+本构建为纯本地版：备份保存在本机，
+这是私有种子（Private Torrent）\n

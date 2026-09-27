@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'formatter.dart';
+import 'i18n.dart';
 
 class FileExport {
   FileExport._();
@@ -15,9 +16,10 @@ class FileExport {
   static Future<String?> saveTextAs({
     required String fileName,
     required String content,
-    String dialogTitle = '保存日志',
+    String? dialogTitle,
     List<String> allowedExtensions = const <String>['txt'],
   }) async {
+    dialogTitle ??= L.t('保存日志');
     final Uint8List bytes = Uint8List.fromList(utf8.encode(content));
     return FilePicker.platform.saveFile(
       dialogTitle: dialogTitle,
@@ -31,9 +33,10 @@ class FileExport {
   static Future<String?> saveBytesAs({
     required String fileName,
     required Uint8List bytes,
-    String dialogTitle = '保存文件',
+    String? dialogTitle,
     List<String> allowedExtensions = const <String>['torrent'],
   }) {
+    dialogTitle ??= L.t('保存文件');
     return FilePicker.platform.saveFile(
       dialogTitle: dialogTitle,
       fileName: Formatter.safeFileName(fileName),
@@ -78,7 +81,7 @@ class FileExport {
     final List<int>? bytes = f.bytes;
     if (bytes != null) {
       if (bytes.length > maxReadBytes) {
-        throw const FileExportException('文件过大（超过 2 MB）');
+        throw FileExportException(L.t('文件过大（超过 2 MB）'));
       }
       return PickedTextFile(
         name: f.name,
@@ -89,7 +92,7 @@ class FileExport {
     if (path == null) return null;
     final File file = File(path);
     if (await file.length() > maxReadBytes) {
-      throw const FileExportException('文件过大（超过 2 MB）');
+      throw FileExportException(L.t('文件过大（超过 2 MB）'));
     }
     return PickedTextFile(name: f.name, content: await file.readAsString());
   }

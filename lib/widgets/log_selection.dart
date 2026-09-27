@@ -8,6 +8,7 @@ import '../utils/file_export.dart';
 import '../utils/formatter.dart';
 import 'ui_dialogs.dart';
 import '../utils/log_export.dart';
+import '../utils/i18n.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 
@@ -185,7 +186,7 @@ Future<bool> exportLogLines(
   String kind = 'app',
 }) async {
   if (lines.isEmpty) {
-    UiDialogs.showToast('${S.logExportFailedPrefix}没有可导出的日志', isError: true);
+    UiDialogs.showToast('${S.logExportFailedPrefix}${L.t('没有可导出的日志')}', isError: true);
     return false;
   }
   final String? name = await askExportFileName(
@@ -213,7 +214,7 @@ Future<bool> exportLogLines(
     } else {
       UiDialogs.showToast(S.logExportPrivacyOff(n), isWarning: true);
     }
-    AppLog.instance.op('导出日志：$name0（$n 条，${masked ? '已打码' : '未打码'}）');
+    AppLog.instance.op(L.pick('导出日志：$name0（$n 条，${masked ? '已打码' : '未打码'}）', 'Log exported: $name0 ($n rows, ${masked ? 'masked' : 'unmasked'})'));
     return true;
   } catch (e) {
     UiDialogs.showToast(
@@ -229,7 +230,7 @@ Future<String?> askExportFileName(BuildContext context, String suggested) {
   return showDialog<String>(
     context: context,
     builder: (BuildContext ctx) => AlertDialog(
-      title: Text('导出日志', style: TextStyle(fontSize: af(context, 14))),
+      title: Text(L.t('导出日志'), style: TextStyle(fontSize: af(context, 14))),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -246,7 +247,7 @@ Future<String?> askExportFileName(BuildContext context, String suggested) {
           ),
           const SizedBox(height: 6),
           Text(
-            '下一步会弹出系统「另存为」，请选择保存位置（如「下载」文件夹）',
+            L.t('下一步会弹出系统「另存为」，请选择保存位置（如「下载」文件夹）'),
             style: TextStyle(fontSize: af(context, 10), color: Colors.grey.shade600),
           ),
         ],

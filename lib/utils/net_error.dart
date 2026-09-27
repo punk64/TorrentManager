@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import 'i18n.dart';
 import 'strings.dart';
 
 enum ConnErrorKind {
@@ -55,19 +56,19 @@ class NetError {
           return S.srvTimeout;
         case DioExceptionType.badCertificate:
 
-          return 'HTTPS 证书校验失败：请为服务端配置受信任的证书，'
-              '或在客户端信任该自签名证书（改用 http 会明文传输账号密码）';
+          return L.t('HTTPS 证书校验失败：请为服务端配置受信任的证书，'
+              '或在客户端信任该自签名证书（改用 http 会明文传输账号密码）');
         case DioExceptionType.badResponse:
           final int? code = e.response?.statusCode;
 
           if (_isBanned(e)) return S.srvIpBanned;
 
-          if (code == 401) return '账号或密码错误（HTTP 401）';
+          if (code == 401) return L.t('账号或密码错误（HTTP 401）');
           if (code == 403) {
-            return '服务器拒绝访问：未登录或会话已失效（HTTP 403）';
+            return L.t('服务器拒绝访问：未登录或会话已失效（HTTP 403）');
           }
-          if (code == 404) return '地址或端口不对，接口未找到（HTTP 404）';
-          return '服务器返回异常状态 HTTP ${code ?? '?'}';
+          if (code == 404) return L.t('地址或端口不对，接口未找到（HTTP 404）');
+          return S.netBadStatus('${code ?? '?'}');
         case DioExceptionType.connectionError:
         case DioExceptionType.cancel:
         case DioExceptionType.unknown:
@@ -77,20 +78,22 @@ class NetError {
 
     final String low = raw.toLowerCase();
     if (low.contains('banned')) return S.srvIpBanned;
-    if (low.contains('no host specified')) return '尚未选择服务器';
+    if (low.contains('no host specified')) return L.t('尚未选择服务器');
     if (low.contains('failed host lookup') ||
         low.contains('nodename nor servname') ||
         low.contains('name or service not known')) {
-      return '无法解析服务器地址（域名写错，或当前网络没有 DNS）';
+      return L.t('无法解析服务器地址（域名写错，或当前网络没有 DNS）');
     }
-    if (low.contains('connection refused')) return '连接被拒绝（端口不对，或服务未启动）';
+    if (low.contains('connection refused')) {
+      return L.t('连接被拒绝（端口不对，或服务未启动）');
+    }
     if (low.contains('no route to host') ||
         low.contains('network is unreachable')) {
-      return '网络不可达（不在同一局域网，或 VPN / 代理未连）';
+      return L.t('网络不可达（不在同一局域网，或 VPN / 代理未连）');
     }
     if (low.contains('timed out')) return S.srvConnTimeout;
     if (low.contains('certificate') || low.contains('handshake')) {
-      return 'HTTPS 握手 / 证书失败';
+      return L.t('HTTPS 握手 / 证书失败');
     }
 
     String scrubbed = raw.replaceAll(
