@@ -601,6 +601,34 @@ class TorrentController extends GetxController {
     categoryPaths.assignAll(paths);
   }
 
+  Future<String?> ensureCategory(String name, {String? savePath}) async {
+    final ServerData? s = serverCtrl.current.value;
+    if (s == null || !s.isQbittorrent) return null;
+    final String n = name.trim();
+    if (n.isEmpty) return null;
+    if (catalogCategories.contains(n)) return null;
+    final String? p = savePath?.trim().isEmpty ?? true ? null : savePath!.trim();
+    try {
+      await serverCtrl.qb.createCategory(n, savePath: p);
+      if (p != null) categoryPaths[n] = p;
+    } catch (e) {
+      AppLog.instance.op(
+          '创建分类「$n」${p == null ? '' : ' → $p'}：${NetError.describe(e)}',
+          level: 'WARN',
+          scope: s.logScope);
+      bool exists = catalogCategories.contains(n);
+      if (!exists) {
+        try {
+          final Map<String, dynamic> m = await serverCtrl.qb.getCategories();
+          exists = m.containsKey(n);
+        } catch (_) {}
+      }
+      if (!exists) return NetError.describe(e);
+    }
+    if (!catalogCategories.contains(n)) catalogCategories.add(n);
+    return null;
+  }
+
   String? get defaultSavePath {
     final ServerData? s = serverCtrl.current.value;
     if (s == null) return null;
@@ -1813,6 +1841,7 @@ class TorrentController extends GetxController {
       _runEdit(hashes, () async {
         final s = serverCtrl.current.value;
         if (s == null || !s.isQbittorrent) return;
+        if (category.isNotEmpty) await ensureCategory(category);
         await serverCtrl.qb.setCategory(hashes.join('|'), category);
         AppLog.instance.op(
             '设置分类 → ${category.isEmpty ? '（空=未分类）' : category}'

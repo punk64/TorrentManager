@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../controllers/torrent_controller.dart';
-import '../data/models/server_data.dart';
 import '../utils/add_batch.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
@@ -73,54 +72,53 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   }
 
   Future<void> _loadCatalog() async {
-    final ServerData? s = ctrl.current.value;
-    if (s == null || !s.isQbittorrent) return;
-    try {
-      final Map<String, dynamic> cats = await ctrl.qb.getCategories();
-      final List<String> tags = await ctrl.qb.getTags();
-      if (!mounted) return;
-      setState(() {
-        _categories
-          ..clear()
-          ..addAll(cats.keys.map((String k) => k.toString()));
-        _tagCatalog
-          ..clear()
-          ..addAll(tags);
-      });
-    } catch (_) {
+    final TorrentController tc = Get.find<TorrentController>();
+    await tc.loadCatalog();
+    if (!mounted) return;
+    final List<String> tags = List<String>.of(tc.catalogTags);
+    for (final FacetEntry e in tc.facets(FilterDim.tags)) {
+      if (e.value != '未标记' && !tags.contains(e.value)) tags.add(e.value);
     }
+    setState(() {
+      _categories
+        ..clear()
+        ..addAll(tc.catalogCategories);
+      for (final FacetEntry e in tc.facets(FilterDim.category)) {
+        final String v = e.value.trim();
+        if (v.isNotEmpty && !_categories.contains(v)) _categories.add(v);
+      }
+      _tagCatalog
+        ..clear()
+        ..addAll(tags);
+    });
   }
 
   Future<void> _pickCategory() async {
-    final String? picked = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (BuildContext ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-              af(ctx, 14), af(ctx, 4), af(ctx, 14), af(ctx, 14)),
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: <Widget>[
-              for (final String c in _categories)
-                ChoiceChip(
-                  label: Text(c, style: TextStyle(fontSize: af(ctx, 11))),
-                  selected: c == _category.text.trim(),
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  onSelected: (bool v) => Navigator.of(ctx).pop(v ? c : ''),
-                ),
-            ],
-          ),
-        ),
-      ),
+    if (_categories.isEmpty) await _loadCatalog();
+    if (!mounted) return;
+    final TorrentController tc = Get.find<TorrentController>();
+    final String? picked = await EditDialogs.category(
+      context,
+      initial: _category.text.trim(),
+      candidates: List<String>.of(_categories),
+      serverCandidates: List<String>.of(tc.catalogCategories),
+      confirmText: S.ok,
+      onCreate: (String name, String? savePath) =>
+          tc.ensureCategory(name, savePath: savePath),
+      pathCandidates: _pathCandidates(),
     );
     if (picked == null || !mounted) return;
-    setState(() => _category.text = picked);
+    setState(() {
+      _category.text = picked;
+      if (picked.isNotEmpty && !_categories.contains(picked)) {
+        _categories.add(picked);
+      }
+    });
   }
 
   Future<void> _pickTags() async {
+    if (_tagCatalog.isEmpty) await _loadCatalog();
+    if (!mounted) return;
     final TagEditResult? r = await EditDialogs.tags(
       context,
       initial: _tags.toList(),
@@ -294,6 +292,7 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
   }
 
   Widget _categoryRow(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final String cur = _category.text.trim();
     return Padding(
       padding: EdgeInsets.only(top: af(context, 8)),
@@ -302,6 +301,11 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
         runSpacing: 6,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
+          if (_categories.isEmpty)
+            Text(S.categoryEmptyList,
+                style: TextStyle(
+                    fontSize: af(context, 10.5),
+                    color: cs.onSurfaceVariant)),
           for (final String c in _categories)
             ChoiceChip(
               label: Text(c, style: TextStyle(fontSize: af(context, 10.5))),
@@ -360,6 +364,10 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
       _total = urls.length + files.length;
       _result = null;
     });
+
+    if (isQb && category != null) {
+      await Get.find<TorrentController>().ensureCategory(category);
+    }
 
     final AddBatchResult r = AddBatchResult();
     try {

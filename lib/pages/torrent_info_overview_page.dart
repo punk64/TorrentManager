@@ -1339,12 +1339,22 @@ class _TorrentInfoOverviewPageState extends State<TorrentInfoOverviewPage> {
       counts[v] = e.count;
       if (!cats.contains(v)) cats.add(v);
     }
+    final List<PathCandidate> pathCands = PathCandidates.build(
+      defaultPath: _ctrl.defaultSavePath,
+      tempPath: _ctrl.tempSavePath,
+      categoryPaths: _ctrl.categoryPaths,
+      current: t.savePath,
+      seedPaths: _ctrl.seedPathCounts,
+    );
     final String? v = await EditDialogs.category(
       context,
       initial: t.category ?? '',
       candidates: cats,
       serverCandidates: List<String>.of(_ctrl.catalogCategories),
       counts: counts,
+      onCreate: (String name, String? savePath) =>
+          _ctrl.ensureCategory(name, savePath: savePath),
+      pathCandidates: pathCands,
     );
     if (v == null) return;
     AppLog.instance.act('种子详情', '编辑[${S.fieldCategory}]', target: t.name);

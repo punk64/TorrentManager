@@ -5,6 +5,10 @@ import '../app/theme.dart';
 import '../utils/strings.dart';
 import '../app/adaptive.dart';
 import 'path_dropdown.dart';
+import 'ui_dialogs.dart';
+
+typedef CategoryCreator = Future<String?> Function(
+    String name, String? savePath);
 
 class TorrentEditFields {
   TorrentEditFields._();
@@ -1246,6 +1250,9 @@ class EditDialogs {
     required List<String> candidates,
     List<String> serverCandidates = const <String>[],
     Map<String, int> counts = const <String, int>{},
+    CategoryCreator? onCreate,
+    List<PathCandidate> pathCandidates = const <PathCandidate>[],
+    String? confirmText,
   }) async {
     String? picked = initial;
     bool ok = false;
@@ -1261,6 +1268,8 @@ class EditDialogs {
             serverCandidates: serverCandidates,
             counts: counts,
             onPicked: (String v) => picked = v,
+            onCreate: onCreate,
+            pathCandidates: pathCandidates,
           ),
         ),
         actions: <Widget>[
@@ -1273,7 +1282,7 @@ class EditDialogs {
               ok = true;
               Navigator.of(ctx).pop();
             },
-            child: Text(S.editModify),
+            child: Text(confirmText ?? S.editModify),
           ),
         ],
       ),
@@ -1366,6 +1375,8 @@ class _CategoryPicker extends StatefulWidget {
     required this.serverCandidates,
     required this.counts,
     required this.onPicked,
+    this.onCreate,
+    this.pathCandidates = const <PathCandidate>[],
   });
 
   final String initial;
@@ -1378,6 +1389,10 @@ class _CategoryPicker extends StatefulWidget {
 
   final ValueChanged<String> onPicked;
 
+  final CategoryCreator? onCreate;
+
+  final List<PathCandidate> pathCandidates;
+
   @override
   State<_CategoryPicker> createState() => _CategoryPickerState();
 }
@@ -1386,6 +1401,7 @@ class _CategoryPickerState extends State<_CategoryPicker> {
   late final TextEditingController _c;
   late String _picked;
   String _query = '';
+  final List<String> _created = <String>[];
 
   @override
   void initState() {
@@ -1400,10 +1416,15 @@ class _CategoryPickerState extends State<_CategoryPicker> {
     super.dispose();
   }
 
+  List<String> get _all => <String>[
+        ...widget.candidates,
+        ..._created.where((String c) => !widget.candidates.contains(c)),
+      ];
+
   List<String> get _visible {
     final String q = _query.trim().toLowerCase();
-    if (q.isEmpty) return widget.candidates;
-    return widget.candidates
+    if (q.isEmpty) return _all;
+    return _all
         .where((String e) => e.toLowerCase().contains(q))
         .toList();
   }
@@ -1423,7 +1444,8 @@ class _CategoryPickerState extends State<_CategoryPicker> {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final bool on = _picked == name;
     final int? n = widget.counts[name];
-    final bool fromServer = widget.serverCandidates.contains(name);
+    final bool isNew = _created.contains(name);
+    final bool fromServer = !isNew && widget.serverCandidates.contains(name);
     return InkWell(
       onTap: () {
         setState(() => _picked = name);
@@ -1454,8 +1476,10 @@ class _CategoryPickerState extends State<_CategoryPicker> {
             ),
             if (name.isNotEmpty) ...<Widget>[
               SizedBox(width: af(context, 6)),
-              _badge(fromServer ? '下载器' : '列表',
-                  fromServer ? cs.tertiary : cs.outline),
+              isNew
+                  ? _badge('新建', cs.primary)
+                  : _badge(fromServer ? '下载器' : '列表',
+                      fromServer ? cs.tertiary : cs.outline),
             ],
             if (n != null) ...<Widget>[
               SizedBox(width: af(context, 6)),
@@ -1473,11 +1497,75 @@ class _CategoryPickerState extends State<_CategoryPicker> {
     );
   }
 
+  Future<void> _create() async {
+    final CategoryCreator? create = widget.onCreate;
+    final String name = _query.trim();
+    if (create == null || name.isEmpty) return;
+    final TextEditingController pc = TextEditingController();
+    final String? savePath = await showDialog<String>(
+      context: context,
+      builder: (BuildContext ctx2) => AlertDialog(
+        title: Text(S.categoryCreateTitle,
+            style: TextStyle(fontSize: af(context, 14))),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(name,
+                style: TextStyle(
+                    fontSize: af(context, 13), fontWeight: FontWeight.w600)),
+            SizedBox(height: af(context, 12)),
+            widget.pathCandidates.isEmpty
+                ? TextField(
+                    controller: pc,
+                    style: TextStyle(fontSize: af(context, 12)),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      labelText: S.categorySavePathLabel,
+                      labelStyle: TextStyle(fontSize: af(context, 11)),
+                    ),
+                  )
+                : PathDropdownField(
+                    controller: pc,
+                    candidates: widget.pathCandidates,
+                    label: S.categorySavePathLabel,
+                  ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx2).pop(),
+            child: Text(S.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx2).pop(pc.text.trim()),
+            child: Text(S.ok),
+          ),
+        ],
+      ),
+    );
+    if (savePath == null) return;
+    final String? err = await create(name, savePath.isEmpty ? null : savePath);
+    if (!mounted) return;
+    if (err != null) {
+      UiDialogs.showToast(S.categoryCreateFailed(err), isError: true);
+      return;
+    }
+    UiDialogs.showToast(S.categoryCreated(name));
+    setState(() {
+      if (!_all.contains(name)) _created.add(name);
+      _picked = name;
+      _c.clear();
+      _query = '';
+    });
+    widget.onPicked(name);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final String q = _query.trim();
-    final bool canCreate = q.isNotEmpty && !widget.candidates.contains(q);
+    final bool canCreate = q.isNotEmpty && !_all.contains(q);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1497,23 +1585,21 @@ class _CategoryPickerState extends State<_CategoryPicker> {
               borderSide: BorderSide(color: cs.outlineVariant),
             ),
           ),
-          onChanged: (String v) {
-            setState(() {
-              _query = v;
-              if (v.trim().isNotEmpty) _picked = v.trim();
-            });
-            if (v.trim().isNotEmpty) widget.onPicked(v.trim());
-          },
+          onChanged: (String v) => setState(() => _query = v),
         ),
         if (canCreate) ...<Widget>[
           SizedBox(height: af(context, 6)),
-          Chip(
-            label: Text('新建「$q」',
-                style:
-                    TextStyle(fontSize: af(context, 10), color: cs.onPrimary)),
-            backgroundColor: cs.primary,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          InkWell(
+            onTap: widget.onCreate == null ? null : _create,
+            borderRadius: BorderRadius.circular(8),
+            child: Chip(
+              label: Text('新建「$q」',
+                  style: TextStyle(
+                      fontSize: af(context, 10), color: cs.onPrimary)),
+              backgroundColor: cs.primary,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ],
         SizedBox(height: af(context, 8)),
@@ -1530,6 +1616,15 @@ class _CategoryPickerState extends State<_CategoryPicker> {
               _row(''),
               for (final String name in _visible)
                 if (name.isNotEmpty) _row(name),
+              if (_all.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: af(context, 10), vertical: af(context, 12)),
+                  child: Text(S.categoryEmptyList,
+                      style: TextStyle(
+                          fontSize: af(context, 10.5),
+                          color: cs.onSurfaceVariant)),
+                ),
             ],
           ),
         ),

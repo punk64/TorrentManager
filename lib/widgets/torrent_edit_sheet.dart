@@ -90,12 +90,22 @@ class _BatchEditBodyState extends State<_BatchEditBody> {
       counts[v] = e.count;
       if (!cats.contains(v)) cats.add(v);
     }
+    final List<PathCandidate> pathCands = PathCandidates.build(
+      defaultPath: _ctrl.defaultSavePath,
+      tempPath: _ctrl.tempSavePath,
+      categoryPaths: _ctrl.categoryPaths,
+      current: '',
+      seedPaths: _ctrl.seedPathCounts,
+    );
     final String? v = await EditDialogs.category(
       context,
       initial: '',
       candidates: cats,
       serverCandidates: List<String>.of(_ctrl.catalogCategories),
       counts: counts,
+      onCreate: (String name, String? savePath) =>
+          _ctrl.ensureCategory(name, savePath: savePath),
+      pathCandidates: pathCands,
     );
     if (v == null) return;
     setState(() => _category = v);

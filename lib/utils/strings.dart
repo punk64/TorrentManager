@@ -939,6 +939,15 @@ class S {
   static String get editCategoryTitle => L.pick('修改分类', 'Change category');
   static String get editCategoryNone => L.pick('未分类', 'Uncategorized');
   static String get editCategoryNew => L.pick('或新建分类', 'Or create new');
+  static String get categoryCreateTitle => L.pick('新建分类', 'New category');
+  static String get categorySavePathLabel =>
+      L.pick('保存路径（留空=默认）', 'Save path (empty = default)');
+  static String categoryCreated(String name) =>
+      L.pick('分类「$name」已创建', 'Category "$name" created');
+  static String categoryCreateFailed(String e) =>
+      L.pick('创建分类失败：$e', 'Failed to create category: $e');
+  static String get categoryEmptyList =>
+      L.pick('未读取到分类，点右侧按钮可新建', 'No categories yet; tap the button to create one');
 
   static String get editTagsTitle => L.pick('修改标签', 'Edit tags');
   static String get editTagsAppend => L.pick('追加（保留原有）', 'Append (keep existing)');
