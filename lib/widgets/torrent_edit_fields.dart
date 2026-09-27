@@ -1254,7 +1254,8 @@ class EditDialogs {
     List<PathCandidate> pathCandidates = const <PathCandidate>[],
     String? confirmText,
   }) async {
-    String? picked = initial;
+    String? picked;
+    bool touched = false;
     bool ok = false;
     await showDialog<void>(
       context: context,
@@ -1267,7 +1268,10 @@ class EditDialogs {
             candidates: candidates,
             serverCandidates: serverCandidates,
             counts: counts,
-            onPicked: (String v) => picked = v,
+            onPicked: (String v) {
+              picked = v;
+              touched = true;
+            },
             onCreate: onCreate,
             pathCandidates: pathCandidates,
           ),
@@ -1287,9 +1291,9 @@ class EditDialogs {
         ],
       ),
     );
-    if (!ok) return null;
+    if (!ok || !touched) return null;
     final String p = (picked ?? '').trim();
-    if (p == initial.trim()) return null;
+    if (p.isNotEmpty && p == initial.trim()) return null;
     return p;
   }
 
@@ -1544,6 +1548,7 @@ class _CategoryPickerState extends State<_CategoryPicker> {
         ],
       ),
     );
+    pc.dispose();
     if (savePath == null) return;
     final String? err = await create(name, savePath.isEmpty ? null : savePath);
     if (!mounted) return;

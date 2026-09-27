@@ -366,7 +366,11 @@ class _TorrentAddPageState extends State<TorrentAddPage> {
     });
 
     if (isQb && category != null) {
-      await Get.find<TorrentController>().ensureCategory(category);
+      final String? err =
+          await Get.find<TorrentController>().ensureCategory(category);
+      if (err != null) {
+        UiDialogs.showToast(S.categoryCreateFailed(err), isError: true);
+      }
     }
 
     final AddBatchResult r = AddBatchResult();

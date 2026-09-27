@@ -593,6 +593,8 @@ class TorrentController extends GetxController {
         }
         tags = await serverCtrl.qb.getTags();
       } catch (_) {
+        _catalogId = null;
+        _catalogAt = null;
         return;
       }
     }

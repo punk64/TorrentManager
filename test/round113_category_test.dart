@@ -195,6 +195,77 @@ void main() {
         reason: '搜索词不能自动成为选中值，直接确认不得误建新分类');
   });
 
+  testWidgets('分类弹窗：批量编辑点「未分类」返回空串（可明确清空）',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(445 * 2, 900 * 2);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    String? picked;
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.dark,
+      home: Builder(
+        builder: (BuildContext ctx) => Scaffold(
+          body: TextButton(
+            onPressed: () async {
+              picked = await EditDialogs.category(
+                ctx,
+                initial: '',
+                candidates: const <String>['电影', '剧集'],
+                serverCandidates: const <String>['电影', '剧集'],
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('未分类'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, '修改'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(picked, '',
+        reason: '明确点「未分类」必须返回空串，批量编辑才能清空分类');
+  });
+
+  testWidgets('分类弹窗：重选当前值不算修改（返回 null）',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(445 * 2, 900 * 2);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.reset);
+
+    String? picked;
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.dark,
+      home: Builder(
+        builder: (BuildContext ctx) => Scaffold(
+          body: TextButton(
+            onPressed: () async {
+              picked = await EditDialogs.category(
+                ctx,
+                initial: '电影',
+                candidates: const <String>['电影', '剧集'],
+                serverCandidates: const <String>['电影', '剧集'],
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('电影'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, '修改'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(picked, isNull, reason: '重选当前值等于无变化，不得触发提交');
+  });
+
   testWidgets('分类弹窗：新建 chip 可点击 → 填保存路径 → 创建成功并选中',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(445 * 2, 900 * 2);
