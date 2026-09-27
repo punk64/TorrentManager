@@ -13,9 +13,9 @@
 
 ## ✨ 界面预览
 
-| 服务器列表 | 种子列表 | 种子详情 |
-| :---: | :---: | :---: |
-| ![服务器列表](docs/screenshots/server_list.png) | ![种子列表](docs/screenshots/torrent_list.png) | ![种子详情](docs/screenshots/torrent_detail.png) |
+> 均为真实页面渲染（445dp 基准，深色主题）：服务器页、种子页与种子详情四个子页。
+
+![TorrentManager 界面预览](docs/screenshots/preview_all.png)
 
 ---
 

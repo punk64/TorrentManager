@@ -470,26 +470,22 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.only(left: af(context, 8.0) + depth * af(context, 14), right: af(context, 4)),
-      leading: SizedBox(
-        width: af(context, 56),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Formatter.iconExtension(n.name),
-                size: AppTheme.iconSize),
-            Checkbox(
-              value: checked,
-              visualDensity: VisualDensity.compact,
-              onChanged: (_) => setState(() {
-                if (checked) {
-                  _selected.remove(n.path);
-                } else {
-                  _selected.add(n.path);
-                }
-              }),
-            ),
-          ],
-        ),
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Formatter.iconExtension(n.name), size: AppTheme.iconSize),
+          Checkbox(
+            value: checked,
+            visualDensity: VisualDensity.compact,
+            onChanged: (_) => setState(() {
+              if (checked) {
+                _selected.remove(n.path);
+              } else {
+                _selected.add(n.path);
+              }
+            }),
+          ),
+        ],
       ),
       title: Row(
         children: <Widget>[
@@ -562,20 +558,17 @@ class _TorrentInfoFilesPageState extends State<TorrentInfoFilesPage> {
       dense: true,
       initiallyExpanded: depth == 0,
       tilePadding: EdgeInsets.only(left: af(context, 8.0) + depth * af(context, 14), right: af(context, 4)),
-      leading: SizedBox(
-        width: af(context, 56),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.folder, size: AppTheme.iconSize),
-            Checkbox(
-              tristate: true,
-              value: tri,
-              visualDensity: VisualDensity.compact,
-              onChanged: (_) => setState(() => _toggleFolder(n)),
-            ),
-          ],
-        ),
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.folder, size: AppTheme.iconSize),
+          Checkbox(
+            tristate: true,
+            value: tri,
+            visualDensity: VisualDensity.compact,
+            onChanged: (_) => setState(() => _toggleFolder(n)),
+          ),
+        ],
       ),
       title: Row(
         children: <Widget>[
