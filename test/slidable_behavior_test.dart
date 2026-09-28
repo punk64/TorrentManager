@@ -27,6 +27,7 @@ Widget _tile({
   Key contentKey = kContent,
   bool withMargin = false,
   VoidCallback? onAction,
+  VoidCallback? onTap,
   Key? tileKey,
 }) =>
     SizedBox(
@@ -34,6 +35,7 @@ Widget _tile({
       child: SlidableTile(
         key: tileKey,
         motion: motion,
+        onTap: onTap,
         extentRatio: kExtentRatio,
         margin: withMargin ? EdgeInsets.zero : null,
         contentBackground: const Color(0xFF202020),
@@ -220,9 +222,55 @@ void main() {
     await _move(tester, g, -move, const Duration(milliseconds: 400));
     await g.up();
     await tester.pumpAndSettle();
-    expect(_contentDx(tester, kContent2), closeTo(rest2 - kExtent, 0.5));
+    expect(_contentDx(tester, kContent2), closeTo(rest2, 0.5),
+        reason: '已有行展开时，拖别的行不再跟手滑动');
     expect(_contentDx(tester), closeTo(rest1, 0.5),
-        reason: '滑开新的一行时，上一行应自动收起');
+        reason: '已展开的那行应回到居中');
+  });
+
+  testWidgets('滑动⑦：有行展开时，点击其它行只收起展开行、不触发点击动作',
+      (WidgetTester tester) async {
+    int taps = 0;
+    await tester.pumpWidget(_host(
+      SizedBox(
+        width: kRowWidth,
+        child: SlidableAutoCloseGroup(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _tile(motion: SlidableMotionKind.scroll),
+              _tile(
+                motion: SlidableMotionKind.scroll,
+                contentKey: kContent2,
+                onTap: () => taps++,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+
+    final double rest1 = _contentDx(tester);
+    final double rest2 = _contentDx(tester, kContent2);
+
+    const double move = kHalf * SlidableTile.defaultDragResistance * 1.4;
+    final TestGesture g = await _press(tester, kContent);
+    await _move(tester, g, -move, const Duration(milliseconds: 400));
+    await g.up();
+    await tester.pumpAndSettle();
+    expect(_contentDx(tester), closeTo(rest1 - kExtent, 0.5),
+        reason: '前提：第一行应已完全展开');
+
+    await tester.tap(find.byKey(kContent2));
+    await tester.pumpAndSettle();
+    expect(taps, 0, reason: '有行展开时点击其它行不应触发该行的点击动作');
+    expect(_contentDx(tester), closeTo(rest1, 0.5),
+        reason: '展开行应回到居中');
+    expect(_contentDx(tester, kContent2), closeTo(rest2, 0.5));
+
+    await tester.tap(find.byKey(kContent2));
+    await tester.pumpAndSettle();
+    expect(taps, 1, reason: '收起后再点同一行应正常触发点击');
   });
 
   testWidgets('滑动⑥：已展开时反方向拖只回中，不跨到另一侧（需求 4）',

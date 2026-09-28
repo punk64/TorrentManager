@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../app/adaptive.dart';
+import '../app/theme.dart';
+import '../controllers/theme_controller.dart';
 
 const Color kSemanticDownload = Color(0xFFD81B60);
 const Color kSemanticUpload = Color(0xFF347F59);
@@ -11,6 +13,16 @@ const Color kSemanticPeer = Color(0xFF8E24AA);
 const Color kSemanticError = Color(0xFFA63F87);
 
 Color adaptSemantic(Color base, Brightness brightness) {
+  // 预设带语义色覆盖时直接取该套定稿值（已按最坏底色验证 ≥4.5）；
+  // 深色玻璃组内嵌于 schemeOverride，浅色组独立覆盖，组件色不受影响。
+  final PresetSemanticColors? sems = ThemeController.activeSemanticOverride;
+  if (sems != null) {
+    if (base == kSemanticUpload) return sems.upload;
+    if (base == kSemanticDownload) return sems.download;
+    if (base == kSemanticActive) return sems.active;
+    if (base == kSemanticPeer) return sems.peer;
+    if (base == kSemanticError) return sems.error;
+  }
   final HSLColor h = HSLColor.fromColor(base);
   final bool dark = brightness == Brightness.dark;
   final bool greenish = h.hue >= 130 && h.hue <= 170;

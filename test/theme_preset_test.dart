@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:torrent_manager/app/theme.dart';
 import 'package:torrent_manager/controllers/theme_controller.dart';
 import 'package:torrent_manager/data/local/secure_prefs.dart';
+import 'package:torrent_manager/widgets/metric_row.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -65,11 +66,11 @@ void main() {
           reason: '面板是浅色，文字应为近黑');
     });
 
-    test('★ 壁纸六套：图片背景 + 自带壁纸资产', () {
+    test('★ 壁纸六套：图片背景 + 自带壁纸资产（第 27 轮改深色档）', () {
       for (final ThemePreset p in wallpaperPresets) {
         expect(p.wallpaper, isTrue, reason: '${p.name} 应标记为壁纸主题');
-        expect(p.themeMode, 1,
-            reason: '${p.name} 走明亮档（近黑文字压在亮色玻璃卡片上）');
+        expect(p.themeMode, 2,
+            reason: '${p.name} 重设计后走深色档（壁纸同相深色玻璃 + 浅字）');
         expect(p.bgMode, 2, reason: '${p.name} 背景模式应为「图片」');
         expect(p.bgImage, isNotNull, reason: '${p.name} 必须自带壁纸');
         expect(p.bgImage!.startsWith('assets/images/wallpapers/'), isTrue,
@@ -106,7 +107,7 @@ void main() {
   group('★ 壁纸主题：套用 / 亮色玻璃 / 资产路径迁移', () {
     ThemeController makeTc() => Get.put(ThemeController());
 
-    test('套用壁纸主题 → 图片背景 + 该壁纸落盘 + 玻璃生效', () {
+    test('套用壁纸主题 → 图片背景 + 该壁纸落盘 + 玻璃生效 + 显式配色', () {
       final ThemeController tc = makeTc();
       final ThemePreset wp = wallpaperPresets.first;
       tc.applyPreset(wp);
@@ -114,11 +115,13 @@ void main() {
       expect(tc.currentPreset.value, wp.id);
       expect(tc.bgModeValue, 2, reason: '套用后应整页铺壁纸');
       expect(tc.pageBgImage, wp.bgImage);
-      expect(tc.themeMode.value, 1);
+      expect(tc.themeMode.value, 2, reason: '重设计后壁纸套为深色档');
       expect(tc.glassAlpha, greaterThan(0),
-          reason: '图片背景 → 卡片应是半透明亮色玻璃');
+          reason: '图片背景 → 卡片应是半透明深色玻璃');
 
-      expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
+      expect(tc.effectiveFontColor, isNot(const Color(0xFF1A1A1A)),
+          reason: '深色玻璃上应为浅字（取预设 onSurface）');
+      expect(tc.effectiveFontColor, wp.schemeOverride!.onSurface);
     });
 
     test('套用浅色主题 → 玻璃关闭（观感与以前完全一致）', () {
@@ -161,7 +164,7 @@ void main() {
       expect(tc.seed.value, const Color(0xFFC2185B));
       expect(tc.bgModeValue, 1);
 
-      expect(tc.gradient2, const Color(0xFFF5B9CE));
+      expect(tc.gradient2, const Color(0xFFF4C2D3));
 
       expect(tc.panelColor.value, ThemeController.defaultPanelColor);
       expect(tc.fontColor.value, isNull);
@@ -188,7 +191,7 @@ void main() {
       tc.applyPreset(presets[4]);
       expect(tc.currentPreset.value, 'purple_mood', reason: '历史 id 保持不变，兼容已落盘的选中状态');
       expect(tc.themeMode.value, 1);
-      expect(tc.seed.value, const Color(0xFF6A1B9A));
+      expect(tc.seed.value, const Color(0xFF6C1FA4));
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
 
       for (final Color c in <Color>[tc.gradient1, tc.gradient2]) {
@@ -204,9 +207,9 @@ void main() {
       tc.applyPreset(presets[5]);
       expect(tc.currentPreset.value, 'dark_sky', reason: '历史 id 保持不变');
       expect(tc.themeMode.value, 1);
-      expect(tc.seed.value, const Color(0xFF37474F));
+      expect(tc.seed.value, const Color(0xFF3A4A55));
 
-      expect(tc.gradient2, const Color(0xFFBFD2D8));
+      expect(tc.gradient2, const Color(0xFFC2D3DA));
       expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
     });
 
@@ -337,6 +340,129 @@ void main() {
       final ThemeController tc2 = ThemeController();
       await tc2.load();
       expect(tc2.useCustom.value, isTrue);
+    });
+  });
+
+  group('★ 第 27 轮：12 套主题重设计落地（深色玻璃显式配色）', () {
+    ThemeController makeTc() => Get.put(ThemeController());
+
+    test('深色六套：themeMode 2 + 显式配色 + glassAlpha 0.78 + 语义/图表色齐全', () {
+      for (final ThemePreset p in wallpaperPresets) {
+        final PresetSchemeOverride o = p.schemeOverride!;
+        expect(p.themeMode, 2, reason: '${p.name} 深色档');
+        expect(p.glassAlpha, 0.78, reason: '${p.name} 组件不透明度 0.22');
+        expect(o.chart.length, 4, reason: '${p.name} 图表色 4 色');
+        expect(o.sems.upload, isNot(o.sems.download), reason: '${p.name} 语义色区分');
+        // 玻璃五阶由深到浅（lowest → highest 单调变亮）
+        expect(AppTheme.lightnessOf(o.surfaceLowest),
+            lessThan(AppTheme.lightnessOf(o.surfaceHighest)),
+            reason: '${p.name} 玻璃层次');
+      }
+    });
+
+    test('套用幽魂：面板三参随主题 + 组件不透明度 0.22', () {
+      final ThemeController tc = makeTc();
+      final ThemePreset wp = wallpaperPresets.first;
+      tc.applyPreset(wp);
+
+      expect(tc.componentOpacity.value, closeTo(0.22, 0.001));
+      expect(tc.panelColor.value, wp.schemeOverride!.surfaceLow,
+          reason: '面板底色 = 该套玻璃 low 阶，不再白板');
+      expect(tc.panel1Alpha.value, ThemeController.presetPanel1Alpha);
+      expect(tc.panel2Alpha.value, ThemeController.presetPanel2Alpha);
+      expect(tc.glassAlpha, 0.78);
+    });
+
+    test('darkTheme 显式配色生效：主色 / 玻璃五阶 alpha / 浅字 / 透明背景', () {
+      final ThemeController tc = makeTc();
+      final ThemePreset wp = wallpaperPresets.first;
+      final PresetSchemeOverride o = wp.schemeOverride!;
+      tc.applyPreset(wp);
+
+      final ThemeData t = tc.darkTheme;
+      expect(t.colorScheme.primary, o.primary);
+      expect(t.colorScheme.tertiary, o.tertiary);
+      expect(t.colorScheme.outlineVariant, o.outlineVariant);
+      expect(t.colorScheme.surfaceContainerLow.a, closeTo(0.78, 0.01));
+      expect(t.colorScheme.surfaceContainerHighest.a, closeTo(0.78, 0.01));
+      expect(t.textTheme.bodyMedium?.color, o.onSurface);
+      expect(t.scaffoldBackgroundColor, Colors.transparent,
+          reason: '壁纸模式下脚手架透明，壁纸透出');
+    });
+
+    test('重启 load()：面板三参随已存预设恢复，不再回白板', () async {
+      final ThemeController tc = makeTc();
+      tc.applyPreset(wallpaperPresets.first);
+
+      final ThemeController tc2 = ThemeController();
+      await tc2.load();
+      expect(tc2.currentPreset.value, wallpaperPresets.first.id);
+      expect(tc2.panelColor.value,
+          wallpaperPresets.first.schemeOverride!.surfaceLow);
+      expect(tc2.panel1Alpha.value, ThemeController.presetPanel1Alpha);
+      expect(tc2.panel2Alpha.value, ThemeController.presetPanel2Alpha);
+    });
+
+    test('adaptSemantic：预设内取主题定稿语义色，脱钩后回落亮度适配', () {
+      final ThemeController tc = makeTc();
+      final ThemePreset wp = wallpaperPresets.first;
+      final PresetSchemeOverride o = wp.schemeOverride!;
+      tc.applyPreset(wp);
+
+      expect(adaptSemantic(kSemanticUpload, Brightness.dark), o.sems.upload);
+      expect(adaptSemantic(kSemanticDownload, Brightness.dark), o.sems.download);
+      expect(adaptSemantic(kSemanticActive, Brightness.dark), o.sems.active);
+      expect(adaptSemantic(kSemanticPeer, Brightness.dark), o.sems.peer);
+      expect(adaptSemantic(kSemanticError, Brightness.dark), o.sems.error);
+
+      tc.setSeed(const Color(0xFF009688));
+      expect(tc.currentPreset.value, isNull, reason: '手动改主色脱钩预设');
+      expect(ThemeController.activeSchemeOverride, isNull,
+          reason: '脱钩后语义色不再吃主题覆盖');
+
+      final HSLColor h = HSLColor.fromColor(kSemanticUpload);
+      final Color expected = h
+          .withLightness(0.60)
+          .withSaturation(h.saturation.clamp(0.35, 0.75))
+          .toColor();
+      expect(adaptSemantic(kSemanticUpload, Brightness.dark), expected);
+      expect(adaptSemantic(kSemanticUpload, Brightness.dark),
+          isNot(o.sems.upload));
+    });
+
+    test('浅色组：语义色独立覆盖生效，组件色保持 fromSeed、面板不随改', () {
+      final ThemeController tc = makeTc();
+      final ThemePreset p = lightPresets.first; // 粉樱
+      tc.applyPreset(p);
+
+      expect(p.schemeOverride, isNull,
+          reason: '浅色组组件色走 fromSeed 机制，不带整套显式配色');
+      expect(p.semanticOverride, isNotNull);
+      expect(ThemeController.activeSemanticOverride, p.semanticOverride);
+      expect(adaptSemantic(kSemanticUpload, Brightness.light),
+          p.semanticOverride!.upload, reason: '上传绿取该套定稿深绿');
+      expect(adaptSemantic(kSemanticDownload, Brightness.light),
+          isNot(kSemanticDownload), reason: '下载玫红随主题调整');
+
+      expect(tc.panelColor.value, ThemeController.defaultPanelColor,
+          reason: '浅色组不写面板三参');
+      expect(tc.glassAlpha, isNull, reason: '浅色组无玻璃');
+    });
+
+    test('chartColors：预设内用该套图表色，无覆盖走全局默认六色', () {
+      final ThemeController tc = makeTc();
+      final PresetSchemeOverride o = wallpaperPresets.first.schemeOverride!;
+      tc.applyPreset(wallpaperPresets.first);
+
+      final ColorScheme cs = tc.darkTheme.colorScheme;
+      expect(AppTheme.chartColors(cs, ThemeController.activeSchemeOverride),
+          o.chart);
+
+      tc.applyBuiltinMode(1);
+      final List<Color> fallback =
+          AppTheme.chartColors(cs, ThemeController.activeSchemeOverride);
+      expect(fallback.length, 6);
+      expect(fallback.first, AppTheme.chartBlue);
     });
   });
 }

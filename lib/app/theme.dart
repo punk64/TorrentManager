@@ -120,18 +120,24 @@ class AppTheme {
     Color? background,
     bool transparentScaffold = false,
     double? glassAlpha,
+    PresetSchemeOverride? schemeOverride,
   }) {
-    final ColorScheme scheme = ColorScheme.fromSeed(
+    final ColorScheme seeded = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: brightness,
     );
     final bool isDark = brightness == Brightness.dark;
+    final PresetSchemeOverride? ov = schemeOverride;
 
-    final Color text = fontColor ?? defaultFontColor(brightness);
+    final Color text =
+        fontColor ?? ov?.onSurface ?? defaultFontColor(brightness);
 
     final bool glass = glassAlpha != null;
-    final Color glassSurface = (isDark ? darkSurface : lightScaffold)
-        .withValues(alpha: (glassAlpha ?? 1.0).clamp(0.0, 1.0));
+    final double ga = (glassAlpha ?? 1.0).clamp(0.0, 1.0);
+    // 有覆盖时玻璃底取主题色阶，替代写死的 darkSurface/lightScaffold。
+    final Color glassSurface =
+        (ov?.surfaceLow ?? (isDark ? darkSurface : lightScaffold))
+            .withValues(alpha: ga);
 
     final Color pageBase =
         background ?? (isDark ? darkScaffold : lightScaffold);
@@ -143,6 +149,43 @@ class AppTheme {
     Color step(double ratio) =>
         glass ? cardBase : shiftLightness(cardBase, dir * ratio);
 
+    final Color surfaceLowest =
+        ov != null ? ov.surfaceLowest.withValues(alpha: ga) : step(0.0);
+    final Color surfaceContainer =
+        ov != null ? ov.surfaceContainer.withValues(alpha: ga) : step(0.35);
+    final Color surfaceHigh =
+        ov != null ? ov.surfaceHigh.withValues(alpha: ga) : step(0.7);
+    final Color surfaceHighest =
+        ov != null ? ov.surfaceHighest.withValues(alpha: ga) : step(1.1);
+
+    final ColorScheme scheme = ov == null
+        ? seeded
+        : seeded.copyWith(
+            primary: ov.primary,
+            onPrimary: ov.onPrimary,
+            primaryContainer: ov.primaryContainer,
+            onPrimaryContainer: ov.onPrimaryContainer,
+            secondary: ov.secondary,
+            onSecondary: ov.onSecondary,
+            secondaryContainer: ov.secondaryContainer,
+            onSecondaryContainer: ov.onSecondaryContainer,
+            tertiary: ov.tertiary,
+            onTertiary: ov.onTertiary,
+            tertiaryContainer: ov.tertiaryContainer,
+            onTertiaryContainer: ov.onTertiaryContainer,
+            error: ov.error,
+            onError: ov.onError,
+            errorContainer: ov.errorContainer,
+            onErrorContainer: ov.onErrorContainer,
+            onSurface: ov.onSurface,
+            onSurfaceVariant: ov.onSurfaceVariant,
+            outline: ov.outline,
+            outlineVariant: ov.outlineVariant,
+            inversePrimary: ov.inversePrimary,
+            inverseSurface: ov.inverseSurface,
+            onInverseSurface: ov.onInverseSurface,
+          );
+
     final Color barBase = glass ? cardBase : shiftLightness(pageBase, dir);
     final Color sheetBase = cardBase;
     final ThemeData base = ThemeData(
@@ -150,12 +193,12 @@ class AppTheme {
       colorScheme: scheme.copyWith(
         surface: cardBase,
 
-        surfaceContainerLowest: step(0.0),
+        surfaceContainerLowest: surfaceLowest,
 
         surfaceContainerLow: cardBase,
-        surfaceContainer: step(0.35),
-        surfaceContainerHigh: step(0.7),
-        surfaceContainerHighest: step(1.1),
+        surfaceContainer: surfaceContainer,
+        surfaceContainerHigh: surfaceHigh,
+        surfaceContainerHighest: surfaceHighest,
 
         surfaceTint: glass ? Colors.transparent : scheme.surfaceTint,
       ),
@@ -223,16 +266,119 @@ class AppTheme {
   static ThemeData get light => of(seedColors.first, Brightness.light);
   static ThemeData get dark => of(seedColors.first, Brightness.dark);
 
-  static List<Color> chartColors(ColorScheme cs) => <Color>[
-        chartBlue,
-        chartBlueAlt,
-        chartPink,
-        cs.primary,
-        cs.secondary,
-        cs.tertiary,
-      ];
+  /// 图表色序列：预设带显式配色时用该套图表色，否则走全局默认（中性蓝粉 + 主题三色）。
+  static List<Color> chartColors(ColorScheme cs,
+      [PresetSchemeOverride? schemeOverride]) {
+    final List<Color>? o = schemeOverride?.chart;
+    if (o != null) return o;
+    return <Color>[
+      chartBlue,
+      chartBlueAlt,
+      chartPink,
+      cs.primary,
+      cs.secondary,
+      cs.tertiary,
+    ];
+  }
 
   static String alphaLabel(double v) => '${(v * 100).round()}%';
+}
+
+/// 5 个语义度量色（上传 / 下载 / 活跃 / peer / 错误）的按主题定稿值。
+/// 深色玻璃组并入 [PresetSchemeOverride.sems]；浅色组组件色保持 fromSeed，
+/// 只通过 [ThemePreset.semanticOverride] 单独覆盖这 5 色。
+class PresetSemanticColors {
+  const PresetSemanticColors({
+    required this.upload,
+    required this.download,
+    required this.active,
+    required this.peer,
+    required this.error,
+  });
+
+  final Color upload;
+  final Color download;
+  final Color active;
+  final Color peer;
+  final Color error;
+}
+
+/// 预设主题的显式配色覆盖：非空时整套 ColorScheme 用显式色替代 fromSeed 派生。
+///
+/// 深色玻璃组 6 套使用（2026-09-28 自 PT Friends 第 26/27 轮「12 套主题配色重设计」同步）：
+/// surface 五阶为玻璃底色阶，落地时统一叠 [ThemePreset.glassAlpha]；
+/// [sems] 为该套语义度量色；`chart` 为该套图表色序列。
+/// error 四色与 inverseSurface 两色六套共用，给默认值。
+class PresetSchemeOverride {
+  const PresetSchemeOverride({
+    required this.primary,
+    required this.onPrimary,
+    required this.primaryContainer,
+    required this.onPrimaryContainer,
+    required this.secondary,
+    required this.onSecondary,
+    required this.secondaryContainer,
+    required this.onSecondaryContainer,
+    required this.tertiary,
+    required this.onTertiary,
+    required this.tertiaryContainer,
+    required this.onTertiaryContainer,
+    required this.onSurface,
+    required this.onSurfaceVariant,
+    required this.outline,
+    required this.outlineVariant,
+    required this.inversePrimary,
+    required this.surfaceLowest,
+    required this.surfaceLow,
+    required this.surfaceContainer,
+    required this.surfaceHigh,
+    required this.surfaceHighest,
+    required this.sems,
+    required this.chart,
+    this.error = const Color(0xFFFFB4BB),
+    this.onError = const Color(0xFF690015),
+    this.errorContainer = const Color(0xFF930020),
+    this.onErrorContainer = const Color(0xFFFFDADF),
+    this.inverseSurface = const Color(0xFFE9DEF2),
+    this.onInverseSurface = const Color(0xFF2A2033),
+  });
+
+  final Color primary;
+  final Color onPrimary;
+  final Color primaryContainer;
+  final Color onPrimaryContainer;
+  final Color secondary;
+  final Color onSecondary;
+  final Color secondaryContainer;
+  final Color onSecondaryContainer;
+  final Color tertiary;
+  final Color onTertiary;
+  final Color tertiaryContainer;
+  final Color onTertiaryContainer;
+  final Color onSurface;
+  final Color onSurfaceVariant;
+  final Color outline;
+  final Color outlineVariant;
+  final Color inversePrimary;
+  final Color inverseSurface;
+  final Color onInverseSurface;
+  final Color error;
+  final Color onError;
+  final Color errorContainer;
+  final Color onErrorContainer;
+
+  /// 玻璃底五阶：lowest / low（卡片·栏·面板）/ container / high / highest。
+  final Color surfaceLowest;
+  final Color surfaceLow;
+  final Color surfaceContainer;
+  final Color surfaceHigh;
+  final Color surfaceHighest;
+
+  /// 语义度量色（上传 / 下载 / 活跃 / peer / 错误），最终渲染色。
+  final PresetSemanticColors sems;
+
+  /// 图表色序列（跟踪页柱状图等）。
+  final List<Color> chart;
 }
 
 class ThemePreset {
@@ -249,6 +395,9 @@ class ThemePreset {
     this.wallpaper = false,
     this.glass = false,
     this.builtin = false,
+    this.schemeOverride,
+    this.semanticOverride,
+    this.glassAlpha,
   });
 
   final String id;
@@ -267,6 +416,20 @@ class ThemePreset {
   final bool glass;
 
   final bool builtin;
+
+  /// 显式配色覆盖；非空时 [AppTheme.of] 用它替代 fromSeed 派生整套 ColorScheme。
+  final PresetSchemeOverride? schemeOverride;
+
+  /// 仅 5 语义度量色的独立覆盖（浅色组用：组件色保持 fromSeed 机制）。
+  final PresetSemanticColors? semanticOverride;
+
+  /// 玻璃不透明度（0~1）。深色玻璃组 0.78（组件不透明度 0.22）；
+  /// 为空时沿用 [ThemeController.glassPanelTransparency] 对应的旧默认。
+  final double? glassAlpha;
+
+  /// 语义色覆盖取用：独立浅色覆盖优先级与深色组内嵌值互斥，二选一。
+  PresetSemanticColors? get effectiveSemantics =>
+      semanticOverride ?? schemeOverride?.sems;
 
   BoxDecoration get preview => bgImage == null
       ? BoxDecoration(
@@ -435,8 +598,15 @@ const List<ThemePreset> presets = <ThemePreset>[
     themeMode: 1,
     seed: Color(0xFFC2185B),
     bgMode: 1,
-    gradient1: Color(0xFFFCE4EE),
-    gradient2: Color(0xFFF5B9CE),
+    gradient1: Color(0xFFFFF5F8),
+    gradient2: Color(0xFFF4C2D3),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF216340),
+      download: Color(0xFFA12B48),
+      active: Color(0xFF25599D),
+      peer: Color(0xFF86348D),
+      error: Color(0xFF962C73),
+    ),
   ),
 
   ThemePreset(
@@ -446,8 +616,15 @@ const List<ThemePreset> presets = <ThemePreset>[
     themeMode: 1,
     seed: Color(0xFF2E7D32),
     bgMode: 1,
-    gradient1: Color(0xFFE4F3E8),
-    gradient2: Color(0xFFB7DEC2),
+    gradient1: Color(0xFFF2F9F3),
+    gradient2: Color(0xFFBFE0C8),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF237046),
+      download: Color(0xFFA12B4C),
+      active: Color(0xFF2962AE),
+      peer: Color(0xFF86348D),
+      error: Color(0xFF962C73),
+    ),
   ),
 
   ThemePreset(
@@ -457,8 +634,15 @@ const List<ThemePreset> presets = <ThemePreset>[
     themeMode: 1,
     seed: Color(0xFF1565C0),
     bgMode: 1,
-    gradient1: Color(0xFFE2EFFB),
-    gradient2: Color(0xFFAECFF0),
+    gradient1: Color(0xFFF0F7FE),
+    gradient2: Color(0xFFB7D4F1),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF256A47),
+      download: Color(0xFFA12B4C),
+      active: Color(0xFF275DB0),
+      peer: Color(0xFF86348D),
+      error: Color(0xFF962C73),
+    ),
   ),
 
   ThemePreset(
@@ -466,10 +650,17 @@ const List<ThemePreset> presets = <ThemePreset>[
     name: '暖橙',
     descriptor: '浅橙',
     themeMode: 1,
-    seed: Color(0xFFE65100),
+    seed: Color(0xFFDD5A00),
     bgMode: 1,
-    gradient1: Color(0xFFFDEEDC),
-    gradient2: Color(0xFFF7C79B),
+    gradient1: Color(0xFFFFF4E8),
+    gradient2: Color(0xFFF8C79E),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF246647),
+      download: Color(0xFFA3293D),
+      active: Color(0xFF275D9B),
+      peer: Color(0xFF82368C),
+      error: Color(0xFF952D6D),
+    ),
   ),
 
   ThemePreset(
@@ -477,10 +668,17 @@ const List<ThemePreset> presets = <ThemePreset>[
     name: '紫霞',
     descriptor: '浅紫',
     themeMode: 1,
-    seed: Color(0xFF6A1B9A),
+    seed: Color(0xFF6C1FA4),
     bgMode: 1,
-    gradient1: Color(0xFFF0E7FA),
-    gradient2: Color(0xFFD2BBEC),
+    gradient1: Color(0xFFF5EFFB),
+    gradient2: Color(0xFFD5BEEC),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF246142),
+      download: Color(0xFF972B4F),
+      active: Color(0xFF255493),
+      peer: Color(0xFF83328F),
+      error: Color(0xFF932F75),
+    ),
   ),
 
   ThemePreset(
@@ -488,94 +686,333 @@ const List<ThemePreset> presets = <ThemePreset>[
     name: '云青',
     descriptor: '浅灰蓝',
     themeMode: 1,
-    seed: Color(0xFF37474F),
+    seed: Color(0xFF3A4A55),
     bgMode: 1,
-    gradient1: Color(0xFFE6EEF1),
-    gradient2: Color(0xFFBFD2D8),
+    gradient1: Color(0xFFF0F4F6),
+    gradient2: Color(0xFFC2D3DA),
+    semanticOverride: PresetSemanticColors(
+      upload: Color(0xFF296A4F),
+      download: Color(0xFF9F2D4D),
+      active: Color(0xFF296199),
+      peer: Color(0xFF84368C),
+      error: Color(0xFF932F72),
+    ),
   ),
+
+  // 深色玻璃组 6 套（2026-09-28 重设计落地，自 PT Friends 第 26/27 轮同步）：
+  // 壁纸同相深色玻璃 + 浅字，16 色显式 ColorScheme + 5 语义色 + 图表色；
+  // 组件不透明度 0.22（glassAlpha 0.78）。
 
   ThemePreset(
     id: 'wp_shell',
     name: '零 · 幽魂',
     descriptor: '青蓝壁纸',
-    themeMode: 1,
-    seed: Color(0xFF1F6E8C),
+    themeMode: 2,
+    seed: Color(0xFF2E9BD6),
     bgMode: 2,
     gradient1: Color(0xFF0A1A24),
     gradient2: Color(0xFF2E5D7A),
     bgImage: 'assets/images/wallpapers/wp_shell.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFF6FC6F2),
+      onPrimary: Color(0xFF00344B),
+      primaryContainer: Color(0xFF0E4A66),
+      onPrimaryContainer: Color(0xFFC2E8FF),
+      secondary: Color(0xFFB9C7DA),
+      onSecondary: Color(0xFF232F3E),
+      secondaryContainer: Color(0xFF39485E),
+      onSecondaryContainer: Color(0xFFDCE4F0),
+      tertiary: Color(0xFFF2938F),
+      onTertiary: Color(0xFF4C0E10),
+      tertiaryContainer: Color(0xFF802A2E),
+      onTertiaryContainer: Color(0xFFFFDAD6),
+      onSurface: Color(0xFFEDF3FA),
+      onSurfaceVariant: Color(0xFFBFCADD),
+      outline: Color(0xFF8FA0B8),
+      outlineVariant: Color(0xFF3D4A60),
+      inversePrimary: Color(0xFF1F6E8C),
+      surfaceLowest: Color(0xFF141A29),
+      surfaceLow: Color(0xFF1B2233),
+      surfaceContainer: Color(0xFF222B40),
+      surfaceHigh: Color(0xFF2A3450),
+      surfaceHighest: Color(0xFF323D5C),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF73C9A1),
+        download: Color(0xFFE495AB),
+        active: Color(0xFF96B0E3),
+        peer: Color(0xFFD19AD6),
+        error: Color(0xFFDF9AC8),
+      ),
+      chart: <Color>[
+        Color(0xFF6FC6F2),
+        Color(0xFFB9C7DA),
+        Color(0xFFF2938F),
+        Color(0xFF3E82B8),
+      ],
+    ),
   ),
 
   ThemePreset(
     id: 'wp_violet',
     name: '壹 · 紫焰',
     descriptor: '紫品红壁纸',
-    themeMode: 1,
-    seed: Color(0xFF8E3A85),
+    themeMode: 2,
+    seed: Color(0xFFC94FA8),
     bgMode: 2,
     gradient1: Color(0xFF150A14),
     gradient2: Color(0xFF6E3A66),
     bgImage: 'assets/images/wallpapers/wp_violet.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFFF47AD9),
+      onPrimary: Color(0xFF43003B),
+      primaryContainer: Color(0xFF6E2462),
+      onPrimaryContainer: Color(0xFFFFD7F6),
+      secondary: Color(0xFFD5BCE6),
+      onSecondary: Color(0xFF3B2549),
+      secondaryContainer: Color(0xFF533D66),
+      onSecondaryContainer: Color(0xFFF0E3FB),
+      tertiary: Color(0xFF5CE0D3),
+      onTertiary: Color(0xFF003733),
+      tertiaryContainer: Color(0xFF0F5751),
+      onTertiaryContainer: Color(0xFFA5F3EA),
+      onSurface: Color(0xFFF2EAF6),
+      onSurfaceVariant: Color(0xFFC9B8D4),
+      outline: Color(0xFFA08FB0),
+      outlineVariant: Color(0xFF4E405E),
+      inversePrimary: Color(0xFF8E3A85),
+      surfaceLowest: Color(0xFF1D1229),
+      surfaceLow: Color(0xFF241833),
+      surfaceContainer: Color(0xFF2B1F3D),
+      surfaceHigh: Color(0xFF332748),
+      surfaceHighest: Color(0xFF3B2F53),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF72CA9B),
+        download: Color(0xFFDF8692),
+        active: Color(0xFF7CAADE),
+        peer: Color(0xFFD19AD6),
+        error: Color(0xFFDB94BA),
+      ),
+      chart: <Color>[
+        Color(0xFFF47AD9),
+        Color(0xFF5CE0D3),
+        Color(0xFFC9B8D4),
+        Color(0xFF9C6BD0),
+      ],
+    ),
   ),
 
   ThemePreset(
     id: 'wp_rain',
     name: '贰 · 雨夜',
     descriptor: '冷蓝壁纸',
-    themeMode: 1,
-    seed: Color(0xFF2E6B8E),
+    themeMode: 2,
+    seed: Color(0xFF2E8EB8),
     bgMode: 2,
     gradient1: Color(0xFF0B1418),
     gradient2: Color(0xFF2C4A5A),
     bgImage: 'assets/images/wallpapers/wp_rain.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFF6ADCE4),
+      onPrimary: Color(0xFF00343A),
+      primaryContainer: Color(0xFF0E4E58),
+      onPrimaryContainer: Color(0xFFB8F1F7),
+      secondary: Color(0xFFB5CCD6),
+      onSecondary: Color(0xFF22343C),
+      secondaryContainer: Color(0xFF374B54),
+      onSecondaryContainer: Color(0xFFD5E5EC),
+      tertiary: Color(0xFF82DCC0),
+      onTertiary: Color(0xFF00382C),
+      tertiaryContainer: Color(0xFF0F5A46),
+      onTertiaryContainer: Color(0xFFB5F2E2),
+      onSurface: Color(0xFFE9F2F5),
+      onSurfaceVariant: Color(0xFFBACBD2),
+      outline: Color(0xFF8CA6B2),
+      outlineVariant: Color(0xFF39505B),
+      inversePrimary: Color(0xFF2E6B8E),
+      surfaceLowest: Color(0xFF121B21),
+      surfaceLow: Color(0xFF18242B),
+      surfaceContainer: Color(0xFF1F2D36),
+      surfaceHigh: Color(0xFF263641),
+      surfaceHighest: Color(0xFF2E404E),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF72CBA1),
+        download: Color(0xFFDF86A4),
+        active: Color(0xFF7EB4DD),
+        peer: Color(0xFFD29BD4),
+        error: Color(0xFFDD92C2),
+      ),
+      chart: <Color>[
+        Color(0xFF6ADCE4),
+        Color(0xFFB5CCD6),
+        Color(0xFF82DCC0),
+        Color(0xFF4E93B8),
+      ],
+    ),
   ),
 
   ThemePreset(
     id: 'wp_amber',
     name: '叁 · 金辉',
     descriptor: '暖金壁纸',
-    themeMode: 1,
-    seed: Color(0xFFA6791C),
+    themeMode: 2,
+    seed: Color(0xFFD29A3A),
     bgMode: 2,
     gradient1: Color(0xFF241F16),
     gradient2: Color(0xFF6B5A33),
     bgImage: 'assets/images/wallpapers/wp_amber.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFFF0C069),
+      onPrimary: Color(0xFF3E2A00),
+      primaryContainer: Color(0xFF6E4A10),
+      onPrimaryContainer: Color(0xFFFFDFA8),
+      secondary: Color(0xFFDCC9A8),
+      onSecondary: Color(0xFF3A2F1B),
+      secondaryContainer: Color(0xFF55462C),
+      onSecondaryContainer: Color(0xFFF6E8CE),
+      tertiary: Color(0xFFF29A6B),
+      onTertiary: Color(0xFF4A1C00),
+      tertiaryContainer: Color(0xFF7A3A14),
+      onTertiaryContainer: Color(0xFFFFDBCC),
+      onSurface: Color(0xFFF7F0E3),
+      onSurfaceVariant: Color(0xFFD3C6AE),
+      outline: Color(0xFFB3A184),
+      outlineVariant: Color(0xFF55472E),
+      inversePrimary: Color(0xFFA6791C),
+      surfaceLowest: Color(0xFF201A10),
+      surfaceLow: Color(0xFF2A2216),
+      surfaceContainer: Color(0xFF332A1C),
+      surfaceHigh: Color(0xFF3D3323),
+      surfaceHighest: Color(0xFF483C2A),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF77C5A5),
+        download: Color(0xFFE0909D),
+        active: Color(0xFF83ADD8),
+        peer: Color(0xFFCB9BD4),
+        error: Color(0xFFDB94BE),
+      ),
+      chart: <Color>[
+        Color(0xFFF0C069),
+        Color(0xFFDCC9A8),
+        Color(0xFFF29A6B),
+        Color(0xFFA8842F),
+      ],
+    ),
   ),
 
   ThemePreset(
     id: 'wp_teal',
     name: '肆 · 青灯',
     descriptor: '青绿壁纸',
-    themeMode: 1,
-    seed: Color(0xFF1F8C93),
+    themeMode: 2,
+    seed: Color(0xFF35A26B),
     bgMode: 2,
     gradient1: Color(0xFF0C1418),
     gradient2: Color(0xFF2E6B70),
     bgImage: 'assets/images/wallpapers/wp_teal.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFF7FDCAC),
+      onPrimary: Color(0xFF00391F),
+      primaryContainer: Color(0xFF0F5330),
+      onPrimaryContainer: Color(0xFFB9F2CF),
+      secondary: Color(0xFFBFD4C3),
+      onSecondary: Color(0xFF2A3A2E),
+      secondaryContainer: Color(0xFF405546),
+      onSecondaryContainer: Color(0xFFDCEEE1),
+      tertiary: Color(0xFF7FD4DC),
+      onTertiary: Color(0xFF00363B),
+      tertiaryContainer: Color(0xFF0E5157),
+      onTertiaryContainer: Color(0xFFB2ECF2),
+      onSurface: Color(0xFFEBF4EE),
+      onSurfaceVariant: Color(0xFFC0D2C6),
+      outline: Color(0xFF92AC9C),
+      outlineVariant: Color(0xFF3A5246),
+      inversePrimary: Color(0xFF1F8C93),
+      surfaceLowest: Color(0xFF13201B),
+      surfaceLow: Color(0xFF1A2A24),
+      surfaceContainer: Color(0xFF21352D),
+      surfaceHigh: Color(0xFF293F36),
+      surfaceHighest: Color(0xFF314B40),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF5EC982),
+        download: Color(0xFFE59EB2),
+        active: Color(0xFF88B2DD),
+        peer: Color(0xFFD4A1D9),
+        error: Color(0xFFDF9AC8),
+      ),
+      chart: <Color>[
+        Color(0xFF7FDCAC),
+        Color(0xFFBFD4C3),
+        Color(0xFF7FD4DC),
+        Color(0xFF3E9E6B),
+      ],
+    ),
   ),
 
   ThemePreset(
     id: 'wp_crimson',
     name: '伍 · 绯霓',
     descriptor: '绯红壁纸',
-    themeMode: 1,
-    seed: Color(0xFFA03A48),
+    themeMode: 2,
+    seed: Color(0xFFC94F5E),
     bgMode: 2,
     gradient1: Color(0xFF1A0E12),
     gradient2: Color(0xFF7A3A44),
     bgImage: 'assets/images/wallpapers/wp_crimson.webp',
     wallpaper: true,
     glass: true,
+    glassAlpha: 0.78,
+    schemeOverride: PresetSchemeOverride(
+      primary: Color(0xFFF58AA0),
+      onPrimary: Color(0xFF4A0A16),
+      primaryContainer: Color(0xFF7A2434),
+      onPrimaryContainer: Color(0xFFFFD9DE),
+      secondary: Color(0xFFDFC2C6),
+      onSecondary: Color(0xFF3E2A2D),
+      secondaryContainer: Color(0xFF583F44),
+      onSecondaryContainer: Color(0xFFF8E0E3),
+      tertiary: Color(0xFFEFA9CF),
+      onTertiary: Color(0xFF4B1038),
+      tertiaryContainer: Color(0xFF7E2F60),
+      onTertiaryContainer: Color(0xFFFFD9F2),
+      onSurface: Color(0xFFF8EDEF),
+      onSurfaceVariant: Color(0xFFD6C2C6),
+      outline: Color(0xFFB08F94),
+      outlineVariant: Color(0xFF583F44),
+      inversePrimary: Color(0xFFA03A48),
+      surfaceLowest: Color(0xFF211417),
+      surfaceLow: Color(0xFF2B1B1E),
+      surfaceContainer: Color(0xFF332226),
+      surfaceHigh: Color(0xFF3D2A2E),
+      surfaceHighest: Color(0xFF483238),
+      sems: PresetSemanticColors(
+        upload: Color(0xFF75C79E),
+        download: Color(0xFFE28389),
+        active: Color(0xFF81B0DA),
+        peer: Color(0xFFD69AD6),
+        error: Color(0xFFDA95BD),
+      ),
+      chart: <Color>[
+        Color(0xFFF58AA0),
+        Color(0xFFDFC2C6),
+        Color(0xFFEFA9CF),
+        Color(0xFFB05264),
+      ],
+    ),
   ),
 ];
 

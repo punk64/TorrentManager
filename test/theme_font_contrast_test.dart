@@ -93,15 +93,17 @@ void main() {
           reason: '背景是深色渐变时，即便主题档位是明亮也必须反色成浅色字');
     });
 
-    test('图片背景：字色回落到按明暗档的默认值（调亮/调暗滑条已删除）', () async {
+    test('壁纸预设：字色取该套预设 onSurface（第 27 轮：深色玻璃 + 浅字）', () async {
       final ThemeController tc = Get.put(ThemeController());
       await tc.load();
 
       tc.applyPreset(wallpaperPresets.first);
       expect(tc.effectiveBackgroundColor, isNull, reason: '图片色彩无从推断');
-      expect(tc.effectiveFontColor, const Color(0xFF1A1A1A));
+      expect(tc.effectiveFontColor,
+          wallpaperPresets.first.schemeOverride!.onSurface,
+          reason: '深色玻璃上用预设定稿浅字，不再回落明暗档默认值');
       expect(tc.glassAlpha, greaterThan(0),
-          reason: '壁纸套默认开玻璃，组件是半透明白，近黑字仍有足够对比度');
+          reason: '壁纸套默认开玻璃，组件是主题色染的半透明深玻璃');
     });
 
     test('手动指定字色优先于反色，且可恢复', () async {

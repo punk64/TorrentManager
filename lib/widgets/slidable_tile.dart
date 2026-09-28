@@ -65,6 +65,13 @@ class SlidableAutoCloseGroupState extends State<SlidableAutoCloseGroup> {
     }
   }
 
+  bool get hasOpen {
+    for (final _SlidableTileState t in _members) {
+      if (t.isOpen) return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return _SlidableAutoCloseScope(
@@ -212,6 +219,7 @@ class _SlidableTileState extends State<SlidableTile>
   bool get isOpen => _controller.value.abs() > 0.001;
 
   bool _reportedOpen = false;
+  bool _dragLocked = false;
 
   @override
   void initState() {
@@ -261,6 +269,11 @@ class _SlidableTileState extends State<SlidableTile>
 
   void _onDragStart(DragStartDetails details) {
     if (!widget.enabled) return;
+    _dragLocked = _group?.hasOpen ?? false;
+    if (_dragLocked) {
+      _group?._closeAll();
+      return;
+    }
     _group?._closeOthers(this);
     _controller.stop();
     _crossedZero = false;
@@ -269,7 +282,7 @@ class _SlidableTileState extends State<SlidableTile>
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    if (!widget.enabled || _width <= 0) return;
+    if (_dragLocked || !widget.enabled || _width <= 0) return;
     final double delta = details.primaryDelta ?? 0;
     if (delta == 0) return;
 
@@ -292,7 +305,7 @@ class _SlidableTileState extends State<SlidableTile>
   }
 
   void _onDragEnd(DragEndDetails details) {
-    if (!widget.enabled || _width <= 0) return;
+    if (_dragLocked || !widget.enabled || _width <= 0) return;
     final double vx = details.velocity.pixelsPerSecond.dx;
 
     final double target = SlidableTile.settleTarget(
@@ -340,6 +353,10 @@ class _SlidableTileState extends State<SlidableTile>
           onHorizontalDragEnd: _onDragEnd,
 
           onTap: () {
+            if (_group?.hasOpen ?? false) {
+              _group?._closeAll();
+              return;
+            }
             if (_controller.value.abs() > 0.001) {
               close();
               return;

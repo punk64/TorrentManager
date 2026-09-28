@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../app/theme.dart';
 import '../controllers/server_controller.dart';
+import '../controllers/theme_controller.dart';
 import '../controllers/torrent_controller.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
@@ -847,7 +848,8 @@ class _TrackerBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Color> colors = AppTheme.chartColors(Theme.of(context).colorScheme);
+    final List<Color> colors = AppTheme.chartColors(
+        Theme.of(context).colorScheme, ThemeController.activeSchemeOverride);
     final List<Map<String, dynamic>> data = trackers.take(6).toList();
     double maxY = 1;
     for (final Map<String, dynamic> t in data) {

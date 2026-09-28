@@ -41,6 +41,44 @@ class ThemeController extends GetxController {
 
   final seed = AppTheme.seedColors.first.obs;
 
+  /// 深色玻璃组面板随主题的三参（自 PT Friends 第 26/27 轮主题方案同步）。
+  static const double presetPanel1Alpha = 0.94;
+  static const double presetPanel2Alpha = 0.86;
+
+  static ThemePreset? presetById(String? id) {
+    if (id == null) return null;
+    for (final ThemePreset p in presets) {
+      if (p.id == id) return p;
+    }
+    return null;
+  }
+
+  static PresetSchemeOverride? presetOverrideById(String? id) =>
+      presetById(id)?.schemeOverride;
+
+  /// 当前选中预设的显式配色覆盖；无预设 / 预设无覆盖时为 null。
+  ///
+  /// 以 [currentPreset] 为唯一事实源（不落静态状态）：手动改参数脱钩预设时
+  /// 自动失效，编辑草稿期间 [_writeAppearance] 会还原 preset id，观感保持连续。
+  PresetSchemeOverride? get liveSchemeOverride =>
+      presetOverrideById(currentPreset.value);
+
+  /// 当前预设的 5 语义度量色覆盖（深色组内嵌于 schemeOverride，浅色组独立）。
+  PresetSemanticColors? get liveSemanticOverride =>
+      presetById(currentPreset.value)?.effectiveSemantics;
+
+  /// 无 BuildContext 处（adaptSemantic / chartColors）读取当前主题覆盖的入口。
+  static PresetSchemeOverride? get activeSchemeOverride =>
+      Get.isRegistered<ThemeController>()
+          ? Get.find<ThemeController>().liveSchemeOverride
+          : null;
+
+  /// 同上，语义色专用入口（浅色组也生效）。
+  static PresetSemanticColors? get activeSemanticOverride =>
+      Get.isRegistered<ThemeController>()
+          ? Get.find<ThemeController>().liveSemanticOverride
+          : null;
+
   final _bgMode = 0.obs;
   final _gradient1 = defaultGradient1.obs;
   final _gradient2 = defaultGradient2.obs;
@@ -111,6 +149,8 @@ class ThemeController extends GetxController {
   Color get effectiveFontColor {
     final Color? custom = fontColor.value;
     if (custom != null) return custom;
+    final PresetSchemeOverride? o = presetOverrideById(currentPreset.value);
+    if (o != null) return o.onSurface;
     final Color? bg = effectiveBackgroundColor;
     return bg == null
         ? AppTheme.defaultFontColor(_brightness)
@@ -149,23 +189,27 @@ class ThemeController extends GetxController {
       fontColor: _liveEffectiveFontColor,
       background: _liveBackgroundColor,
       transparentScaffold: backgroundActive,
-      glassAlpha: _liveGlassAlpha);
+      glassAlpha: _liveGlassAlpha,
+      schemeOverride: liveSchemeOverride);
   ThemeData get darkTheme => AppTheme.of(_liveSeed, Brightness.dark,
       fontColor: _liveEffectiveFontColor,
       background: _liveBackgroundColor,
       transparentScaffold: backgroundActive,
-      glassAlpha: _liveGlassAlpha);
+      glassAlpha: _liveGlassAlpha,
+      schemeOverride: liveSchemeOverride);
   ThemeData get lightTheme => AppTheme.of(_liveSeed, Brightness.light,
       fontColor: _liveEffectiveFontColor,
       background: _liveBackgroundColor,
       transparentScaffold: backgroundActive,
-      glassAlpha: _liveGlassAlpha);
+      glassAlpha: _liveGlassAlpha,
+      schemeOverride: liveSchemeOverride);
 
   ThemeData get previewTheme => AppTheme.of(seed.value, _brightness,
       fontColor: effectiveFontColor,
       background: effectiveBackgroundColor,
       transparentScaffold: backgroundActive,
-      glassAlpha: glassAlpha);
+      glassAlpha: glassAlpha,
+      schemeOverride: liveSchemeOverride);
 
   double? get _liveGlassAlpha {
     final double t = _liveOpacity;
@@ -178,6 +222,8 @@ class ThemeController extends GetxController {
   Color get _liveEffectiveFontColor {
     final Color? custom = _liveFontColor;
     if (custom != null) return custom;
+    final PresetSchemeOverride? o = liveSchemeOverride;
+    if (o != null) return o.onSurface;
     final Color? bg = effectiveBackgroundColor;
     return bg == null
         ? AppTheme.defaultFontColor(_liveBrightness)
@@ -250,10 +296,6 @@ class ThemeController extends GetxController {
     _gradient1.value = await _readColor(_kGrad1) ?? defaultGradient1;
     _gradient2.value = await _readColor(_kGrad2) ?? defaultGradient2;
 
-    panelColor.value = defaultPanelColor;
-    panel1Alpha.value = defaultPanel1Alpha;
-    panel2Alpha.value = defaultPanel2Alpha;
-
     _pageBgImage.value = aliveAsset(await ThemeBackground.load()) ??
         defaultBackgroundImage;
     menuImagePath.value =
@@ -272,6 +314,9 @@ class ThemeController extends GetxController {
 
     final Object? preset = await Formatter.getGlobalData(_kPreset);
     currentPreset.value = preset is String ? preset : null;
+
+    // 面板三参不落盘，随选中预设重推导（深色玻璃组不再重启后回白板）。
+    _applyPanelForPreset(presetById(currentPreset.value));
 
     useCustom.value = (await Formatter.getGlobalData(_kUseCustom)) == true;
 
@@ -946,8 +991,10 @@ class ThemeController extends GetxController {
 
       _setPageBgImage(p.bgImage ?? defaultBackgroundImage);
 
-      setComponentOpacity(p.glass ? glassPanelTransparency : 0.0);
+      setComponentOpacity(p.glass ? _presetComponentOpacity(p) : 0.0);
       setFontColor(null);
+
+      _applyPanelForPreset(p);
 
       _clearPageStyles();
 
@@ -966,6 +1013,25 @@ class ThemeController extends GetxController {
       !useCustom.value &&
       currentPreset.value == null &&
       themeMode.value == mode;
+
+  /// 预设玻璃档 → 组件不透明度；预设未带 glassAlpha 时沿用旧默认。
+  static double _presetComponentOpacity(ThemePreset p) => p.glassAlpha != null
+      ? (1.0 - p.glassAlpha!).clamp(0.0, 1.0)
+      : glassPanelTransparency;
+
+  /// 面板三参随预设：带显式配色的深色玻璃组用该套玻璃底，否则回默认白板。
+  void _applyPanelForPreset(ThemePreset? p) {
+    final PresetSchemeOverride? o = p?.schemeOverride;
+    if (o == null) {
+      panelColor.value = defaultPanelColor;
+      panel1Alpha.value = defaultPanel1Alpha;
+      panel2Alpha.value = defaultPanel2Alpha;
+    } else {
+      panelColor.value = o.surfaceLow;
+      panel1Alpha.value = presetPanel1Alpha;
+      panel2Alpha.value = presetPanel2Alpha;
+    }
+  }
 
   bool get isCustomSelected =>
       useCustom.value &&
