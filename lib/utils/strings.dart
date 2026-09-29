@@ -231,6 +231,30 @@ class S {
   static String get setIncompleteExtSub => L.t('未完成任务临时文件追加 .!qB');
   static String autoMgrActiveCount(int n) => L.pick('$n 项开启', '$n enabled');
 
+  static String get setDiscoveryGroup => L.t('网络发现');
+  static String get setDiscoveryHelp => L.t(
+      'DHT / PEX / LSD 是公共 BT 网络的三大发现机制，开关即时生效；\n私有种子（PT）不受影响，服务器会自动对其禁用');
+  static String get setEnableDht => L.t('启用 DHT（分布式哈希表）');
+  static String get setEnableDhtSub => L.t('无 tracker 时也能通过 DHT 网络找到 peer');
+  static String get setEnablePex => L.t('启用 PEX（对等交换）');
+  static String get setEnablePexSub => L.t('已连接的 peer 之间互相交换更多节点');
+  static String get setEnableLsd => L.t('启用 LSD（本地对等发现）');
+  static String get setEnableLsdSub => L.t('自动发现同一局域网内的其他客户端');
+  static String get qbSetDiscovery => L.t('更改 网络发现 成功: ');
+  static String get qbSetDiscoveryFail => L.t('setPreferences 更改 网络发现 失败: ');
+  static String get setAnonymousMode => L.t('匿名模式');
+  static String get setAnonymousModeSub => L.t('尽量不向 peer 暴露客户端身份信息');
+  static String get setEncryption => L.t('协议加密');
+  static String get setEncryptionSub => L.t('加密 BT 流量，档位越严格兼容性越低');
+  static String encryptionModeName(int v) => v == 1
+      ? L.t('强制加密')
+      : v == 2
+          ? L.t('禁用加密')
+          : L.t('优先加密');
+  static String get qbSetEncryption => L.t('更改 协议加密 成功: ');
+  static String get qbSetEncryptionFail =>
+      L.t('setPreferences 更改 协议加密 失败: ');
+
   static String get themeCustom => L.t('自定义主题');
   static String get themeCurrentPrefix => L.t('当前主题: ');
   static String get themeFollowSystem => L.t('跟随系统');

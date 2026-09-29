@@ -12,6 +12,12 @@ class PrefKey {
 
   static const String altSpeedEnabled = 'alt_speed_enabled';
 
+  static const String dht = 'dht';
+  static const String pex = 'pex';
+  static const String lsd = 'lsd';
+  static const String anonymousMode = 'anonymous_mode';
+  static const String encryption = 'encryption';
+
   static const String savePath = 'save_path';
   static const String tempPath = 'temp_path';
   static const String tempPathEnabled = 'temp_path_enabled';
@@ -176,6 +182,11 @@ class QbPrefsApi extends ServerPrefsApi {
     PrefKey.dlLimit,
     PrefKey.altUpLimit,
     PrefKey.altDlLimit,
+    PrefKey.dht,
+    PrefKey.pex,
+    PrefKey.lsd,
+    PrefKey.anonymousMode,
+    PrefKey.encryption,
     PrefKey.savePath,
     PrefKey.tempPath,
     PrefKey.tempPathEnabled,
@@ -218,6 +229,7 @@ class TrPrefsApi extends ServerPrefsApi {
     PrefKey.preallocateAll,
     PrefKey.ipFilterTrackers,
     PrefKey.bannedIps,
+    PrefKey.anonymousMode,
   };
 
   @override
@@ -333,6 +345,10 @@ class TrPrefsApi extends ServerPrefsApi {
     PrefKey.altUpLimit: 'alt-speed-up',
     PrefKey.altDlLimit: 'alt-speed-down',
     PrefKey.altSpeedEnabled: 'alt-speed-enabled',
+    PrefKey.dht: 'dht-enabled',
+    PrefKey.pex: 'pex-enabled',
+    PrefKey.lsd: 'lpd-enabled',
+    PrefKey.encryption: 'encryption',
     PrefKey.savePath: 'download-dir',
     PrefKey.tempPath: 'incomplete-dir',
     PrefKey.tempPathEnabled: 'incomplete-dir-enabled',
@@ -362,6 +378,11 @@ class TrPrefsApi extends ServerPrefsApi {
         trKey == 'alt-speed-down') {
       if (v is num) return v * 1024;
     }
+    if (trKey == 'encryption') {
+      if (v == 'required') return 1;
+      if (v == 'preferred' || v == 'tolerated') return 0;
+      if (v is num) return v.toInt();
+    }
     return v;
   }
 
@@ -371,6 +392,10 @@ class TrPrefsApi extends ServerPrefsApi {
         trKey == 'alt-speed-up' ||
         trKey == 'alt-speed-down') {
       if (v is num) return v ~/ 1024;
+    }
+    if (trKey == 'encryption') {
+      final int n = v is num ? v.toInt() : int.tryParse('$v') ?? 0;
+      return n == 1 ? 'required' : 'preferred';
     }
     return v;
   }

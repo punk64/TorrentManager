@@ -463,6 +463,7 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               _queueGroup(),
               _seedingGroup(),
               _connectionGroup(),
+              _discoveryGroup(),
               _miscGroup(),
               _banGroup(),
             ],
@@ -939,6 +940,166 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
           ),
         ],
       );
+
+  Widget _discoveryGroup() => _group(
+        icon: Icons.travel_explore_rounded,
+        title: S.setDiscoveryGroup,
+        summary: S.autoMgrActiveCount(_discoveryOnCount()),
+        help: S.setDiscoveryHelp,
+        children: <Widget>[
+          _switchRow(
+            S.setEnableDht,
+            _prefBool(PrefKey.dht),
+            (bool v) => _writeDiscovery(PrefKey.dht, v),
+            sub: S.setEnableDhtSub,
+          ),
+          _switchRow(
+            S.setEnablePex,
+            _prefBool(PrefKey.pex),
+            (bool v) => _writeDiscovery(PrefKey.pex, v),
+            sub: S.setEnablePexSub,
+          ),
+          _switchRow(
+            S.setEnableLsd,
+            _prefBool(PrefKey.lsd),
+            (bool v) => _writeDiscovery(PrefKey.lsd, v),
+            sub: S.setEnableLsdSub,
+          ),
+          if (_supports(PrefKey.anonymousMode))
+            _switchRow(
+              S.setAnonymousMode,
+              _prefBool(PrefKey.anonymousMode),
+              (bool v) => _writeDiscovery(PrefKey.anonymousMode, v),
+              sub: S.setAnonymousModeSub,
+            ),
+          _sectionDivider(),
+          _encryptionRow(),
+        ],
+      );
+
+  int _discoveryOnCount() {
+    int n = 0;
+    if (_prefBool(PrefKey.dht)) n++;
+    if (_prefBool(PrefKey.pex)) n++;
+    if (_prefBool(PrefKey.lsd)) n++;
+    if (_supports(PrefKey.anonymousMode) && _prefBool(PrefKey.anonymousMode)) {
+      n++;
+    }
+    return n;
+  }
+
+  Future<void> _writeDiscovery(String key, bool v) => _run(
+        LogT.prefSwitch(L.t('网络发现'), v),
+        _okToast(S.qbSetDiscovery),
+        _failToast(S.qbSetDiscoveryFail),
+        () => _api.write(<String, dynamic>{key: v}),
+        after: () => _prefs[key] = v,
+      );
+
+  int get _encryptionValue {
+    final dynamic v = _prefs[PrefKey.encryption];
+    final int n = v is int
+        ? v
+        : (v is num ? v.toInt() : int.tryParse('$v') ?? 0);
+    return n < 0 || n > 2 ? 0 : n;
+  }
+
+  Widget _encryptionRow() {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 8), vertical: af(context, 3)),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(S.setEncryption,
+                    style: TextStyle(
+                        fontSize: af(context, 13),
+                        height: 1.2,
+                        color: cs.onSurface)),
+                Text(S.setEncryptionSub,
+                    style: TextStyle(
+                        fontSize: af(context, 10),
+                        height: 1.25,
+                        color: cs.onSurfaceVariant)),
+              ],
+            ),
+          ),
+          SizedBox(width: af(context, 8)),
+          InkWell(
+            borderRadius: BorderRadius.circular(af(context, 8)),
+            onTap: _prefsLoaded ? _pickEncryption : null,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: af(context, 8), vertical: af(context, 5)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(S.encryptionModeName(_encryptionValue),
+                      style: TextStyle(
+                          fontSize: af(context, 12),
+                          fontWeight: FontWeight.w600,
+                          color: cs.primary)),
+                  Icon(Icons.expand_more_rounded,
+                      size: af(context, 15), color: cs.primary),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickEncryption() async {
+    final int cur = _encryptionValue;
+    final int? picked = await showDialog<int>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(S.setEncryption,
+            style: TextStyle(fontSize: af(context, 15))),
+        contentPadding:
+            EdgeInsets.symmetric(vertical: af(context, 6)),
+        content: RadioGroup<int>(
+          groupValue: cur,
+          onChanged: (int? x) => Navigator.of(ctx).pop(x),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              for (final int v in _isQb
+                  ? const <int>[0, 1, 2]
+                  : const <int>[0, 1])
+                RadioListTile<int>(
+                  value: v,
+                  dense: true,
+                  title: Text(S.encryptionModeName(v),
+                      style: TextStyle(fontSize: af(context, 13))),
+                ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(S.cancel),
+          ),
+        ],
+      ),
+    );
+    if (picked == null || picked == cur) return;
+    await _run(
+      LogT.prefChanged(S.setEncryption),
+      _okToast(S.qbSetEncryption),
+      _failToast(S.qbSetEncryptionFail),
+      () => _api.write(<String, dynamic>{PrefKey.encryption: picked}),
+      after: () => _prefs[PrefKey.encryption] = picked,
+      detail: S.encryptionModeName(picked),
+    );
+  }
 
   Widget _miscGroup() => _group(
         icon: Icons.auto_mode_rounded,
