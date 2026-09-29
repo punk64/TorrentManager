@@ -205,8 +205,8 @@ void main() {
       sc.cacheTorrents(s.id, <Torrent>[sampleTorrent()]);
       await tester.pump(const Duration(milliseconds: 50));
 
-      const List<String> row1 = <String>['种子数量', '下载中', '做种', '上传中'];
-      const List<String> row2 = <String>['暂停下载', '暂停上传', '校验状态', '错误'];
+      const List<String> row1 = <String>['种子数量', '下载中', '做种', '排队'];
+      const List<String> row2 = <String>['暂停', '校验中', '正在移动', '错误'];
 
       Finder label(String l) => find.descendant(
             of: find.byType(Card),

@@ -66,8 +66,10 @@ void main() {
             counts: const TorrentStatusCounts(
               downloading: 3,
               seeding: 12,
+              queued: 0,
               paused: 5,
               checking: 0,
+              moving: 0,
               error: 1,
               other: 0,
             ),

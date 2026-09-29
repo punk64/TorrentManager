@@ -548,6 +548,7 @@ class _ServerListPageState extends State<ServerListPage> {
                   return _statsRefreshingPlaceholder(context);
                 }
                 final ServerData live = raw.copyWith(torrents: liveTs);
+                final TorrentStatusCounts counts = live.statusCounts;
                 final ServerState liveState = ctrl.stateOf(s.id);
                 final ServerSpeedLimit limit = ctrl.limitOf(s.id);
 
@@ -587,17 +588,13 @@ class _ServerListPageState extends State<ServerListPage> {
                           color: dlColor,
                         ),
                         MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalSeeding}',
+                          value: statsPending ? '--' : '${counts.seeding}',
                           label: S.stSeeding,
                           color: upColor,
                         ),
                         MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalUploading}',
-                          label: S.fieldUpLoading,
+                          value: statsPending ? '--' : '${counts.queued}',
+                          label: S.filterQueued,
                           color: actColor,
                         ),
                       ],
@@ -613,30 +610,22 @@ class _ServerListPageState extends State<ServerListPage> {
                       minValueSize: 9,
                       items: <MetricItem>[
                         MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalPausedDL}',
-                          label: S.stPausedDl,
+                          value: statsPending ? '--' : '${counts.paused}',
+                          label: S.filterPaused,
                           color: cs.onSurfaceVariant,
                         ),
                         MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalPausedUP}',
-                          label: S.stPausedUp,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalChecking}',
-                          label: S.fieldVerifyState,
+                          value: statsPending ? '--' : '${counts.checking}',
+                          label: S.filterChecking,
                           color: adaptSemantic(kSemanticPeer, br),
                         ),
                         MetricItem(
-                          value: statsPending
-                              ? '--'
-                              : '${live.totalError}',
+                          value: statsPending ? '--' : '${counts.moving}',
+                          label: S.stMoving,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        MetricItem(
+                          value: statsPending ? '--' : '${counts.error}',
                           label: S.error,
                           color: adaptSemantic(kSemanticError, br),
                         ),

@@ -7,6 +7,8 @@ enum TorrentStatusGroup {
   paused,
   queued,
   checking,
+  allocating,
+  moving,
   error,
   unknown,
 }
@@ -472,14 +474,16 @@ class Torrent {
   TorrentStatusGroup get statusGroup {
     final String s = state.toLowerCase();
     if (isError) return TorrentStatusGroup.error;
+    if (s.contains('allocat')) return TorrentStatusGroup.allocating;
+    if (s.contains('moving')) return TorrentStatusGroup.moving;
     if (s.contains('check')) return TorrentStatusGroup.checking;
     if (s.contains('paus') || s.contains('stop')) return TorrentStatusGroup.paused;
     if (s.contains('queued')) return TorrentStatusGroup.queued;
 
-    if (s.contains('stalleddl') ||
-        s.contains('forceddl') ||
+    if (s.contains('dl') ||
         s.contains('download') ||
-        s.contains('dl')) {
+        s.contains('meta') ||
+        s.contains('forceddl')) {
       return TorrentStatusGroup.downloading;
     }
     if (s.contains('stalledup') ||
@@ -498,7 +502,7 @@ class Torrent {
 
   int get transferPeers {
     if (activePeers >= 0) return activePeers;
-    return (dlSpeed > 0 || upSpeed > 0) ? numSeeds + numLeechs : 0;
+    return (numSeeds < 0 ? 0 : numSeeds) + (numLeechs < 0 ? 0 : numLeechs);
   }
 
   bool get _isTrSource => trId != null;
@@ -535,8 +539,10 @@ class TorrentStatusCounts {
   const TorrentStatusCounts({
     required this.downloading,
     required this.seeding,
+    required this.queued,
     required this.paused,
     required this.checking,
+    required this.moving,
     required this.error,
     required this.other,
   });
@@ -544,30 +550,40 @@ class TorrentStatusCounts {
   factory TorrentStatusCounts.of(Iterable<Torrent> list) {
     int dl = 0;
     int up = 0;
+    int queued = 0;
     int paused = 0;
     int checking = 0;
+    int moving = 0;
     int error = 0;
     int other = 0;
     for (final Torrent t in list) {
-      if (t.isError) {
-        error++;
-      } else if (t.isChecking) {
-        checking++;
-      } else if (t.isPause) {
-        paused++;
-      } else if (t.isDownloading) {
-        dl++;
-      } else if (t.isSeeding || t.isUploading) {
-        up++;
-      } else {
-        other++;
+      switch (t.statusGroup) {
+        case TorrentStatusGroup.downloading:
+          dl++;
+        case TorrentStatusGroup.seeding:
+          up++;
+        case TorrentStatusGroup.queued:
+          queued++;
+        case TorrentStatusGroup.paused:
+          paused++;
+        case TorrentStatusGroup.checking:
+          checking++;
+        case TorrentStatusGroup.moving:
+          moving++;
+        case TorrentStatusGroup.error:
+          error++;
+        case TorrentStatusGroup.allocating:
+        case TorrentStatusGroup.unknown:
+          other++;
       }
     }
     return TorrentStatusCounts(
       downloading: dl,
       seeding: up,
+      queued: queued,
       paused: paused,
       checking: checking,
+      moving: moving,
       error: error,
       other: other,
     );
@@ -576,21 +592,31 @@ class TorrentStatusCounts {
   const TorrentStatusCounts.empty()
       : downloading = 0,
         seeding = 0,
+        queued = 0,
         paused = 0,
         checking = 0,
+        moving = 0,
         error = 0,
         other = 0;
 
   final int downloading;
   final int seeding;
+  final int queued;
   final int paused;
   final int checking;
+  final int moving;
   final int error;
-
   final int other;
 
   int get total =>
-      downloading + seeding + paused + checking + error + other;
+      downloading + seeding + queued + paused + checking + moving + error + other;
+
+  int get activeDown => downloading + queued;
+
+  int get rest => queued + moving + other;
+
+  List<int> get ribbon =>
+      <int>[downloading, seeding, queued, paused, checking, moving, error];
 }
 
 class TransferTotals {

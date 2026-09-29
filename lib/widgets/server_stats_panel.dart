@@ -218,7 +218,7 @@ class ServerStatsPanel extends StatelessWidget {
       counts.paused,
       counts.checking,
       counts.error,
-      counts.other,
+      counts.rest,
     ];
     final List<Color> c = <Color>[
       p.seeding,
@@ -303,8 +303,8 @@ class ServerStatsPanel extends StatelessWidget {
             dot: true,
           ),
           MetricItem(
-            value: hasData ? '${counts.other}' : '--',
-            label: S.stUnknownState,
+            value: hasData ? '${counts.rest}' : '--',
+            label: S.statsLabelOther,
             color: p.other,
             dot: true,
           ),

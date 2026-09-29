@@ -306,6 +306,7 @@ class TrMethod {
     'id',
     'hashString',
     'name',
+    'totalSize',
     'sizeWhenDone',
     'percentDone',
     'status',

@@ -71,13 +71,14 @@ void main() {
   });
 
   group('★ 连接数与流量口径', () {
-    test('★ transferPeers：TR 精确值优先，qB 只在有速度时用 seeds+leechs', () {
+    test('★ transferPeers：TR 精确值优先，qB 回落 seeds+leechs（统一按连接数）',
+        () {
       expect(_t('a', activePeers: 7).transferPeers, 7);
       expect(
           _t('b', activePeers: -1, seeds: 3, leechs: 4, dlSpeed: 100)
               .transferPeers,
           7);
-      expect(_t('c', activePeers: -1, seeds: 3, leechs: 4).transferPeers, 0);
+      expect(_t('c', activePeers: -1, seeds: 3, leechs: 4).transferPeers, 7);
     });
 
     test('★ TransferTotals.of 汇总三值且负值归零', () {
@@ -140,8 +141,10 @@ void main() {
             counts: TorrentStatusCounts(
               downloading: 3,
               seeding: 5,
+              queued: 0,
               paused: 1,
               checking: 0,
+              moving: 0,
               error: 0,
               other: 0,
             ),
@@ -180,8 +183,10 @@ void main() {
             counts: const TorrentStatusCounts(
               downloading: 0,
               seeding: 0,
+              queued: 0,
               paused: 0,
               checking: 0,
+              moving: 0,
               error: 0,
               other: 0,
             ),

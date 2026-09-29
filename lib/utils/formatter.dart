@@ -393,49 +393,8 @@ class Formatter {
     return used == 0 ? null : total;
   }
 
-  static Map<String, int> getTotalCounts(List<Torrent> list) {
-    final Map<String, int> map = <String, int>{
-      'total': list.length,
-      'downloading': 0,
-      'seeding': 0,
-      'pausedDL': 0,
-      'pausedUP': 0,
-      'checking': 0,
-      'error': 0,
-      'uploading': 0,
-      'stalled': 0,
-    };
-    for (final Torrent t in list) {
-      if (t.isDownloading) map['downloading'] = map['downloading']! + 1;
-      if (t.isSeeding) map['seeding'] = map['seeding']! + 1;
-      if (t.isPausedDL) map['pausedDL'] = map['pausedDL']! + 1;
-      if (t.isPausedUP) map['pausedUP'] = map['pausedUP']! + 1;
-      if (t.isChecking) map['checking'] = map['checking']! + 1;
-      if (t.isError) map['error'] = map['error']! + 1;
-      if (t.isUploading) map['uploading'] = map['uploading']! + 1;
-      if (t.isStalled) map['stalled'] = map['stalled']! + 1;
-    }
-    return map;
-  }
-
   static int getTotalTrackers(List<Torrent> list) =>
       list.fold(0, (int a, Torrent t) => a + t.trackerCount);
-
-  static Map<String, dynamic> getServerData(
-    ServerData server,
-    List<Torrent> list,
-  ) {
-    return <String, dynamic>{
-      'name': server.name,
-      'type': server.type,
-      'address': server.displayAddress,
-      'total': list.length,
-      'dlSpeed': list.fold(0, (int a, Torrent t) => a + t.dlSpeed),
-      'upSpeed': list.fold(0, (int a, Torrent t) => a + t.upSpeed),
-      'size': list.fold(0, (int a, Torrent t) => a + t.size),
-      'counts': getTotalCounts(list),
-    };
-  }
 
   static List<double> updateLineChartData(List<num> samples) {
     if (samples.isEmpty) return <double>[0, 0];

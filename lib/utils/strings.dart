@@ -104,6 +104,8 @@ class S {
 
   static String get statsLabelTorrents => L.t('种子');
 
+  static String get statsLabelOther => L.pick('其他', 'Other');
+
   static String get filterAll => L.pick('全部', 'All');
   static String get filterDownloading => L.pick('下载中', 'Downloading');
   static String get filterSeeding => L.pick('做种中', 'Seeding');

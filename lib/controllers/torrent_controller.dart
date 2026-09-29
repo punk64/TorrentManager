@@ -1117,7 +1117,11 @@ class TorrentController extends GetxController {
         out.add(Torrent(
           hash: m['hashString']?.toString() ?? '',
           name: m['name']?.toString() ?? '',
-          size: Formatter.getInt(m, 'sizeWhenDone'),
+          size: Formatter.getInt(
+            m,
+            'totalSize',
+            def: Formatter.getInt(m, 'sizeWhenDone'),
+          ),
           progress: Formatter.getDouble(m, 'percentDone'),
           state: _trState(m['status']),
           dlSpeed: Formatter.getInt(m, 'rateDownload'),

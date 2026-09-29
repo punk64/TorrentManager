@@ -198,22 +198,25 @@ class ServerData {
 
   int get totalTorrents => torrents.length;
 
-  int get totalDownloading =>
-      torrents.where((Torrent t) => t.isDownloading).length;
+  TorrentStatusCounts get statusCounts => TorrentStatusCounts.of(torrents);
 
-  int get totalSeeding => torrents.where((Torrent t) => t.isSeeding).length;
+  int get totalDownloading => statusCounts.downloading;
 
-  int get totalPausedDL => torrents.where((Torrent t) => t.isPausedDL).length;
+  int get totalSeeding => statusCounts.seeding;
 
-  int get totalPausedUP => torrents.where((Torrent t) => t.isPausedUP).length;
+  int get totalPausedDL => torrents
+      .where((Torrent t) =>
+          t.statusGroup == TorrentStatusGroup.paused && !t.isCompleted)
+      .length;
 
-  int get totalChecking => torrents.where((Torrent t) => t.isChecking).length;
+  int get totalPausedUP => torrents
+      .where((Torrent t) =>
+          t.statusGroup == TorrentStatusGroup.paused && t.isCompleted)
+      .length;
 
-  int get totalError => torrents.where((Torrent t) => t.isError).length;
+  int get totalChecking => statusCounts.checking;
 
-  int get totalUploading => torrents.where((Torrent t) => t.isUploading).length;
-
-  int get totalStalled => torrents.where((Torrent t) => t.isStalled).length;
+  int get totalError => statusCounts.error;
 
   List<String> get selectedTorrentsHashes => selected.toList();
 
