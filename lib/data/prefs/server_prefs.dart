@@ -31,7 +31,10 @@ class PrefKey {
 
   static const String maxRatioEnabled = 'max_ratio_enabled';
   static const String maxSeedingTime = 'max_seeding_time';
+  static const String maxSeedingTimeEnabled = 'max_seeding_time_enabled';
   static const String maxInactiveSeedingTime = 'max_inactive_seeding_time';
+  static const String maxInactiveSeedingTimeEnabled =
+      'max_inactive_seeding_time_enabled';
 
   static const String maxConnec = 'max_connec';
   static const String maxConnecPerTorrent = 'max_connec_per_torrent';
@@ -197,7 +200,9 @@ class QbPrefsApi extends ServerPrefsApi {
     PrefKey.maxRatio,
     PrefKey.maxRatioEnabled,
     PrefKey.maxSeedingTime,
+    PrefKey.maxSeedingTimeEnabled,
     PrefKey.maxInactiveSeedingTime,
+    PrefKey.maxInactiveSeedingTimeEnabled,
     PrefKey.maxConnec,
     PrefKey.maxConnecPerTorrent,
     PrefKey.maxUploads,
@@ -224,6 +229,7 @@ class TrPrefsApi extends ServerPrefsApi {
   static const Set<String> _unsupported = <String>{
     PrefKey.maxActiveTorrents,
     PrefKey.maxSeedingTime,
+    PrefKey.maxSeedingTimeEnabled,
     PrefKey.maxUploads,
     PrefKey.autoTmmEnabled,
     PrefKey.preallocateAll,
@@ -310,6 +316,10 @@ class TrPrefsApi extends ServerPrefsApi {
       if (trKey == null) continue;
       fields[trKey] = _scaleOut(trKey, e.value);
 
+      // TR 4.1 改名键：同时补发旧键（session-set 忽略未知键，4.0/4.1 各取所需）
+      final String? legacy = _trLegacyAlias[trKey];
+      if (legacy != null) fields[legacy] = fields[trKey];
+
       if (trKey == 'speed-limit-up' || trKey == 'speed-limit-down') {
         fields['$trKey-enabled'] = (e.value as num) > 0;
       }
@@ -318,10 +328,8 @@ class TrPrefsApi extends ServerPrefsApi {
         fields['seed-queue-enabled'] = e.value;
       }
 
-      if (trKey == 'seedRatioLimit') fields['seedRatioLimited'] = true;
-      if (trKey == 'idle-seeding-limit') {
-        fields['idle-seeding-limit-enabled'] = (e.value as num) > 0;
-      }
+      // 注意：不在数值键写入时夹带 enabled 开关（idle-seeding-limit-enabled /
+      // seed-ratio-limited），启用状态由设置页开关行单独管理
     }
     if (fields.isEmpty) return;
     try {
@@ -355,19 +363,33 @@ class TrPrefsApi extends ServerPrefsApi {
     PrefKey.queueingEnabled: 'download-queue-enabled',
     PrefKey.maxActiveDownloads: 'download-queue-size',
     PrefKey.maxActiveUploads: 'seed-queue-size',
-    PrefKey.maxRatio: 'seedRatioLimit',
-    PrefKey.maxRatioEnabled: 'seedRatioLimited',
+    // TR 4.1 起以下三键改为 kebab-case（≤4.0 为 camelCase/旧长键），见 _trLegacyAlias
+    PrefKey.maxRatio: 'seed-ratio-limit',
+    PrefKey.maxRatioEnabled: 'seed-ratio-limited',
     PrefKey.maxInactiveSeedingTime: 'idle-seeding-limit',
+    PrefKey.maxInactiveSeedingTimeEnabled: 'idle-seeding-limit-enabled',
     PrefKey.maxConnec: 'peer-limit-global',
     PrefKey.maxConnecPerTorrent: 'peer-limit-per-torrent',
-    PrefKey.maxUploadsPerTorrent: 'upload-slots-per-torrent',
+    PrefKey.maxUploadsPerTorrent: 'upload-limit',
     PrefKey.incompleteFilesExt: 'rename-partial-files',
     PrefKey.ipFilterEnabled: 'blocklist-enabled',
     PrefKey.blocklistUrl: 'blocklist-url',
   };
 
+  /// TR 4.1 改名键的旧别名（≤4.0）：写时双发（session-set 忽略未知键，两端安全）、
+  /// 读时 _fromTr 双收（4.0 返回旧键、4.1 返回新键）
+  static const Map<String, String> _trLegacyAlias = <String, String>{
+    'seed-ratio-limit': 'seedRatioLimit',
+    'seed-ratio-limited': 'seedRatioLimited',
+    'upload-limit': 'upload-slots-per-torrent',
+  };
+
   static final Map<String, String> _fromTr = <String, String>{
     for (final MapEntry<String, String> e in _toTr.entries) e.value: e.key,
+    // TR ≤4.0 返回的旧键名（4.1+ 返回 kebab 新键，已由上面循环覆盖）
+    'seedRatioLimit': PrefKey.maxRatio,
+    'seedRatioLimited': PrefKey.maxRatioEnabled,
+    'upload-slots-per-torrent': PrefKey.maxUploadsPerTorrent,
     'blocklist-size': PrefKey.blocklistSize,
   };
 

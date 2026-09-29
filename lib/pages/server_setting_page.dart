@@ -854,34 +854,64 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
         summary: L.pick('比率 ${_kbText(_maxRatio)}', 'Ratio ${_kbText(_maxRatio)}'),
         help: S.setRatioHelp,
         children: <Widget>[
-          _gridRow(<Widget>[
-            Expanded(
-              child: _numCell(L.t('最大分享比率'), _maxRatio, prefKey: PrefKey.maxRatio),
-            ),
-            if (_supports(PrefKey.maxSeedingTime))
-              Expanded(
-                child: _numCell(L.t('最长做种时间'), _maxSeedingTime,
-                    prefKey: PrefKey.maxSeedingTime, unit: L.t('分')),
-              ),
-            Expanded(
-              child: _numCell(L.t('非活动做种时间'), _maxInactiveSeedingTime,
-                  prefKey: PrefKey.maxInactiveSeedingTime, unit: L.t('分')),
-            ),
-          ]),
+          _seedingRow(L.t('最大分享比率'), _maxRatio,
+              prefKey: PrefKey.maxRatio,
+              enabled: _prefBool(PrefKey.maxRatioEnabled),
+              onEnabledChanged: (bool v) => _run(
+                LogT.prefSwitch(L.t('最大分享比率'), v),
+                _okToast(S.qbSetRatio),
+                _failToast(S.qbSetRatioFail),
+                () => _api.write(<String, dynamic>{
+                  PrefKey.maxRatioEnabled: v,
+                }),
+                after: () => _prefs[PrefKey.maxRatioEnabled] = v,
+              )),
+          if (_supports(PrefKey.maxSeedingTime))
+            _seedingRow(L.t('最长做种时间'), _maxSeedingTime,
+                prefKey: PrefKey.maxSeedingTime,
+                unit: L.t('分'),
+                enabled: _prefBool(PrefKey.maxSeedingTimeEnabled),
+                onEnabledChanged: (bool v) => _run(
+                  LogT.prefSwitch(L.t('最长做种时间'), v),
+                  _okToast(S.qbSetRatio),
+                  _failToast(S.qbSetRatioFail),
+                  () => _api.write(<String, dynamic>{
+                    PrefKey.maxSeedingTimeEnabled: v,
+                  }),
+                  after: () => _prefs[PrefKey.maxSeedingTimeEnabled] = v,
+                )),
+          _seedingRow(L.t('非活动做种时间'), _maxInactiveSeedingTime,
+              prefKey: PrefKey.maxInactiveSeedingTime,
+              unit: L.t('分'),
+              enabled: _prefBool(PrefKey.maxInactiveSeedingTimeEnabled),
+              onEnabledChanged: (bool v) => _run(
+                LogT.prefSwitch(L.t('非活动做种时间'), v),
+                _okToast(S.qbSetRatio),
+                _failToast(S.qbSetRatioFail),
+                () => _api.write(<String, dynamic>{
+                  PrefKey.maxInactiveSeedingTimeEnabled: v,
+                }),
+                after: () => _prefs[PrefKey.maxInactiveSeedingTimeEnabled] = v,
+              )),
           _changeButton(
             LogT.prefChanged(L.t('做种限制')),
             _okToast(S.qbSetRatio),
             _failToast(S.qbSetRatioFail),
-            () => _api.write(<String, dynamic>{
-              PrefKey.maxRatio: double.tryParse(_maxRatio.text.trim()) ?? -1,
-
-              PrefKey.maxRatioEnabled: true,
-              if (_supports(PrefKey.maxSeedingTime))
-                PrefKey.maxSeedingTime:
-                    int.tryParse(_maxSeedingTime.text.trim()) ?? -1,
-              PrefKey.maxInactiveSeedingTime:
-                  int.tryParse(_maxInactiveSeedingTime.text.trim()) ?? -1,
-            }),
+            // 启用开关由上方开关行单独即时下发；输入为空不下发（保留服务端现值，
+            // 避免 qB「-1=不限」与 TR「负值非法」语义冲突）
+            () {
+              final double? ratio = double.tryParse(_maxRatio.text.trim());
+              final int? seedTime = _supports(PrefKey.maxSeedingTime)
+                  ? int.tryParse(_maxSeedingTime.text.trim())
+                  : null;
+              final int? idleTime =
+                  int.tryParse(_maxInactiveSeedingTime.text.trim());
+              return _api.write(<String, dynamic>{
+                if (ratio != null) PrefKey.maxRatio: ratio,
+                if (seedTime != null) PrefKey.maxSeedingTime: seedTime,
+                if (idleTime != null) PrefKey.maxInactiveSeedingTime: idleTime,
+              });
+            },
             detail: S.seedDetail(
                 _kbText(_maxRatio),
                 _kbText(_maxInactiveSeedingTime),
@@ -1927,6 +1957,83 @@ class _ServerSettingPageState extends State<ServerSettingPage> {
               ],
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  /// 做种限制行：启用开关 + 标签 + 右侧定宽数值输入。行式布局替代原三列网格
+  /// （Mate 80 Pro 445dp 下三列网格标签必截断），尺寸全部走 af() 自适应，
+  /// 宽屏与窄屏同构；标签最多两行，保证卓易通字体缩放下不丢失内容
+  Widget _seedingRow(
+    String label,
+    TextEditingController c, {
+    String? prefKey,
+    String? unit,
+    bool enabled = false,
+    ValueChanged<bool>? onEnabledChanged,
+  }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: af(context, 3)),
+      padding: EdgeInsets.symmetric(
+          horizontal: af(context, 9), vertical: af(context, 2)),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(af(context, 8)),
+        border: Border.all(
+            color: cs.outlineVariant.withValues(alpha: 0.45), width: 0.8),
+      ),
+      child: Row(
+        children: <Widget>[
+          if (onEnabledChanged != null) ...<Widget>[
+            Transform.scale(
+              scale: 0.78,
+              child: CupertinoSwitch(
+                value: enabled,
+                onChanged: _prefsLoaded ? onEnabledChanged : null,
+              ),
+            ),
+            SizedBox(width: af(context, 6)),
+          ],
+          Expanded(
+            child: Text(label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: af(context, 12), color: cs.onSurface)),
+          ),
+          SizedBox(width: af(context, 8)),
+          SizedBox(
+            width: af(context, 92),
+            child: TextField(
+              controller: c,
+              maxLength: AppTheme.maxLenGeneral,
+              buildCounter: AppTheme.noCounter,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                  fontSize: af(context, 13),
+                  fontWeight: FontWeight.w700,
+                  height: 1.1),
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                hintText: prefKey != null && !_prefsLoaded ? '--' : null,
+                hintStyle: TextStyle(
+                    fontSize: af(context, 13), fontWeight: FontWeight.w700),
+              ),
+              onChanged: prefKey == null
+                  ? null
+                  : (String _) => setState(() => _touched.add(prefKey)),
+            ),
+          ),
+          if (unit != null) ...<Widget>[
+            SizedBox(width: af(context, 3)),
+            Text(unit,
+                style: TextStyle(
+                    fontSize: af(context, 9), color: cs.onSurfaceVariant)),
+          ],
         ],
       ),
     );

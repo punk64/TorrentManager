@@ -7,6 +7,7 @@ import '../app/theme.dart';
 import '../controllers/server_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../controllers/torrent_controller.dart';
+import '../data/prefs/server_prefs.dart';
 import '../utils/app_log.dart';
 import '../utils/formatter.dart';
 import '../widgets/ui_dialogs.dart';
@@ -30,17 +31,49 @@ class _TorrentSpecialEntry {
   final String label;
 }
 
+/// DHT/PEX/LSD 当前开关状态（on=开启 off=关闭 unknown=无数据）
+enum DiscovState { on, off, unknown }
+
+/// qB 的 /torrents/trackers 恒返回 `** [DHT] **` 等粘性条目，
+/// status 字段才是真实状态：2=working，其余（0=disabled）=关
+DiscovState qbStickyState(Map<String, dynamic>? t) {
+  if (t == null) return DiscovState.unknown;
+  final int st = (t['status'] as num?)?.toInt() ?? -1;
+  return st == 2 ? DiscovState.on : DiscovState.off;
+}
+
+/// TR 无 torrent 级 DHT/PEX/LPD 数据，状态取 session 开关（PrefKey.dht/pex/lsd）
+DiscovState trDiscovState(Map<String, dynamic> prefs, String key) {
+  if (!prefs.containsKey(key)) return DiscovState.unknown;
+  final dynamic v = prefs[key];
+  final bool on = v is bool
+      ? v
+      : (v is num ? v != 0 : (v is String ? v == 'true' : false));
+  return on ? DiscovState.on : DiscovState.off;
+}
+
 class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
   final TorrentController ctrl = Get.find<TorrentController>();
   final ServerController sc = Get.find<ServerController>();
 
   bool _showChart = false;
 
-  static const List<_TorrentSpecialEntry> _specials = <_TorrentSpecialEntry>[
-    _TorrentSpecialEntry('DHT', 'DHT'),
-    _TorrentSpecialEntry('PEX', 'PEX'),
-    _TorrentSpecialEntry('LSD', 'LSD'),
-  ];
+  /// qB 端 key 与粘性条目名一致；TR 端 key 用 session 键（PrefKey），
+  /// label 对齐各端官方命名（TR 的 LSD 叫 LPD）
+  List<_TorrentSpecialEntry> get _specials {
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+    return isQb
+        ? const <_TorrentSpecialEntry>[
+            _TorrentSpecialEntry('DHT', 'DHT'),
+            _TorrentSpecialEntry('PEX', 'PEX'),
+            _TorrentSpecialEntry('LSD', 'LSD'),
+          ]
+        : const <_TorrentSpecialEntry>[
+            _TorrentSpecialEntry(PrefKey.dht, 'DHT'),
+            _TorrentSpecialEntry(PrefKey.pex, 'PEX'),
+            _TorrentSpecialEntry(PrefKey.lsd, 'LPD'),
+          ];
+  }
 
   static final RegExp _specialRe = RegExp(r'^\*\*\s*\[(\w+)\]\s*\*\*$');
 
@@ -64,6 +97,14 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       out[m.group(1)!.toUpperCase()] = t;
     }
     return out;
+  }
+
+  DiscovState _stateOf(_TorrentSpecialEntry e) {
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+    if (isQb) return qbStickyState(_specialMap[e.key]);
+    final Map<String, dynamic>? prefs =
+        sc.prefsSnapOf(sc.current.value?.id ?? '')?.prefs;
+    return trDiscovState(prefs ?? const <String, dynamic>{}, e.key);
   }
 
   int get _badCount {
@@ -113,7 +154,7 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
       return ListView(
         padding: EdgeInsets.only(bottom: af(context, 24)),
         children: <Widget>[
-          _summaryBar(trackers.length, specials),
+          _summaryBar(trackers.length),
           if (priv) ...<Widget>[
             SizedBox(height: af(context, 10)),
             Container(
@@ -179,7 +220,16 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
 
   Widget _dhtCard() {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    Widget tip(String name, String full, String desc, Color c) {
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+
+    Widget tip(
+        String name, String full, String desc, Color c, DiscovState st) {
+      final String? stText = switch (st) {
+        DiscovState.on => L.pick('已开启', 'On'),
+        DiscovState.off => L.pick('已关闭', 'Off'),
+        DiscovState.unknown => null,
+      };
+      final Color stColor = st == DiscovState.on ? cs.primary : cs.outline;
       return Padding(
         padding: EdgeInsets.symmetric(vertical: af(context, 4)),
         child: Row(
@@ -202,11 +252,23 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(full,
-                      style: TextStyle(
-                          fontSize: af(context, 10.5),
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface)),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(full,
+                            style: TextStyle(
+                                fontSize: af(context, 10.5),
+                                fontWeight: FontWeight.w600,
+                                color: cs.onSurface)),
+                      ),
+                      if (stText != null)
+                        Text(stText,
+                            style: TextStyle(
+                                fontSize: af(context, 9.5),
+                                fontWeight: FontWeight.w600,
+                                color: stColor)),
+                    ],
+                  ),
                   SizedBox(height: af(context, 1)),
                   Text(desc,
                       style: TextStyle(
@@ -220,6 +282,14 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
         ),
       );
     }
+
+    // 命名对齐各端官方：TR 的 LSD 叫 LPD（本地用户发现）、PEX 译作「用户交换」
+    final String cardTitle = isQb
+        ? L.t('DHT / PEX / LSD 说明')
+        : L.pick('DHT / PEX / LPD 说明', 'About DHT / PEX / LPD');
+    final String alias = isQb
+        ? L.pick('TR 中称 LPD', 'LPD in Transmission')
+        : L.pick('qB 中称 LSD', 'LSD in qBittorrent');
 
     return Container(
       width: double.infinity,
@@ -238,13 +308,13 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           Row(children: <Widget>[
             Container(width: 3, height: 12, color: cs.primary),
             SizedBox(width: af(context, 6)),
-            Text(L.t('DHT / PEX / LSD 说明'),
+            Text(cardTitle,
                 style: TextStyle(
                     fontSize: af(context, 11),
                     fontWeight: FontWeight.w600,
                     color: cs.onSurface)),
             const Spacer(),
-            Text(L.t('仅 Transmission 显示为条目'),
+            Text(alias,
                 style: TextStyle(
                     fontSize: af(context, 10),
                     color: cs.onSurfaceVariant)),
@@ -252,19 +322,29 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           SizedBox(height: af(context, 6)),
           tip('DHT', L.t('DHT · 分布式哈希表'),
               L.t('无 Tracker 时也能通过 DHT 网络找到 Peer；私有种子必须关闭。'),
-              cs.secondary),
-          tip('PEX', L.t('PEX · Peer 交换'),
+              cs.secondary, _stateOf(_specials[0])),
+          tip(
+              'PEX',
+              isQb
+                  ? L.t('PEX · Peer 交换')
+                  : L.pick('PEX · 用户交换', 'PEX · Peer Exchange'),
               L.t('与已连接的 Peer 互相交换彼此的 Peer 列表；私有种子必须关闭。'),
-              cs.tertiary),
-          tip('LSD', L.t('LSD · 本地发现'),
+              cs.tertiary,
+              _stateOf(_specials[1])),
+          tip(
+              isQb ? 'LSD' : 'LPD',
+              isQb
+                  ? L.t('LSD · 本地发现')
+                  : L.pick('LPD · 本地用户发现', 'LPD · Local Peer Discovery'),
               L.t('在局域网内广播发现同一资源的设备；私有种子必须关闭。'),
-              cs.primary),
+              cs.primary,
+              _stateOf(_specials[2])),
         ],
       ),
     );
   }
 
-  Widget _summaryBar(int realCount, Map<String, Map<String, dynamic>> specials) {
+  Widget _summaryBar(int realCount) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -289,27 +369,81 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
               L.pick('· ⚠ $_badCount 个异常', '· ⚠ $_badCount errors'),
               style: TextStyle(fontSize: af(context, 11), color: cs.error, fontWeight: FontWeight.w600),
             ),
-          for (final _TorrentSpecialEntry e in _specials)
-            _specialBadge(e, specials[e.key]),
+          for (final _TorrentSpecialEntry e in _specials) _specialBadge(e),
         ],
       ),
     );
   }
 
-  Widget _specialBadge(_TorrentSpecialEntry e, Map<String, dynamic>? t) {
+  Widget _specialBadge(_TorrentSpecialEntry e) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final bool on = t != null;
     final bool priv = ctrl.current.value?.isPrivate == true;
+    final bool isQb = sc.current.value?.isQbittorrent == true;
+    final DiscovState st = _stateOf(e);
+    final Map<String, dynamic>? t = isQb ? _specialMap[e.key] : null;
     final int nodes =
         ((t?['num_peers'] ?? t?['peers']) as num?)?.toInt() ?? 0;
+
+    // 私有种子：关=绿（符合要求） 开=红（应立即关闭）；
+    // 非私有：开=主色 关=中性；无数据=仅名称
+    final String text;
+    final Color dot;
+    final Color border;
+    final Color fg;
+    Color? bg;
+    bool bold = false;
+    switch (st) {
+      case DiscovState.on:
+        if (priv) {
+          text = L.pick('${e.label} · 应立即关闭', '${e.label} · must be off');
+          dot = cs.error;
+          border = cs.error.withValues(alpha: 0.55);
+          fg = cs.error;
+          bg = cs.error.withValues(alpha: 0.10);
+          bold = true;
+        } else {
+          text = isQb && nodes > 0
+              ? L.pick('${e.label} · 已开启 $nodes 节点',
+                  '${e.label} · on ($nodes nodes)')
+              : L.pick('${e.label} · 已开启', '${e.label} · on');
+          dot = cs.primary;
+          border = cs.primary.withValues(alpha: 0.35);
+          fg = cs.onSurface;
+          bg = cs.primary.withValues(alpha: 0.08);
+        }
+        break;
+      case DiscovState.off:
+        if (priv) {
+          text = L.pick('${e.label} · 已关闭（符合私有要求）',
+              '${e.label} · off (private-safe)');
+          dot = const Color(0xFF0F9D58);
+          border = const Color(0xFF0F9D58).withValues(alpha: 0.35);
+          fg = const Color(0xFF0F9D58);
+          bg = const Color(0xFF0F9D58).withValues(alpha: 0.08);
+          bold = true;
+        } else {
+          text = L.pick('${e.label} · 已关闭', '${e.label} · off');
+          dot = cs.outlineVariant;
+          border = cs.outlineVariant.withValues(alpha: 0.7);
+          fg = cs.outline;
+        }
+        break;
+      case DiscovState.unknown:
+        text = priv
+            ? L.pick('${e.label} · 建议关闭', '${e.label} · disable recommended')
+            : e.label;
+        dot = cs.outlineVariant;
+        border = cs.outlineVariant.withValues(alpha: 0.7);
+        fg = priv ? cs.error : cs.outline;
+        bold = priv;
+        break;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: on ? cs.primary.withValues(alpha: 0.08) : null,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: on ? cs.primary.withValues(alpha: 0.35) : cs.outlineVariant.withValues(alpha: 0.7),
-        ),
+        border: Border.all(color: border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -317,22 +451,15 @@ class _TorrentInfoTrackersPageState extends State<TorrentInfoTrackersPage> {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: on ? cs.primary : cs.outlineVariant,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: dot),
           ),
           const SizedBox(width: 4),
           Text(
-            priv
-                ? L.pick('${e.label} · 建议关闭', '${e.label} · disable recommended')
-                : on && nodes > 0
-                    ? '${e.label} $nodes'
-                    : e.label,
+            text,
             style: TextStyle(
               fontSize: af(context, 10),
-              color: priv ? cs.error : (on ? cs.onSurface : cs.outline),
-              fontWeight: priv ? FontWeight.w600 : null,
+              color: fg,
+              fontWeight: bold ? FontWeight.w600 : null,
             ),
           ),
         ],

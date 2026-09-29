@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../data/models/server_data.dart';
 import '../data/models/torrent.dart';
+import '../data/prefs/server_prefs.dart';
 import '../data/server_capabilities.dart';
 
 import '../data/transmission/tr_method.dart';
@@ -2251,6 +2252,47 @@ class TorrentController extends GetxController {
     }
   }
 
+  /// 测试注入点（round119）：TR 发现开关 prefs 拉取通道
+  static ServerPrefsApi? debugPrefsApiOverride;
+
+  /// TR 的 trackerStats 无 torrent 级 DHT/PEX/LPD 数据，徽章状态只能取
+  /// session 全局开关；带 5 分钟 TTL，避免详情页定时刷新每次都发 session-get
+  Future<void> _refreshTrDiscovPrefs(ServerData s) async {
+    final ServerPrefsSnap? cur = serverCtrl.prefsSnapOf(s.id);
+    if (cur != null &&
+        cur.prefs.containsKey(PrefKey.dht) &&
+        DateTime.now().difference(cur.at) < ServerController.kPrefsCacheTtl) {
+      return;
+    }
+    try {
+      final ServerPrefsApi api = debugPrefsApiOverride ??
+          createPrefsApi(
+            server: s,
+            qbClient: serverCtrl.clientForQb(s.id),
+            trClient: serverCtrl.clientForTr(s.id),
+            resolve: serverCtrl.targetFor,
+          );
+      api.attach(s);
+      if (!await api.ensureSession()) return;
+      final Map<String, dynamic> p = await api.read();
+      serverCtrl.putPrefsSnap(
+        s.id,
+        ServerPrefsSnap(
+          prefs: <String, dynamic>{
+            ...cur?.prefs ?? const <String, dynamic>{},
+            ...p,
+          },
+          serverState: cur?.serverState ?? const <String, dynamic>{},
+          categories: cur?.categories ?? const <String>[],
+          tags: cur?.tags ?? const <String>[],
+          at: DateTime.now(),
+        ),
+      );
+    } catch (_) {
+      // 拉取失败时徽章回退「未知」态，不打断详情加载
+    }
+  }
+
   Future<void> loadDetailData() async {
     final s = serverCtrl.current.value;
     final Torrent? t = current.value;
@@ -2278,6 +2320,7 @@ class TorrentController extends GetxController {
         f = await serverCtrl.tr.torrentFiles(ids);
         p = await serverCtrl.tr.torrentPeers(ids);
         tk = await serverCtrl.tr.torrentTrackers(ids);
+        await _refreshTrDiscovPrefs(s);
       }
       if (_detailStale(targetId, targetHash, seq)) return;
       files.value = f;
